@@ -71,6 +71,8 @@ interface ImportRecord {
     products: ProductItem[];
 }
 
+import { IMPORT_LABELS, IMPORT_TABLE_COLUMNS, IMPORT_STATUS_CONFIG, IMPORT_ORIGIN_CONFIG } from '../../constants/import.constants';
+
 export default function ImportListPage() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
@@ -117,7 +119,7 @@ export default function ImportListPage() {
                 totalQuantity: item.totalQuantity,
                 serialImported: item.serialImported,
                 serialExpected: item.totalQuantity,
-                inventoryStatus: item.inventoryStatus || 'pending',
+                inventoryStatus: (item.inventoryStatus || 'pending') as any,
                 origin: (item as any).origin || 'IMPORT',
                 notes: item.notes,
                 products,
@@ -204,23 +206,7 @@ export default function ImportListPage() {
     }, [debounceTimer]);
 
     // --- 4. Render Helpers ---
-    const getOriginConfig = (origin?: string) => {
-        const map: Record<string, { color: string; text: string }> = {
-            DOMESTIC: { color: 'green', text: 'Nội địa' },
-            IMPORT: { color: 'blue', text: 'Nhập khẩu' },
-            WARRANTY_RETURN: { color: 'orange', text: 'Trả bảo hành' },
-        };
-        return map[origin || ''] || { color: 'default', text: origin || 'Khác' };
-    };
-
-    const getInventoryStatusConfig = (status: string) => {
-        const configs = {
-            pending: { color: 'default', text: 'Chưa kiểm kê' },
-            'in-progress': { color: 'processing', text: 'Đang kiểm kê' },
-            completed: { color: 'success', text: 'Đã kiểm kê' },
-        };
-        return configs[status as keyof typeof configs] || configs.pending;
-    };
+    // (Removed getOriginConfig and getInventoryStatusConfig as they are now constants)
 
     const handleViewDetail = (importCode: string) => {
         console.log('View detail:', importCode);
@@ -230,7 +216,7 @@ export default function ImportListPage() {
     // --- 5. Columns ---
     const columns: TableColumnsType<ImportRecord> = [
         {
-            title: 'Mã phiếu nhập',
+            title: IMPORT_TABLE_COLUMNS.CODE,
             dataIndex: 'importCode',
             key: 'importCode',
             width: 150,
@@ -242,24 +228,24 @@ export default function ImportListPage() {
             ),
         },
         {
-            title: 'Loại hàng hóa',
+            title: IMPORT_TABLE_COLUMNS.TYPE,
             dataIndex: 'productType',
             key: 'productType',
             width: 130,
             render: (text) => <Tag color="blue">{text}</Tag>,
         },
         {
-            title: 'Nguồn gốc',
+            title: IMPORT_TABLE_COLUMNS.ORIGIN,
             dataIndex: 'origin',
             key: 'origin',
             width: 130,
             render: (origin) => {
-                const config = getOriginConfig(origin);
+                const config = IMPORT_ORIGIN_CONFIG[origin || ''] || IMPORT_ORIGIN_CONFIG.DEFAULT;
                 return <Tag color={config.color}>{config.text}</Tag>;
             },
         },
         {
-            title: 'Ngày nhập',
+            title: IMPORT_TABLE_COLUMNS.DATE,
             dataIndex: 'importDate',
             key: 'importDate',
             width: 120,
@@ -267,19 +253,19 @@ export default function ImportListPage() {
             render: (text) => dayjs(text).format('DD/MM/YYYY'),
         },
         {
-            title: 'Người nhập kho',
+            title: IMPORT_TABLE_COLUMNS.IMPORTER,
             dataIndex: 'importedBy',
             key: 'importedBy',
             width: 150,
         },
         {
-            title: 'Đơn vị xuất',
+            title: IMPORT_TABLE_COLUMNS.SUPPLIER,
             dataIndex: 'supplier',
             key: 'supplier',
             width: 200,
         },
         {
-            title: 'Tổng SP',
+            title: IMPORT_TABLE_COLUMNS.TOTAL_QTY,
             dataIndex: 'totalQuantity',
             key: 'totalQuantity',
             width: 100,
@@ -287,18 +273,18 @@ export default function ImportListPage() {
             render: (value) => <Tag color="blue" style={{ fontSize: 14, fontWeight: 500 }}>{value}</Tag>,
         },
         {
-            title: 'Trạng thái kiểm kê',
+            title: IMPORT_TABLE_COLUMNS.STATUS,
             dataIndex: 'inventoryStatus',
             key: 'inventoryStatus',
             width: 150,
             align: 'center',
             render: (status) => {
-                const config = getInventoryStatusConfig(status);
+                const config = IMPORT_STATUS_CONFIG[status as keyof typeof IMPORT_STATUS_CONFIG] || IMPORT_STATUS_CONFIG.pending;
                 return <Tag color={config.color}>{config.text}</Tag>;
             },
         },
         {
-            title: 'Ghi chú',
+            title: IMPORT_TABLE_COLUMNS.NOTE,
             dataIndex: 'notes',
             key: 'notes',
             width: 80,
@@ -313,7 +299,7 @@ export default function ImportListPage() {
                 ),
         },
         {
-            title: 'Thao tác',
+            title: IMPORT_TABLE_COLUMNS.ACTION,
             key: 'action',
             width: 180,
             fixed: 'right',
@@ -326,14 +312,14 @@ export default function ImportListPage() {
                         icon={<EyeOutlined />}
                         onClick={() => handleViewDetail(record.key)}
                     >
-                        Chi tiết
+                        {IMPORT_LABELS.BTN_DETAIL}
                     </Button>
                     <Button
                         size="small"
                         icon={<FileExcelOutlined />}
                         onClick={() => console.log('Export serial:', record.importCode)}
                     >
-                        Xuất
+                        {IMPORT_LABELS.BTN_EXPORT_SERIAL}
                     </Button>
                 </Space>
             ),
@@ -352,7 +338,7 @@ export default function ImportListPage() {
                 }}
             >
                 <Title level={3} style={{ margin: 0 }}>
-                    Danh sách phiếu nhập kho
+                    {IMPORT_LABELS.PAGE_TITLE}
                 </Title>
                 <Button
                     type="primary"
@@ -360,7 +346,7 @@ export default function ImportListPage() {
                     size="large"
                     onClick={() => navigate('/import/create')}
                 >
-                    Thêm mới phiếu nhập
+                    {IMPORT_LABELS.BTN_CREATE}
                 </Button>
             </div>
 
@@ -415,7 +401,7 @@ export default function ImportListPage() {
                         <Col xs={24} sm={24} md={8} lg={8}>
                             <Form.Item name="keyword" style={{ marginBottom: 0 }}>
                                 <Input
-                                    placeholder="Tìm mã phiếu, NCC, người nhập..."
+                                    placeholder={IMPORT_LABELS.SEARCH_PLACEHOLDER}
                                     prefix={<SearchOutlined />}
                                     allowClear
                                 />
@@ -458,7 +444,7 @@ export default function ImportListPage() {
                     </div>
                 ) : filteredData.length === 0 ? (
                     <Empty
-                        description="Không tìm thấy phiếu nhập nào"
+                        description={IMPORT_LABELS.NOT_FOUND}
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
                         style={{ padding: 40 }}
                     >
@@ -467,7 +453,7 @@ export default function ImportListPage() {
                             icon={<PlusOutlined />}
                             onClick={() => navigate('/import/create')}
                         >
-                            Tạo phiếu nhập ngay
+                            {IMPORT_LABELS.CREATE_NOW}
                         </Button>
                     </Empty>
                 ) : (

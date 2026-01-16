@@ -5,6 +5,8 @@ import { UpdateDeviceImportDto } from '../dto/update-device-import.dto';
 import { PaginateResult } from '../interfaces/pagination-result.interface';
 import { DeviceImport } from '../schemas/device-import.schemas';
 import { DeviceService } from '../../devices/services/device.service';
+import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
+import { FilterQuery } from 'mongoose';
 
 @Injectable()
 export class DeviceImportService {
@@ -18,14 +20,17 @@ export class DeviceImportService {
     if (createDto.status === 'PENDING') {
       const products = createDto.products || [];
       for (const product of products) {
-        const p: any = product;
+        const p: any = product; // TODO: Define Interface for Product inside DTO
         const serials = p.expectedSerials || [];
 
         // 1. Check khớp số lượng
         // Nếu đã nhập serial (>0) thì bắt buộc phải nhập ĐỦ bằng quantity
         if (serials.length > 0 && serials.length !== p.quantity) {
           throw new BadRequestException(
-            `Sản phẩm ${p.productCode}: Số lượng Serial khai báo (${serials.length}) không khớp với số lượng nhập (${p.quantity})`
+            ERROR_MESSAGES.DEVICE_IMPORT.SERIAL_QUANTITY_MISMATCH
+              .replace('{product}', p.productCode)
+              .replace('{serials}', serials.length)
+              .replace('{quantity}', p.quantity)
           );
         }
 
@@ -34,7 +39,8 @@ export class DeviceImportService {
           const unique = new Set(serials);
           if (unique.size !== serials.length) {
             throw new BadRequestException(
-              `Sản phẩm ${p.productCode}: Danh sách Serial có chứa mã trùng lặp`
+              ERROR_MESSAGES.DEVICE_IMPORT.SERIAL_DUPLICATE
+                .replace('{product}', p.productCode)
             );
           }
         }
@@ -75,18 +81,18 @@ export class DeviceImportService {
     return newImport;
   }
 
-  async findAll(filter: any = {}): Promise<DeviceImport[]> {
+  async findAll(filter: FilterQuery<DeviceImport> = {}): Promise<DeviceImport[]> {
     return this.deviceImportRepository.findAll(filter);
   }
 
-  async findAllWithPagination(filter: any = {}, options: any = {}): Promise<PaginateResult<DeviceImport>> {
+  async findAllWithPagination(filter: FilterQuery<DeviceImport> = {}, options: any = {}): Promise<PaginateResult<DeviceImport>> {
     return this.deviceImportRepository.findAllWithPagination(filter, options);
   }
 
   async findById(id: string): Promise<DeviceImport> {
     const deviceimport = await this.deviceImportRepository.findById(id);
     if (!deviceimport) {
-      throw new NotFoundException('Không tìm thấy phiếu nhập thiết bị');
+      throw new NotFoundException(ERROR_MESSAGES.DEVICE_IMPORT.NOT_FOUND);
     }
     return deviceimport;
   }
@@ -96,10 +102,10 @@ export class DeviceImportService {
 
     // Chỉ cho sửa khi đang DRAFT
     if (existing.status !== 'DRAFT') {
-      throw new BadRequestException('Chỉ được sửa các phiếu ở trạng thái DRAFT (nháp)');
+      throw new BadRequestException(ERROR_MESSAGES.DEVICE_IMPORT.DRAFT_ONLY_EDIT);
     }
 
-    let updateData: any = {
+    const updateData: any = {
       ...updateDto,
       updatedBy: userId
     };
@@ -113,6 +119,11 @@ export class DeviceImportService {
 
     const updated = await this.deviceImportRepository.update(id, updateData);
 
+    // Check null safely though update repo usually returns document or null
+    if (!updated) {
+      throw new BadRequestException(ERROR_MESSAGES.DEVICE_IMPORT.UPDATE_FAILED);
+    }
+
     return updated;
   }
 
@@ -120,12 +131,12 @@ export class DeviceImportService {
     const existing = await this.findById(id);
 
     if (existing.status !== 'DRAFT') {
-      throw new BadRequestException('Chỉ được xóa các phiếu ở trạng thái DRAFT (nháp)');
+      throw new BadRequestException(ERROR_MESSAGES.DEVICE_IMPORT.DRAFT_ONLY_DELETE);
     }
 
     const deleted = await this.deviceImportRepository.delete(id);
     if (!deleted) {
-      throw new BadRequestException('Xóa phiếu không thành công');
+      throw new BadRequestException(ERROR_MESSAGES.DEVICE_IMPORT.DELETE_FAILED);
     }
     return deleted;
   }

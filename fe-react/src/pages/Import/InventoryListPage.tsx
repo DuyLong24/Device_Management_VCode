@@ -17,12 +17,14 @@ import type { DeviceImport } from '../../types/import.type';
 
 const { Title, Text } = Typography;
 
+import { INVENTORY_LABELS } from '../../constants/inventory.constants';
+
 // Config hiển thị trạng thái kiểm kê
 const getInventoryStatusConfig = (status: string) => {
     const configs: Record<string, { color: string; text: string }> = {
-        pending: { color: 'default', text: 'Chưa kiểm kê' },
-        'in-progress': { color: 'processing', text: 'Đang kiểm kê' },
-        completed: { color: 'success', text: 'Đã kiểm kê' },
+        pending: { color: 'default', text: INVENTORY_LABELS.STATUS_PROCESSING }, // Correct logic mapping if needed
+        'in-progress': { color: 'processing', text: INVENTORY_LABELS.STATUS_PROCESSING },
+        completed: { color: 'success', text: INVENTORY_LABELS.STATUS_COMPLETED },
     };
     return configs[status] || configs.pending;
 };
@@ -130,7 +132,7 @@ export default function InventoryListPage() {
 
     const columns: TableColumnsType<DeviceImport> = [
         {
-            title: 'Mã phiếu nhập',
+            title: INVENTORY_LABELS.IMPORT_TICKET,
             dataIndex: 'code',
             width: 150,
             render: (text, record) => (
@@ -145,7 +147,7 @@ export default function InventoryListPage() {
         { title: 'Nhà cung cấp', dataIndex: 'supplier', width: 200 },
         { title: 'Tổng SP', dataIndex: 'totalQuantity', width: 100, align: 'center' },
         {
-            title: 'Serial đã quét',
+            title: INVENTORY_LABELS.TOTAL_SCANNED,
             key: 'progress',
             align: 'center',
             render: (_, record) => {
@@ -156,7 +158,7 @@ export default function InventoryListPage() {
             },
         },
         {
-            title: 'Trạng thái',
+            title: INVENTORY_LABELS.STATUS,
             dataIndex: 'inventoryStatus',
             align: 'center',
             render: (status) => {
@@ -182,7 +184,7 @@ export default function InventoryListPage() {
 
     return (
         <div style={{ padding: 24 }}>
-            <Title level={3} style={{ marginBottom: 8, marginTop: 0 }}>Kiểm kê sản phẩm nhập kho</Title>
+            <Title level={3} style={{ marginBottom: 8, marginTop: 0 }}>{INVENTORY_LABELS.PAGE_TITLE_LIST}</Title>
 
             <Card>
                 <Alert
@@ -215,7 +217,7 @@ export default function InventoryListPage() {
 
             <Card size="small" style={{ marginBottom: 16 }}>
                 <Form form={form} layout="inline" onValuesChange={handleFilter}>
-                    <Form.Item name="keyword"><Input prefix={<SearchOutlined />} placeholder="Tìm kiếm..." /></Form.Item>
+                    <Form.Item name="keyword"><Input prefix={<SearchOutlined />} placeholder={INVENTORY_LABELS.SEARCH_PLACEHOLDER} /></Form.Item>
                     <Form.Item name="status">
                         <Select style={{ width: 150 }} placeholder="Trạng thái" allowClear>
                             <Select.Option value="pending">Chưa kiểm kê</Select.Option>

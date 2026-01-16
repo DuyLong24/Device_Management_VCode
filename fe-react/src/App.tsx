@@ -9,6 +9,8 @@ import CreateImportPage from './pages/Import/CreateImportPage';
 import InventoryListPage from './pages/Import/InventoryListPage';
 import InventoryCheckPage from './pages/Import/InventoryCheckPage';
 import AllSerialsPage from './pages/AllSerialsPage';
+import WarehousePage from './pages/Warehouse/WarehousePage';
+import ExportListPage from './pages/Export/ExportListPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,8 +57,17 @@ function App() {
                 <Route path="inventory-check/:importId" element={<InventoryCheckPage />} />
               </Route>
 
+              {/* MODULE XUẤT KHO */}
+              <Route path="export">
+                <Route path="list" element={<ExportListPage />} />
+                <Route path="create" element={<div>Create Export (Coming Soon)</div>} />
+                <Route path="check" element={<div>Check Export (Coming Soon)</div>} />
+              </Route>
+
+              {/* --- CÁC MODULE KHÁC --- */}
               {/* --- CÁC MODULE KHÁC --- */}
               <Route path="all-serials" element={<AllSerialsPage />} />
+              <Route path="warehouse/:code" element={<WarehousePage />} />
 
               <Route path="*" element={<div>404 Not Found</div>} />
             </Route>

@@ -6,10 +6,13 @@ import { PaginateResult } from '../interfaces/pagination-result.interface';
 import { Device, DeviceModel } from '../schemas/device.schemas';
 import { InjectModel } from '@nestjs/mongoose';
 import { ExcelService } from 'apps/main-service/src/common/excel/excel.service';
-import { ExcelColumn } from 'apps/main-service/src/common/excel/interfaces/excel-column.interface';
 import { WarehouseTransition } from '../../warehouse-transitions/schemas/warehouse-transition.schemas';
 import { DeviceHistory } from '../../device-histories/schemas/device-history.schemas';
 import { Model } from 'mongoose';
+
+// Constants
+import { DEVICE_EXCEL_COLUMNS } from '../constants/device.constants';
+import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
 
 @Injectable()
 export class DeviceService {
@@ -26,17 +29,13 @@ export class DeviceService {
     return this.deviceRepository.create(createDeviceDto);
   }
 
-  async insertMany(devices: any[], options: any = {}): Promise<Device[]> {
+  async insertMany(devices: CreateDeviceDto[], options: any = {}): Promise<Device[]> {
     return this.deviceRepository.insertMany(devices, options);
   }
 
   async findAll(filter: any = {}): Promise<Device[]> {
     return this.deviceRepository.findAll(filter);
   }
-
-  // async findAllWithPagination(filter: any = {}, options: any = {}): Promise<PaginateResult<Device>> {
-  //   return this.deviceRepository.findAllWithPagination(filter, options);
-  // }
 
   async findAllWithPagination(filter: any, options: any) {
     return this.deviceModel.paginate(filter, options);
@@ -45,7 +44,7 @@ export class DeviceService {
   async findById(id: string): Promise<Device> {
     const device = await this.deviceRepository.findById(id);
     if (!device) {
-      throw new NotFoundException('Device not found');
+      throw new NotFoundException(ERROR_MESSAGES.DEVICE.NOT_FOUND);
     }
     return device;
   }
@@ -53,11 +52,11 @@ export class DeviceService {
   async update(id: string, updateDeviceDto: UpdateDeviceDto): Promise<Device> {
     const device = await this.deviceRepository.findById(id);
     if (!device) {
-      throw new NotFoundException('Device not found');
+      throw new NotFoundException(ERROR_MESSAGES.DEVICE.NOT_FOUND);
     }
     const updatedDevice = await this.deviceRepository.update(id, updateDeviceDto);
     if (!updatedDevice) {
-      throw new BadRequestException('Failed to update device');
+      throw new BadRequestException(ERROR_MESSAGES.DEVICE.UPDATE_FAILED);
     }
     return updatedDevice;
   }
@@ -65,11 +64,11 @@ export class DeviceService {
   async delete(id: string): Promise<Device> {
     const device = await this.deviceRepository.findById(id);
     if (!device) {
-      throw new NotFoundException('Device not found');
+      throw new NotFoundException(ERROR_MESSAGES.DEVICE.NOT_FOUND);
     }
     const deletedDevice = await this.deviceRepository.delete(id);
     if (!deletedDevice) {
-      throw new BadRequestException('Failed to delete device');
+      throw new BadRequestException(ERROR_MESSAGES.DEVICE.DELETE_FAILED);
     }
     return deletedDevice;
   }
@@ -82,59 +81,8 @@ export class DeviceService {
       .sort({ createdAt: -1 })
       .exec();
 
-    // 2. Định nghĩa Cột (Config)
-    const columns: ExcelColumn[] = [
-      {
-        header: 'STT',
-        key: 'index',
-        width: 8,
-        alignment: 'center',
-        format: (val, row, index) => index || 0 // Lấy index từ loop
-      },
-      { header: 'Serial', key: 'serial', width: 20 },
-      { header: 'Tên thiết bị', key: 'name', width: 30 },
-      { header: 'Model', key: 'deviceModel', width: 20 },
-      {
-        header: 'Kho hiện tại',
-        key: 'warehouseId.name',
-        width: 25
-      },
-      {
-        header: 'Trạng thái',
-        key: 'status',
-        width: 15,
-        alignment: 'center',
-        format: (val, row) => {
-          const status = row.qcStatus || row.status; // Ưu tiên qcStatus
-          const map: Record<string, string> = {
-            'PENDING': 'Chờ QC',
-            'PENDING_QC': 'Chờ QC',
-            'READY_TO_EXPORT': 'Sẵn sàng xuất',
-            'PASS': 'Sẵn sàng xuất',
-            'DEFECT': 'Lỗi',
-            'IN_WARRANTY': 'Đang bảo hành',
-            'SOLD': 'Đã bán'
-          };
-          return map[status] || status || '';
-        }
-      },
-      {
-        header: 'Ngày nhập',
-        key: 'importDate',
-        width: 15,
-        alignment: 'center',
-        format: (val, row) => {
-          const finalDate = val || row.createdAt;
-
-          if (!finalDate) return '';
-
-          const date = new Date(finalDate);
-          return isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN');
-        }
-      }
-    ];
-
-    return this.excelService.exportTableData(devices, columns, 'Danh sách thiết bị');
+    // 2. Sử dụng Config Cột từ Constants
+    return this.excelService.exportTableData(devices, DEVICE_EXCEL_COLUMNS, 'Danh sách thiết bị');
   }
 
   /**
@@ -153,13 +101,15 @@ export class DeviceService {
     // 1. Lấy thông tin thiết bị
     const device = await this.deviceModel.findById(deviceId);
     if (!device) {
-      throw new NotFoundException('Device not found');
+      throw new NotFoundException(ERROR_MESSAGES.DEVICE.NOT_FOUND);
     }
 
     const fromWarehouseId = device.warehouseId.toString(); // Lấy ID kho hiện tại
 
     // Nếu chuyển đến chính kho hiện tại thì bỏ qua
     if (fromWarehouseId === toWarehouseId) {
+      // throw new BadRequestException(ERROR_MESSAGES.DEVICE.TRANSFER_SAME_WAREHOUSE); 
+      // Hoặc return luôn logic cũ
       return device;
     }
 
@@ -173,9 +123,10 @@ export class DeviceService {
 
     // Nếu không có rule -> Chặn ngay lập tức
     if (!transition) {
-      throw new BadRequestException(
-        `Lỗi: Không thể chuyển từ kho ${fromWarehouseId} sang ${toWarehouseId}`
-      );
+      const msg = ERROR_MESSAGES.DEVICE.TRANSFER_RULE_NOT_FOUND
+        .replace('{from}', fromWarehouseId)
+        .replace('{to}', toWarehouseId);
+      throw new BadRequestException(msg);
     }
 
     // TODO: Check role user có nằm trong transition.allowedRoles không 
@@ -201,7 +152,7 @@ export class DeviceService {
       toWarehouseId: toWarehouseId,
       actorId: userId,
       action: transition.transitionType || 'TRANSFER',
-      note: note || 'Chuyển kho thủ công',
+      note: note || 'Chuyển kho thủ công', // Có thể chuyển sang constant nếu cần, tạm giữ
       createdAt: new Date()
     });
 

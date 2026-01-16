@@ -16,31 +16,27 @@ import {
   Col,
   Space,
   Divider,
-  Upload,
   Flex,
-  Tabs // [NEW]
+  Tabs
 } from 'antd';
 import {
   ArrowLeftOutlined,
   ScanOutlined,
   CheckCircleOutlined,
   PlayCircleOutlined,
-  UploadOutlined,
-  DownloadOutlined,
-  FileExcelOutlined,
   DeleteOutlined,
-  WarningOutlined // [NEW]
+  WarningOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
-import { useMemo, useState } from 'react'; // [NEW] hooks
+import { useMemo } from 'react';
 
 import { useInventoryCheck } from '../../hooks/useInventoryCheck';
 import type { LocalScannedItem } from '../../hooks/useInventoryCheck';
-import { useScanSound } from '../../hooks/useScanSound'; // [NEW]
+import { useScanSound } from '../../hooks/useScanSound';
+import { INVENTORY_LABELS } from '../../constants/inventory.constants';
 
 const { Title, Text } = Typography;
-const { Dragger } = Upload;
 const { TabPane } = Tabs;
 
 // [NEW] Helper logic
@@ -59,14 +55,14 @@ export default function InventoryCheckPage() {
   const { playSuccess, playError } = useScanSound();
   const {
     loading, isSaving, session, importInfo, serverItems, localItems, sessionStatus,
-    scannedInput, setScannedInput, manualSerials, setManualSerials,
+    scannedInput, setScannedInput,
     selectedProductCode, setSelectedProductCode, inputRef,
     completeModalVisible, setCompleteModalVisible,
-    handleStartSession, handleManualImport,
+    handleStartSession,
     handleSaveItems, handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
     navigate,
-    removeServerItem, // [NEW] Cần thêm từ hook
-    setLocalItems // [NEW] Cần thêm từ hook
+    removeServerItem,
+    setLocalItems
   } = useInventoryCheck();
 
   // [NEW] Logic thống kê Matching
@@ -196,7 +192,7 @@ export default function InventoryCheckPage() {
       {/* Header */}
       <div className="mb-4">
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/import/list')} className="mb-4">
-          Quay lại
+          {INVENTORY_LABELS.BTN_BACK}
         </Button>
       </div>
 
@@ -212,10 +208,10 @@ export default function InventoryCheckPage() {
       </div>
 
       {/* Session Info */}
-      <Card title="Thông tin phiên kiểm kê" className="mb-6 shadow-sm">
+      <Card title={INVENTORY_LABELS.SESSION_INFO} className="mb-6 shadow-sm">
         <Descriptions column={{ xxl: 4, xl: 3, lg: 2, md: 2, sm: 1, xs: 1 }} size="small" bordered>
-          <Descriptions.Item label="Mã phiên">{sessionInfo.sessionCode}</Descriptions.Item>
-          <Descriptions.Item label="Mã phiếu nhập">{sessionInfo.importCode}</Descriptions.Item>
+          <Descriptions.Item label={INVENTORY_LABELS.SESSION_CODE}>{sessionInfo.sessionCode}</Descriptions.Item>
+          <Descriptions.Item label={INVENTORY_LABELS.IMPORT_TICKET}>{sessionInfo.importCode}</Descriptions.Item>
           <Descriptions.Item label="Ngày nhập">{sessionInfo.importDate}</Descriptions.Item>
           <Descriptions.Item label="Người nhập kho">{sessionInfo.importedBy}</Descriptions.Item>
         </Descriptions>
@@ -229,7 +225,7 @@ export default function InventoryCheckPage() {
           </Col>
           <Col xs={12} sm={8} md={4}>
             <Statistic
-              title="Đã quét"
+              title={INVENTORY_LABELS.TOTAL_SCANNED}
               value={stats.scannedCount}
               valueStyle={{ color: '#1890ff' }}
             />
@@ -384,7 +380,7 @@ export default function InventoryCheckPage() {
                 disabled={localItems.length > 0 || isSaving}
                 className={stats.missingCount > 0 ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
               >
-                {localItems.length > 0 ? 'Lưu dữ liệu trước' : 'Hoàn thành kiểm kê'}
+                {localItems.length > 0 ? 'Lưu dữ liệu trước' : INVENTORY_LABELS.BTN_COMPLETE}
               </Button>
             </Flex>
           </Card>

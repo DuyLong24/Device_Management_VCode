@@ -3,47 +3,33 @@ import type { ReactNode } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu, Badge, Avatar, Dropdown, Breadcrumb, Space, Typography, Spin } from 'antd';
 import { useQuery } from '@tanstack/react-query';
-import {
-    DashboardOutlined, InboxOutlined, FileAddOutlined, UnorderedListOutlined, CheckCircleOutlined,
-    CloseCircleOutlined, ToolOutlined, ExportOutlined, BellOutlined, UserOutlined, LogoutOutlined,
-    SettingOutlined, LockOutlined, DatabaseOutlined, TeamOutlined, SafetyOutlined, CustomerServiceOutlined,
-    AppstoreOutlined, ScanOutlined, LoadingOutlined, ClockCircleOutlined, FolderOutlined
-} from '@ant-design/icons';
+import { BellOutlined, UserOutlined, LoadingOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { warehouseService } from '../../services/warehouse.service';
 import type { Warehouse } from '../../types/warehouse.type';
 
 import logoImage from '../../assets/logo_alvar.png';
 
+// Import Constants & Utils
+import {
+    DASHBOARD_COLORS, COLOR_MAP, ICON_MAP,
+    MENU_KEYS, MENU_LABELS, SECTION_ICONS
+} from '../../constants/dashboard.constants';
+import { findMenuItemLabel, getActiveKeysFromPath } from '../../utils/navigation.utils';
+
 const { Header, Sider, Content, Footer } = Layout;
 const { Text } = Typography;
 
 interface DashboardLayoutProps {
     children?: ReactNode;
-    onLogout?: () => void;
-    onNavigate?: (path: string) => void;
-    currentPage?: string;
 }
-
-const findMenuItemLabel = (items: MenuProps['items'], key: string): ReactNode => {
-    if (!items) return null;
-    for (const item of items) {
-        if (!item) continue;
-        if ('key' in item && item.key === key) return (item as any).label;
-        if ('children' in item && item.children) {
-            const found = findMenuItemLabel(item.children, key);
-            if (found) return found;
-        }
-    }
-    return null;
-};
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const navigate = useNavigate();
     const location = useLocation();
 
     const [collapsed, setCollapsed] = useState(false);
-    const [selectedKey, setSelectedKey] = useState<string>('dashboard');
+    const [selectedKey, setSelectedKey] = useState<string>(MENU_KEYS.DASHBOARD);
     const [openKeys, setOpenKeys] = useState<string[]>([]);
 
     // Logic lấy dữ liệu kho từ API
@@ -52,38 +38,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         queryFn: warehouseService.getAll,
     });
 
-    const getIcon = (iconName: string) => {
-        const icons: Record<string, ReactNode> = {
-            'clock-circle': <ClockCircleOutlined />,
-            'check-circle': <CheckCircleOutlined />,
-            'close-circle': <CloseCircleOutlined />,
-            'tool': <ToolOutlined />,
-            'export': <ExportOutlined />,
-            'folder': <FolderOutlined />
-        };
-        return icons[iconName] || <AppstoreOutlined />;
-    };
-
-    const getColor = (colorName?: string) => {
-        const map: Record<string, string> = {
-            blue: '#1890ff',
-            green: '#52c41a',
-            red: '#ff4d4f',
-            orange: '#faad14',
-            purple: '#722ed1',
-            grey: '#8c8c8c'
-        };
-        return map[colorName || 'blue'] || '#1890ff';
-    };
-
     const renderBadgeLabel = (label: string, count?: number, colorName?: string) => {
         if (!count) return label;
+        const color = COLOR_MAP[colorName || 'blue'] || DASHBOARD_COLORS.BLUE;
+
         return (
             <div className="flex justify-between items-center w-full">
                 <span>{label}</span>
                 <Badge
                     count={count}
-                    style={{ backgroundColor: getColor(colorName), boxShadow: 'none', marginLeft: 8 }}
+                    style={{ backgroundColor: color, boxShadow: 'none', marginLeft: 8 }}
                     overflowCount={9999}
                     size="small"
                 />
@@ -103,12 +67,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     : { _id: 'other', name: 'Khác', code: 'OTHER' };
 
                 const item = {
-                    key: `warehouse-${wh.code}`, // VD: warehouse-PENDING_QC
+                    key: `warehouse-${wh.code}`,
                     label: renderBadgeLabel(wh.name, wh.count, wh.color),
-                    icon: getIcon(wh.icon),
+                    icon: ICON_MAP[wh.icon] || ICON_MAP['default'],
                     onClick: () => navigate(`/warehouse/${wh.code}`),
                 };
 
+                // Logic phân nhóm kho theo code
                 if (group.code === 'INTERNAL' || group.name === 'Kho nội bộ') {
                     internalItems.push(item);
                 } else if (group.code === 'EXPORTED' || group.name === 'Đã xuất khỏi kho') {
@@ -119,114 +84,105 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         return [
             {
-                key: 'dashboard',
-                icon: <DashboardOutlined />,
-                label: 'Dashboard',
+                key: MENU_KEYS.DASHBOARD,
+                icon: SECTION_ICONS.DASHBOARD,
+                label: MENU_LABELS.DASHBOARD,
                 onClick: () => navigate('/dashboard'),
             },
             {
-                key: 'import',
-                icon: <InboxOutlined />,
-                label: 'Quản lý nhập kho',
+                key: MENU_KEYS.IMPORT.ROOT,
+                icon: SECTION_ICONS.IMPORT,
+                label: MENU_LABELS.IMPORT.ROOT,
                 children: [
-                    { key: 'import-list', icon: <UnorderedListOutlined />, label: 'Danh sách phiếu nhập kho', onClick: () => navigate('/import/list') },
-                    { key: 'create-import', icon: <FileAddOutlined />, label: 'Thêm mới phiếu nhập kho', onClick: () => navigate('/import/create') },
-                    { key: 'inventory-list', icon: <CheckCircleOutlined />, label: 'Kiểm kê sản phẩm nhập kho', onClick: () => navigate('/import/inventory-list') },
+                    { key: MENU_KEYS.IMPORT.LIST, icon: SECTION_ICONS.IMPORT_LIST, label: MENU_LABELS.IMPORT.LIST, onClick: () => navigate('/import/list') },
+                    { key: MENU_KEYS.IMPORT.CREATE, icon: SECTION_ICONS.IMPORT_CREATE, label: MENU_LABELS.IMPORT.CREATE, onClick: () => navigate('/import/create') },
+                    { key: MENU_KEYS.IMPORT.INVENTORY, icon: SECTION_ICONS.IMPORT_INVENTORY, label: MENU_LABELS.IMPORT.INVENTORY, onClick: () => navigate('/import/inventory-list') },
                 ],
             },
+            { type: 'divider' },
             {
-                type: 'divider',
-            },
-            {
-                key: 'all-serials',
-                icon: <DatabaseOutlined />,
-                label: renderBadgeLabel('Danh sách tổng'),
+                key: MENU_KEYS.ALL_SERIALS,
+                icon: SECTION_ICONS.ALL_SERIALS,
+                label: renderBadgeLabel(MENU_LABELS.ALL_SERIALS),
                 onClick: () => navigate('/all-serials'),
             },
             {
-                key: 'group-internal',
-                icon: <AppstoreOutlined />,
-                label: 'Kho nội bộ',
+                key: MENU_KEYS.INTERNAL_GROUP,
+                icon: SECTION_ICONS.INTERNAL,
+                label: MENU_LABELS.INTERNAL_GROUP,
                 children: internalItems.length > 0 ? internalItems : undefined,
             },
             {
-                key: 'group-exported',
-                icon: <ExportOutlined />,
-                label: 'Đã xuất khỏi kho',
+                key: MENU_KEYS.EXPORTED_GROUP,
+                icon: SECTION_ICONS.EXPORTED,
+                label: MENU_LABELS.EXPORTED_GROUP,
                 children: exportedItems.length > 0 ? exportedItems : undefined,
             },
+            { type: 'divider' },
             {
-                type: 'divider',
-            },
-            {
-                key: 'export',
-                icon: <ExportOutlined rotate={180} />,
-                label: 'Quản lý xuất kho',
+                key: MENU_KEYS.EXPORT.ROOT,
+                icon: SECTION_ICONS.EXPORT,
+                label: MENU_LABELS.EXPORT.ROOT,
                 children: [
-                    { key: 'export-list', icon: <UnorderedListOutlined />, label: 'Danh sách phiếu xuất kho', onClick: () => navigate('/export/list') },
-                    { key: 'create-export', icon: <FileAddOutlined />, label: 'Thêm mới phiếu xuất kho', onClick: () => navigate('/export/create') },
-                    { key: 'export-check', icon: <ScanOutlined />, label: 'Xuất kho - Quét Serial', onClick: () => navigate('/export/check') },
+                    { key: MENU_KEYS.EXPORT.LIST, icon: SECTION_ICONS.EXPORT_LIST, label: MENU_LABELS.EXPORT.LIST, onClick: () => navigate('/export/list') },
+                    { key: MENU_KEYS.EXPORT.CREATE, icon: SECTION_ICONS.EXPORT_CREATE, label: MENU_LABELS.EXPORT.CREATE, onClick: () => navigate('/export/create') },
+                    { key: MENU_KEYS.EXPORT.CHECK, icon: SECTION_ICONS.EXPORT_CHECK, label: MENU_LABELS.EXPORT.CHECK, onClick: () => navigate('/export/check') },
+                ],
+            },
+            { type: 'divider' },
+            {
+                key: MENU_KEYS.WARRANTY.ROOT,
+                icon: SECTION_ICONS.WARRANTY,
+                label: MENU_LABELS.WARRANTY.ROOT,
+                children: [
+                    { key: MENU_KEYS.WARRANTY.LIST, icon: SECTION_ICONS.WARRANTY_LIST, label: MENU_LABELS.WARRANTY.LIST, onClick: () => navigate('/warranty/list') },
                 ],
             },
             {
-                type: 'divider',
-            },
-            {
-                key: 'warranty',
-                icon: <CustomerServiceOutlined />,
-                label: 'Quản lý bảo hành',
+                key: MENU_KEYS.SYSTEM.ROOT,
+                icon: SECTION_ICONS.SYSTEM,
+                label: MENU_LABELS.SYSTEM.ROOT,
                 children: [
-                    { key: 'warranty-activation-list', icon: <UnorderedListOutlined />, label: 'Danh sách bảo hành', onClick: () => navigate('/warranty/list') },
-                ],
-            },
-            {
-                key: 'system',
-                icon: <SettingOutlined />,
-                label: 'Quản trị hệ thống',
-                children: [
-                    { key: 'user-management', icon: <TeamOutlined />, label: 'Quản lý tài khoản', onClick: () => navigate('/system/users') },
-                    { key: 'role-permission', icon: <SafetyOutlined />, label: 'Quản lý vai trò & phân quyền', onClick: () => navigate('/system/roles') },
+                    { key: MENU_KEYS.SYSTEM.USERS, icon: SECTION_ICONS.SYSTEM_USERS, label: MENU_LABELS.SYSTEM.USERS, onClick: () => navigate('/system/users') },
+                    { key: MENU_KEYS.SYSTEM.ROLES, icon: SECTION_ICONS.SYSTEM_ROLES, label: MENU_LABELS.SYSTEM.ROLES, onClick: () => navigate('/system/roles') },
                 ],
             },
         ];
     }, [warehouses, navigate]);
 
+
+
+    // Handle Navigation Active State
     useEffect(() => {
-        const path = location.pathname;
-        let newKey = 'dashboard';
-
-        if (path.includes('/warehouse/')) newKey = `warehouse-${path.split('/warehouse/')[1]}`;
-        else if (path.includes('/import/create')) newKey = 'create-import';
-        else if (path.includes('/import/inventory-list') || path.includes('/import/inventory-check')) newKey = 'inventory-list';
-        else if (path.includes('/import/list')) newKey = 'import-list';
-        else if (path.includes('all-serials')) newKey = 'all-serials';
-        else if (path.includes('export')) newKey = 'export-list';
-
+        const { selectedKey: newKey, parentKey } = getActiveKeysFromPath(location.pathname);
         setSelectedKey(newKey);
 
-        const keyToParent: Record<string, string> = {
-            'import-list': 'import', 'create-import': 'import', 'inventory-list': 'import',
-            'export-list': 'export', 'create-export': 'export', 'export-check': 'export',
-            'user-management': 'system', 'role-permission': 'system', 'warranty-activation-list': 'warranty'
-        };
-
-        if (warehouses) {
-            warehouses.forEach(wh => {
-                const gCode = (typeof wh.groupId === 'object' ? wh.groupId.code : 'OTHER');
-                if (gCode === 'INTERNAL') keyToParent[`warehouse-${wh.code}`] = 'group-internal';
-                if (gCode === 'EXPORTED') keyToParent[`warehouse-${wh.code}`] = 'group-exported';
-            });
+        // Auto expand parent menu if needed
+        if (parentKey && !collapsed) {
+            setOpenKeys((prev) => [...new Set([...prev, parentKey])]);
         }
-        const parent = keyToParent[newKey];
-        if (parent && !collapsed) setOpenKeys((prev) => [...new Set([...prev, parent])]);
+
+        // Logic cũ cho warehouse dynamic mapping (Compatibility)
+        if (warehouses && newKey.startsWith('warehouse-')) {
+            const whCode = newKey.split('warehouse-')[1];
+            const wh = warehouses.find(w => w.code === whCode);
+            if (wh) {
+                const gCode = (typeof wh.groupId === 'object' ? wh.groupId.code : 'OTHER');
+                let parent = '';
+                if (gCode === 'INTERNAL') parent = MENU_KEYS.INTERNAL_GROUP;
+                if (gCode === 'EXPORTED') parent = MENU_KEYS.EXPORTED_GROUP;
+
+                if (parent && !collapsed) setOpenKeys((prev) => [...new Set([...prev, parent])]);
+            }
+        }
 
     }, [location.pathname, warehouses, collapsed]);
 
     const userMenuItems: MenuProps['items'] = [
-        { key: 'profile', icon: <UserOutlined />, label: 'Thông tin tài khoản' },
-        { key: 'change-password', icon: <LockOutlined />, label: 'Đổi mật khẩu' },
+        { key: MENU_KEYS.USER.PROFILE, icon: SECTION_ICONS.USER_PROFILE, label: MENU_LABELS.USER.PROFILE },
+        { key: MENU_KEYS.USER.CHANGE_PASS, icon: SECTION_ICONS.USER_LOCK, label: MENU_LABELS.USER.CHANGE_PASS },
         { type: 'divider' },
-        { key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất', danger: true, onClick: () => navigate('/login') },
+        { key: MENU_KEYS.USER.LOGOUT, icon: SECTION_ICONS.USER_LOGOUT, label: MENU_LABELS.USER.LOGOUT, danger: true, onClick: () => navigate('/login') },
     ];
 
     const notificationItems: MenuProps['items'] = [
@@ -236,7 +192,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         { key: 'all', label: <Text className="text-blue-500">Xem tất cả thông báo</Text> },
     ];
 
-    const currentBreadcrumbTitle = (findMenuItemLabel(menuItems, selectedKey) as ReactNode) || 'Dashboard';
+    const currentBreadcrumbTitle = (findMenuItemLabel(menuItems, selectedKey) as ReactNode) || MENU_LABELS.DASHBOARD;
 
     return (
         <Layout style={{ minHeight: '100vh' }}>

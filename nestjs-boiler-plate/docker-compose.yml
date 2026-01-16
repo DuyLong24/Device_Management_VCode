@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - microservices-network
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+
+  envoy:
+    image: envoyproxy/envoy:v1.24.3
+    hostname: envoy
+    container_name: envoy
+    ports:
+      - "8080:8080"   
+      - "10000:10000" 
+    volumes:
+      - ./config/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    command: ["/usr/local/bin/envoy", "-c", "/etc/envoy/envoy.yaml", "-l", "debug"]
+    depends_on:
+      - opa
+    networks:
+      - microservices-network
+    extra_hosts:
+      - "nestjs-backend:host-gateway"
+
+  opa:
+    image: openpolicyagent/opa:latest-envoy-static
+    hostname: opa
+    container_name: opa
+    ports:
+      - "8181:8181" 
+      - "9191:9191" 
+    volumes:
+      - ./config/opa:/policies:ro
+    command:
+      - "run"
+      - "--server"
+      - "--addr=0.0.0.0:8181"
+      - "--set=plugins.envoy_ext_authz_grpc.addr=:9191"
+      - "--set=plugins.envoy_ext_authz_grpc.enable_reflection=true"
+      - "--set=decision_logs.console=true"
+      - "--watch"
+      - "/policies"
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge
+
+volumes:
+  mongo_data:

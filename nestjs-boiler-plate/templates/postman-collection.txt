@@ -1,0 +1,241 @@
+{
+	"info": {
+		"_postman_id": "{{MODULE_NAME_LOWER}}-api-collection",
+		"name": "{{MODULE_NAME_CAPITAL}} API Collection",
+		"description": "Collection for {{MODULE_NAME_CAPITAL}} CRUD operations with pagination",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "{{MODULE_NAME_CAPITAL}}s",
+			"item": [
+				{
+					"name": "Create {{MODULE_NAME_CAPITAL}}",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{{SAMPLE_CREATE_BODY}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/{{MODULE_NAME_KEBAB}}s",
+							"host": ["{{baseUrl}}"],
+							"path": ["{{MODULE_NAME_KEBAB}}s"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All {{MODULE_NAME_CAPITAL}}s",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/{{MODULE_NAME_KEBAB}}s",
+							"host": ["{{baseUrl}}"],
+							"path": ["{{MODULE_NAME_KEBAB}}s"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get {{MODULE_NAME_CAPITAL}}s with Pagination",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/{{MODULE_NAME_KEBAB}}s?page=1&limit=10&sortBy=createdAt:desc",
+							"host": ["{{baseUrl}}"],
+							"path": ["{{MODULE_NAME_KEBAB}}s"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "sortBy",
+									"value": "createdAt:desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get {{MODULE_NAME_CAPITAL}}s with Filter",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/{{MODULE_NAME_KEBAB}}s{{SAMPLE_FILTER_PARAMS}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["{{MODULE_NAME_KEBAB}}s"],
+							"query": {{FILTER_QUERY_PARAMS}}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search {{MODULE_NAME_CAPITAL}}s",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/{{MODULE_NAME_KEBAB}}s{{SAMPLE_SEARCH_PARAMS}}&page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["{{MODULE_NAME_KEBAB}}s"],
+							"query": {{SEARCH_QUERY_PARAMS}}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get {{MODULE_NAME_CAPITAL}}s Paginated (Always Paginated)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/{{MODULE_NAME_KEBAB}}s/paginated?page=1&limit=5&sortBy=createdAt:asc",
+							"host": ["{{baseUrl}}"],
+							"path": ["{{MODULE_NAME_KEBAB}}s", "paginated"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "5"
+								},
+								{
+									"key": "sortBy",
+									"value": "createdAt:asc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get {{MODULE_NAME_CAPITAL}} by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/{{MODULE_NAME_KEBAB}}s/{{sampleId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["{{MODULE_NAME_KEBAB}}s", "{{sampleId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update {{MODULE_NAME_CAPITAL}}",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{{SAMPLE_UPDATE_BODY}}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/{{MODULE_NAME_KEBAB}}s/{{sampleId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["{{MODULE_NAME_KEBAB}}s", "{{sampleId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete {{MODULE_NAME_CAPITAL}}",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/{{MODULE_NAME_KEBAB}}s/{{sampleId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["{{MODULE_NAME_KEBAB}}s", "{{sampleId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Advanced Filter & Search Combination",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/{{MODULE_NAME_KEBAB}}s{{COMBINED_PARAMS}}&page=1&limit=10&sortBy=createdAt:desc&populate={{SAMPLE_POPULATE}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["{{MODULE_NAME_KEBAB}}s"],
+							"query": {{COMBINED_QUERY_PARAMS}}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Date Range Filter",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/{{MODULE_NAME_KEBAB}}s?createdFrom=2024-01-01&createdTo=2024-12-31&page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["{{MODULE_NAME_KEBAB}}s"],
+							"query": [
+								{
+									"key": "createdFrom",
+									"value": "2024-01-01",
+									"description": "Start date for filtering"
+								},
+								{
+									"key": "createdTo",
+									"value": "2024-12-31",
+									"description": "End date for filtering"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string",
+			"description": "Base URL for the API"
+		},
+		{
+			"key": "sampleId",
+			"value": "60f1b2b3c9b9c7a3d8e1f2g3",
+			"type": "string",
+			"description": "{{MODULE_NAME_CAPITAL}} ID for testing"
+		}
+	]
+}

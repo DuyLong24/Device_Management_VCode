@@ -1,0 +1,16 @@
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { {{MODULE_NAME_CAPITAL}}Controller } from './controllers/{{MODULE_NAME_KEBAB}}.controller';
+import { {{MODULE_NAME_CAPITAL}}Service } from './services/{{MODULE_NAME_KEBAB}}.service';
+import { {{MODULE_NAME_CAPITAL}}Repository } from './repositories/{{MODULE_NAME_KEBAB}}.repository';
+import { {{MODULE_NAME_CAPITAL}}, {{MODULE_NAME_CAPITAL}}Schema } from './entities/{{MODULE_NAME_KEBAB}}.entity';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([{ name: {{MODULE_NAME_CAPITAL}}.name, schema: {{MODULE_NAME_CAPITAL}}Schema }])
+  ],
+  controllers: [{{MODULE_NAME_CAPITAL}}Controller],
+  providers: [{{MODULE_NAME_CAPITAL}}Service, {{MODULE_NAME_CAPITAL}}Repository],
+  exports: [{{MODULE_NAME_CAPITAL}}Service, {{MODULE_NAME_CAPITAL}}Repository]
+})
+export class {{MODULE_NAME_CAPITAL}}Module {}

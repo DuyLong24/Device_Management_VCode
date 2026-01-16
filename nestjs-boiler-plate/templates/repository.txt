@@ -1,0 +1,54 @@
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { {{MODULE_NAME_CAPITAL}}, {{MODULE_NAME_CAPITAL}}Model } from '../entities/{{MODULE_NAME_KEBAB}}.entity';
+import { Create{{MODULE_NAME_CAPITAL}}Dto } from '../dto/create-{{MODULE_NAME_KEBAB}}.dto';
+import { Update{{MODULE_NAME_CAPITAL}}Dto } from '../dto/update-{{MODULE_NAME_KEBAB}}.dto';
+import { PaginateResult } from '../interfaces/pagination-result.interface';
+
+@Injectable()
+export class {{MODULE_NAME_CAPITAL}}Repository {
+  constructor(@InjectModel({{MODULE_NAME_CAPITAL}}.name) private {{MODULE_NAME_LOWER}}Model: {{MODULE_NAME_CAPITAL}}Model) {}
+
+  async create(create{{MODULE_NAME_CAPITAL}}Dto: Create{{MODULE_NAME_CAPITAL}}Dto): Promise<{{MODULE_NAME_CAPITAL}}> {
+    const {{MODULE_NAME_LOWER}}Data: any = { ...create{{MODULE_NAME_CAPITAL}}Dto };
+    
+    return this.{{MODULE_NAME_LOWER}}Model.create({{MODULE_NAME_LOWER}}Data);
+  }
+
+  async findAll(filter: any = {}): Promise<{{MODULE_NAME_CAPITAL}}[]> {
+    return this.{{MODULE_NAME_LOWER}}Model.find(filter).exec();
+  }
+
+  async findAllWithPagination(filter: any = {}, options: any = {}): Promise<PaginateResult<{{MODULE_NAME_CAPITAL}}>> {
+    const { page = 1, limit = 10, sortBy, populate } = options;
+
+    // Build options for plugin
+    const paginateOptions: any = {
+      page: Number(page),
+      limit: Number(limit),
+      sortBy: sortBy || 'createdAt:desc'
+    };
+
+    if (populate) {
+      paginateOptions.populate = populate;
+    }
+
+    // Use the paginate plugin
+    return this.{{MODULE_NAME_LOWER}}Model.paginate(filter, paginateOptions);
+  }
+
+  async findById(id: string): Promise<{{MODULE_NAME_CAPITAL}} | null> {
+    return this.{{MODULE_NAME_LOWER}}Model.findById(id).exec();
+  }
+
+  async update(id: string, update{{MODULE_NAME_CAPITAL}}Dto: Update{{MODULE_NAME_CAPITAL}}Dto): Promise<{{MODULE_NAME_CAPITAL}} | null> {
+    const updateData: any = { ...update{{MODULE_NAME_CAPITAL}}Dto };
+    updateData.updatedAt = new Date();
+    
+    return this.{{MODULE_NAME_LOWER}}Model.findByIdAndUpdate(id, updateData, { new: true }).exec();
+  }
+
+  async delete(id: string): Promise<{{MODULE_NAME_CAPITAL}} | null> {
+    return this.{{MODULE_NAME_LOWER}}Model.findByIdAndDelete(id).exec();
+  }
+}

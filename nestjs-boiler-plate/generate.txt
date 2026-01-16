@@ -1,0 +1,2 @@
+node generate.js order customerName:string customerEmail:email totalAmount:number orderDate:date isCompleted:boolean
+node generate.js order userId:objectId:User productId:objectId:Product quantity:number

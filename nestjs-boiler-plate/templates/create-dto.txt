@@ -1,0 +1,5 @@
+import { {{VALIDATORS}}, IsOptional, IsEnum } from 'class-validator';
+
+export class Create{{MODULE_NAME_CAPITAL}}Dto {
+{{FIELDS}}
+}

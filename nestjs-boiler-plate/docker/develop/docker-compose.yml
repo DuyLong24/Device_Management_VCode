@@ -1,0 +1,111 @@
+version: '3'
+services:
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:7.4.0
+  #   hostname: zookeeper
+  #   container_name: zookeeper
+  #   ports:
+  #     - "2181:2181"
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_TICK_TIME: 2000
+  #   networks:
+  #     - microservices-network
+
+  # # Kafka Broker
+  # kafka:
+  #   image: confluentinc/cp-kafka:7.4.0
+  #   hostname: kafka
+  #   container_name: kafka
+  #   depends_on:
+  #     - zookeeper
+  #   ports:
+  #     - "9092:9092"
+  #     - "9101:9101"
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #     KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+  #     KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+  #     KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+  #     KAFKA_JMX_PORT: 9101
+  #     KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.rmi.port=9101
+  #   networks:
+  #     - microservices-network
+
+  # The Application
+  api_glorin:
+    container_name: api_glorin
+    depends_on:
+      - kafka
+      - zookeeper
+    build:
+      context: ./
+      dockerfile: ./node.dockerfile
+    restart: always
+    networks:
+      - traefik_traefik
+      - default
+    working_dir: /usr/src/app
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.api_glorin.entrypoints=http'
+      - 'traefik.http.routers.api_glorin.rule=Host(`api.glorin.bfd.vn`)'
+      - 'traefik.docker.network=traefik_traefik'
+      - 'traefik.http.services.api_glorin.loadbalancer.server.port=3000'
+
+      # - 'traefik.http.middlewares.api_glorin-https-redirect.redirectscheme.scheme=https'
+      # - 'traefik.http.routers.api_glorin.middlewares=api_glorin-https-redirect'
+      # - 'traefik.http.routers.api_glorin-secure.rule=Host(`api.glorin.bfd.vn`)'
+      # - 'traefik.http.routers.api_glorin-secure.tls=true'
+      # - 'traefik.http.routers.api_glorin-secure.tls.certresolver=http'
+      # - 'traefik.http.routers.api_glorin-secure.entrypoints=https'
+      # - 'traefik.http.routers.api_glorin-secure.service=api_glorin'
+  envoy:
+    image: envoyproxy/envoy:v1.24.3
+    hostname: envoy
+    container_name: envoy
+    ports:
+      - "8080:8080"  # Main gateway port
+      - "10000:10000"  # Admin interface
+    volumes:
+      - ./config/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+      # - /containers/data/glorin/config/envoy:/data.json:ro
+
+    command: ["/usr/local/bin/envoy", "-c", "/etc/envoy/envoy.yaml", "-l", "debug"]
+    depends_on:
+      - opa
+    networks:
+      - microservices-network
+    extra_hosts:
+      - "nestjs-backend:192.168.1.8"  # Map backend hostname to IP
+
+  # OPA - Open Policy Agent
+  opa:
+    image: openpolicyagent/opa:latest-envoy-static
+    hostname: opa
+    container_name: opa
+    ports:
+      - "8181:8181"  # OPA API port
+      - "9191:9191"  # gRPC port for Envoy
+    volumes:
+      - ./config/opa:/policies:ro
+      # - /containers/data/glorin/config/opa:/data.json:ro
+    command: 
+      - "run"
+      - "--server"
+      - "--addr=0.0.0.0:8181"
+      - "--set=plugins.envoy_ext_authz_grpc.addr=:9191"
+      - "--set=plugins.envoy_ext_authz_grpc.enable_reflection=true"
+      - "--set=decision_logs.console=true"
+      - "--watch"
+      - "/policies"
+    networks:
+      - microservices-network
+
+networks:
+  traefik_traefik:
+    external: true

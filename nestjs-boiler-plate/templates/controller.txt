@@ -1,0 +1,72 @@
+import { 
+  Controller, 
+  Post, 
+  Body, 
+  Get, 
+  Query, 
+  Put, 
+  Delete, 
+  Param,
+  HttpStatus,
+  HttpCode
+} from '@nestjs/common';
+import { {{MODULE_NAME_CAPITAL}}Service } from '../services/{{MODULE_NAME_KEBAB}}.service';
+import { Create{{MODULE_NAME_CAPITAL}}Dto } from '../dto/create-{{MODULE_NAME_KEBAB}}.dto';
+import { Update{{MODULE_NAME_CAPITAL}}Dto } from '../dto/update-{{MODULE_NAME_KEBAB}}.dto';
+import { {{MODULE_NAME_CAPITAL}}PaginationDto } from '../dto/{{MODULE_NAME_KEBAB}}-pagination.dto';
+import { createFilterAndOptions } from '../../utils/pick.util';
+
+@Controller('{{MODULE_NAME_KEBAB}}s')
+export class {{MODULE_NAME_CAPITAL}}Controller {
+  constructor(private readonly {{MODULE_NAME_CAMEL}}Service: {{MODULE_NAME_CAPITAL}}Service) {}
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() create{{MODULE_NAME_CAPITAL}}Dto: Create{{MODULE_NAME_CAPITAL}}Dto) {
+    return this.{{MODULE_NAME_CAMEL}}Service.create(create{{MODULE_NAME_CAPITAL}}Dto);
+  }
+
+  @Get()
+  async findAll(@Query() query: {{MODULE_NAME_CAPITAL}}PaginationDto) {
+    const { filter, options } = createFilterAndOptions(
+      query,
+      [{{FILTER_KEYS}}], // Filter keys for exact match
+      [{{SEARCH_KEYS}}], // Search keys for regex search
+      ['sortBy', 'limit', 'page', 'populate']
+    );
+
+    // Nếu có tham số phân trang, sử dụng phân trang
+    if (query.page || query.limit) {
+      return this.{{MODULE_NAME_CAMEL}}Service.findAllWithPagination(filter, options);
+    }
+    // Nếu không, trả về tất cả với filter
+    return this.{{MODULE_NAME_CAMEL}}Service.findAll(filter);
+  }
+
+  @Get('paginated')
+  async findAllPaginated(@Query() query: {{MODULE_NAME_CAPITAL}}PaginationDto) {
+    const { filter, options } = createFilterAndOptions(
+      query,
+      [{{FILTER_KEYS}}], // Filter keys for exact match
+      [{{SEARCH_KEYS}}], // Search keys for regex search
+      ['sortBy', 'limit', 'page', 'populate']
+    );
+    
+    return this.{{MODULE_NAME_CAMEL}}Service.findAllWithPagination(filter, options);
+  }
+
+  @Get(':id')
+  async findById(@Param('id') id: string) {
+    return this.{{MODULE_NAME_CAMEL}}Service.findById(id);
+  }
+
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() update{{MODULE_NAME_CAPITAL}}Dto: Update{{MODULE_NAME_CAPITAL}}Dto) {
+    return this.{{MODULE_NAME_CAMEL}}Service.update(id, update{{MODULE_NAME_CAPITAL}}Dto);
+  }
+
+  @Delete(':id')
+  async delete(@Param('id') id: string) {
+    return this.{{MODULE_NAME_CAMEL}}Service.delete(id);
+  }
+}

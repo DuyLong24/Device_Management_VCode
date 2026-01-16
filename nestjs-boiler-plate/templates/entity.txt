@@ -1,0 +1,21 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
+import paginate, { PaginateModel } from '../../plugins/paginate.plugin';
+import { toJSONPlugin } from '../../plugins/toJSON.plugin';
+{{REF_IMPORTS}}
+
+@Schema({ timestamps: true })
+export class {{MODULE_NAME_CAPITAL}} extends Document {
+{{FIELDS}}
+
+  // Virtual for id (will be handled by toJSON plugin)
+  declare id?: string;
+}
+
+export const {{MODULE_NAME_CAPITAL}}Schema = SchemaFactory.createForClass({{MODULE_NAME_CAPITAL}});
+
+// Apply plugins
+{{MODULE_NAME_CAPITAL}}Schema.plugin(paginate);
+{{MODULE_NAME_CAPITAL}}Schema.plugin(toJSONPlugin);
+
+export type {{MODULE_NAME_CAPITAL}}Model = PaginateModel<{{MODULE_NAME_CAPITAL}}>;

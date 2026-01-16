@@ -1,0 +1,29 @@
+image: docker/compose
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  image: docker/compose
+  script:
+    - cp ./docker/develop/.env ./.env
+    - cp ./docker/develop/envoy.yaml ./config/envoy/envoy.yaml
+    - cp ./docker/develop/docker-compose.yml ./docker-compose.yml
+    
+    # Kiểm tra và copy config nếu cần thiết
+    - |
+      if [ ! -d "/containers/data/glorin/config" ] || [ -z "$(ls -A /containers/data/glorin/config 2>/dev/null)" ]; then
+        echo "Config folder không tồn tại hoặc trống, đang copy config..."
+        mkdir -p /containers/data/glorin
+        cp -r ./config /containers/data/glorin/
+        echo "Đã copy config thành công"
+      else
+        echo "Config folder đã có dữ liệu, bỏ qua"
+      fi
+    
+    # - docker-compose down
+    - docker-compose build
+    - docker-compose up -d
+  only:
+    refs:
+      - main

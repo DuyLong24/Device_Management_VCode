@@ -1,0 +1,623 @@
+{
+  "app": {
+    "permissions": {
+      "user:get": {
+        "resources": [
+          {
+            "path": "/users",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68a8286e0435123a468ad26c"
+          },
+          {
+            "path": "/users/:id",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68a8286e0435123a468ad26d"
+          }
+        ]
+      },
+      "user:manage": {
+        "resources": [
+          {
+            "path": "/users",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68a8286e0435123a468ad271"
+          },
+          {
+            "path": "/users/:id",
+            "methods": [
+              "PUT",
+              "PATCH"
+            ],
+            "_id": "68a8286e0435123a468ad272"
+          }
+        ]
+      },
+      "user:delete": {
+        "resources": [
+          {
+            "path": "/users/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "_id": "68a8286e0435123a468ad276"
+          }
+        ]
+      },
+      "users:post": {
+        "resources": [
+          {
+            "path": "/users",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68b6bc3a7d2de47d242d0822"
+          }
+        ]
+      },
+      "users:delete": {
+        "resources": [
+          {
+            "path": "/users/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "_id": "68b6bc3a7d2de47d242d0828"
+          }
+        ]
+      },
+      "users:manage": {
+        "resources": [
+          {
+            "path": "/users",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68b6bc3a7d2de47d242d082c"
+          }
+        ]
+      },
+      "fnc-roles:post": {
+        "resources": [
+          {
+            "path": "/fnc-roles",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68b6bc3a7d2de47d242d0831"
+          }
+        ]
+      },
+      "fnc-roles:delete": {
+        "resources": [
+          {
+            "path": "/fnc-roles/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "_id": "68b6bc3a7d2de47d242d0837"
+          }
+        ]
+      },
+      "fnc-roles:manage": {
+        "resources": [
+          {
+            "path": "/fnc-roles",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68b6bc3a7d2de47d242d083b"
+          }
+        ]
+      },
+      "tokens:post": {
+        "resources": [
+          {
+            "path": "/tokens",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68b6bc3b7d2de47d242d0840"
+          }
+        ]
+      },
+      "tokens:delete": {
+        "resources": [
+          {
+            "path": "/tokens/:id",
+            "methods": [
+              "DELETE"
+            ],
+            "_id": "68b6bc3b7d2de47d242d0846"
+          }
+        ]
+      },
+      "tokens:manage": {
+        "resources": [
+          {
+            "path": "/tokens",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68b6bc3b7d2de47d242d084a"
+          }
+        ]
+      },
+      "auth:post": {
+        "resources": [
+          {
+            "path": "/auth/login",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68b6bc3b7d2de47d242d084f"
+          },
+          {
+            "path": "/auth/logout",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68b6bc3b7d2de47d242d0850"
+          },
+          {
+            "path": "/auth/refresh",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68b6bc3b7d2de47d242d0851"
+          }
+        ]
+      },
+      "auth:manage": {
+        "resources": [
+          {
+            "path": "/auth/login",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68b6bc3b7d2de47d242d085a"
+          },
+          {
+            "path": "/auth/logout",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68b6bc3b7d2de47d242d085b"
+          },
+          {
+            "path": "/auth/refresh",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68b6bc3b7d2de47d242d085c"
+          }
+        ]
+      },
+      "health:get": {
+        "resources": [
+          {
+            "path": "/health",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68b6bc3b7d2de47d242d0862"
+          }
+        ]
+      },
+      "policy-admin:get": {
+        "resources": [
+          {
+            "path": "/policy/catalog",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba6504"
+          },
+          {
+            "path": "/policy/permissions",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba6505"
+          },
+          {
+            "path": "/policy/roles",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba6506"
+          },
+          {
+            "path": "/policy/users/:userId/permissions",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba6507"
+          },
+          {
+            "path": "/policy/versions",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba6508"
+          },
+          {
+            "path": "/policy/versions/:hash",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba6509"
+          }
+        ]
+      },
+      "policy-admin:manage": {
+        "resources": [
+          {
+            "path": "/policy/catalog/resource-templates:bulk-upsert",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68bea20f925dbde296ba6511"
+          },
+          {
+            "path": "/policy/permissions:bulk-upsert",
+            "methods": [
+              "PUT"
+            ],
+            "_id": "68bea20f925dbde296ba6512"
+          },
+          {
+            "path": "/policy/roles",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68bea20f925dbde296ba6513"
+          },
+          {
+            "path": "/policy/roles/:code",
+            "methods": [
+              "PUT"
+            ],
+            "_id": "68bea20f925dbde296ba6514"
+          },
+          {
+            "path": "/policy/roles/:code/permissions:bulk-set",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68bea20f925dbde296ba6515"
+          }
+        ]
+      },
+      "policy-admin:delete": {
+        "resources": [
+          {
+            "path": "/policy/permissions/:key",
+            "methods": [
+              "DELETE"
+            ],
+            "_id": "68bea20f925dbde296ba651c"
+          },
+          {
+            "path": "/policy/roles/:code",
+            "methods": [
+              "DELETE"
+            ],
+            "_id": "68bea20f925dbde296ba651d"
+          }
+        ]
+      },
+      "policy-admin:scan": {
+        "resources": [
+          {
+            "path": "/policy/catalog/scan",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68bea20f925dbde296ba6521"
+          }
+        ]
+      },
+      "policy-admin:sync": {
+        "resources": [
+          {
+            "path": "/policy/sync/keycloak",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68bea20f925dbde296ba6524"
+          }
+        ]
+      },
+      "policy-admin:publish": {
+        "resources": [
+          {
+            "path": "/policy/publish",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68bea20f925dbde296ba6527"
+          }
+        ]
+      },
+      "policy-admin:simulate": {
+        "resources": [
+          {
+            "path": "/policy/simulate",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68bea20f925dbde296ba652a"
+          }
+        ]
+      },
+      "policy-admin:debug": {
+        "resources": [
+          {
+            "path": "/policy/debug/roles/:code/permissions",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba652d"
+          },
+          {
+            "path": "/policy/debug/opa/health",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba652e"
+          },
+          {
+            "path": "/policy/debug/opa/data",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba652f"
+          },
+          {
+            "path": "/policy/debug/opa/policies",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba6530"
+          },
+          {
+            "path": "/policy/debug/opa/policy/current",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba6531"
+          },
+          {
+            "path": "/policy/debug/opa/policy/merged",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba6532"
+          },
+          {
+            "path": "/policy/debug/opa/policy/content",
+            "methods": [
+              "GET"
+            ],
+            "_id": "68bea20f925dbde296ba6533"
+          },
+          {
+            "path": "/policy/debug/opa/policy/test",
+            "methods": [
+              "POST"
+            ],
+            "_id": "68bea20f925dbde296ba6534"
+          }
+        ]
+      }
+    },
+    "roles": {
+      "ND": {
+        "name": "Normal Developer",
+        "permissions": [
+          "user:get",
+          "user:manage"
+        ]
+      },
+      "admin": {
+        "name": "admin",
+        "permissions": [
+          "user:get",
+          "user:manage",
+          "policy-admin:manage",
+          "policy-admin:get"
+        ]
+      }
+    },
+    "catalog": {
+      "modules": [
+        {
+          "code": "policy-admin",
+          "name": "Policy-admin"
+        }
+      ],
+      "actions": [
+        "get",
+        "manage",
+        "delete",
+        "post",
+        "scan",
+        "sync",
+        "publish",
+        "simulate",
+        "debug"
+      ],
+      "resourceTemplates": [
+        {
+          "module": "policy-admin",
+          "path": "/policy/catalog",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/catalog/resource-templates:bulk-upsert",
+          "methods": [
+            "POST"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/catalog/scan",
+          "methods": [
+            "POST"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/permissions",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/permissions:bulk-upsert",
+          "methods": [
+            "PUT"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/permissions/:key",
+          "methods": [
+            "DELETE"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/roles",
+          "methods": [
+            "GET",
+            "POST"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/roles/:code",
+          "methods": [
+            "PUT",
+            "DELETE"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/roles/:code/permissions:bulk-set",
+          "methods": [
+            "POST"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/sync/keycloak",
+          "methods": [
+            "POST"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/users/:userId/permissions",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/debug/roles/:code/permissions",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/debug/opa/health",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/debug/opa/data",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/debug/opa/policies",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/debug/opa/policy/current",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/debug/opa/policy/merged",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/debug/opa/policy/content",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/debug/opa/policy/test",
+          "methods": [
+            "POST"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/versions",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/versions/:hash",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/publish",
+          "methods": [
+            "POST"
+          ]
+        },
+        {
+          "module": "policy-admin",
+          "path": "/policy/simulate",
+          "methods": [
+            "POST"
+          ]
+        }
+      ]
+    }
+  }
+}

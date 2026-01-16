@@ -1,0 +1,59 @@
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { {{MODULE_NAME_CAPITAL}}Repository } from '../repositories/{{MODULE_NAME_KEBAB}}.repository';
+import { Create{{MODULE_NAME_CAPITAL}}Dto } from '../dto/create-{{MODULE_NAME_KEBAB}}.dto';
+import { Update{{MODULE_NAME_CAPITAL}}Dto } from '../dto/update-{{MODULE_NAME_KEBAB}}.dto';
+import { PaginateResult } from '../interfaces/pagination-result.interface';
+import { {{MODULE_NAME_CAPITAL}} } from '../entities/{{MODULE_NAME_KEBAB}}.entity';
+
+@Injectable()
+export class {{MODULE_NAME_CAPITAL}}Service {
+  constructor(private readonly {{MODULE_NAME_CAMEL}}Repository: {{MODULE_NAME_CAPITAL}}Repository) {}
+
+  async create(create{{MODULE_NAME_CAPITAL}}Dto: Create{{MODULE_NAME_CAPITAL}}Dto): Promise<{{MODULE_NAME_CAPITAL}}> {
+    return this.{{MODULE_NAME_CAMEL}}Repository.create(create{{MODULE_NAME_CAPITAL}}Dto);
+  }
+
+  async findAll(filter: any = {}): Promise<{{MODULE_NAME_CAPITAL}}[]> {
+    return this.{{MODULE_NAME_CAMEL}}Repository.findAll(filter);
+  }
+
+  async findAllWithPagination(filter: any = {}, options: any = {}): Promise<PaginateResult<{{MODULE_NAME_CAPITAL}}>> {
+    return this.{{MODULE_NAME_CAMEL}}Repository.findAllWithPagination(filter, options);
+  }
+
+  async findById(id: string): Promise<{{MODULE_NAME_CAPITAL}}> {
+    const {{MODULE_NAME_LOWER}} = await this.{{MODULE_NAME_CAMEL}}Repository.findById(id);
+    if (!{{MODULE_NAME_LOWER}}) {
+      throw new NotFoundException('{{MODULE_NAME_CAPITAL}} not found');
+    }
+    return {{MODULE_NAME_LOWER}};
+  }
+
+  async update(id: string, update{{MODULE_NAME_CAPITAL}}Dto: Update{{MODULE_NAME_CAPITAL}}Dto): Promise<{{MODULE_NAME_CAPITAL}}> {
+    const {{MODULE_NAME_LOWER}} = await this.{{MODULE_NAME_CAMEL}}Repository.findById(id);
+    if (!{{MODULE_NAME_LOWER}}) {
+      throw new NotFoundException('{{MODULE_NAME_CAPITAL}} not found');
+    }
+
+    const updated{{MODULE_NAME_CAPITAL}} = await this.{{MODULE_NAME_CAMEL}}Repository.update(id, update{{MODULE_NAME_CAPITAL}}Dto);
+    if (!updated{{MODULE_NAME_CAPITAL}}) {
+      throw new BadRequestException('Failed to update {{MODULE_NAME_LOWER}}');
+    }
+
+    return updated{{MODULE_NAME_CAPITAL}};
+  }
+
+  async delete(id: string): Promise<{{MODULE_NAME_CAPITAL}}> {
+    const {{MODULE_NAME_LOWER}} = await this.{{MODULE_NAME_CAMEL}}Repository.findById(id);
+    if (!{{MODULE_NAME_LOWER}}) {
+      throw new NotFoundException('{{MODULE_NAME_CAPITAL}} not found');
+    }
+
+    const deleted{{MODULE_NAME_CAPITAL}} = await this.{{MODULE_NAME_CAMEL}}Repository.delete(id);
+    if (!deleted{{MODULE_NAME_CAPITAL}}) {
+      throw new BadRequestException('Failed to delete {{MODULE_NAME_LOWER}}');
+    }
+
+    return deleted{{MODULE_NAME_CAPITAL}};
+  }
+}

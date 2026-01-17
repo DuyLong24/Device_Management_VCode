@@ -10,7 +10,7 @@ import { WarehouseTransition } from '../../warehouse-transitions/schemas/warehou
 import { DeviceHistory } from '../../device-histories/schemas/device-history.schemas';
 import { Model } from 'mongoose';
 
-import { DEVICE_EXCEL_COLUMNS } from '../constants/device.constants';
+import { DEVICE_EXCEL_COLUMNS } from '../../../common/constants/device.constants';
 import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
 
 @Injectable()
@@ -175,5 +175,23 @@ export class DeviceService {
     }));
 
     return results;
+  }
+
+  async findBySerials(serials: string[]): Promise<Device[]> {
+    if (!serials || serials.length === 0) return [];
+    return this.deviceModel.find({ serial: { $in: serials } }).exec();
+  }
+
+  async bulkUpdateStatus(serials: string[], status: string, note?: string): Promise<any> {
+    if (!serials || serials.length === 0) return;
+
+    const result = await this.deviceModel.updateMany(
+      { serial: { $in: serials } },
+      {
+        $set: { qcStatus: status }
+      }
+    ).exec();
+
+    return result;
   }
 }

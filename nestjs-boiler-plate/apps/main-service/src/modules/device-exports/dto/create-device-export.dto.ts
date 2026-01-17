@@ -1,21 +1,64 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsEnum } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsEnum, IsString, IsArray } from 'class-validator';
 
 export class CreateDeviceExportDto {
-  @IsNotEmpty()
-  exportName!: string;
+  @IsOptional()
+  code?: string;
+
+  @IsOptional()
+  @IsString()
+  exportName?: string;
 
   @IsNotEmpty()
   type!: string;
 
-  @IsNotEmpty()
-  receiver!: string;
+  @IsOptional()
+  @IsString()
+  receiver?: string;
 
-  @IsNotEmpty()
-  status!: string;
+  @IsOptional()
+  @IsString()
+  receiverPerson?: string;
 
-  @IsNumber()
-  totalItems!: number;
+  @IsOptional()
+  @IsString()
+  project?: string;
 
-  @IsNumber()
-  totalQuantity!: number;
+  @IsOptional()
+  @IsString()
+  customer?: string;
+
+  @IsOptional()
+  @IsString()
+  deliveryAddress?: string;
+
+  @IsEnum(['SALE', 'WARRANTY', 'TRANSFER', 'OTHER'])
+  @IsOptional()
+  exportReason?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @IsOptional()
+  @IsArray()
+  requirements?: {
+    productCode: string;
+    productName: string;
+    quantity: number;
+  }[];
+
+  @IsOptional()
+  @IsEnum(['DRAFT', 'PENDING_APPROVAL'])
+  status?: string;
+
+  // items is now usually empty on creation, but kept for compatibility
+  @IsOptional()
+  @IsArray()
+  items?: any[];
+
+  @IsOptional()
+  totalItems?: number;
+
+  @IsOptional()
+  totalQuantity?: number;
 }

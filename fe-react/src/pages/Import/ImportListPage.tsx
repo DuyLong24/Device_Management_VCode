@@ -1,44 +1,17 @@
 import { useState, useEffect } from 'react';
-import {
-    Card,
-    Button,
-    Space,
-    Table,
-    Tag,
-    Input,
-    DatePicker,
-    Select,
-    Form,
-    Row,
-    Col,
-    Tooltip,
-    Empty,
-    Spin,
-    Typography,
-    Statistic,
-    message,
-} from 'antd';
-import {
-    PlusOutlined,
-    SearchOutlined,
-    EyeOutlined,
-    FileExcelOutlined,
-    InfoCircleOutlined,
-    ReloadOutlined,
-    FileTextOutlined,
-    ClockCircleOutlined,
-    SyncOutlined,
-    CheckCircleOutlined,
-} from '@ant-design/icons';
+import { Card, Button, Space, Table, Tag, Form, Tooltip, Empty, Spin, Typography } from 'antd';
+import { PlusOutlined, EyeOutlined, FileExcelOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
 import { importService } from '../../services/import.service';
 import type { DeviceImport, ImportProduct } from '../../types/import.type';
+import { IMPORT_LABELS, IMPORT_TABLE_COLUMNS, IMPORT_STATUS_CONFIG, IMPORT_ORIGIN_CONFIG } from '../../constants/import.constants';
+import { StatisticsCards, PageHeader, FilterBar } from '../../components/ui';
+import { FileTextOutlined, ClockCircleOutlined, SyncOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
-const { RangePicker } = DatePicker;
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface ProductItem {
     key: string;
@@ -71,8 +44,6 @@ interface ImportRecord {
     products: ProductItem[];
 }
 
-import { IMPORT_LABELS, IMPORT_TABLE_COLUMNS, IMPORT_STATUS_CONFIG, IMPORT_ORIGIN_CONFIG } from '../../constants/import.constants';
-
 export default function ImportListPage() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
@@ -80,8 +51,6 @@ export default function ImportListPage() {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<ImportRecord[]>([]);
     const [filteredData, setFilteredData] = useState<ImportRecord[]>([]);
-
-    const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
     const mapApiToUi = (apiData: DeviceImport[]): ImportRecord[] => {
         return apiData.map((item) => {
@@ -127,7 +96,6 @@ export default function ImportListPage() {
         });
     };
 
-    // --- 2. Fetch Data ---
     const fetchData = async () => {
         try {
             setLoading(true);
@@ -139,7 +107,6 @@ export default function ImportListPage() {
             }
         } catch (error) {
             console.error(error);
-            message.error('Lỗi tải dữ liệu');
         } finally {
             setLoading(false);
         }
@@ -149,7 +116,6 @@ export default function ImportListPage() {
         fetchData();
     }, []);
 
-    // --- 3. Filter Logic ---
     const handleRealtimeFilter = () => {
         const values = form.getFieldsValue();
         let filtered = [...data];
@@ -162,9 +128,7 @@ export default function ImportListPage() {
                     item.supplier.toLowerCase().includes(keyword) ||
                     item.importedBy.toLowerCase().includes(keyword) ||
                     item.handoverPerson.toLowerCase().includes(keyword);
-                const matchProduct = item.products.some((p) =>
-                    p.productCode.toLowerCase().includes(keyword)
-                );
+                const matchProduct = item.products.some((p) => p.productCode.toLowerCase().includes(keyword));
                 return matchBasic || matchProduct;
             });
         }
@@ -172,26 +136,15 @@ export default function ImportListPage() {
         if (values.dateRange && values.dateRange.length === 2) {
             filtered = filtered.filter((item) => {
                 const itemDate = dayjs(item.importDate);
-                return (
-                    itemDate.isAfter(values.dateRange[0].startOf('day')) &&
-                    itemDate.isBefore(values.dateRange[1].endOf('day'))
-                );
+                return itemDate.isAfter(values.dateRange[0].startOf('day')) && itemDate.isBefore(values.dateRange[1].endOf('day'));
             });
         }
 
-        if (values.inventoryStatus) {
-            filtered = filtered.filter((item) => item.inventoryStatus === values.inventoryStatus);
+        if (values.status) {
+            filtered = filtered.filter((item) => item.inventoryStatus === values.status);
         }
 
         setFilteredData(filtered);
-    };
-
-    const handleFieldChange = () => {
-        if (debounceTimer) clearTimeout(debounceTimer);
-        const timer = setTimeout(() => {
-            handleRealtimeFilter();
-        }, 300);
-        setDebounceTimer(timer);
     };
 
     const handleReset = () => {
@@ -199,20 +152,43 @@ export default function ImportListPage() {
         setFilteredData(data);
     };
 
-    useEffect(() => {
-        return () => {
-            if (debounceTimer) clearTimeout(debounceTimer);
-        };
-    }, [debounceTimer]);
-
-    // --- 4. Render Helpers ---
-
     const handleViewDetail = (importCode: string) => {
-        console.log('View detail:', importCode);
         navigate(`/import/${importCode}`);
     };
 
-    // --- 5. Columns ---
+    const statisticsCards = [
+        {
+            title: 'Tổng phiếu nhập',
+            value: data.length,
+            prefix: <FileTextOutlined />,
+            color: '#1890ff',
+        },
+        {
+            title: 'Chờ kiểm kê',
+            value: data.filter((item) => item.inventoryStatus === 'pending').length,
+            prefix: <ClockCircleOutlined />,
+            color: '#8c8c8c',
+        },
+        {
+            title: 'Đang kiểm kê',
+            value: data.filter((item) => item.inventoryStatus === 'in-progress').length,
+            prefix: <SyncOutlined spin />,
+            color: '#1890ff',
+        },
+        {
+            title: 'Đã kiểm kê',
+            value: data.filter((item) => item.inventoryStatus === 'completed').length,
+            prefix: <CheckCircleOutlined />,
+            color: '#52c41a',
+        },
+    ];
+
+    const statusOptions = [
+        { value: 'pending', label: 'Chưa kiểm kê' },
+        { value: 'in-progress', label: 'Đang kiểm kê' },
+        { value: 'completed', label: 'Đã kiểm kê' },
+    ];
+
     const columns: TableColumnsType<ImportRecord> = [
         {
             title: IMPORT_TABLE_COLUMNS.CODE,
@@ -305,19 +281,10 @@ export default function ImportListPage() {
             align: 'center',
             render: (_, record) => (
                 <Space size="small">
-                    <Button
-                        type="primary"
-                        size="small"
-                        icon={<EyeOutlined />}
-                        onClick={() => handleViewDetail(record.key)}
-                    >
+                    <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.key)}>
                         {IMPORT_LABELS.BTN_DETAIL}
                     </Button>
-                    <Button
-                        size="small"
-                        icon={<FileExcelOutlined />}
-                        onClick={() => console.log('Export serial:', record.importCode)}
-                    >
+                    <Button size="small" icon={<FileExcelOutlined />} onClick={() => console.log('Export serial:', record.importCode)}>
                         {IMPORT_LABELS.BTN_EXPORT_SERIAL}
                     </Button>
                 </Space>
@@ -327,131 +294,40 @@ export default function ImportListPage() {
 
     return (
         <div style={{ minHeight: '100%', padding: 24 }}>
-            {/* Page Header */}
-            <div
-                style={{
-                    marginBottom: 24,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+            <PageHeader
+                title={IMPORT_LABELS.PAGE_TITLE}
+                extra={
+                    <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => navigate('/import/create')}>
+                        {IMPORT_LABELS.BTN_CREATE}
+                    </Button>
+                }
+            />
+
+            <StatisticsCards cards={statisticsCards} />
+
+            <FilterBar
+                form={form}
+                onValuesChange={handleRealtimeFilter}
+                onReset={handleReset}
+                searchPlaceholder={IMPORT_LABELS.SEARCH_PLACEHOLDER}
+                showDateRange={true}
+                statusOptions={statusOptions}
+                statusPlaceholder="Trạng thái kiểm kê"
+                showReload={true}
+                onReload={() => {
+                    fetchData();
+                    handleReset();
                 }}
-            >
-                <Title level={3} style={{ margin: 0 }}>
-                    {IMPORT_LABELS.PAGE_TITLE}
-                </Title>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    size="large"
-                    onClick={() => navigate('/import/create')}
-                >
-                    {IMPORT_LABELS.BTN_CREATE}
-                </Button>
-            </div>
+            />
 
-            {/* Summary Cards */}
-            <Row gutter={16} style={{ marginBottom: 16 }}>
-                <Col xs={12} sm={12} md={6}>
-                    <Card bordered={false} hoverable>
-                        <Statistic
-                            title="Tổng phiếu nhập"
-                            value={data.length}
-                            prefix={<FileTextOutlined />}
-                            valueStyle={{ color: '#1890ff' }}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={12} sm={12} md={6}>
-                    <Card bordered={false} hoverable>
-                        <Statistic
-                            title="Chờ kiểm kê"
-                            value={data.filter((item) => item.inventoryStatus === 'pending').length}
-                            prefix={<ClockCircleOutlined />}
-                            valueStyle={{ color: '#8c8c8c' }}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={12} sm={12} md={6}>
-                    <Card bordered={false} hoverable>
-                        <Statistic
-                            title="Đang kiểm kê"
-                            value={data.filter((item) => item.inventoryStatus === 'in-progress').length}
-                            prefix={<SyncOutlined spin />}
-                            valueStyle={{ color: '#1890ff' }}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={12} sm={12} md={6}>
-                    <Card bordered={false} hoverable>
-                        <Statistic
-                            title="Đã kiểm kê"
-                            value={data.filter((item) => item.inventoryStatus === 'completed').length}
-                            prefix={<CheckCircleOutlined />}
-                            valueStyle={{ color: '#52c41a' }}
-                        />
-                    </Card>
-                </Col>
-            </Row>
-
-            {/* Filter Bar */}
-            <Card style={{ marginBottom: 16 }} bordered={false}>
-                <Form form={form} onValuesChange={handleFieldChange}>
-                    <Row gutter={16} align="middle">
-                        <Col xs={24} sm={24} md={8} lg={8}>
-                            <Form.Item name="keyword" style={{ marginBottom: 0 }}>
-                                <Input
-                                    placeholder={IMPORT_LABELS.SEARCH_PLACEHOLDER}
-                                    prefix={<SearchOutlined />}
-                                    allowClear
-                                />
-                            </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={12} md={6} lg={6}>
-                            <Form.Item name="dateRange" style={{ marginBottom: 0 }}>
-                                <RangePicker
-                                    style={{ width: '100%' }}
-                                    format="DD/MM/YYYY"
-                                    placeholder={['Từ ngày', 'Đến ngày']}
-                                />
-                            </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={12} md={6} lg={6}>
-                            <Form.Item name="inventoryStatus" style={{ marginBottom: 0 }}>
-                                <Select placeholder="Trạng thái kiểm kê" allowClear>
-                                    <Select.Option value="pending">Chưa kiểm kê</Select.Option>
-                                    <Select.Option value="in-progress">Đang kiểm kê</Select.Option>
-                                    <Select.Option value="completed">Đã kiểm kê</Select.Option>
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={24} md={4} lg={4}>
-                            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                                <Tooltip title="Tải lại dữ liệu">
-                                    <Button icon={<ReloadOutlined />} onClick={() => { fetchData(); handleReset(); }} />
-                                </Tooltip>
-                            </Space>
-                        </Col>
-                    </Row>
-                </Form>
-            </Card>
-
-            {/* Table */}
             <Card bordered={false} bodyStyle={{ padding: 0 }}>
                 {loading && data.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '50px 0' }}>
                         <Spin size="large" tip="Đang tải dữ liệu..." />
                     </div>
                 ) : filteredData.length === 0 ? (
-                    <Empty
-                        description={IMPORT_LABELS.NOT_FOUND}
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        style={{ padding: 40 }}
-                    >
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={() => navigate('/import/create')}
-                        >
+                    <Empty description={IMPORT_LABELS.NOT_FOUND} image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ padding: 40 }}>
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/import/create')}>
                             {IMPORT_LABELS.CREATE_NOW}
                         </Button>
                     </Empty>

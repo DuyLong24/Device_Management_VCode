@@ -11,7 +11,10 @@ import InventoryCheckPage from './pages/Import/InventoryCheckPage';
 import AllSerialsPage from './pages/AllSerialsPage';
 import WarehousePage from './pages/Warehouse/WarehousePage';
 import ExportListPage from './pages/Export/ExportListPage';
-// import QCPendingPage from './pages/Warehouse/QCPendingPage';
+import CreateExportPage from './pages/Export/CreateExportPage';
+import ExportDetailPage from './pages/Export/ExportDetailPage';
+import ExportCheckPage from './pages/Export/ExportCheckPage';
+// import ExportProcessPage from './pages/Export/ExportProcessPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,8 +64,9 @@ function App() {
               {/* MODULE XUẤT KHO */}
               <Route path="export">
                 <Route path="list" element={<ExportListPage />} />
-                <Route path="create" element={<div>Create Export (Coming Soon)</div>} />
-                <Route path="check" element={<div>Check Export (Coming Soon)</div>} />
+                <Route path="create" element={<CreateExportPage />} />
+                <Route path=":id" element={<ExportDetailPage />} />
+                <Route path=":id/check" element={<ExportCheckPage />} />
               </Route>
 
               {/* --- CÁC MODULE KHÁC --- */}

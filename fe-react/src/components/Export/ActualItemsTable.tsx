@@ -1,0 +1,67 @@
+import { Card, Table, Typography, Empty } from 'antd';
+import dayjs from 'dayjs';
+
+const { Text } = Typography;
+
+interface ExportItem {
+    serial: string;
+    productCode: string;
+    deviceModel?: string;
+    scannedAt?: string;
+    scannedBy?: string;
+}
+
+interface ActualItemsTableProps {
+    items: ExportItem[];
+}
+
+export const ActualItemsTable = ({ items = [] }: ActualItemsTableProps) => {
+    const columns = [
+        {
+            title: 'Serial',
+            dataIndex: 'serial',
+            key: 'serial',
+            render: (text: string) => <Text strong>{text}</Text>,
+        },
+        {
+            title: 'Mã SP',
+            dataIndex: 'productCode',
+            key: 'productCode',
+        },
+        {
+            title: 'Model',
+            dataIndex: 'deviceModel',
+            key: 'deviceModel',
+            render: (text: string) => text || <Text type="secondary">-</Text>,
+        },
+        {
+            title: 'Ngày quét',
+            dataIndex: 'scannedAt',
+            key: 'scannedAt',
+            render: (date: string) => (date ? dayjs(date).format('DD/MM/YYYY HH:mm') : '-'),
+        },
+        {
+            title: 'Người quét',
+            dataIndex: 'scannedBy',
+            key: 'scannedBy',
+            render: (text: string) => text || <Text type="secondary">-</Text>,
+        },
+    ];
+
+    return (
+        <Card title={`Serial đã xuất (${items.length})`} className="shadow-sm mb-6">
+            {items.length === 0 ? (
+                <Empty description="Chưa có serial nào được quét" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            ) : (
+                <Table
+                    columns={columns}
+                    dataSource={items}
+                    rowKey={(record, index) => record.serial || `item-${index}`}
+                    pagination={{ pageSize: 10 }}
+                    size="small"
+                    bordered
+                />
+            )}
+        </Card>
+    );
+};

@@ -69,4 +69,29 @@ export class DeviceExportController {
   async delete(@Param('id') id: string) {
     return this.deviceExportService.delete(id);
   }
+  @Post(':id/items')
+  async addItems(@Param('id') id: string, @Body() body: { serials: string[] }) {
+    return this.deviceExportService.addItems(id, body.serials);
+  }
+
+  @Post(':id/submit')
+  async submitForApproval(@Param('id') id: string) {
+    return this.deviceExportService.submitForApproval(id);
+  }
+
+  @Post(':id/approve')
+  async approve(@Param('id') id: string) {
+    // TODO: Get user from request
+    return this.deviceExportService.approve(id, { _id: 'mock-admin-id', username: 'Admin' });
+  }
+
+  @Post(':id/reject')
+  async reject(@Param('id') id: string, @Body() body: { reason: string }) {
+    return this.deviceExportService.reject(id, body.reason);
+  }
+
+  @Post(':id/confirm')
+  async confirm(@Param('id') id: string) {
+    return this.deviceExportService.confirm(id);
+  }
 }

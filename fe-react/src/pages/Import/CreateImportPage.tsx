@@ -340,7 +340,7 @@ export default function CreateImportPage() {
             ),
         },
         {
-            title: <span className="font-semibold">Quy cách</span>,
+            title: <span className="font-semibold">Quy cách (Hộp x Chiếc)</span>,
             key: 'packaging',
             width: '20%',
             render: (_, record) => (

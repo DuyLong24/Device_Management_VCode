@@ -43,7 +43,6 @@ export class DeviceController {
     res.end(buffer);
   }
 
-  // --- Endpoint List (Pagination) ---
   @Get()
   async findAll(@Query() query: DevicePaginationDto) {
     const filter = this.buildFilter(query);
@@ -126,5 +125,13 @@ export class DeviceController {
     const userId = '69685cb83e015da83ef00a85';
 
     return this.deviceService.transfer(id, body.toWarehouseId, userId, body.note);
+  }
+
+  @Post('bulk-transfer')
+  async bulkTransfer(
+    @Body() body: { deviceIds: string[]; toWarehouseId: string; note?: string },
+  ) {
+    const userId = '69685cb83e015da83ef00a85'; // Hardcoded for now
+    return this.deviceService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note);
   }
 }

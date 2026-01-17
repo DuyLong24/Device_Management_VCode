@@ -1,0 +1,76 @@
+
+  // --- 4. SEED DEVICES (Mock Data) ---
+  private async seedDevices() {
+    // A. Ensure Category
+    let category = await this.categoryModel.findOne({ name: 'Thiết bị an ninh' });
+    if (!category) {
+      category = await this.categoryModel.create({
+        name: 'Thiết bị an ninh',
+        description: 'Camera, Barrier, Máy chấm công'
+      });
+      this.logger.log('Created Default Category');
+    }
+
+    // B. Ensure Import Record
+    let importRecord = await this.deviceImportModel.findOne({ code: 'IMP-INIT-001' });
+    if (!importRecord) {
+      importRecord = await this.deviceImportModel.create({
+        code: 'IMP-INIT-001',
+        origin: 'Vietnam',
+        supplier: 'Hikvision Vietnam',
+        totalQuantity: 100,
+        status: 'COMPLETED',
+        importDate: new Date(),
+        importedBy: 'Admin'
+      });
+      this.logger.log('Created Default Import Record');
+    }
+
+    // C. Create Devices in PENDING_QC
+    const pendingQcWh = await this.warehouseModel.findOne({ code: WarehouseCode.PENDING_QC });
+    if (pendingQcWh) {
+      const count = await this.deviceModel.countDocuments({ warehouseId: pendingQcWh._id });
+      if (count < 10) {
+        const devices = [];
+        for (let i = 0; i < 10; i++) {
+          devices.push({
+            serial: `SN-PENDING-${Date.now()}-${i}`,
+            name: `Camera AI Series ${i}`,
+            deviceModel: `AI-CAM-0${i}`,
+            unit: 'Pcs',
+            categoryId: category._id,
+            warehouseId: pendingQcWh._id,
+            importId: importRecord._id,
+            qcStatus: 'PENDING',
+            importDate: new Date(),
+          });
+        }
+        await this.deviceModel.insertMany(devices);
+        this.logger.log(`Seeded 10 devices to ${WarehouseCode.PENDING_QC}`);
+      }
+    }
+
+    // D. Create Devices in READY_TO_EXPORT
+    const readyWh = await this.warehouseModel.findOne({ code: WarehouseCode.READY_TO_EXPORT });
+    if (readyWh) {
+      const count = await this.deviceModel.countDocuments({ warehouseId: readyWh._id });
+      if (count < 5) {
+         const devices = [];
+        for (let i = 0; i < 5; i++) {
+          devices.push({
+            serial: `SN-READY-${Date.now()}-${i}`,
+            name: `Barrier Gate B${i}`,
+            deviceModel: `BARRIER-0${i}`,
+            unit: 'Set',
+            categoryId: category._id,
+            warehouseId: readyWh._id,
+            importId: importRecord._id,
+            qcStatus: 'PASS',
+            importDate: new Date(),
+          });
+        }
+        await this.deviceModel.insertMany(devices);
+        this.logger.log(`Seeded 5 devices to ${WarehouseCode.READY_TO_EXPORT}`);
+      }
+    }
+  }

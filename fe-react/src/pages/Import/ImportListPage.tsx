@@ -206,7 +206,6 @@ export default function ImportListPage() {
     }, [debounceTimer]);
 
     // --- 4. Render Helpers ---
-    // (Removed getOriginConfig and getInventoryStatusConfig as they are now constants)
 
     const handleViewDetail = (importCode: string) => {
         console.log('View detail:', importCode);

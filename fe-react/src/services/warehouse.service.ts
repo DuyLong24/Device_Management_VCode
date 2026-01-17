@@ -7,6 +7,7 @@ export const warehouseService = {
             const response = await axiosInstance.get<Warehouse[]>('/warehouses', {
                 params: {
                     sortBy: 'orderIndex:asc',
+                    populate: 'groupId',
                     ...params
                 }
             });
@@ -23,4 +24,8 @@ export const warehouseService = {
         return response.data;
     },
 
+    getAllGroups: async (): Promise<any[]> => {
+        const response = await axiosInstance.get('/warehouse-groups');
+        return response.data;
+    }
 };

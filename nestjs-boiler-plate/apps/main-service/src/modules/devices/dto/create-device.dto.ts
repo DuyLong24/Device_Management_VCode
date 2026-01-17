@@ -12,7 +12,7 @@ export class CreateDeviceDto {
   name!: string;
 
   @IsNotEmpty()
-  model!: string;
+  deviceModel!: string;
 
   @IsNotEmpty()
   unit!: string;

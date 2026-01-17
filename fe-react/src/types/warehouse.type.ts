@@ -1,3 +1,9 @@
+export interface WarehouseGroup {
+    _id: string;
+    name: string;
+    code?: string;
+}
+
 export interface WarehouseConfigColumn {
     key: string;
     title: string;
@@ -15,13 +21,15 @@ export interface WarehouseConfig {
     columns: Array<{ key: string; title: string; type: string }>;
     filters: Array<{ key: string; type: string; label: string; source?: string }>;
     actions: string[];
-    quickTransfers?: Array<{ to: string; label: string; style: string }>;
+    quickTransfers?: Array<{ to: string; label: string; style: string; description?: string }>;
 }
 
 export interface Warehouse {
+    id: string;
     _id: string;
     name: string;
     code: string;
+    description?: string;
     groupId: {
         _id: string;
         name: string;

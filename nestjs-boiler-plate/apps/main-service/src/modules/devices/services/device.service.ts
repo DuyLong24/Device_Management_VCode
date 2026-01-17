@@ -10,7 +10,6 @@ import { WarehouseTransition } from '../../warehouse-transitions/schemas/warehou
 import { DeviceHistory } from '../../device-histories/schemas/device-history.schemas';
 import { Model } from 'mongoose';
 
-// Constants
 import { DEVICE_EXCEL_COLUMNS } from '../constants/device.constants';
 import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
 
@@ -77,7 +76,7 @@ export class DeviceService {
     // 1. Lấy dữ liệu (Populate kho để lấy tên)
     const devices = await this.deviceModel
       .find(filter)
-      .populate('warehouseId', 'name') // Lấy tên kho
+      .populate('warehouseId', 'name')
       .sort({ createdAt: -1 })
       .exec();
 
@@ -108,8 +107,6 @@ export class DeviceService {
 
     // Nếu chuyển đến chính kho hiện tại thì bỏ qua
     if (fromWarehouseId === toWarehouseId) {
-      // throw new BadRequestException(ERROR_MESSAGES.DEVICE.TRANSFER_SAME_WAREHOUSE); 
-      // Hoặc return luôn logic cũ
       return device;
     }
 
@@ -157,5 +154,26 @@ export class DeviceService {
     });
 
     return savedDevice;
+  }
+
+  async bulkTransfer(
+    deviceIds: string[],
+    toWarehouseId: string,
+    userId: string,
+    note?: string
+  ): Promise<{ success: string[]; errors: any[] }> {
+    const results = { success: [], errors: [] };
+
+    // Use Promise.all to process in parallel, but catch errors individually
+    await Promise.all(deviceIds.map(async (id) => {
+      try {
+        await this.transfer(id, toWarehouseId, userId, note);
+        results.success.push(id);
+      } catch (error) {
+        results.errors.push({ id, message: error.message });
+      }
+    }));
+
+    return results;
   }
 }

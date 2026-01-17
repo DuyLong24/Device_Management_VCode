@@ -1,131 +1,253 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Table, Typography, Space, Button, Tag, Breadcrumb } from 'antd';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Card, Table, Typography, Space, Button, Checkbox, Input, Select, message } from 'antd';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+    ArrowLeftOutlined,
+    ReloadOutlined,
+    ScanOutlined,
+    ImportOutlined,
+    SwapOutlined,
+    DownloadOutlined,
+    SearchOutlined
+} from '@ant-design/icons';
 
-import { deviceService, type Device } from '../../services/device.service';
+import { deviceService } from '../../services/device.service';
 import { warehouseService } from '../../services/warehouse.service';
-import { WAREHOUSE_LABELS, WAREHOUSE_TABLE_COLUMNS } from '../../constants/warehouse.constants';
-import { DEVICE_STATUS_LABEL, DEVICE_STATUS } from '../../constants/dashboard.constants'; // Reuse from Dashboard or create new if needed
+import { WAREHOUSE_LABELS } from '../../constants/warehouse.constants';
+
+import TransferModal from './components/TransferModal';
 
 const { Title, Text } = Typography;
 
 export default function WarehousePage() {
     const { code } = useParams();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(20);
+
+    // Filter States
+    const [searchText, setSearchText] = useState('');
+    const [selectedProduct, setSelectedProduct] = useState<string | undefined>(undefined);
+
+    // Selection State
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+
+    // Modal States
+    const [transferModalVisible, setTransferModalVisible] = useState(false);
 
     // 1. Get Warehouse Info
     const { data: warehouses } = useQuery({
         queryKey: ['warehouses'],
         queryFn: warehouseService.getAll,
-        staleTime: 5 * 60 * 1000 // Cache for 5 mins
+        staleTime: 5 * 60 * 1000
     });
 
-    const currentWarehouse = warehouses?.find(w => w.code === code);
+    const currentWarehouse = useMemo(() => warehouses?.find(w => w.code === code), [warehouses, code]);
 
     // 2. Get Devices in Warehouse
     const { data: deviceData, isLoading, refetch } = useQuery({
-        queryKey: ['devices', code, page, pageSize],
+        queryKey: ['devices', code, page, pageSize, searchText, selectedProduct],
         queryFn: () => deviceService.getAll({
             page,
             limit: pageSize,
-            warehouseId: currentWarehouse?._id
+            warehouseId: currentWarehouse?.id,
         }),
-        enabled: !!currentWarehouse?._id
+        enabled: !!currentWarehouse?.id
     });
 
-    // Reset page when switching warehouse
     useEffect(() => {
         setPage(1);
+        setSelectedRowKeys([]);
+        setSearchText('');
     }, [code]);
 
-    const columns = [
-        {
-            title: WAREHOUSE_TABLE_COLUMNS.STT,
-            key: 'index',
-            width: 70,
-            align: 'center' as const,
-            render: (_: any, __: any, index: number) => (page - 1) * pageSize + index + 1
-        },
-        {
-            title: WAREHOUSE_TABLE_COLUMNS.SERIAL,
-            dataIndex: 'serial',
-            key: 'serial',
-            render: (text: string) => <Text strong>{text}</Text>
-        },
-        {
-            title: WAREHOUSE_TABLE_COLUMNS.NAME,
-            dataIndex: 'name',
-            key: 'name',
-        },
-        {
-            title: WAREHOUSE_TABLE_COLUMNS.MODEL,
-            dataIndex: 'deviceModel',
-            key: 'deviceModel',
-        },
-        {
-            title: WAREHOUSE_TABLE_COLUMNS.STATUS,
-            dataIndex: 'status',
-            key: 'status',
-            render: (status: string, record: Device) => {
-                const finalStatus = record.qcStatus || status;
-                let color = 'default';
-                if (finalStatus === DEVICE_STATUS.PASS || finalStatus === DEVICE_STATUS.READY_TO_EXPORT) color = 'success';
-                else if (finalStatus === DEVICE_STATUS.PENDING || finalStatus === DEVICE_STATUS.PENDING_QC) color = 'warning';
-                else if (finalStatus === DEVICE_STATUS.DEFECT) color = 'error';
 
-                return <Tag color={color}>{DEVICE_STATUS_LABEL[finalStatus] || finalStatus}</Tag>;
-            }
+    // --- Actions ---
+    const { mutate: transferDevices } = useMutation({
+        mutationFn: deviceService.bulkTransfer,
+        onSuccess: (data) => {
+            message.success(`Đã chuyển thành công ${data.success.length} thiết bị.`);
+            queryClient.invalidateQueries({ queryKey: ['devices'] });
+            refetch();
+            setTransferModalVisible(false);
+            setSelectedRowKeys([]);
         },
-        {
-            title: WAREHOUSE_TABLE_COLUMNS.IMPORT_DATE,
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            render: (date: string) => date ? new Date(date).toLocaleDateString('vi-VN') : '-'
+        onError: () => message.error('Có lỗi xảy ra khi xử lý')
+    });
+
+    const handleTransferSubmit = (toWarehouse: string, note: string) => {
+        const targetWh = warehouses?.find(w => w.code === toWarehouse);
+        if (!targetWh) {
+            message.error('Kho đích không hợp lệ');
+            return;
         }
-    ];
+        transferDevices({
+            deviceIds: selectedRowKeys as string[],
+            toWarehouseId: targetWh.id,
+            note
+        });
+    };
+
+    /*                               3. DYNAMIC UI                                      */
+
+    const getColumnDef = (colConfig: { key: string; title: string; type: string }) => {
+        const base = {
+            title: titleMap(colConfig),
+            key: colConfig.key,
+            dataIndex: colConfig.key,
+        };
+        base.title = colConfig.title || base.title;
+
+        if (colConfig.key === 'serial') {
+            return {
+                ...base,
+                render: (text: string) => <Button type="link" style={{ padding: 0 }}>{text}</Button>
+            };
+        }
+        if (colConfig.type === 'date' || colConfig.key.includes('Date')) {
+            return {
+                ...base,
+                render: (date: string) => date ? new Date(date).toLocaleDateString('vi-VN') : '-'
+            };
+        }
+        return base;
+    };
+
+    const titleMap = (c: any) => {
+        const map: Record<string, string> = {
+            serial: 'Serial',
+            name: 'Tên thiết bị',
+            model: 'Mã Model',
+            importDate: 'Ngày nhập',
+            qcStatus: 'QC Status',
+            qcNote: 'QC Note',
+        };
+        return c.title || map[c.key] || c.key;
+    };
+
+    const normalizedColumns = (currentWarehouse?.config?.columns || []).map((c: any) => {
+        if (typeof c === 'string') return { key: c, title: titleMap({ key: c }), type: 'text' };
+        return c;
+    });
+
+    const dataColumns = normalizedColumns.map(getColumnDef);
+
+    const transferOptions = useMemo(() => {
+        if (!currentWarehouse?.config?.quickTransfers) return [];
+        return currentWarehouse.config.quickTransfers.map(qt => ({
+            to: qt.to,
+            label: qt.label,
+            description: qt.description,
+        }));
+    }, [currentWarehouse]);
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
+    };
 
     if (!code) return null;
 
     return (
-        <div className="p-4">
-            <Breadcrumb
-                items={[
-                    { title: 'Dashboard', onClick: () => navigate('/dashboard'), className: 'cursor-pointer' },
-                    { title: WAREHOUSE_LABELS.TITLE },
-                    { title: currentWarehouse?.name || code }
-                ]}
-                className="mb-4"
-            />
-
-            <Card
-                title={
-                    <Space>
-                        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard')} />
-                        <Title level={4} style={{ margin: 0 }}>
-                            {currentWarehouse ? `${currentWarehouse.name} (${currentWarehouse.code})` : code}
+        <div style={{ padding: 24 }}>
+            {/* Header */}
+            <div style={{ marginBottom: 16 }}>
+                <Button
+                    type="link"
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => navigate('/dashboard')}
+                    style={{ paddingLeft: 0, marginBottom: 8 }}
+                >
+                    Quay lại Danh sách tổng
+                </Button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <Title level={3} style={{ margin: 0 }}>
+                            📦 {currentWarehouse ? currentWarehouse.name : code}
+                            <span style={{ fontSize: 16, color: '#8c8c8c', marginLeft: 12, fontWeight: 'normal' }}>
+                                {deviceData?.totalResults || 0} serial
+                            </span>
                         </Title>
-                    </Space>
-                }
-                extra={<Button icon={<ReloadOutlined />} onClick={() => refetch()} />}
-            >
+                        {currentWarehouse?.description && <Text type="secondary">{currentWarehouse.description}</Text>}
+                    </div>
+                </div>
+            </div>
+
+            {/* Toolbar */}
+            <Card size="small" style={{ marginBottom: 16 }}>
+                <Space wrap>
+                    {currentWarehouse?.config?.actions?.includes('scan') && (
+                        <Button type="primary" icon={<ScanOutlined />}>Quét mã</Button>
+                    )}
+                    {currentWarehouse?.config?.actions?.includes('import_excel') && (
+                        <Button icon={<ImportOutlined />}>Import Excel</Button>
+                    )}
+
+                    {currentWarehouse?.config?.actions?.includes('transfer') && (
+                        <Button
+                            icon={<SwapOutlined />}
+                            disabled={selectedRowKeys.length === 0}
+                            onClick={() => setTransferModalVisible(true)}
+                        >
+                            Chuyển ({selectedRowKeys.length})
+                        </Button>
+                    )}
+
+                    <Button icon={<ReloadOutlined />} onClick={() => refetch()}>Làm mới</Button>
+                    <Button icon={<DownloadOutlined />}>Xuất Excel</Button>
+                </Space>
+            </Card>
+
+            {/* Filters */}
+            <Card size="small" style={{ marginBottom: 16 }}>
+                <Space wrap>
+                    <Input
+                        placeholder="Tìm serial, mã SP..."
+                        prefix={<SearchOutlined />}
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        style={{ width: 300 }}
+                        allowClear
+                    />
+                    <Select
+                        placeholder="Lọc theo sản phẩm"
+                        style={{ width: 200 }}
+                        value={selectedProduct}
+                        onChange={setSelectedProduct}
+                        allowClear
+                        options={[]} // Placeholder
+                    />
+                </Space>
+            </Card>
+
+            {/* Table Area */}
+            <Card bodyStyle={{ padding: 0 }}>
+                {selectedRowKeys.length > 0 && (
+                    <div style={{ padding: '8px 16px', backgroundColor: '#e6f7ff', borderBottom: '1px solid #f0f0f0' }}>
+                        <Space>
+                            <Checkbox
+                                checked={true}
+                                disabled
+                            />
+                            <Text>Đã chọn <Text strong>{selectedRowKeys.length}</Text> serial</Text>
+                            <Button type="link" size="small" onClick={() => setSelectedRowKeys([])}>Bỏ chọn</Button>
+                        </Space>
+                    </div>
+                )}
+
                 {!currentWarehouse && !isLoading ? (
                     <div className="text-center py-10">
                         <Text type="secondary">{WAREHOUSE_LABELS.NOT_FOUND}</Text>
-                        <br />
-                        <Button type="link" onClick={() => navigate('/dashboard')}>
-                            {WAREHOUSE_LABELS.BACK_TO_DASHBOARD}
-                        </Button>
                     </div>
                 ) : (
                     <Table
-                        columns={columns}
+                        columns={dataColumns}
                         dataSource={deviceData?.results || []}
                         loading={isLoading}
                         rowKey="id"
+                        rowSelection={rowSelection}
                         pagination={{
                             current: page,
                             pageSize: pageSize,
@@ -135,11 +257,20 @@ export default function WarehousePage() {
                                 setPageSize(ps);
                             },
                             showSizeChanger: true,
-                            showTotal: (total) => `Tổng ${total} thiết bị`
+                            showTotal: (total) => `Tổng ${total} serial`
                         }}
                     />
                 )}
             </Card>
+
+            {/* Modals */}
+            <TransferModal
+                open={transferModalVisible}
+                onCancel={() => setTransferModalVisible(false)}
+                onConfirm={handleTransferSubmit}
+                count={selectedRowKeys.length}
+                options={transferOptions}
+            />
         </div>
     );
 }

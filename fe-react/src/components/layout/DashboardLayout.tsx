@@ -38,6 +38,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         queryFn: warehouseService.getAll,
     });
 
+    const { data: groups } = useQuery({
+        queryKey: ['warehouse-groups'],
+        queryFn: warehouseService.getAllGroups,
+    });
+
     const renderBadgeLabel = (label: string, count?: number, colorName?: string) => {
         if (!count) return label;
         const color = COLOR_MAP[colorName || 'blue'] || DASHBOARD_COLORS.BLUE;
@@ -59,12 +64,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         const internalItems: MenuProps['items'] = [];
         const exportedItems: MenuProps['items'] = [];
 
-        // Map dữ liệu kho thật vào menu item
         if (warehouses) {
             warehouses.forEach((wh: Warehouse) => {
-                const group = typeof wh.groupId === 'object'
-                    ? wh.groupId
-                    : { _id: 'other', name: 'Khác', code: 'OTHER' };
+                const group = groups?.find((g: any) => g._id === wh.groupId || g._id === (wh.groupId as any)?._id)
+                    || (typeof wh.groupId === 'object' ? wh.groupId : { _id: 'other', name: 'Khác', code: 'OTHER' });
 
                 const item = {
                     key: `warehouse-${wh.code}`,
@@ -157,12 +160,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         const { selectedKey: newKey, parentKey } = getActiveKeysFromPath(location.pathname);
         setSelectedKey(newKey);
 
-        // Auto expand parent menu if needed
         if (parentKey && !collapsed) {
             setOpenKeys((prev) => [...new Set([...prev, parentKey])]);
         }
-
-        // Logic cũ cho warehouse dynamic mapping (Compatibility)
         if (warehouses && newKey.startsWith('warehouse-')) {
             const whCode = newKey.split('warehouse-')[1];
             const wh = warehouses.find(w => w.code === whCode);

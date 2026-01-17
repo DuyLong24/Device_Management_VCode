@@ -1,9 +1,9 @@
 import type { MenuProps } from 'antd';
 import type { ReactNode } from 'react';
 
-/**
- * Tìm label của menu item dựa trên key (đệ quy)
- */
+
+// Tìm label của menu item dựa trên key (đệ quy)
+
 export const findMenuItemLabel = (items: MenuProps['items'], key: string): ReactNode | null => {
     if (!items) return null;
     for (const item of items) {
@@ -42,7 +42,7 @@ export const getActiveKeysFromPath = (path: string): { selectedKey: string, pare
 
     if (path.includes('/export/create')) return { selectedKey: 'create-export', parentKey: 'export' };
     if (path.includes('/export/check')) return { selectedKey: 'export-check', parentKey: 'export' };
-    if (path.includes('export')) return { selectedKey: 'export-list', parentKey: 'export' }; // Default export list
+    if (path.includes('export')) return { selectedKey: 'export-list', parentKey: 'export' };
 
     if (path.includes('warranty')) return { selectedKey: 'warranty-activation-list', parentKey: 'warranty' };
 

@@ -15,8 +15,20 @@ export class WarehouseRepository {
     return this.warehouseModel.create(warehouseData);
   }
 
-  async findAll(filter: FilterQuery<Warehouse> = {}): Promise<Warehouse[]> {
-    return this.warehouseModel.find(filter).exec();
+  async findAll(filter: FilterQuery<Warehouse> = {}, options: any = {}): Promise<Warehouse[]> {
+    const { sortBy, populate } = options;
+    let query = this.warehouseModel.find(filter);
+
+    if (sortBy) {
+      const [field, order] = sortBy.split(':');
+      query = query.sort({ [field]: order === 'desc' ? -1 : 1 });
+    }
+
+    if (populate) {
+      query = query.populate(populate);
+    }
+
+    return query.exec();
   }
 
   async findOne(filter: FilterQuery<Warehouse>): Promise<Warehouse | null> {

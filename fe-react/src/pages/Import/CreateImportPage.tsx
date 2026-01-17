@@ -452,7 +452,6 @@ export default function CreateImportPage() {
                         initialValues={{ importDate: dayjs(), origin: 'IMPORT', productType: 'Camera' }}
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6"
                     >
-                        {/* Form items giữ nguyên như cũ... */}
                         <Form.Item label="Mã phiếu nhập" className="col-span-1">
                             <Input value="Hệ thống tự sinh sau khi lưu" disabled className="!text-gray-500! font-medium !bg-gray-100! cursor-not-allowed" />
                         </Form.Item>
@@ -543,7 +542,7 @@ export default function CreateImportPage() {
                 </div>
             </footer>
 
-            {/* [NEW] MODAL NHẬP SERIAL */}
+            {/* MODAL NHẬP SERIAL */}
             <Modal
                 title="Nhập danh sách Serial"
                 open={isSerialModalOpen}

@@ -34,6 +34,9 @@ import { WarehouseGroup, WarehouseGroupSchema } from './modules/warehouse-groups
 import { Warehouse, WarehouseSchema } from './modules/warehouses/schemas/warehouse.schemas';
 import { WarehouseTransition, WarehouseTransitionSchema } from './modules/warehouse-transitions/schemas/warehouse-transition.schemas';
 import { DeviceHistory, DeviceHistorySchema } from './modules/device-histories/schemas/device-history.schemas';
+import { Device, DeviceSchema } from './modules/devices/schemas/device.schemas';
+import { Category, CategorySchema } from './modules/categories/schemas/categories.schemas';
+import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schemas/device-import.schemas';
 
 @Module({
   imports: [
@@ -77,6 +80,9 @@ import { DeviceHistory, DeviceHistorySchema } from './modules/device-histories/s
       { name: Warehouse.name, schema: WarehouseSchema },
       { name: WarehouseTransition.name, schema: WarehouseTransitionSchema },
       { name: DeviceHistory.name, schema: DeviceHistorySchema },
+      { name: Device.name, schema: DeviceSchema },
+      { name: Category.name, schema: CategorySchema },
+      { name: DeviceImport.name, schema: DeviceImportSchema },
     ]),
     // Cấu hình Kafka client để giao tiếp với Upload Service
     // ClientsModule.register([

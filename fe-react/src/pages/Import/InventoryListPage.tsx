@@ -22,7 +22,7 @@ import { INVENTORY_LABELS } from '../../constants/inventory.constants';
 // Config hiển thị trạng thái kiểm kê
 const getInventoryStatusConfig = (status: string) => {
     const configs: Record<string, { color: string; text: string }> = {
-        pending: { color: 'default', text: INVENTORY_LABELS.STATUS_PROCESSING }, // Correct logic mapping if needed
+        pending: { color: 'default', text: INVENTORY_LABELS.STATUS_PROCESSING },
         'in-progress': { color: 'processing', text: INVENTORY_LABELS.STATUS_PROCESSING },
         completed: { color: 'success', text: INVENTORY_LABELS.STATUS_COMPLETED },
     };

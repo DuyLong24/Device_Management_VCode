@@ -2,7 +2,7 @@ import { axiosInstance } from '../configs/axios.config';
 
 export interface ScannedItem {
     serial: string;
-    model: string;
+    deviceModel: string;
     scannedAt?: string;
     _id?: string;
 }
@@ -33,7 +33,7 @@ export const inventorySessionService = {
         return response.data;
     },
 
-    update: async (id: string, data: { scannedItems?: { serial: string, model: string }[], status?: string }) => {
+    update: async (id: string, data: { scannedItems?: { serial: string, deviceModel: string }[], status?: string }) => {
         const response = await axiosInstance.put(`/inventory-sessions/${id}`, data);
         return response.data;
     },

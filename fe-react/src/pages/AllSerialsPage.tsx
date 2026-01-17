@@ -48,14 +48,13 @@ export default function AllSerialsPage() {
         handleExport
     } = useAllSerials();
 
-    // Table Columns definition
     const columns: ColumnsType<SerialUI> = [
         {
             title: 'Serial',
             dataIndex: 'serial',
             key: 'serial',
             fixed: 'left',
-            width: 180,
+            width: 'auto',
             render: (text) => (
                 <Button
                     type="link"
@@ -130,7 +129,7 @@ export default function AllSerialsPage() {
     return (
         <div className="p-6 max-w-400 mx-auto">
             {/* <div className="mb-8 p-4 bg-gray-100 border border-red-500 rounded text-xs font-mono overflow-auto max-h-60">
-                <h3 className="text-red-600 font-bold text-lg">⚠️ DEBUG MODE</h3>
+                <h3 className="text-red-600 font-bold text-lg"> DEBUG </h3>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <strong>1. Dữ liệu DEVICE đầu tiên từ API:</strong>
@@ -265,7 +264,6 @@ export default function AllSerialsPage() {
                     scroll={{ x: 1000 }}
                     loading={loading}
 
-                    // [FIX]: Server-side Pagination
                     pagination={paginationConfig}
                     onChange={handleTableChange}
 

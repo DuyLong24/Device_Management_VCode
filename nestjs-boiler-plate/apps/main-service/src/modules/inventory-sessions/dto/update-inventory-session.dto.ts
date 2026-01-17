@@ -6,7 +6,7 @@ class ScannedDetailDto {
     serial: string;
 
     @IsString()
-    model: string;
+    deviceModel: string;
 
     @IsOptional()
     @IsString()

@@ -63,5 +63,10 @@ export const deviceService = {
             responseType: 'blob',
         });
         return response.data;
+    },
+
+    bulkTransfer: async (data: { deviceIds: string[], toWarehouseId: string, note?: string }) => {
+        const response = await axiosInstance.post('/devices/bulk-transfer', data);
+        return response.data;
     }
 };

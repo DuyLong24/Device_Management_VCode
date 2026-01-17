@@ -67,7 +67,7 @@ export class InventorySessionService {
 
             const itemsToPush = updateDto.scannedItems.map(item => ({
                 serial: item.serial,
-                model: item.model,
+                deviceModel: item.deviceModel,
                 productCode: item.productCode || 'Unknown',
                 scannedAt: new Date()
             }));
@@ -95,24 +95,26 @@ export class InventorySessionService {
 
             const category = await this.categoryRepo.findOne({ name: importTicket.productType });
 
-            const devicesToCreate = session.details.map(item => ({
-                code: item.serial,
-                serial: item.serial,
-                name: item.model,
-                model: item.productCode || item.model, // Correct property name
-                unit: 'Cái',
-                qcStatus: 'PENDING',
-                warehouseId: String(warehouse._id),
-                categoryId: category ? String(category._id) : null,
-                importId: String(importTicket._id),
-                supplierId: importTicket.supplier || 'Unknown',
-                importDate: importTicket.importDate,
-                history: [],
-                // Default values for missing required fields
-                mac: '',
-                p2p: '',
-                currentExportId: null // Assuming nullable or handle properly if required
-            }));
+            const devicesToCreate = session.details.map(item => {
+                const modelName = item.deviceModel || item.model || 'Unknown Device';
+                return {
+                    code: item.serial,
+                    serial: item.serial,
+                    name: modelName,
+                    deviceModel: item.productCode || modelName,
+                    unit: 'Cái',
+                    qcStatus: 'PENDING',
+                    warehouseId: String(warehouse._id),
+                    categoryId: category ? String(category._id) : null,
+                    importId: String(importTicket._id),
+                    supplierId: importTicket.supplier || 'Unknown',
+                    importDate: importTicket.importDate,
+                    history: [],
+                    mac: '',
+                    p2p: '',
+                    currentExportId: null
+                };
+            });
 
             if (devicesToCreate.length > 0) {
                 await this.deviceService.insertMany(devicesToCreate, { session: mongoSession });

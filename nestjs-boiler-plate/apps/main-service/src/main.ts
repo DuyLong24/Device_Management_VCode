@@ -6,7 +6,10 @@ import { KAFKA_CLIENT_CONFIG } from '@app/shared';
 async function bootstrap() {
   // Tạo HTTP application (API Gateway)
   const app = await NestFactory.create(AppModule);
-  
+
+  // Thiết lập prefix global cho tất cả routes
+  app.setGlobalPrefix('api');
+
   // Cấu hình CORS
   app.enableCors({
     origin: true,
@@ -31,7 +34,7 @@ async function bootstrap() {
 
   // // Khởi động tất cả microservices
   // await app.startAllMicroservices();
-  
+
   // Khởi động HTTP server
   await app.listen(3000);
   console.log('Main Service is running on: http://localhost:3000');

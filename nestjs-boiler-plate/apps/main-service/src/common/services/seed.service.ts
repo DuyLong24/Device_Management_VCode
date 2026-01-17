@@ -6,6 +6,9 @@ import { User } from '../../users/entities/user.entity';
 import { WarehouseGroup } from '../../modules/warehouse-groups/schemas/warehouse-group.schemas';
 import { Warehouse } from '../../modules/warehouses/schemas/warehouse.schemas';
 import { WarehouseTransition } from '../../modules/warehouse-transitions/schemas/warehouse-transition.schemas';
+import { Device } from '../../modules/devices/schemas/device.schemas';
+import { Category } from '../../modules/categories/schemas/categories.schemas';
+import { DeviceImport } from '../../modules/device-imports/schemas/device-import.schemas';
 import * as bcrypt from 'bcrypt';
 import { WarehouseCode, TransitionType, ActionType } from '../constants/warehouse.constant';
 
@@ -19,6 +22,9 @@ export class SeedService implements OnModuleInit {
     @InjectModel(WarehouseGroup.name) private warehouseGroupModel: Model<WarehouseGroup>,
     @InjectModel(Warehouse.name) private warehouseModel: Model<Warehouse>,
     @InjectModel(WarehouseTransition.name) private warehouseTransitionModel: Model<WarehouseTransition>,
+    @InjectModel(Device.name) private deviceModel: Model<Device>,
+    @InjectModel(Category.name) private categoryModel: Model<Category>,
+    @InjectModel(DeviceImport.name) private deviceImportModel: Model<DeviceImport>,
   ) { }
 
   async onModuleInit() {
@@ -26,6 +32,7 @@ export class SeedService implements OnModuleInit {
     await this.seedRoles();
     await this.seedUsers();
     await this.seedWarehousesAndTransitions();
+    await this.seedDevices();
     this.logger.log('Seed Service Completed.');
   }
 
@@ -85,11 +92,27 @@ export class SeedService implements OnModuleInit {
         orderIndex: 1,
         icon: 'clock-circle',
         config: {
-          columns: ['serial', 'name', 'model', 'importDate'],
-          actions: [ActionType.SCAN, ActionType.QC_BATCH],
+          columns: [
+            { key: 'serial', title: 'Serial', type: 'text' },
+            { key: 'deviceModel', title: 'Mã Model', type: 'text' },
+            { key: 'name', title: 'Tên thiết bị', type: 'text' },
+            { key: 'importDate', title: 'Ngày nhập', type: 'date' },
+            // { key: 'importBy', title: 'Người nhập', type: 'text' } // Field not yet in Device entity, comment out or add mock
+          ],
+          actions: [ActionType.SCAN, ActionType.IMPORT_EXCEL, ActionType.TRANSFER],
           quickTransfers: [
-            { to: WarehouseCode.READY_TO_EXPORT, label: 'QC Pass', style: 'success' },
-            { to: WarehouseCode.DEFECT, label: 'QC Fail', style: 'danger' }
+            {
+              to: WarehouseCode.READY_TO_EXPORT,
+              label: 'Sẵn sàng xuất kho',
+              description: 'QC đạt, chuyển sang kho sẵn sàng xuất',
+              style: 'success' // Mapped to Green in Frontend
+            },
+            {
+              to: WarehouseCode.DEFECT,
+              label: 'Lỗi - Chờ BH NCC',
+              description: 'QC không đạt, cần gửi bảo hành',
+              style: 'danger' // Mapped to Red in Frontend
+            }
           ]
         }
       },
@@ -102,21 +125,60 @@ export class SeedService implements OnModuleInit {
         orderIndex: 2,
         icon: 'check-circle',
         config: {
-          columns: ['serial', 'name', 'model', 'importDate', 'qcStatus'],
-          actions: [ActionType.SCAN, ActionType.EXPORT_CREATE, ActionType.TRANSFER],
+          columns: [
+            { key: 'serial', title: 'Serial', type: 'text' },
+            { key: 'deviceModel', title: 'Mã Model', type: 'text' },
+            { key: 'name', title: 'Tên thiết bị', type: 'text' },
+            { key: 'importDate', title: 'Ngày nhập', type: 'date' },
+            { key: 'qcStatus', title: 'Trạng thái QC', type: 'status' }
+          ],
+          actions: [ActionType.SCAN, ActionType.IMPORT_EXCEL, ActionType.TRANSFER],
+          quickTransfers: [
+            {
+              to: WarehouseCode.SOLD,
+              label: 'Đã xuất - Trong BH',
+              description: 'Xuất kho cho khách/dự án',
+              style: 'primary'
+            },
+            {
+              to: WarehouseCode.DEFECT,
+              label: 'Lỗi - Chờ BH NCC',
+              description: 'Phát hiện lỗi sau QC',
+              style: 'danger'
+            }
+          ]
         }
       },
       // 3. Kho Lỗi
       {
         code: WarehouseCode.DEFECT,
-        name: 'Kho Lỗi',
+        name: 'Lỗi - Chờ BH NCC',
         groupId: internalGroup._id,
         color: 'red',
         orderIndex: 3,
         icon: 'close-circle',
         config: {
-          columns: ['serial', 'name', 'qcNote'],
-          actions: [ActionType.WARRANTY_SEND],
+          columns: [
+            { key: 'serial', title: 'Serial', type: 'text' },
+            { key: 'deviceModel', title: 'Mã Model', type: 'text' },
+            { key: 'name', title: 'Tên thiết bị', type: 'text' },
+            { key: 'qcNote', title: 'Lý do lỗi', type: 'text' }
+          ],
+          actions: [ActionType.SCAN, ActionType.IMPORT, ActionType.TRANSFER],
+          quickTransfers: [
+            {
+              to: WarehouseCode.IN_WARRANTY,
+              label: 'Đang BH NCC',
+              description: 'Gửi về NCC bảo hành',
+              style: 'warning'
+            },
+            {
+              to: WarehouseCode.READY_TO_EXPORT,
+              label: 'Sẵn sàng xuất kho',
+              description: 'Sửa được trong kho, không cần gửi BH',
+              style: 'success'
+            }
+          ]
         }
       },
       // 4. Đang bảo hành
@@ -128,21 +190,45 @@ export class SeedService implements OnModuleInit {
         orderIndex: 1,
         icon: 'tool',
         config: {
-          columns: ['serial', 'sentDate', 'supplier'],
-          actions: ['warranty_receive'],
+          columns: [
+            { key: 'serial', title: 'Serial', type: 'text' },
+            { key: 'deviceModel', title: 'Mã Model', type: 'text' },
+            { key: 'sentDate', title: 'Ngày gửi', type: 'date' },
+            { key: 'supplier', title: 'Nhà cung cấp', type: 'text' }
+          ],
+          actions: [ActionType.TRANSFER], // Receive is technically a transfer back
+          quickTransfers: [
+            {
+              to: WarehouseCode.READY_TO_EXPORT,
+              label: 'Sẵn sàng xuất kho',
+              description: 'NCC trả về, đã sửa xong',
+              style: 'success'
+            },
+            {
+              to: WarehouseCode.DEFECT,
+              label: 'Lỗi - Chờ BH NCC',
+              description: 'NCC trả về vẫn lỗi, cần gửi lại',
+              style: 'danger'
+            }
+          ]
         }
       },
       // 5. Đã bán
       {
         code: WarehouseCode.SOLD,
-        name: 'Đã xuất bán',
+        name: 'Đã xuất - Trong BH',
         groupId: exportedGroup._id,
         color: 'gray',
         orderIndex: 1,
         icon: 'shopping-cart',
         config: {
-          columns: ['serial', 'customer', 'exportDate'],
+          columns: [
+            { key: 'serial', title: 'Serial', type: 'text' },
+            { key: 'customer', title: 'Khách hàng', type: 'text' },
+            { key: 'exportDate', title: 'Ngày xuất', type: 'date' }
+          ],
           actions: [],
+          quickTransfers: []
         }
       }
     ];
@@ -182,6 +268,82 @@ export class SeedService implements OnModuleInit {
         continue;
       }
       await this.ensureTransition(fromId, toId, t.type);
+    }
+  }
+
+  // --- 4. SEED DEVICES (Mock Data) ---
+  private async seedDevices() {
+    // A. Ensure Category
+    let category = await this.categoryModel.findOne({ name: 'Thiết bị an ninh' });
+    if (!category) {
+      category = await this.categoryModel.create({
+        name: 'Thiết bị an ninh',
+        description: 'Camera, Barrier, Máy chấm công'
+      });
+      this.logger.log('Created Default Category');
+    }
+
+    // B. Ensure Import Record
+    let importRecord = await this.deviceImportModel.findOne({ code: 'IMP-INIT-001' });
+    if (!importRecord) {
+      importRecord = await this.deviceImportModel.create({
+        code: 'IMP-INIT-001',
+        origin: 'Vietnam',
+        supplier: 'Hikvision Vietnam',
+        totalQuantity: 100,
+        status: 'COMPLETED',
+        importDate: new Date(),
+        importedBy: 'Admin'
+      });
+      this.logger.log('Created Default Import Record');
+    }
+
+    // C. Create Devices in PENDING_QC
+    const pendingQcWh = await this.warehouseModel.findOne({ code: WarehouseCode.PENDING_QC });
+    if (pendingQcWh) {
+      const count = await this.deviceModel.countDocuments({ warehouseId: pendingQcWh._id });
+      if (count < 10) {
+        const devices = [];
+        for (let i = 0; i < 10; i++) {
+          devices.push({
+            serial: `SN-PENDING-${Date.now()}-${i}`,
+            name: `Camera AI Series ${i}`,
+            deviceModel: `AI-CAM-0${i}`,
+            unit: 'Pcs',
+            categoryId: category._id,
+            warehouseId: pendingQcWh._id,
+            importId: importRecord._id,
+            qcStatus: 'PENDING',
+            importDate: new Date(),
+          });
+        }
+        await this.deviceModel.insertMany(devices);
+        this.logger.log(`Seeded 10 devices to ${WarehouseCode.PENDING_QC}`);
+      }
+    }
+
+    // D. Create Devices in READY_TO_EXPORT
+    const readyWh = await this.warehouseModel.findOne({ code: WarehouseCode.READY_TO_EXPORT });
+    if (readyWh) {
+      const count = await this.deviceModel.countDocuments({ warehouseId: readyWh._id });
+      if (count < 5) {
+        const devices = [];
+        for (let i = 0; i < 5; i++) {
+          devices.push({
+            serial: `SN-READY-${Date.now()}-${i}`,
+            name: `Barrier Gate B${i}`,
+            deviceModel: `BARRIER-0${i}`,
+            unit: 'Set',
+            categoryId: category._id,
+            warehouseId: readyWh._id,
+            importId: importRecord._id,
+            qcStatus: 'PASS',
+            importDate: new Date(),
+          });
+        }
+        await this.deviceModel.insertMany(devices);
+        this.logger.log(`Seeded 5 devices to ${WarehouseCode.READY_TO_EXPORT}`);
+      }
     }
   }
 

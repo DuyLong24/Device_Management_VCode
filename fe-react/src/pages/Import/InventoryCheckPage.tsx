@@ -17,7 +17,8 @@ import {
   Space,
   Divider,
   Flex,
-  Tabs
+  Tabs,
+  Upload
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -25,21 +26,24 @@ import {
   CheckCircleOutlined,
   PlayCircleOutlined,
   DeleteOutlined,
-  WarningOutlined
+  WarningOutlined,
+  DownloadOutlined,
+  UploadOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useInventoryCheck } from '../../hooks/useInventoryCheck';
 import type { LocalScannedItem } from '../../hooks/useInventoryCheck';
 import { useScanSound } from '../../hooks/useScanSound';
 import { INVENTORY_LABELS } from '../../constants/inventory.constants';
 
+const { Dragger } = Upload;
+
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 
-// [NEW] Helper logic
 const getSerialStatus = (serial: string, productCode: string | undefined, importProducts: any[]) => {
   if (!importProducts || !productCode) return 'UNKNOWN';
   const product = importProducts.find(p => p.productCode === productCode);
@@ -65,15 +69,14 @@ export default function InventoryCheckPage() {
     setLocalItems
   } = useInventoryCheck();
 
-  // [NEW] Logic thống kê Matching
+  // Logic thống kê Matching
   const allItems = useMemo(() => [...serverItems, ...localItems], [serverItems, localItems]);
 
   const processedItems = useMemo(() => {
     if (!importInfo) return [];
     return allItems.map(item => ({
       ...item,
-      // Ép kiểu nếu cần thiết
-      status: getSerialStatus(item.serial, (item as any).productCode || (item as any).model, importInfo.products)
+      status: getSerialStatus(item.serial, (item as any).productCode || (item as any).deviceModel, importInfo.products)
     }));
   }, [allItems, importInfo]);
 
@@ -108,7 +111,49 @@ export default function InventoryCheckPage() {
     createdAt: session?.createdAt ? dayjs(session.createdAt).format('DD/MM/YYYY HH:mm') : '---',
   };
 
-  // [UPDATED] Override handleScanSerial để có âm thanh & status
+  // [NEW] State for Manual Import
+  const [manualSerials, setManualSerials] = useState('');
+
+  const handleManualImport = () => {
+    if (!selectedProductCode) {
+      message.warning('Vui lòng chọn sản phẩm trước khi nhập!');
+      return;
+    }
+    if (!manualSerials.trim()) return;
+
+    const lines = manualSerials.split(/\n/).map(s => s.trim()).filter(Boolean);
+    if (lines.length === 0) return;
+
+    let addedCount = 0;
+    const newItems: LocalScannedItem[] = [];
+
+    lines.forEach(serial => {
+      // Check local duplicate in new batch or existing items
+      const isDup = allItems.some(i => i.serial === serial) || newItems.some(i => i.serial === serial);
+      if (!isDup) {
+        newItems.push({
+          serial,
+          deviceModel: selectedProductCode,
+          productCode: selectedProductCode,
+          scannedAt: new Date().toISOString()
+        } as any);
+        addedCount++;
+      }
+    });
+
+    if (newItems.length > 0) {
+      setLocalItems(prev => [...newItems, ...prev]);
+      message.success(`Đã thêm ${newItems.length} serial.`);
+      playSuccess();
+      setManualSerials('');
+    }
+
+    if (addedCount < lines.length) {
+      message.warning(`Đã bỏ qua ${lines.length - addedCount} serial trùng lặp.`);
+    }
+  };
+
+  // Override handleScanSerial để có âm thanh & status
   const onScanSerial = () => {
     const code = scannedInput.trim();
     if (!code) return;
@@ -140,7 +185,7 @@ export default function InventoryCheckPage() {
 
     const newItem: LocalScannedItem = {
       serial: code,
-      model: selectedProductCode,
+      deviceModel: selectedProductCode,
       productCode: selectedProductCode,
       scannedAt: new Date().toISOString()
     } as any;
@@ -155,7 +200,6 @@ export default function InventoryCheckPage() {
     { title: 'Serial', dataIndex: 'serial', key: 'serial', render: (t) => <Text strong className="text-blue-600 font-mono">{t}</Text> },
     { title: 'Sản phẩm', dataIndex: 'productCode', key: 'productCode' },
     { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t) => dayjs(t).format('HH:mm:ss') },
-    // [NEW]
     {
       title: 'So khớp',
       key: 'match',
@@ -292,7 +336,7 @@ export default function InventoryCheckPage() {
                       placeholder={selectedProductCode ? "Đặt trỏ chuột vào đây và quét..." : "Vui lòng chọn sản phẩm trước"}
                       value={scannedInput}
                       onChange={(e) => setScannedInput(e.target.value)}
-                      onPressEnter={onScanSerial} // Dùng hàm mới
+                      onPressEnter={onScanSerial}
                       prefix={<ScanOutlined />}
                       disabled={!selectedProductCode}
                       autoFocus
@@ -317,7 +361,41 @@ export default function InventoryCheckPage() {
                 />
               )}
 
-              {/* ... (Phần Import nâng cao giữ nguyên) ... */}
+              <Divider>Hoặc nhập liệu nâng cao</Divider>
+
+              <Row gutter={16}>
+                <Col xs={24} md={12}>
+                  <Space direction="vertical" style={{ width: '100%' }} size="small">
+                    <Text strong>Nhập thủ công nhiều serial</Text>
+                    <Input.TextArea
+                      rows={5}
+                      placeholder="Nhập từng serial trên một dòng..."
+                      value={manualSerials}
+                      onChange={(e) => setManualSerials(e.target.value)}
+                    />
+                    <Button block icon={<CheckCircleOutlined />} onClick={handleManualImport}>
+                      Nhập danh sách
+                    </Button>
+                  </Space>
+                </Col>
+
+                <Col xs={24} md={12}>
+                  <Space direction="vertical" style={{ width: '100%' }} size="small">
+                    <Text strong>Import từ file Excel</Text>
+                    <Dragger
+                      beforeUpload={() => false}
+                      showUploadList={false}
+                      onChange={() => message.info('Tính năng đang phát triển')}
+                    >
+                      <p className="ant-upload-drag-icon"><UploadOutlined /></p>
+                      <p className="ant-upload-text">Kéo thả file hoặc click để chọn</p>
+                    </Dragger>
+                    <Button block icon={<DownloadOutlined />} onClick={() => { }}>
+                      Tải template Excel
+                    </Button>
+                  </Space>
+                </Col>
+              </Row>
             </Space>
           </Card>
 
@@ -387,7 +465,6 @@ export default function InventoryCheckPage() {
         </>
       )}
 
-      {/* Modal giữ nguyên */}
       <Modal
         title="Xác nhận hoàn tất"
         open={completeModalVisible}

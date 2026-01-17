@@ -33,7 +33,7 @@ export class Warehouse extends Document {
     columns: Array<{ key: string; title: string; type: string }>;
     filters: Array<{ key: string; type: string; label: string; source?: string }>;
     actions: string[];
-    quickTransfers?: Array<{ to: string; label: string; style: string }>;
+    quickTransfers?: Array<{ to: string; label: string; style: string; description?: string }>;
   };
 
   @Prop({ default: true })

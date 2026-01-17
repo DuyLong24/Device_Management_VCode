@@ -3,7 +3,6 @@ import type { DeviceImport, CreateImportDto } from '../types/import.type';
 
 export const importService = {
     getImports: async (_params: any) => {
-        // [FIX]: Thêm params sortBy
         const response = await axiosInstance.get<DeviceImport[]>('/device-imports', {
             params: {
                 sortBy: 'createdAt:desc',

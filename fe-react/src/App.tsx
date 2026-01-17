@@ -11,6 +11,7 @@ import InventoryCheckPage from './pages/Import/InventoryCheckPage';
 import AllSerialsPage from './pages/AllSerialsPage';
 import WarehousePage from './pages/Warehouse/WarehousePage';
 import ExportListPage from './pages/Export/ExportListPage';
+// import QCPendingPage from './pages/Warehouse/QCPendingPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,6 +68,7 @@ function App() {
               {/* --- CÁC MODULE KHÁC --- */}
               {/* --- CÁC MODULE KHÁC --- */}
               <Route path="all-serials" element={<AllSerialsPage />} />
+              {/* Route path="warehouse/PENDING_QC" element={<QCPendingPage />} */}
               <Route path="warehouse/:code" element={<WarehousePage />} />
 
               <Route path="*" element={<div>404 Not Found</div>} />

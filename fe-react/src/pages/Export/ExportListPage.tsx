@@ -4,23 +4,19 @@ import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
 import { EXPORT_LABELS, EXPORT_TABLE_COLUMNS } from '../../constants/export.constants';
-// Note: Assuming exportService will be available or mocking it for now if missing
-// import { exportService } from '../../services/export.service';
 
 const { Title } = Typography;
 
 export default function ExportListPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [data, setData] = useState<any[]>([]); // Placeholder type
+    const [data, setData] = useState<any[]>([]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            // const res = await exportService.getAll();
-            // setData(res);
             setTimeout(() => {
-                setData([]); // Mock empty
+                setData([]);
                 setLoading(false);
             }, 500);
         } catch (error) {

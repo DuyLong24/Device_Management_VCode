@@ -202,7 +202,7 @@ export const useInventoryCheck = () => {
             const payload = {
                 scannedItems: localItems.map(i => ({
                     serial: i.serial,
-                    model: i.model,
+                    deviceModel: i.deviceModel,
                     productCode: i.productCode
                 }))
             };

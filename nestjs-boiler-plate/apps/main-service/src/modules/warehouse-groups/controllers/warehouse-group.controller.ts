@@ -30,8 +30,8 @@ export class WarehouseGroupController {
   async findAll(@Query() query: WarehouseGroupPaginationDto) {
     const { filter, options } = createFilterAndOptions(
       query,
-      ['orderIndex', 'isActive'], // Filter keys for exact match
-      ['name'], // Search keys for regex search
+      ['orderIndex', 'isActive'],
+      ['name'],
       ['sortBy', 'limit', 'page', 'populate']
     );
 

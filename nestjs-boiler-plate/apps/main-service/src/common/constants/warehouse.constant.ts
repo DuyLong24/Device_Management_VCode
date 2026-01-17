@@ -1,5 +1,3 @@
-//File này giúp quản lý tập trung các mã kho và loại hành động.
-
 export enum WarehouseCode {
     // Kho nội bộ
     PENDING_QC = 'PENDING_QC',
@@ -31,4 +29,5 @@ export enum ActionType {
     QC_BATCH = 'qc_batch',
     EXPORT_CREATE = 'export_create',
     WARRANTY_SEND = 'warranty_send',
+    IMPORT = "IMPORT",
 }

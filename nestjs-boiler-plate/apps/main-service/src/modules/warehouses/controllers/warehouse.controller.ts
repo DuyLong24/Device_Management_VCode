@@ -40,7 +40,7 @@ export class WarehouseController {
       return this.warehouseService.findAllWithPagination(filter, options);
     }
     // Nếu không, trả về tất cả với filter
-    return this.warehouseService.findAll(filter);
+    return this.warehouseService.findAll(filter, options);
   }
 
   @Get('paginated')

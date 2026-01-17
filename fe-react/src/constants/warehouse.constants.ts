@@ -13,5 +13,10 @@ export const WAREHOUSE_TABLE_COLUMNS = {
     MODEL: 'Model',
     STATUS: 'Trạng thái',
     IMPORT_DATE: 'Ngày nhập',
+    SECTION: 'Khu vực',
+    SHELF: 'Kệ',
+    QC_DATE: 'Ngày QC',
+    QC_BY: 'Người QC',
+    NOTE: 'Ghi chú',
     ACTIONS: 'Thao tác'
 };

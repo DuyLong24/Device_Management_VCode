@@ -19,8 +19,8 @@ export class WarehouseService {
     }
   }
 
-  async findAll(filter: FilterQuery<Warehouse> = {}): Promise<Warehouse[]> {
-    return this.warehouseRepository.findAll(filter);
+  async findAll(filter: FilterQuery<Warehouse> = {}, options: any = {}): Promise<Warehouse[]> {
+    return this.warehouseRepository.findAll(filter, options);
   }
 
   async findAllWithPagination(filter: FilterQuery<Warehouse> = {}, options: any = {}): Promise<PaginateResult<Warehouse>> {

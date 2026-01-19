@@ -1,8 +1,8 @@
-import { Card, Button, Space, Form, Input, Select, InputNumber, Table, Tag, Typography, Row, Col, Tooltip, Divider } from 'antd';
-import { SaveOutlined, CloseOutlined, PlusOutlined, DeleteOutlined, InfoCircleOutlined, WarningOutlined, SendOutlined } from '@ant-design/icons';
+import { Card, Button, Space, Form, Input, Select, InputNumber, Table, Typography, Row, Col, Tooltip, Divider, Modal, Tabs } from 'antd';
+import { SaveOutlined, CloseOutlined, PlusOutlined, DeleteOutlined, InfoCircleOutlined, WarningOutlined, SendOutlined, UploadOutlined } from '@ant-design/icons';
 
-import { useCreateExport } from '../../hooks/useCreateExport';
-
+import { useCreateExport, type SerialValidationResult } from '../../hooks/useCreateExport';
+import { parseExcelSerials } from '../../utils/excel.utils';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
@@ -10,45 +10,103 @@ export default function CreateExportPage() {
     const {
         form,
         loading,
-        productList,
+        deviceList,
         autoExportCode,
-        handleAddProduct,
-        handleDeleteProduct,
-        handleProductChange,
-        getProductStock,
+        deviceOptions,
+        categoryOptions,
+        loadingDevices,
+        loadingCategories,
+        handleAddDevice,
+        handleDeleteDevice,
+        handleDeviceChange,
+        getDeviceStock,
+        openSerialModal,
+        handleSaveSerials,
         handleSaveDraft,
         handleSaveAndSubmit,
         handleCancel,
         setHasUnsavedChanges,
-        mockProductCodes,
-        mockProjects,
-        mockCustomers,
+
+        // Serial modal states
+        isSerialModalOpen,
+        setIsSerialModalOpen,
+        tempSerials,
+        setTempSerials,
+        activeTab,
+        setActiveTab,
+        validatingSerials,
+        saveValidSerials,
     } = useCreateExport();
 
-    // Cột bảng sản phẩm
-    const productColumns = [
+    // Use Modal hook để hiển thị error modal
+    const [modal, contextHolder] = Modal.useModal();
+
+    const handleValidationError = (validation: SerialValidationResult, uniqueSerials: string[]) => {
+        modal.error({
+            title: 'Phát hiện serial không hợp lệ',
+            width: 700,
+            content: (
+                <div>
+                    <p style={{ marginBottom: 12, fontSize: 14 }}>
+                        Có <strong style={{ color: '#ff4d4f' }}>{validation.invalidSerials.length}</strong> serial không hợp lệ
+                        trên tổng <strong>{uniqueSerials.length}</strong> serial.
+                    </p>
+                    <div style={{ maxHeight: 300, overflow: 'auto', border: '1px solid #f0f0f0', borderRadius: 4, padding: 12 }}>
+                        {validation.errors.map((err, idx) => (
+                            <div key={idx} style={{
+                                padding: '8px 0',
+                                borderBottom: idx < validation.errors.length - 1 ? '1px solid #f5f5f5' : 'none'
+                            }}>
+                                <Text strong style={{ color: '#ff4d4f' }}>{err.serial}</Text>
+                                <br />
+                                <Text type="secondary" style={{ fontSize: 12 }}>{err.message}</Text>
+                            </div>
+                        ))}
+                    </div>
+                    {validation.validSerials.length > 0 && (
+                        <p style={{ marginTop: 16, marginBottom: 0 }}>
+                            Bạn có muốn chỉ lưu <strong style={{ color: '#52c41a' }}>{validation.validSerials.length}</strong> serial hợp lệ không?
+                        </p>
+                    )}
+                </div>
+            ),
+            okText: validation.validSerials.length > 0 ? `Lưu ${validation.validSerials.length} serial hợp lệ` : 'Đóng',
+            cancelText: 'Quay lại sửa',
+            okButtonProps: { danger: validation.validSerials.length === 0 },
+            onOk: () => {
+                if (validation.validSerials.length > 0) {
+                    saveValidSerials(validation.validSerials);
+                }
+            }
+        });
+    };
+
+    // Cột bảng thiết bị
+    const deviceColumns = [
         {
             title: (
                 <span>
-                    <Text type="danger">*</Text> Mã sản phẩm
+                    <Text type="danger">*</Text> Mã thiết bị
                 </span>
             ),
-            dataIndex: 'productCode',
-            key: 'productCode',
+            dataIndex: 'deviceModel',
+            key: 'deviceModel',
             width: 280,
             render: (value: string, record: any) => {
-                const inStock = value ? getProductStock(value) : 0;
+                const inStock = value ? getDeviceStock(value) : 0;
                 return (
                     <Space direction="vertical" style={{ width: '100%' }} size={4}>
                         <Select
                             showSearch
                             value={value || undefined}
-                            placeholder="Chọn mã sản phẩm"
+                            placeholder="Chọn mã thiết bị"
                             style={{ width: '100%' }}
-                            options={mockProductCodes}
-                            onChange={(val) => handleProductChange(record.key, 'productCode', val)}
+                            options={deviceOptions}
+                            loading={loadingDevices}
+                            onChange={(val) => handleDeviceChange(record.key, 'deviceModel', val)}
+                            allowClear
                             filterOption={(input, option) =>
-                                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                             }
                         />
                         {value && (
@@ -64,12 +122,6 @@ export default function CreateExportPage() {
             },
         },
         {
-            title: 'Tên sản phẩm',
-            dataIndex: 'productName',
-            key: 'productName',
-            render: (value: string) => value || <Text type="secondary">-</Text>,
-        },
-        {
             title: (
                 <span>
                     <Text type="danger">*</Text> Số lượng
@@ -79,7 +131,7 @@ export default function CreateExportPage() {
             key: 'quantity',
             width: 130,
             render: (value: number, record: any) => {
-                const inStock = record.productCode ? getProductStock(record.productCode) : 0;
+                const inStock = record.deviceModel ? getDeviceStock(record.deviceModel) : 0;
                 const isExceed = value > inStock;
                 return (
                     <Space direction="vertical" style={{ width: '100%' }} size={4}>
@@ -88,7 +140,7 @@ export default function CreateExportPage() {
                             max={inStock}
                             value={value}
                             style={{ width: '100%' }}
-                            onChange={(val) => handleProductChange(record.key, 'quantity', val || 1)}
+                            onChange={(val) => handleDeviceChange(record.key, 'quantity', val || 1)}
                             placeholder="SL"
                             status={isExceed ? 'error' : undefined}
                         />
@@ -106,12 +158,34 @@ export default function CreateExportPage() {
             key: 'serial',
             width: 130,
             align: 'center' as const,
-            render: () => (
-                <Space direction="vertical" size={0}>
-                    <Text strong>0 / 0</Text>
-                    <Tag color="default">Chưa chọn</Tag>
-                </Space>
-            ),
+            render: (_: any, record: any) => {
+                const count = record.expectedSerials?.length || 0;
+                const required = record.quantity || 0;
+                const isMatch = count === required;
+                const isEmpty = count === 0;
+
+                return (
+                    <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                        <Button
+                            type={isEmpty ? 'dashed' : 'default'}
+                            size="small"
+                            onClick={() => openSerialModal(record)}
+                            disabled={!record.deviceModel}
+                            block
+                        >
+                            {isEmpty ? 'Nhập Serial' : `${count} serial`}
+                        </Button>
+                        {!isEmpty && (
+                            <Text
+                                type={isMatch ? 'success' : 'danger'}
+                                style={{ fontSize: 11, textAlign: 'center', display: 'block' }}
+                            >
+                                {count}/{required} {isMatch ? '✓' : '⚠'}
+                            </Text>
+                        )}
+                    </Space>
+                );
+            },
         },
         {
             title: 'Thao tác',
@@ -119,13 +193,14 @@ export default function CreateExportPage() {
             width: 80,
             align: 'center' as const,
             render: (_: any, record: any) => (
-                <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDeleteProduct(record.key)} />
+                <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDeleteDevice(record.key)} />
             ),
         },
     ];
 
     return (
         <div className="p-6 max-w-full mx-auto">
+            {contextHolder}
             {/* Page Header */}
             <div style={{ marginBottom: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -133,7 +208,7 @@ export default function CreateExportPage() {
                         <Title level={3} style={{ margin: 0 }}>
                             Thêm mới phiếu xuất kho
                         </Title>
-                        <Text type="secondary">Tạo mới phiếu xuất kho và danh sách sản phẩm đi kèm</Text>
+                        <Text type="secondary">Tạo mới phiếu xuất kho và danh sách thiết bị đi kèm</Text>
                     </div>
                     <Space>
                         <Button icon={<SaveOutlined />} onClick={handleSaveDraft} loading={loading}>
@@ -174,13 +249,18 @@ export default function CreateExportPage() {
                                 label="Loại hàng hóa xuất kho"
                                 rules={[{ required: true, message: 'Vui lòng chọn loại hàng hóa' }]}
                             >
-                                <Select placeholder="Chọn loại hàng hóa">
-                                    <Select.Option value="Camera">Camera</Select.Option>
-                                    <Select.Option value="Màn hình">Màn hình</Select.Option>
-                                    <Select.Option value="Barrier">Barrier</Select.Option>
-                                    <Select.Option value="NVR">NVR</Select.Option>
-                                    <Select.Option value="Khác">Khác</Select.Option>
-                                </Select>
+                                <Select
+                                    placeholder="Chọn loại hàng hóa"
+                                    loading={loadingCategories}
+                                    showSearch
+                                    options={categoryOptions.length > 0 ? categoryOptions : [
+                                        { value: 'Camera', label: 'Camera' },
+                                        { value: 'Màn hình', label: 'Màn hình' },
+                                        { value: 'Barrier', label: 'Barrier' },
+                                        { value: 'NVR', label: 'NVR' },
+                                        { value: 'Khác', label: 'Khác' },
+                                    ]}
+                                />
                             </Form.Item>
                         </Col>
                     </Row>
@@ -234,18 +314,16 @@ export default function CreateExportPage() {
                             <Form.Item
                                 name="project"
                                 label="Dự án"
-                                rules={[{ required: true, message: 'Vui lòng chọn dự án' }]}
                             >
-                                <Select placeholder="Chọn dự án" options={mockProjects} showSearch allowClear />
+                                <Input placeholder="Nhập tên dự án (nếu có)" />
                             </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
                             <Form.Item
                                 name="customer"
                                 label="Khách hàng"
-                                rules={[{ required: true, message: 'Vui lòng chọn khách hàng' }]}
                             >
-                                <Select placeholder="Chọn khách hàng" options={mockCustomers} showSearch allowClear />
+                                <Input placeholder="Nhập tên khách hàng (nếu có)" />
                             </Form.Item>
                         </Col>
                     </Row>
@@ -271,35 +349,35 @@ export default function CreateExportPage() {
                     </Row>
                 </Card>
 
-                {/* Card B - Danh sách sản phẩm */}
+                {/* Card B - Danh sách thiết bị */}
                 <Card
                     title={
                         <span>
-                            Danh sách mã sản phẩm xuất kho{' '}
+                            Danh sách mã thiết bị xuất kho{' '}
                             <Text type="secondary" style={{ fontSize: 14, fontWeight: 'normal' }}>
-                                ({productList.length} sản phẩm)
+                                ({deviceList.length} thiết bị)
                             </Text>
                         </span>
                     }
                     extra={
-                        <Button type="default" icon={<PlusOutlined />} onClick={handleAddProduct}>
-                            Thêm sản phẩm
+                        <Button type="default" icon={<PlusOutlined />} onClick={handleAddDevice}>
+                            Thêm thiết bị
                         </Button>
                     }
                 >
-                    {productList.length === 0 ? (
+                    {deviceList.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                            <Text type="secondary">Chưa có sản phẩm nào</Text>
+                            <Text type="secondary">Chưa có thiết bị nào</Text>
                             <br />
-                            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddProduct} style={{ marginTop: 16 }}>
-                                Thêm sản phẩm đầu tiên
+                            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDevice} style={{ marginTop: 16 }}>
+                                Thêm thiết bị đầu tiên
                             </Button>
                         </div>
                     ) : (
                         <>
                             <Table
-                                columns={productColumns}
-                                dataSource={productList}
+                                columns={deviceColumns}
+                                dataSource={deviceList}
                                 pagination={false}
                                 bordered
                                 size="middle"
@@ -311,19 +389,19 @@ export default function CreateExportPage() {
                                     <Text strong>
                                         Tổng mã SP:{' '}
                                         <Text type="success" style={{ fontSize: 18 }}>
-                                            {productList.length}
+                                            {deviceList.length}
                                         </Text>
                                     </Text>
                                     <Text strong>
                                         Tổng số lượng:{' '}
                                         <Text type="success" style={{ fontSize: 18 }}>
-                                            {productList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                                            {deviceList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
                                         </Text>
                                     </Text>
                                     <Text strong>
                                         Serial đã chọn:{' '}
                                         <Text type="warning" style={{ fontSize: 18 }}>
-                                            0 / {productList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                                            0 / {deviceList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
                                         </Text>
                                     </Text>
                                 </Space>
@@ -333,7 +411,6 @@ export default function CreateExportPage() {
                 </Card>
             </Form>
 
-            {/* Fixed bottom action bar */}
             <div
                 style={{
                     position: 'sticky',
@@ -357,6 +434,77 @@ export default function CreateExportPage() {
                     </Button>
                 </div>
             </div>
+
+            {/* Serial Input Modal */}
+            <Modal
+                title="Nhập danh sách Serial"
+                open={isSerialModalOpen}
+                onOk={() => handleSaveSerials(handleValidationError)}
+                onCancel={() => setIsSerialModalOpen(false)}
+                width={700}
+                okText="Lưu Serial"
+                cancelText="Hủy"
+                confirmLoading={validatingSerials}
+            >
+                <Tabs activeKey={activeTab} onChange={setActiveTab}>
+                    <Tabs.TabPane tab="Nhập thủ công" key="manual">
+                        <div>
+                            <p style={{ marginBottom: 8, color: '#666' }}>
+                                Nhập mỗi serial trên một dòng:
+                            </p>
+                            <Input.TextArea
+                                rows={12}
+                                value={tempSerials}
+                                onChange={(e) => setTempSerials(e.target.value)}
+                                placeholder={'SN001\nSN002\nSN003\n...'}
+                                style={{ fontFamily: 'monospace' }}
+                            />
+                            <p style={{ marginTop: 8, fontSize: 12, color: '#999' }}>
+                                Đã nhập: {tempSerials.split('\n').filter(s => s.trim()).length} serial
+                            </p>
+                        </div>
+                    </Tabs.TabPane>
+
+                    <Tabs.TabPane tab={<span><UploadOutlined /> Upload Excel</span>} key="excel">
+                        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                            <p style={{ marginBottom: 16, color: '#666' }}>
+                                Upload file Excel với danh sách serial (cột A, bỏ qua dòng 1):
+                            </p>
+                            <Button
+                                icon={<UploadOutlined />}
+                                size="large"
+                                onClick={async () => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = '.xlsx,.xls';
+                                    input.onchange = async (e: any) => {
+                                        const file = e.target?.files?.[0];
+                                        if (file) {
+                                            try {
+                                                const serials = await parseExcelSerials(file);
+                                                const current = tempSerials.split('\n').filter(s => s.trim());
+                                                const merged = [...current, ...serials];
+                                                const unique = [...new Set(merged)];
+
+                                                setTempSerials(unique.join('\n'));
+                                                setActiveTab('manual');
+                                            } catch (err) {
+                                                console.error(err);
+                                            }
+                                        }
+                                    };
+                                    input.click();
+                                }}
+                            >
+                                Chọn file Excel
+                            </Button>
+                            <p style={{ marginTop: 16, fontSize: 12, color: '#999' }}>
+                                Hỗ trợ: .xlsx, .xls
+                            </p>
+                        </div>
+                    </Tabs.TabPane>
+                </Tabs>
+            </Modal>
         </div>
     );
 }

@@ -2,7 +2,10 @@ import type { ReactNode } from 'react';
 import {
     DashboardOutlined, InboxOutlined, FileAddOutlined, UnorderedListOutlined, CheckCircleOutlined,
     CloseCircleOutlined, ToolOutlined, ExportOutlined, ClockCircleOutlined, FolderOutlined,
-    AppstoreOutlined, DatabaseOutlined, CustomerServiceOutlined, SettingOutlined, TeamOutlined, SafetyOutlined, UserOutlined, LockOutlined, LogoutOutlined
+    AppstoreOutlined, DatabaseOutlined, CustomerServiceOutlined, SettingOutlined, TeamOutlined, SafetyOutlined, UserOutlined, LockOutlined, LogoutOutlined,
+    SafetyCertificateOutlined,
+    FieldTimeOutlined,
+    DeleteOutlined
 } from '@ant-design/icons';
 
 // Màu sắc
@@ -56,6 +59,9 @@ export const ICON_MAP: Record<string, ReactNode> = {
     'tool': <ToolOutlined />,
     'export': <ExportOutlined />,
     'folder': <FolderOutlined />,
+    'safety-certificate': <SafetyCertificateOutlined />,
+    'field-time': <FieldTimeOutlined />,
+    'delete': <DeleteOutlined />,
     'default': <AppstoreOutlined />
 };
 

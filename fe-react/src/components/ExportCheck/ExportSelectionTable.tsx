@@ -21,9 +21,10 @@ interface ExportRecord {
 interface ExportSelectionTableProps {
     exports: ExportRecord[];
     onSelectExport: (record: ExportRecord) => void;
+    loading?: boolean;
 }
 
-export const ExportSelectionTable = ({ exports, onSelectExport }: ExportSelectionTableProps) => {
+export const ExportSelectionTable = ({ exports, onSelectExport, loading }: ExportSelectionTableProps) => {
     const canSelectExport = (status: string): boolean => {
         return status === 'approved' || status === 'in-progress';
     };
@@ -131,6 +132,7 @@ export const ExportSelectionTable = ({ exports, onSelectExport }: ExportSelectio
                     pagination={{ pageSize: 10 }}
                     size="small"
                     bordered
+                    loading={loading}
                 />
             )}
         </Card>

@@ -9,6 +9,7 @@ import { WarehouseTransition, WarehouseTransitionSchema } from '../warehouse-tra
 import { DeviceHistory, DeviceHistorySchema } from '../device-histories/schemas/device-history.schemas';
 
 import { ExcelModule } from '../../common/excel/excel.module';
+import { WarehousesModule } from '../warehouses/warehouses.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ExcelModule } from '../../common/excel/excel.module';
       { name: DeviceHistory.name, schema: DeviceHistorySchema },
     ]),
     ExcelModule,
+    WarehousesModule,
   ],
   controllers: [DeviceController],
   providers: [DeviceService, DeviceRepository],

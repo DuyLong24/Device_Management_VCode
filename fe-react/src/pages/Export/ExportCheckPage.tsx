@@ -14,7 +14,8 @@ export default function ExportCheckPage() {
         currentStep,
         selectedExport,
         serialData,
-        mockExportRecords,
+        exportRecords,
+        loading,
         handleSelectExport,
         handleScan,
         handleBackToSelection,
@@ -47,18 +48,19 @@ export default function ExportCheckPage() {
                         size="large"
                         disabled={stats.missingCount > 0}
                         onClick={handleCompleteExport}
+                        loading={loading}
                     >
                         Hoàn tất xuất kho ({stats.scannedCount}/{stats.totalRequired})
                     </Button>
                 )}
             </div>
 
-            {/* Chọn phiếu xuất */}
+            {/* Step 1: Chọn phiếu xuất */}
             {currentStep === 'select' && (
-                <ExportSelectionTable exports={mockExportRecords} onSelectExport={handleSelectExport} />
+                <ExportSelectionTable exports={exportRecords} onSelectExport={handleSelectExport} loading={loading} />
             )}
 
-            {/* Quét serial */}
+            {/* Step 2: Quét serial */}
             {currentStep === 'check' && stats && (
                 <>
                     <ScanStatistics

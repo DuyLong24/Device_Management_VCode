@@ -17,6 +17,7 @@ import { DeviceService } from '../services/device.service';
 import { CreateDeviceDto } from '../dto/create-device.dto';
 import { UpdateDeviceDto } from '../dto/update-device.dto';
 import { DevicePaginationDto } from '../dto/device-pagination.dto';
+import { ValidateSerialsDto, ValidateSerialsResponse } from '../dto/validate-serials.dto';
 
 @Controller('devices')
 export class DeviceController {
@@ -111,7 +112,7 @@ export class DeviceController {
   }
 
   /**
-   * [NEW] API Chuyển kho (Transfer)
+   * API Chuyển kho (Transfer)
    * Method: PATCH /devices/:id/transfer
    * Body: { toWarehouseId: string, note?: string }
    */
@@ -131,7 +132,15 @@ export class DeviceController {
   async bulkTransfer(
     @Body() body: { deviceIds: string[]; toWarehouseId: string; note?: string },
   ) {
-    const userId = '69685cb83e015da83ef00a85'; // Hardcoded for now
+    const userId = '69685cb83e015da83ef00a85'; // Hardcoded
     return this.deviceService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note);
+  }
+
+  @Post('validate-serials')
+  @HttpCode(HttpStatus.OK)
+  async validateSerials(
+    @Body() dto: ValidateSerialsDto
+  ): Promise<ValidateSerialsResponse> {
+    return this.deviceService.validateSerials(dto);
   }
 }

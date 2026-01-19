@@ -6,86 +6,182 @@ import { logger } from '../utils/logger';
 import { EXPORT_STATUS } from '../constants/export-status.constant';
 import type { DeviceExport } from '../types/export.type';
 import { exportService } from '../services/export.service';
+import { axiosInstance } from '../configs/axios.config';
 
-interface ProductItem {
-    key: string;
-    productCode: string;
-    productName: string;
-    quantity: number;
-    inStock?: number;
+// Export types
+export interface SerialValidationError {
+    serial: string;
+    reason: 'NOT_FOUND' | 'WRONG_MODEL' | 'WRONG_WAREHOUSE' | 'DUPLICATE';
+    message: string;
+    currentModel?: string;
+    currentWarehouse?: string;
 }
 
-// Mock data
-const mockProductCodes = [
-    { value: 'CAM-IN-001', label: 'CAM-IN-001 - Camera Indoor 2MP', inStock: 45 },
-    { value: 'CAM-OUT-002', label: 'CAM-OUT-002 - Camera Outdoor 4MP', inStock: 78 },
-    { value: 'NVR-4CH-001', label: 'NVR-4CH-001 - NVR 4 kênh', inStock: 20 },
-    { value: 'MON-27-001', label: 'MON-27-001 - Màn hình 27 inch', inStock: 15 },
-    { value: 'BAR-AUTO-001', label: 'BAR-AUTO-001 - Barrier tự động', inStock: 12 },
-];
+export interface SerialValidationResult {
+    valid: boolean;
+    validSerials: string[];
+    invalidSerials: string[];
+    errors: SerialValidationError[];
+}
 
-const mockProjects = [
-    { value: 'project1', label: 'Dự án Smart City Hà Nội' },
-    { value: 'project2', label: 'Dự án An ninh ABC' },
-    { value: 'project3', label: 'Dự án Camera Quận 1' },
-];
+interface DeviceItem {
+    key: string;
+    deviceModel: string;
+    name: string;
+    quantity: number;
+    inStock?: number;
+    expectedSerials: string[];
+}
 
-const mockCustomers = [
-    { value: 'customer1', label: 'Công ty TNHH ABC' },
-    { value: 'customer2', label: 'Công ty CP XYZ' },
-    { value: 'customer3', label: 'Tập đoàn DEF' },
-];
+interface DeviceOption {
+    value: string;
+    label: string;
+    inStock: number;
+}
+
+interface CategoryOption {
+    value: string;
+    label: string;
+}
 
 export const useCreateExport = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-    const [productList, setProductList] = useState<ProductItem[]>([]);
+    const [deviceList, setDeviceList] = useState<DeviceItem[]>([]);
     const [autoExportCode, setAutoExportCode] = useState('');
+    const [deviceOptions, setDeviceOptions] = useState<DeviceOption[]>([]);
+    const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+    const [loadingDevices, setLoadingDevices] = useState(false);
+    const [loadingCategories, setLoadingCategories] = useState(false);
 
+    // Serial modal states
+    const [isSerialModalOpen, setIsSerialModalOpen] = useState(false);
+    const [currentDeviceKey, setCurrentDeviceKey] = useState<string | null>(null);
+    const [tempSerials, setTempSerials] = useState<string>('');
+    const [activeTab, setActiveTab] = useState('manual');
+    const [validatingSerials, setValidatingSerials] = useState(false);
+
+    // Generate auto code
     useEffect(() => {
         const today = dayjs();
         const code = `PX-${today.format('YYYY-MM')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
         setAutoExportCode(code);
     }, []);
 
-    const handleFormChange = () => {
-        setHasUnsavedChanges(true);
+    // Fetch device codes and categories
+    useEffect(() => {
+        fetchDeviceCodes();
+        fetchCategories();
+    }, []);
+
+    const fetchDeviceCodes = async () => {
+        setLoadingDevices(true);
+        try {
+            const warehousesRes = await axiosInstance.get('/warehouses');
+            const readyWarehouse = warehousesRes.data?.find((w: any) => w.code === 'READY_TO_EXPORT');
+
+            if (!readyWarehouse) {
+                message.warning('Không tìm thấy kho sẵn sàng xuất');
+                return;
+            }
+
+            const response = await axiosInstance.get('/devices', {
+                params: {
+                    warehouseId: readyWarehouse.id,
+                    limit: 1000,
+                    sortBy: 'deviceModel:asc'
+                }
+            });
+
+            const devices = response.data?.results || response.data || [];
+
+            if (Array.isArray(devices)) {
+                const grouped = devices.reduce((acc: any, device: any) => {
+                    const model = device.deviceModel;
+                    if (!model) return acc;
+
+                    if (!acc[model]) {
+                        acc[model] = {
+                            deviceModel: model,
+                            name: device.name || '',
+                            count: 0
+                        };
+                    }
+                    acc[model].count++;
+                    return acc;
+                }, {});
+
+                const options: DeviceOption[] = Object.values(grouped).map((item: any) => ({
+                    value: item.deviceModel,
+                    label: `${item.deviceModel}${item.name ? ' - ' + item.name : ''}`,
+                    inStock: item.count
+                }));
+
+                setDeviceOptions(options);
+                logger.info('Loaded device codes from READY_TO_EXPORT', { count: options.length });
+            }
+        } catch (error) {
+            logger.error('Failed to fetch device codes', { error });
+            message.warning('Không thể tải danh sách thiết bị');
+        } finally {
+            setLoadingDevices(false);
+        }
     };
 
-    const getProductStock = (productCode: string): number => {
-        const product = mockProductCodes.find((p) => p.value === productCode);
-        return product?.inStock || 0;
+    const fetchCategories = async () => {
+        setLoadingCategories(true);
+        try {
+            const response = await axiosInstance.get('/categories');
+            if (response.data && Array.isArray(response.data)) {
+                const options: CategoryOption[] = response.data.map((cat: any) => ({
+                    value: cat.name,
+                    label: cat.name
+                }));
+                setCategoryOptions(options);
+            }
+        } catch (error) {
+            logger.error('Failed to fetch categories', { error });
+        } finally {
+            setLoadingCategories(false);
+        }
     };
 
-    const handleAddProduct = () => {
-        const newProduct: ProductItem = {
-            key: `product-${Date.now()}`,
-            productCode: '',
-            productName: '',
+    const getDeviceStock = (deviceModel: string): number => {
+        const device = deviceOptions.find((d) => d.value === deviceModel);
+        return device?.inStock || 0;
+    };
+
+    const handleAddDevice = () => {
+        const newDevice: DeviceItem = {
+            key: `device-${Date.now()}`,
+            deviceModel: '',
+            name: '',
             quantity: 1,
+            expectedSerials: [],
         };
-        setProductList([...productList, newProduct]);
+        setDeviceList([...deviceList, newDevice]);
         setHasUnsavedChanges(true);
     };
 
-    const handleDeleteProduct = (key: string) => {
-        setProductList(productList.filter((item) => item.key !== key));
+    const handleDeleteDevice = (key: string) => {
+        setDeviceList(deviceList.filter((item) => item.key !== key));
         setHasUnsavedChanges(true);
     };
 
-    const handleProductChange = (key: string, field: string, value: any) => {
-        setProductList(
-            productList.map((item) => {
+    const handleDeviceChange = (key: string, field: string, value: any) => {
+        setDeviceList(
+            deviceList.map((item) => {
                 if (item.key === key) {
-                    if (field === 'productCode') {
-                        const product = mockProductCodes.find((p) => p.value === value);
+                    if (field === 'deviceModel') {
+                        const device = deviceOptions.find((d) => d.value === value);
                         return {
                             ...item,
-                            productCode: value,
-                            productName: product?.label.split(' - ')[1] || '',
-                            inStock: product?.inStock || 0,
+                            deviceModel: value,
+                            name: device?.label.split(' - ')[1] || '',
+                            inStock: device?.inStock || 0,
+                            expectedSerials: [],
                         };
                     }
                     return { ...item, [field]: value };
@@ -96,31 +192,134 @@ export const useCreateExport = () => {
         setHasUnsavedChanges(true);
     };
 
-    const validateProductList = (): { valid: boolean; message?: string } => {
-        if (productList.length === 0) {
-            return { valid: false, message: 'Phiếu xuất phải có ít nhất 1 sản phẩm' };
+    const openSerialModal = (record: DeviceItem) => {
+        if (!record.deviceModel) {
+            message.warning('Vui lòng chọn mã thiết bị trước');
+            return;
+        }
+        setCurrentDeviceKey(record.key);
+        setTempSerials(record.expectedSerials.join('\n'));
+        setIsSerialModalOpen(true);
+        setActiveTab('manual');
+    };
+
+    // Validate serials with backend API
+    const validateSerials = async (
+        serials: string[],
+        deviceModel: string
+    ): Promise<SerialValidationResult> => {
+        try {
+            setValidatingSerials(true);
+
+            const response = await axiosInstance.post('/devices/validate-serials', {
+                serials,
+                deviceModel,
+                warehouseCode: 'READY_TO_EXPORT',
+                operation: 'EXPORT'
+            });
+
+            return response.data;
+        } catch (error: any) {
+            logger.error('Serial validation failed', { error });
+            message.error('Không thể validate serial');
+            return {
+                valid: false,
+                validSerials: [],
+                invalidSerials: serials,
+                errors: [{
+                    serial: 'API_ERROR',
+                    reason: 'NOT_FOUND',
+                    message: 'Lỗi kết nối API validation'
+                }]
+            };
+        } finally {
+            setValidatingSerials(false);
+        }
+    };
+
+    // Lưu serials
+    const handleSaveSerials = async (
+        onValidationError?: (result: SerialValidationResult, uniqueSerials: string[]) => void
+    ) => {
+        if (!currentDeviceKey) return;
+
+        const currentDevice = deviceList.find(d => d.key === currentDeviceKey);
+        if (!currentDevice || !currentDevice.deviceModel) {
+            message.error('Vui lòng chọn mã thiết bị trước');
+            return;
         }
 
-        const productCodes = productList.map((p) => p.productCode);
-        const duplicates = productCodes.filter((code, index) => code && productCodes.indexOf(code) !== index);
-        if (duplicates.length > 0) {
-            return { valid: false, message: `Mã sản phẩm ${duplicates[0]} đã tồn tại trong phiếu` };
+        const rawSerials = tempSerials.split('\n').map(s => s.trim()).filter(s => s);
+        const uniqueSerials = [...new Set(rawSerials)];
+
+        if (rawSerials.length !== uniqueSerials.length) {
+            message.warning(`Đã loại bỏ ${rawSerials.length - uniqueSerials.length} serial trùng lặp`);
         }
 
-        for (const product of productList) {
-            if (!product.productCode) {
-                return { valid: false, message: 'Vui lòng chọn mã sản phẩm cho tất cả các dòng' };
+        if (uniqueSerials.length === 0) {
+            message.warning('Vui lòng nhập ít nhất 1 serial');
+            return;
+        }
+
+        // Validate = backend
+        const validation = await validateSerials(uniqueSerials, currentDevice.deviceModel);
+
+        if (!validation.valid) {
+            if (onValidationError) {
+                onValidationError(validation, uniqueSerials);
             }
-            if (!product.quantity || product.quantity <= 0) {
+            return;
+        }
+
+        saveValidSerials(validation.validSerials);
+    };
+
+    const saveValidSerials = (serials: string[]) => {
+        setDeviceList(prev => prev.map(d =>
+            d.key === currentDeviceKey
+                ? { ...d, expectedSerials: serials }
+                : d
+        ));
+
+        setIsSerialModalOpen(false);
+        setTempSerials('');
+        message.success(`Đã lưu ${serials.length} serial hợp lệ`);
+    };
+
+    const validateDeviceList = (): { valid: boolean; message?: string } => {
+        if (deviceList.length === 0) {
+            return { valid: false, message: 'Phiếu xuất phải có ít nhất 1 thiết bị' };
+        }
+
+        const deviceModels = deviceList.map((d) => d.deviceModel);
+        const duplicates = deviceModels.filter((code, index) => code && deviceModels.indexOf(code) !== index);
+        if (duplicates.length > 0) {
+            return { valid: false, message: `Mã thiết bị ${duplicates[0]} đã tồn tại trong phiếu` };
+        }
+
+        for (const device of deviceList) {
+            if (!device.deviceModel) {
+                return { valid: false, message: 'Vui lòng chọn mã thiết bị cho tất cả các dòng' };
+            }
+            if (!device.quantity || device.quantity <= 0) {
                 return { valid: false, message: 'Số lượng phải lớn hơn 0' };
             }
 
-            const inStock = getProductStock(product.productCode);
-            if (product.quantity > inStock) {
+            const inStock = getDeviceStock(device.deviceModel);
+            if (device.quantity > inStock) {
                 return {
                     valid: false,
-                    message: `Mã sản phẩm ${product.productCode} chỉ còn ${inStock} sản phẩm trong kho`,
+                    message: `Thiết bị ${device.deviceModel} chỉ còn ${inStock} chiếc trong kho`,
                 };
+            }
+
+            if (device.expectedSerials && device.expectedSerials.length > 0) {
+                if (device.expectedSerials.length !== device.quantity) {
+                    return {
+                        valid: false,
+                        message: `Thiết bị ${device.deviceModel}: Số serial (${device.expectedSerials.length}) không khớp số lượng (${device.quantity})`
+                    };
+                }
             }
         }
 
@@ -130,10 +329,10 @@ export const useCreateExport = () => {
     const handleSaveDraft = async () => {
         try {
             const formValues = await form.validateFields();
-            const productValidation = validateProductList();
+            const deviceValidation = validateDeviceList();
 
-            if (!productValidation.valid) {
-                message.error(productValidation.message);
+            if (!deviceValidation.valid) {
+                message.error(deviceValidation.message);
                 return;
             }
 
@@ -143,13 +342,14 @@ export const useCreateExport = () => {
                 ...formValues,
                 code: autoExportCode,
                 status: EXPORT_STATUS.DRAFT,
-                requirements: productList.map((p) => ({
-                    productCode: p.productCode,
-                    productName: p.productName,
-                    quantity: p.quantity,
+                requirements: deviceList.map((d) => ({
+                    productCode: d.deviceModel,
+                    productName: d.name,
+                    quantity: d.quantity,
+                    expectedSerials: d.expectedSerials || [],
                 })),
-                totalProductCodes: productList.length,
-                totalQuantity: productList.reduce((sum, p) => sum + p.quantity, 0),
+                totalProductCodes: deviceList.length,
+                totalQuantity: deviceList.reduce((sum, d) => sum + d.quantity, 0),
                 items: [],
             };
 
@@ -161,7 +361,7 @@ export const useCreateExport = () => {
                 navigate(`/export/${exportData.id || exportData._id}`);
             }
         } catch (error: any) {
-            logger.error('Failed to save draft', { error, module: 'useCreateExport', action: 'saveDraft' });
+            logger.error('Failed to save draft', { error });
             if (error.errorFields && error.errorFields.length > 0) {
                 const firstError = error.errorFields[0];
                 message.error(firstError.errors[0]);
@@ -177,10 +377,10 @@ export const useCreateExport = () => {
     const handleSaveAndSubmit = async () => {
         try {
             const formValues = await form.validateFields();
-            const productValidation = validateProductList();
+            const deviceValidation = validateDeviceList();
 
-            if (!productValidation.valid) {
-                message.error(productValidation.message);
+            if (!deviceValidation.valid) {
+                message.error(deviceValidation.message);
                 return;
             }
 
@@ -190,13 +390,14 @@ export const useCreateExport = () => {
                 ...formValues,
                 code: autoExportCode,
                 status: EXPORT_STATUS.PENDING_APPROVAL,
-                requirements: productList.map((p) => ({
-                    productCode: p.productCode,
-                    productName: p.productName,
-                    quantity: p.quantity,
+                requirements: deviceList.map((d) => ({
+                    productCode: d.deviceModel,
+                    productName: d.name,
+                    quantity: d.quantity,
+                    expectedSerials: d.expectedSerials || [],
                 })),
-                totalProductCodes: productList.length,
-                totalQuantity: productList.reduce((sum, p) => sum + p.quantity, 0),
+                totalProductCodes: deviceList.length,
+                totalQuantity: deviceList.reduce((sum, d) => sum + d.quantity, 0),
                 items: [],
             };
 
@@ -208,7 +409,7 @@ export const useCreateExport = () => {
                 navigate(`/export/${exportData.id || exportData._id}`);
             }
         } catch (error: any) {
-            logger.error('Failed to submit export', { error, module: 'useCreateExport', action: 'saveAndSubmit' });
+            logger.error('Failed to submit export', { error });
             if (error.errorFields && error.errorFields.length > 0) {
                 const firstError = error.errorFields[0];
                 message.error(firstError.errors[0]);
@@ -240,24 +441,36 @@ export const useCreateExport = () => {
         form,
         loading,
         hasUnsavedChanges,
-        setHasUnsavedChanges: handleFormChange,
+        setHasUnsavedChanges: () => setHasUnsavedChanges(true),
 
-        productList,
+        deviceList,
         autoExportCode,
+        deviceOptions,
+        categoryOptions,
+        loadingDevices,
+        loadingCategories,
 
-        handleAddProduct,
-        handleDeleteProduct,
-        handleProductChange,
-        getProductStock,
+        handleAddDevice,
+        handleDeleteDevice,
+        handleDeviceChange,
+        getDeviceStock,
+
+        // Serial functions
+        openSerialModal,
+        handleSaveSerials,
+        saveValidSerials,
 
         handleSaveDraft,
         handleSaveAndSubmit,
         handleCancel,
 
-        mockProductCodes,
-        mockProjects,
-        mockCustomers,
-
-        navigate,
+        // Serial modal states
+        isSerialModalOpen,
+        setIsSerialModalOpen,
+        tempSerials,
+        setTempSerials,
+        activeTab,
+        setActiveTab,
+        validatingSerials,
     };
 };

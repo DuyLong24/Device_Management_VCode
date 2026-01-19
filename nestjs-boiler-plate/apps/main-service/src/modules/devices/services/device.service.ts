@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { DeviceRepository } from '../repositories/device.repository';
 import { CreateDeviceDto } from '../dto/create-device.dto';
 import { UpdateDeviceDto } from '../dto/update-device.dto';
+import { ValidateSerialsDto, ValidateSerialsResponse, SerialValidationError } from '../dto/validate-serials.dto';
 import { PaginateResult } from '../interfaces/pagination-result.interface';
 import { Device, DeviceModel } from '../schemas/device.schemas';
 import { InjectModel } from '@nestjs/mongoose';
@@ -12,6 +13,7 @@ import { Model } from 'mongoose';
 
 import { DEVICE_EXCEL_COLUMNS } from '../../../common/constants/device.constants';
 import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
+import { WarehouseService } from '../../warehouses/services/warehouse.service';
 
 @Injectable()
 export class DeviceService {
@@ -22,6 +24,7 @@ export class DeviceService {
 
     @InjectModel(WarehouseTransition.name) private transitionModel: Model<WarehouseTransition>,
     @InjectModel(DeviceHistory.name) private historyModel: Model<DeviceHistory>,
+    private readonly warehouseService: WarehouseService,
   ) { }
 
   async create(createDeviceDto: CreateDeviceDto): Promise<Device> {
@@ -193,5 +196,90 @@ export class DeviceService {
     ).exec();
 
     return result;
+  }
+
+  async validateSerials(dto: ValidateSerialsDto): Promise<ValidateSerialsResponse> {
+    const { serials, deviceModel, warehouseCode } = dto;
+
+    // Get warehouse by code using WarehouseService
+    const warehouses = await this.warehouseService.findAll({ code: warehouseCode });
+    const warehouse = warehouses[0];
+
+    if (!warehouse) {
+      throw new NotFoundException(`Warehouse with code "${warehouseCode}" not found`);
+    }
+
+    const validSerials: string[] = [];
+    const invalidSerials: string[] = [];
+    const errors: SerialValidationError[] = [];
+
+    // Check duplicates 
+    const serialCounts = new Map<string, number>();
+    serials.forEach(s => serialCounts.set(s, (serialCounts.get(s) || 0) + 1));
+
+    for (const serial of serials) {
+      // Check duplicate
+      if (serialCounts.get(serial)! > 1) {
+        if (!invalidSerials.includes(serial)) {
+          invalidSerials.push(serial);
+          errors.push({
+            serial,
+            reason: 'DUPLICATE',
+            message: `Serial "${serial}" bị trùng lặp trong danh sách`
+          });
+        }
+        continue;
+      }
+
+      // Find by serial
+      const device = await this.deviceModel.findOne({ serial })
+        .populate('warehouseId')
+        .exec();
+
+      if (!device) {
+        invalidSerials.push(serial);
+        errors.push({
+          serial,
+          reason: 'NOT_FOUND',
+          message: `Serial "${serial}" không tồn tại trong hệ thống`
+        });
+        continue;
+      }
+
+      // Check device model
+      if (device.deviceModel !== deviceModel) {
+        invalidSerials.push(serial);
+        errors.push({
+          serial,
+          reason: 'WRONG_MODEL',
+          message: `Serial "${serial}" thuộc model "${device.deviceModel}", không phải "${deviceModel}"`,
+          currentModel: device.deviceModel
+        });
+        continue;
+      }
+
+      // Check warehouse
+      const currentWarehouse = device.warehouseId as any;
+      if (currentWarehouse._id.toString() !== warehouse._id.toString()) {
+        invalidSerials.push(serial);
+        errors.push({
+          serial,
+          reason: 'WRONG_WAREHOUSE',
+          message: `Serial "${serial}" đang ở kho "${currentWarehouse.name}", không phải "${warehouse.name}"`,
+          currentWarehouse: currentWarehouse.name
+        });
+        continue;
+      }
+
+      // All checks passed
+      validSerials.push(serial);
+    }
+
+    return {
+      valid: invalidSerials.length === 0,
+      validSerials,
+      invalidSerials,
+      errors
+    };
   }
 }

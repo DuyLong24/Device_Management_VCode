@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { importService } from '../services/import.service';
 import { inventorySessionService } from '../services/inventory-session.service';
 import type { ImportProductUI } from '../pages/Import/components/ImportProductTable';
+import { exportImportPDF } from '../utils/export-import-pdf';
 
 export const useImportDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -41,9 +42,19 @@ export const useImportDetail = () => {
         };
     });
 
-    // Actions
-    const handlePrint = () => {
-        message.info('Tính năng in đang phát triển');
+    const handlePrint = async () => {
+        if (!importData) {
+            message.error('Chưa có dữ liệu phiếu nhập');
+            return;
+        }
+        try {
+            message.loading({ content: 'Đang tạo file PDF...', key: 'pdf_export' });
+            await exportImportPDF(importData);
+            message.success({ content: 'Đã xuất file PDF thành công!', key: 'pdf_export' });
+        } catch (error) {
+            console.error(error);
+            message.error({ content: 'Lỗi khi tạo PDF', key: 'pdf_export' });
+        }
     };
 
     const handleEdit = () => {

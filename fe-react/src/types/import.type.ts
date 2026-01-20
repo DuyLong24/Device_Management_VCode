@@ -26,6 +26,7 @@ export interface DeviceImport {
     status: ImportStatus;
     inventoryStatus: InventoryStatus;
     productType: string;
+    origin: string;
     importDate: string;
     importedBy: string;
     supplier: string;

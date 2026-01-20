@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, Button, Space, Table, Tag, Form, Tooltip, Empty, Spin, Typography } from 'antd';
-import { PlusOutlined, EyeOutlined, FileExcelOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, EyeOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +10,8 @@ import type { DeviceImport, ImportProduct } from '../../types/import.type';
 import { IMPORT_LABELS, IMPORT_TABLE_COLUMNS, IMPORT_STATUS_CONFIG, IMPORT_ORIGIN_CONFIG } from '../../constants/import.constants';
 import { StatisticsCards, PageHeader, FilterBar } from '../../components/ui';
 import { FileTextOutlined, ClockCircleOutlined, SyncOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { exportImportPDF } from '../../utils/export-import-pdf';
+import { message } from 'antd';
 
 const { Text } = Typography;
 
@@ -156,6 +158,43 @@ export default function ImportListPage() {
         navigate(`/import/${importCode}`);
     };
 
+    const handleExportPdf = async (record: ImportRecord) => {
+        try {
+            message.loading({ content: 'Đang tạo file PDF...', key: 'pdf_export' });
+
+            // Map ImportRecord to DeviceImport for PDF generator
+            const deviceImportData: any = {
+                id: record.key,
+                code: record.importCode,
+                status: 'COMPLETED', // Approximate
+                inventoryStatus: record.inventoryStatus,
+                productType: record.productType,
+                origin: record.origin || 'IMPORT',
+                importDate: record.importDate,
+                importedBy: record.importedBy,
+                supplier: record.supplier,
+                handoverPerson: record.handoverPerson,
+                notes: record.notes,
+                totalItem: record.totalProductCodes,
+                totalQuantity: record.totalQuantity,
+                serialImported: record.serialImported,
+                products: record.products.map(p => ({
+                    productCode: p.productCode,
+                    quantity: p.quantity,
+                    boxCount: p.boxCount || 0,
+                    itemsPerBox: p.itemsPerBox || 0,
+                    serialImported: p.serialImported,
+                }))
+            };
+
+            await exportImportPDF(deviceImportData);
+            message.success({ content: 'Đã xuất file PDF thành công!', key: 'pdf_export' });
+        } catch (error) {
+            console.error(error);
+            message.error({ content: 'Lỗi khi tạo PDF', key: 'pdf_export' });
+        }
+    };
+
     const statisticsCards = [
         {
             title: 'Tổng phiếu nhập',
@@ -284,7 +323,7 @@ export default function ImportListPage() {
                     <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.key)}>
                         {IMPORT_LABELS.BTN_DETAIL}
                     </Button>
-                    <Button size="small" icon={<FileExcelOutlined />} onClick={() => console.log('Export serial:', record.importCode)}>
+                    <Button size="small" icon={<FileTextOutlined />} onClick={() => handleExportPdf(record)}>
                         {IMPORT_LABELS.BTN_EXPORT_SERIAL}
                     </Button>
                 </Space>

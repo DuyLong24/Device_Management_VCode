@@ -60,6 +60,22 @@ export class Device extends Document {
   customer?: { warrantyDays: number };
 
   @Prop()
+  warrantyActivatedDate?: Date;
+
+  @Prop()
+  warrantyNote?: string;
+
+  // --- KHO LOẠI BỎ & HẾT BH ---
+  @Prop()
+  removeReason?: string;
+
+  @Prop()
+  removeDate?: Date;
+
+  @Prop()
+  warrantyExpiredDate?: Date; // Cache for easy query/sort
+
+  @Prop()
   warehouseUpdatedAt?: Date;
 
   @Prop()

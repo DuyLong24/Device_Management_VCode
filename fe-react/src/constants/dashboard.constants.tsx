@@ -109,7 +109,7 @@ export const MENU_LABELS = {
     },
     ALL_SERIALS: 'Danh sách tổng',
     INTERNAL_GROUP: 'Kho nội bộ',
-    EXPORTED_GROUP: 'Đã xuất khỏi kho',
+    EXPORTED_GROUP: 'Đã xuất',
     EXPORT: {
         ROOT: 'Quản lý xuất kho',
         LIST: 'Danh sách phiếu xuất kho',

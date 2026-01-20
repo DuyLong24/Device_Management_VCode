@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsMongoId, IsOptional, IsEnum } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsObject, IsDateString, IsMongoId } from 'class-validator';
 
 export class CreateDeviceDto {
   @IsNotEmpty()
@@ -28,4 +28,22 @@ export class CreateDeviceDto {
 
   @IsMongoId()
   currentExportId!: string;
+
+  @IsOptional()
+  removeReason?: string;
+
+  @IsOptional()
+  removeDate?: Date;
+
+  @IsOptional()
+  @IsDateString()
+  warrantyExpiredDate?: Date;
+
+  @IsOptional()
+  @IsDateString()
+  warrantyActivatedDate?: Date;
+
+  @IsOptional()
+  @IsString()
+  warrantyNote?: string;
 }

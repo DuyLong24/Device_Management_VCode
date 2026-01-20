@@ -9,7 +9,8 @@ import {
     ImportOutlined,
     SwapOutlined,
     DownloadOutlined,
-    SearchOutlined
+    SearchOutlined,
+    EyeOutlined
 } from '@ant-design/icons';
 
 import { deviceService } from '../../services/device.service';
@@ -103,10 +104,38 @@ export default function WarehousePage() {
         if (colConfig.key === 'serial') {
             return {
                 ...base,
-                render: (text: string) => <Button type="link" style={{ padding: 0 }}>{text}</Button>
+                render: (text: string) => (
+                    <Button
+                        type="link"
+                        style={{ padding: 0 }}
+                        onClick={() => navigate(`/serial/${text}`)}
+                    >
+                        {text}
+                    </Button>
+                )
             };
         }
-        if (colConfig.type === 'date' || colConfig.key.includes('Date')) {
+        if (colConfig.type === 'action') {
+            return {
+                ...base,
+                title: 'Thao tác',
+                align: 'center' as const,
+                width: 100,
+                fixed: 'right' as const,
+                render: (_: any, record: any) => (
+                    <Button
+                        type="text"
+                        icon={<EyeOutlined />}
+                        size="small"
+                        title="Xem chi tiết"
+                        onClick={() => navigate(`/serial/${record.serial}`)}
+                    >
+                        Chi tiết
+                    </Button>
+                )
+            };
+        }
+        if (colConfig.type === 'date' || colConfig.key.includes('Date') || colConfig.key.includes('At')) {
             return {
                 ...base,
                 render: (date: string) => date ? new Date(date).toLocaleDateString('vi-VN') : '-'

@@ -7,6 +7,7 @@ import { EXPORT_STATUS } from '../constants/export-status.constant';
 import type { DeviceExport } from '../types/export.type';
 import { exportService } from '../services/export.service';
 import { axiosInstance } from '../configs/axios.config';
+import { DEVICE_STATUS } from '../constants/dashboard.constants';
 
 // Export types
 export interface SerialValidationError {
@@ -80,7 +81,7 @@ export const useCreateExport = () => {
         setLoadingDevices(true);
         try {
             const warehousesRes = await axiosInstance.get('/warehouses');
-            const readyWarehouse = warehousesRes.data?.find((w: any) => w.code === 'READY_TO_EXPORT');
+            const readyWarehouse = warehousesRes.data?.find((w: any) => w.code === DEVICE_STATUS.READY_TO_EXPORT);
 
             if (!readyWarehouse) {
                 message.warning('Không tìm thấy kho sẵn sàng xuất');
@@ -120,7 +121,7 @@ export const useCreateExport = () => {
                 }));
 
                 setDeviceOptions(options);
-                logger.info('Loaded device codes from READY_TO_EXPORT', { count: options.length });
+                logger.info(`Loaded device codes from ${DEVICE_STATUS.READY_TO_EXPORT}`, { count: options.length });
             }
         } catch (error) {
             logger.error('Failed to fetch device codes', { error });
@@ -214,7 +215,7 @@ export const useCreateExport = () => {
             const response = await axiosInstance.post('/devices/validate-serials', {
                 serials,
                 deviceModel,
-                warehouseCode: 'READY_TO_EXPORT',
+                warehouseCode: DEVICE_STATUS.READY_TO_EXPORT,
                 operation: 'EXPORT'
             });
 

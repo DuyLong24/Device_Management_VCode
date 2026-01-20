@@ -36,7 +36,11 @@ export class DeviceService {
   }
 
   async findAll(filter: any = {}): Promise<Device[]> {
-    return this.deviceRepository.findAll(filter);
+    return this.deviceModel.find(filter)
+      .populate('warehouseId')
+      .populate('currentExportId') // Populate to get exportDate, customer
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   async findAllWithPagination(filter: any, options: any) {
@@ -73,6 +77,35 @@ export class DeviceService {
       throw new BadRequestException(ERROR_MESSAGES.DEVICE.DELETE_FAILED);
     }
     return deletedDevice;
+  }
+
+  async findBySerialWithDetail(serial: string): Promise<any> {
+    const device = await this.deviceModel.findOne({ serial })
+      .populate('warehouseId')
+      //.populate('importId') 
+      .populate({
+        path: 'importId',
+        populate: { path: 'createdBy', select: 'fullName' }
+      })
+      .populate('currentExportId')
+      .populate('qcBy', 'fullName')
+      .exec();
+
+    if (!device) {
+      throw new NotFoundException(ERROR_MESSAGES.DEVICE.NOT_FOUND);
+    }
+
+    const history = await this.historyModel.find({ deviceId: device._id })
+      .populate('fromWarehouseId', 'name color')
+      .populate('toWarehouseId', 'name color')
+      .populate('actorId', 'name')
+      .sort({ createdAt: 1 })
+      .exec();
+
+    return {
+      device,
+      history
+    };
   }
 
   async exportExcel(filter: any): Promise<Buffer> {

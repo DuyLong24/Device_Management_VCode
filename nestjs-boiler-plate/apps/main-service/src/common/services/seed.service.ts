@@ -77,9 +77,9 @@ export class SeedService implements OnModuleInit {
 
   // --- 3. SEED WAREHOUSES & TRANSITIONS (Config-driven) ---
   private async seedWarehousesAndTransitions() {
-    const internalGroup = await this.ensureGroup('Kho nội bộ', 1);
-    const warrantyGroup = await this.ensureGroup('Kho bảo hành', 2);
-    const exportedGroup = await this.ensureGroup('Đã xuất', 3);
+    const internalGroup = await this.ensureGroup('Kho nội bộ', 'INTERNAL', 1);
+    const warrantyGroup = await this.ensureGroup('Kho bảo hành', 'WARRANTY', 2);
+    const exportedGroup = await this.ensureGroup('Đã xuất', 'EXPORTED', 3);
 
     // B. Tạo Warehouses (Logic + UI Config)
     const warehousesData = [
@@ -96,8 +96,10 @@ export class SeedService implements OnModuleInit {
             { key: 'serial', title: 'Serial', type: 'text' },
             { key: 'deviceModel', title: 'Mã Model', type: 'text' },
             { key: 'name', title: 'Tên thiết bị', type: 'text' },
+            { key: 'mac', title: 'MAC Address', type: 'text' },
             { key: 'importDate', title: 'Ngày nhập', type: 'date' },
-            // { key: 'importBy', title: 'Người nhập', type: 'text' } // Field not yet in Device entity, comment out or add mock
+            { key: 'importId.createdBy.fullName', title: 'Người nhập', type: 'text' },
+            { key: 'action', title: 'Thao tác', type: 'action' }
           ],
           actions: [ActionType.SCAN, ActionType.IMPORT_EXCEL, ActionType.TRANSFER],
           quickTransfers: [
@@ -129,8 +131,10 @@ export class SeedService implements OnModuleInit {
             { key: 'serial', title: 'Serial', type: 'text' },
             { key: 'deviceModel', title: 'Mã Model', type: 'text' },
             { key: 'name', title: 'Tên thiết bị', type: 'text' },
-            { key: 'importDate', title: 'Ngày nhập', type: 'date' },
-            { key: 'qcStatus', title: 'Trạng thái QC', type: 'status' }
+            { key: 'mac', title: 'MAC Address', type: 'text' },
+            { key: 'warehouseUpdatedAt', title: 'Ngày QC', type: 'date' },
+            { key: 'qcBy.name', title: 'Người QC', type: 'text' },
+            { key: 'action', title: 'Thao tác', type: 'action' }
           ],
           actions: [ActionType.SCAN, ActionType.IMPORT_EXCEL, ActionType.TRANSFER],
           quickTransfers: [
@@ -162,7 +166,9 @@ export class SeedService implements OnModuleInit {
             { key: 'serial', title: 'Serial', type: 'text' },
             { key: 'deviceModel', title: 'Mã Model', type: 'text' },
             { key: 'name', title: 'Tên thiết bị', type: 'text' },
-            { key: 'qcNote', title: 'Lý do lỗi', type: 'text' }
+            { key: 'warehouseUpdatedAt', title: 'Ngày QC', type: 'date' },
+            { key: 'qcNote', title: 'Lý do lỗi', type: 'text' },
+            { key: 'action', title: 'Thao tác', type: 'action' }
           ],
           actions: [ActionType.SCAN, ActionType.IMPORT, ActionType.TRANSFER],
           quickTransfers: [
@@ -185,7 +191,7 @@ export class SeedService implements OnModuleInit {
       {
         code: WarehouseCode.IN_WARRANTY,
         name: 'Đang bảo hành NCC',
-        groupId: warrantyGroup._id,
+        groupId: internalGroup._id,
         color: 'orange',
         orderIndex: 1,
         icon: 'tool',
@@ -193,8 +199,10 @@ export class SeedService implements OnModuleInit {
           columns: [
             { key: 'serial', title: 'Serial', type: 'text' },
             { key: 'deviceModel', title: 'Mã Model', type: 'text' },
-            { key: 'sentDate', title: 'Ngày gửi', type: 'date' },
-            { key: 'supplier', title: 'Nhà cung cấp', type: 'text' }
+            { key: 'name', title: 'Tên thiết bị', type: 'text' },
+            { key: 'warehouseUpdatedAt', title: 'Ngày gửi', type: 'date' },
+            { key: 'warrantyNote', title: 'Ghi chú', type: 'text' },
+            { key: 'action', title: 'Thao tác', type: 'action' }
           ],
           actions: [ActionType.TRANSFER], // Receive is technically a transfer back
           quickTransfers: [
@@ -213,19 +221,65 @@ export class SeedService implements OnModuleInit {
           ]
         }
       },
-      // 5. Đã bán
+      // 5. Đã xuất - Trong BH
       {
         code: WarehouseCode.SOLD,
         name: 'Đã xuất - Trong BH',
         groupId: exportedGroup._id,
         color: 'gray',
         orderIndex: 1,
-        icon: 'shopping-cart',
+        icon: 'export',
         config: {
           columns: [
             { key: 'serial', title: 'Serial', type: 'text' },
-            { key: 'customer', title: 'Khách hàng', type: 'text' },
-            { key: 'exportDate', title: 'Ngày xuất', type: 'date' }
+            { key: 'deviceModel', title: 'Mã Model', type: 'text' },
+            { key: 'name', title: 'Tên thiết bị', type: 'text' },
+            { key: 'exportDate', title: 'Ngày xuất', type: 'date' },
+            { key: 'warrantyActivatedDate', title: 'Ngày kích hoạt BH', type: 'date' },
+            { key: 'warrantyExpiredDate', title: 'Hết hạn BH', type: 'date' },
+            { key: 'action', title: 'Thao tác', type: 'action' }
+          ],
+          actions: [],
+          quickTransfers: []
+        }
+      },
+      // 6. Đã xuất - Hết BH
+      {
+        code: WarehouseCode.SOLD_WARRANTY,
+        name: 'Đã xuất - Hết BH',
+        groupId: exportedGroup._id,
+        color: 'purple',
+        orderIndex: 2,
+        icon: 'field-time',
+        config: {
+          columns: [
+            { key: 'serial', title: 'Serial', type: 'text' },
+            { key: 'deviceModel', title: 'Mã Model', type: 'text' },
+            { key: 'name', title: 'Tên thiết bị', type: 'text' },
+            { key: 'exportDate', title: 'Ngày xuất', type: 'date' },
+            { key: 'warrantyExpiredDate', title: 'Ngày hết BH', type: 'date' },
+            { key: 'action', title: 'Thao tác', type: 'action' }
+          ],
+          actions: [],
+          quickTransfers: []
+        }
+      },
+      // 7. Lỗi - Loại bỏ
+      {
+        code: WarehouseCode.REMOVED,
+        name: 'Lỗi - Loại bỏ',
+        groupId: exportedGroup._id,
+        color: 'volcano',
+        orderIndex: 3,
+        icon: 'delete',
+        config: {
+          columns: [
+            { key: 'serial', title: 'Serial', type: 'text' },
+            { key: 'deviceModel', title: 'Mã Model', type: 'text' },
+            { key: 'name', title: 'Tên thiết bị', type: 'text' },
+            { key: 'removeReason', title: 'Lý do loại bỏ', type: 'text' },
+            { key: 'warehouseUpdatedAt', title: 'Ngày loại bỏ', type: 'date' },
+            { key: 'action', title: 'Thao tác', type: 'action' }
           ],
           actions: [],
           quickTransfers: []
@@ -254,7 +308,19 @@ export class SeedService implements OnModuleInit {
       { from: WarehouseCode.DEFECT, to: WarehouseCode.IN_WARRANTY, type: TransitionType.SEND_WARRANTY },
 
       // In Warranty -> Ready (Nhận lại dùng được)
-      { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.READY_TO_EXPORT, type: TransitionType.RECEIVE_WARRANTY },
+      { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.READY_TO_EXPORT, type: TransitionType.RECEIVE_WARRANTY }, // KEEP for backward compatibility or quick fix
+
+      // [NEW] In Warranty -> Removed (Đổi mới - Serial cũ hủy)
+      { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.REMOVED, type: TransitionType.WARRANTY_REPLACE },
+
+      // [NEW] In Warranty -> Pending QC (Sửa xong - Cần QC lại)
+      { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.PENDING_QC, type: TransitionType.WARRANTY_REPAIR },
+
+      // [NEW] Defect -> Removed (Thanh lý hàng lỗi)
+      { from: WarehouseCode.DEFECT, to: WarehouseCode.REMOVED, type: TransitionType.SCRAP },
+
+      // [NEW] Sold -> Pending QC (Khách trả hàng)
+      { from: WarehouseCode.SOLD, to: WarehouseCode.PENDING_QC, type: TransitionType.CUSTOMER_RETURN },
 
       // Ready -> Sold (Xuất bán)
       { from: WarehouseCode.READY_TO_EXPORT, to: WarehouseCode.SOLD, type: TransitionType.EXPORT },
@@ -349,15 +415,29 @@ export class SeedService implements OnModuleInit {
 
   // --- HELPER METHODS ---
 
-  private async ensureGroup(name: string, orderIndex: number) {
+  private async ensureGroup(name: string, code: string, orderIndex: number) {
     let group = await this.warehouseGroupModel.findOne({ name });
+
+    if (!group) {
+      // Try finding by code if name changed (rare but good for consistency)
+      group = await this.warehouseGroupModel.findOne({ code });
+    }
+
     if (!group) {
       group = await this.warehouseGroupModel.create({
         name,
+        code,
         orderIndex,
         isActive: true
       });
-      this.logger.log(`Created Group: ${name}`);
+      this.logger.log(`Created Group: ${name} [${code}]`);
+    } else {
+      // Update code if missing
+      if (!group.code) {
+        group.code = code;
+        await group.save();
+        this.logger.log(`Updated Group Code: ${name} -> ${code}`);
+      }
     }
     return group;
   }

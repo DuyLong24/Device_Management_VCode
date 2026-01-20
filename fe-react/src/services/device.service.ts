@@ -18,8 +18,14 @@ export interface Device {
     status?: string;
     qcStatus?: string;
     importDate?: string;
-    warehouseId?: string;
+    warehouseId?: any;
     categoryId?: string;
+    description?: string;
+    mac?: string;
+    warehouseUpdatedAt?: string;
+    qcNote?: string;
+    warrantyActivatedDate?: string;
+    warrantyExpiredDate?: string;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -67,6 +73,11 @@ export const deviceService = {
 
     bulkTransfer: async (data: { deviceIds: string[], toWarehouseId: string, note?: string }) => {
         const response = await axiosInstance.post('/devices/bulk-transfer', data);
+        return response.data;
+    },
+
+    getBySerialWithDetail: async (serial: string) => {
+        const response = await axiosInstance.get<{ device: Device; history: any[] }>(`/devices/serial/${serial}/detail`);
         return response.data;
     }
 };

@@ -20,3 +20,4 @@ export const WAREHOUSE_TABLE_COLUMNS = {
     NOTE: 'Ghi chú',
     ACTIONS: 'Thao tác'
 };
+

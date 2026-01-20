@@ -12,6 +12,9 @@ export class WarehouseGroup extends Document {
   @Prop({ required: true })
   orderIndex!: number;
 
+  @Prop({ required: true, unique: true })
+  code!: string;
+
   @Prop({ default: true })
   isActive!: boolean;
 

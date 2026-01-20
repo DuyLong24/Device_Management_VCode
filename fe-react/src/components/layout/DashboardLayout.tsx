@@ -66,8 +66,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         if (warehouses) {
             warehouses.forEach((wh: Warehouse) => {
-                const group = groups?.find((g: any) => g._id === wh.groupId || g._id === (wh.groupId as any)?._id)
-                    || (typeof wh.groupId === 'object' ? wh.groupId : { _id: 'other', name: 'Khác', code: 'OTHER' });
+                const whGroupId = (typeof wh.groupId === 'object' && wh.groupId) ? (wh.groupId as any)._id || (wh.groupId as any).id : wh.groupId;
+
+                const group = groups?.find((g: any) => {
+                    const gId = g._id || g.id;
+                    return gId === whGroupId;
+                }) || (typeof wh.groupId === 'object' ? wh.groupId : { _id: 'other', name: 'Khác', code: 'OTHER' });
+
+                console.log(`[MENU] Warehouse: ${wh.name} (${wh.code})`);
+                console.log(`       whGroupId: ${whGroupId}`);
+                console.log(`       Mapped Group: ${group?.name} (${group?.code})`);
+
+                console.log(`[MENU] Warehouse: ${wh.name}, Group: ${group.name}, GroupCode: ${group.code}`);
 
                 const item = {
                     key: `warehouse-${wh.code}`,
@@ -78,9 +88,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
                 // Logic phân nhóm kho theo code
                 if (group.code === 'INTERNAL' || group.name === 'Kho nội bộ') {
+                    console.log(`  -> Added to INTERNAL`);
                     internalItems.push(item);
-                } else if (group.code === 'EXPORTED' || group.name === 'Đã xuất khỏi kho') {
+                } else if (group.code === 'EXPORTED' || group.name === 'Đã xuất') {
+                    console.log(`  -> Added to EXPORTED`);
                     exportedItems.push(item);
+                } else {
+                    console.log(`  -> NOT MATCHED - group.code: ${group.code}, group.name: ${group.name}`);
                 }
             });
         }

@@ -58,6 +58,11 @@ export class DeviceController {
     return this.deviceService.findAllWithPagination(filter, options);
   }
 
+  @Get('serial/:serial/detail')
+  async findBySerialWithDetail(@Param('serial') serial: string) {
+    return this.deviceService.findBySerialWithDetail(serial);
+  }
+
   @Get(':id')
   async findById(@Param('id') id: string) {
     return this.deviceService.findById(id);

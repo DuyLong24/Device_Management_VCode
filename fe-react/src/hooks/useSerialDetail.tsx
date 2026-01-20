@@ -1,0 +1,164 @@
+import { useMemo } from 'react';
+import { message } from 'antd';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { deviceService } from '../services/device.service';
+import { warehouseService } from '../services/warehouse.service';
+
+import {
+    InboxOutlined,
+    ExportOutlined,
+    ToolOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    SwapOutlined,
+    SyncOutlined
+} from '@ant-design/icons';
+
+const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
+    const timeline: any[] = [];
+
+    // 1. IMPORT Event
+    if (device.importDate || device.importId) {
+        timeline.push({
+            date: device.importDate || device.createdAt,
+            type: 'IMPORT',
+            description: 'Nhập kho',
+            actor: device.importId?.createdBy?.fullName || 'N/A',
+            note: device.importId?.note,
+        });
+    }
+
+    // 2. EXPORT Event
+    if (device.currentExportId) {
+        timeline.push({
+            date: device.currentExportId.exportDate || device.currentExportId.createdAt,
+            type: 'EXPORT',
+            description: 'Xuất kho',
+            actor: device.currentExportId.createdBy?.fullName || 'N/A',
+            exportSheetCode: device.currentExportId.code,
+            note: device.currentExportId.note
+        });
+    }
+
+    // 3. HISTORY Events
+    rawHistory.forEach(h => {
+        const item: any = {
+            date: h.createdAt,
+            actor: h.actorId?.fullName || 'Unknown',
+            note: h.note,
+            rawAction: h.action,
+            fromWarehouse: h.fromWarehouseId,
+            toWarehouse: h.toWarehouseId,
+        };
+
+        if (h.action === 'IMPORT') {
+            // Skip
+        } else if (h.action.includes('EXPORT')) {
+            if (!timeline.some(t => t.type === 'EXPORT')) {
+                item.type = 'EXPORT';
+                item.description = 'Xuất kho';
+                timeline.push(item);
+            }
+        } else if (h.action.includes('WARRANTY_SEND')) {
+            item.type = 'WARRANTY_SEND';
+            item.description = 'Gửi bảo hành';
+            timeline.push(item);
+        } else if (h.action.includes('WARRANTY_RECEIVE')) {
+            item.type = 'WARRANTY_RECEIVE';
+            item.description = 'Nhận từ bảo hành';
+            timeline.push(item);
+        } else {
+            // TRANSFER / QC
+            item.type = 'TRANSFER';
+            item.description = `Chuyển kho: ${h.fromWarehouseId?.name} -> ${h.toWarehouseId?.name}`;
+
+            if (h.action === 'QC_PASS') item.qcResult = 'PASS';
+            if (h.action === 'QC_FAIL') item.qcResult = 'FAIL';
+            timeline.push(item);
+        }
+    });
+
+    return timeline.sort((a, b) => new Date(a.date).valueOf() - new Date(b.date).valueOf());
+};
+
+export const getTimelineIcon = (event: any) => {
+    if (event.type === 'IMPORT') return <InboxOutlined style={{ color: '#1890ff' }} />;
+    if (event.type === 'EXPORT') return <ExportOutlined style={{ color: '#52c41a' }} />;
+    if (event.type === 'WARRANTY_SEND') return <ToolOutlined style={{ color: '#faad14' }} />;
+    if (event.type === 'WARRANTY_RECEIVE') return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+
+    if (event.type === 'TRANSFER') {
+        if (event.qcResult === 'PASS') return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+        if (event.qcResult === 'FAIL') return <CloseCircleOutlined style={{ color: '#ff4d4f' }} />;
+        return <SwapOutlined style={{ color: '#1890ff' }} />;
+    }
+    return <SyncOutlined style={{ color: '#1890ff' }} />;
+};
+
+export function useSerialDetail(serial?: string) {
+    const queryClient = useQueryClient();
+
+    // 1. Fetch Device Detail
+    const { data, isLoading, refetch } = useQuery({
+        queryKey: ['serial-detail', serial],
+        queryFn: () => deviceService.getBySerialWithDetail(serial || ''),
+        enabled: !!serial
+    });
+
+    // 2. Fetch Warehouses 
+    const { data: warehouses } = useQuery({
+        queryKey: ['warehouses'],
+        queryFn: warehouseService.getAll
+    });
+
+    const device = data?.device;
+    const history = (data?.history || []);
+
+    const timeline = useMemo(() =>
+        device ? mapHistoryToTimeline(device, history) : [],
+        [device, history]);
+
+    // Current Warehouse Config
+    const currentWarehouse = useMemo(() =>
+        warehouses?.find(w => w.id === device?.warehouseId?._id || w.id === device?.warehouseId),
+        [warehouses, device]);
+
+    // Available Transitions
+    const availableTransitions = useMemo(() => {
+        if (!currentWarehouse?.config?.quickTransfers) return [];
+        return currentWarehouse.config.quickTransfers.map((qt: any) => {
+            const targetWh = warehouses?.find(w => w.code === qt.to);
+            return {
+                ...qt,
+                targetId: targetWh?.id,
+                targetName: targetWh?.name
+            };
+        });
+    }, [currentWarehouse, warehouses]);
+
+    // Transfer Mutation
+    const { mutate: transferDevice, isPending: isTransferring } = useMutation({
+        mutationFn: deviceService.bulkTransfer,
+        onSuccess: () => {
+            message.success('Chuyển kho thành công!');
+            refetch(); // Refresh data
+            queryClient.invalidateQueries({ queryKey: ['devices'] });
+        },
+        onError: (err: any) => message.error(err.response?.data?.message || 'Lỗi chuyển kho')
+    });
+
+    return {
+        device,
+        history,
+        timeline,
+        isLoading,
+        refetch,
+
+        currentWarehouse,
+        availableTransitions,
+        warehouses,
+
+        transferDevice,
+        isTransferring
+    };
+}

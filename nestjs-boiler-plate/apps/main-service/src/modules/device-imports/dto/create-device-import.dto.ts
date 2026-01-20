@@ -60,7 +60,7 @@ export class CreateDeviceImportDto {
   importedBy: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   supplier: string;
 
   @IsString()

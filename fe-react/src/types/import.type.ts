@@ -13,8 +13,8 @@ export interface ImportProduct {
     _id?: string;
     productCode: string;
     quantity: number;
-    boxCount: number;
-    itemsPerBox: number;
+    boxCount?: number;
+    itemsPerBox?: number;
     serialImported?: number;
     productName?: string;
     expectedSerials?: string[];
@@ -45,7 +45,8 @@ export interface CreateImportDto {
     products: {
         productCode: string;
         quantity: number;
-        boxCount: number;
-        itemsPerBox: number;
+        boxCount?: number;
+        itemsPerBox?: number;
+        expectedSerials?: string[];
     }[];
 }

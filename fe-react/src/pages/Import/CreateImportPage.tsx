@@ -47,8 +47,8 @@ interface ProductItem {
     key: string;
     productCode: string;
     quantity: number;
-    boxCount: number;
-    itemsPerBox: number;
+    boxCount: number | null;
+    itemsPerBox: number | null;
     serialImported: number;
     expectedSerials: string[];
 }
@@ -72,9 +72,21 @@ export default function CreateImportPage() {
     const [tempSerials, setTempSerials] = useState<string>('');
     const [activeTab, setActiveTab] = useState('manual');
 
+    // NEW: Auto generate code
+    const generateImportCode = () => {
+        const today = dayjs();
+        const dateStr = today.format('DD/MM/YYYY');
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        // Format: PN-dd/MM/yyyy-xxx
+        return `PN-${dateStr}-${random}`;
+    };
+
     useEffect(() => {
         const initData = async () => {
             try {
+                // Set default code
+                form.setFieldValue('code', generateImportCode());
+
                 const [users, categories, devices] = await Promise.all([
                     userService.getAll(),
                     categoryService.getAll(),
@@ -111,17 +123,13 @@ export default function CreateImportPage() {
 
     const handleFormChange = () => setHasUnsavedChanges(true);
 
-    const checkPackagingMatch = (quantity: number, boxCount: number, itemsPerBox: number): boolean => {
-        return quantity === boxCount * itemsPerBox;
-    };
-
     const handleAddProduct = () => {
         const newProduct: ProductItem = {
             key: `product-${Date.now()}`,
             productCode: '',
             quantity: 1,
-            boxCount: 1,
-            itemsPerBox: 1,
+            boxCount: null,
+            itemsPerBox: null,
             serialImported: 0,
             expectedSerials: []
         };
@@ -138,9 +146,7 @@ export default function CreateImportPage() {
         setProductList(productList.map(item => {
             if (item.key === key) {
                 const newItem = { ...item, [field]: value };
-                if (field === 'boxCount' || field === 'itemsPerBox') {
-                    newItem.quantity = newItem.boxCount * newItem.itemsPerBox;
-                }
+                // Removed auto-calc quantity logic
                 if (field === 'productCode') {
                     newItem.expectedSerials = [];
                 }
@@ -228,12 +234,7 @@ export default function CreateImportPage() {
             if (!p.productCode) return { valid: false, message: 'Vui lòng chọn Mã sản phẩm' };
             if (p.quantity <= 0) return { valid: false, message: 'Số lượng phải lớn hơn 0' };
 
-            if (p.expectedSerials.length > 0 && p.expectedSerials.length !== p.quantity) {
-                return {
-                    valid: false,
-                    message: `Sản phẩm ${p.productCode}: Số lượng Serial (${p.expectedSerials.length}) không khớp với số lượng nhập (${p.quantity})`
-                };
-            }
+            // Removed strict serial count check
         }
         return { valid: true };
     };
@@ -251,6 +252,7 @@ export default function CreateImportPage() {
             setLoading(true);
 
             const payload = {
+                code: values.code, // Send code to BE
                 productType: values.productType,
                 origin: values.origin,
                 importDate: values.importDate.toISOString(),
@@ -262,8 +264,8 @@ export default function CreateImportPage() {
                 products: productList.map(p => ({
                     productCode: p.productCode,
                     quantity: p.quantity,
-                    boxCount: p.boxCount,
-                    itemsPerBox: p.itemsPerBox,
+                    boxCount: p.boxCount || undefined,
+                    itemsPerBox: p.itemsPerBox || undefined,
                     expectedSerials: p.expectedSerials
                 })),
             };
@@ -350,15 +352,15 @@ export default function CreateImportPage() {
                         value={record.boxCount}
                         className="w-1/2"
                         placeholder="Hộp"
-                        onChange={(val) => handleProductChange(record.key, 'boxCount', val || 1)}
+                        onChange={(val) => handleProductChange(record.key, 'boxCount', val)}
                     />
-                    <span className="text-gray-400 select-none">×</span>
+                    <span className="text-gray-400 select-none">x</span>
                     <InputNumber
-                        min={1}
+                        // min={1}
                         value={record.itemsPerBox}
                         className="w-1/2"
                         placeholder="SP"
-                        onChange={(val) => handleProductChange(record.key, 'itemsPerBox', val || 1)}
+                        onChange={(val) => handleProductChange(record.key, 'itemsPerBox', val)}
                     />
                 </div>
             ),
@@ -393,14 +395,13 @@ export default function CreateImportPage() {
             width: '15%',
             align: 'center',
             render: (_, record) => {
-                const pkgMatch = checkPackagingMatch(record.quantity, record.boxCount, record.itemsPerBox);
                 const serialMatch = record.expectedSerials.length === record.quantity;
                 const serialEmpty = record.expectedSerials.length === 0;
 
                 return (
                     <Space direction="vertical" size="small">
-                        {pkgMatch ? <Tag color="success">Quy cách OK</Tag> : <Tag color="warning">Lệch Quy cách</Tag>}
-                        {!serialEmpty && (serialMatch ? <Tag color="blue">Serial OK</Tag> : <Tag color="error">Lệch Serial</Tag>)}
+                        {!serialEmpty && (serialMatch ? <Tag color="blue">Serial OK</Tag> : <Tag color="warning">Serial chưa khớp SL</Tag>)}
+                        {serialEmpty && <Tag color="default">Chưa nhập Serial</Tag>}
                     </Space>
                 )
             }
@@ -452,8 +453,8 @@ export default function CreateImportPage() {
                         initialValues={{ importDate: dayjs(), origin: 'IMPORT', productType: 'Camera' }}
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6"
                     >
-                        <Form.Item label="Mã phiếu nhập" className="col-span-1">
-                            <Input value="Hệ thống tự sinh sau khi lưu" disabled className="!text-gray-500! font-medium !bg-gray-100! cursor-not-allowed" />
+                        <Form.Item name="code" label="Mã phiếu nhập" className="col-span-1" rules={[{ required: true, message: 'Vui lòng nhập mã phiếu' }]}>
+                            <Input placeholder="PN-dd/mm/yyyy-xxx" />
                         </Form.Item>
 
                         <Form.Item name="productType" label="Loại hàng hóa" rules={[{ required: true }]} className="col-span-1 md:col-span-2 lg:col-span-1">
@@ -476,7 +477,7 @@ export default function CreateImportPage() {
                             <Select placeholder="Chọn người nhập" options={userOptions} showSearch optionFilterProp="label" />
                         </Form.Item>
 
-                        <Form.Item name="supplier" label="Đơn vị xuất (Nhà cung cấp)" rules={[{ required: true }]} className="col-span-1 md:col-span-2 lg:col-span-1">
+                        <Form.Item name="supplier" label="Đơn vị xuất (Tùy chọn)" className="col-span-1 md:col-span-2 lg:col-span-1">
                             <Input placeholder="Nhập tên nhà cung cấp" />
                         </Form.Item>
 

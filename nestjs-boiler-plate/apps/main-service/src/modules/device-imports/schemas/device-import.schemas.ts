@@ -22,7 +22,7 @@ export class DeviceImport extends Document {
   @Prop()
   importedBy: string;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   supplier: string;
 
   @Prop()

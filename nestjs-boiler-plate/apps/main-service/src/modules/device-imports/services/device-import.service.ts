@@ -20,19 +20,8 @@ export class DeviceImportService {
     if (createDto.status === 'PENDING') {
       const products = createDto.products || [];
       for (const product of products) {
-        const p: any = product; // TODO: Define Interface for Product inside DTO
+        const p: any = product;
         const serials = p.expectedSerials || [];
-
-        // 1. Check khớp số lượng
-        // Nếu đã nhập serial (>0) thì bắt buộc phải nhập ĐỦ bằng quantity
-        if (serials.length > 0 && serials.length !== p.quantity) {
-          throw new BadRequestException(
-            ERROR_MESSAGES.DEVICE_IMPORT.SERIAL_QUANTITY_MISMATCH
-              .replace('{product}', p.productCode)
-              .replace('{serials}', serials.length)
-              .replace('{quantity}', p.quantity)
-          );
-        }
 
         // 2. Check trùng lặp nội bộ
         if (serials.length > 0) {

@@ -8,6 +8,7 @@ import ImportListPage from './pages/Import/ImportListPage';
 import CreateImportPage from './pages/Import/CreateImportPage';
 import InventoryListPage from './pages/Import/InventoryListPage';
 import InventoryCheckPage from './pages/Import/InventoryCheckPage';
+import ImportDetailPage from './pages/Import/ImportDetailPage';
 import AllSerialsPage from './pages/AllSerialsPage';
 import WarehousePage from './pages/Warehouse/WarehousePage';
 import ExportListPage from './pages/Export/ExportListPage';
@@ -59,6 +60,9 @@ function App() {
                 <Route path="inventory-list" element={<InventoryListPage />} />
 
                 <Route path="inventory-check/:importId" element={<InventoryCheckPage />} />
+
+                {/* 4. Chi tiết: /import/:id */}
+                <Route path=":id" element={<ImportDetailPage />} />
               </Route>
 
               {/* MODULE XUẤT KHO */}

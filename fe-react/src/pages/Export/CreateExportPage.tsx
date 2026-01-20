@@ -47,25 +47,22 @@ export default function CreateExportPage() {
             width: 700,
             content: (
                 <div>
-                    <p style={{ marginBottom: 12, fontSize: 14 }}>
-                        Có <strong style={{ color: '#ff4d4f' }}>{validation.invalidSerials.length}</strong> serial không hợp lệ
+                    <p className="mb-3 text-sm">
+                        Có <strong className="text-red-500">{validation.invalidSerials.length}</strong> serial không hợp lệ
                         trên tổng <strong>{uniqueSerials.length}</strong> serial.
                     </p>
-                    <div style={{ maxHeight: 300, overflow: 'auto', border: '1px solid #f0f0f0', borderRadius: 4, padding: 12 }}>
+                    <div className="max-h-[300px] overflow-auto border border-gray-200 rounded p-3">
                         {validation.errors.map((err, idx) => (
-                            <div key={idx} style={{
-                                padding: '8px 0',
-                                borderBottom: idx < validation.errors.length - 1 ? '1px solid #f5f5f5' : 'none'
-                            }}>
-                                <Text strong style={{ color: '#ff4d4f' }}>{err.serial}</Text>
+                            <div key={idx} className={`py-2 ${idx < validation.errors.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                <Text strong className="text-red-500">{err.serial}</Text>
                                 <br />
-                                <Text type="secondary" style={{ fontSize: 12 }}>{err.message}</Text>
+                                <Text type="secondary" className="text-xs">{err.message}</Text>
                             </div>
                         ))}
                     </div>
                     {validation.validSerials.length > 0 && (
-                        <p style={{ marginTop: 16, marginBottom: 0 }}>
-                            Bạn có muốn chỉ lưu <strong style={{ color: '#52c41a' }}>{validation.validSerials.length}</strong> serial hợp lệ không?
+                        <p className="mt-4 mb-0">
+                            Bạn có muốn chỉ lưu <strong className="text-green-500">{validation.validSerials.length}</strong> serial hợp lệ không?
                         </p>
                     )}
                 </div>
@@ -95,12 +92,12 @@ export default function CreateExportPage() {
             render: (value: string, record: any) => {
                 const inStock = value ? getDeviceStock(value) : 0;
                 return (
-                    <Space direction="vertical" style={{ width: '100%' }} size={4}>
+                    <Space direction="vertical" className="w-full" size={4}>
                         <Select
                             showSearch
                             value={value || undefined}
                             placeholder="Chọn mã thiết bị"
-                            style={{ width: '100%' }}
+                            className="w-full"
                             options={deviceOptions}
                             loading={loadingDevices}
                             onChange={(val) => handleDeviceChange(record.key, 'deviceModel', val)}
@@ -110,9 +107,9 @@ export default function CreateExportPage() {
                             }
                         />
                         {value && (
-                            <Text type="secondary" style={{ fontSize: 12 }}>
+                            <Text type="secondary" className="text-xs">
                                 Tồn kho:{' '}
-                                <Text strong style={{ color: inStock > 0 ? '#52c41a' : '#ff4d4f' }}>
+                                <Text strong className={inStock > 0 ? "text-green-500" : "text-red-500"}>
                                     {inStock}
                                 </Text>
                             </Text>
@@ -134,18 +131,18 @@ export default function CreateExportPage() {
                 const inStock = record.deviceModel ? getDeviceStock(record.deviceModel) : 0;
                 const isExceed = value > inStock;
                 return (
-                    <Space direction="vertical" style={{ width: '100%' }} size={4}>
+                    <Space direction="vertical" className="w-full" size={4}>
                         <InputNumber
                             min={1}
                             max={inStock}
                             value={value}
-                            style={{ width: '100%' }}
+                            className="w-full"
                             onChange={(val) => handleDeviceChange(record.key, 'quantity', val || 1)}
                             placeholder="SL"
                             status={isExceed ? 'error' : undefined}
                         />
                         {isExceed && (
-                            <Text type="danger" style={{ fontSize: 12 }}>
+                            <Text type="danger" className="text-xs">
                                 <WarningOutlined /> Vượt tồn kho!
                             </Text>
                         )}
@@ -165,7 +162,7 @@ export default function CreateExportPage() {
                 const isEmpty = count === 0;
 
                 return (
-                    <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                    <Space direction="vertical" size={4} className="w-full">
                         <Button
                             type={isEmpty ? 'dashed' : 'default'}
                             size="small"
@@ -178,7 +175,7 @@ export default function CreateExportPage() {
                         {!isEmpty && (
                             <Text
                                 type={isMatch ? 'success' : 'danger'}
-                                style={{ fontSize: 11, textAlign: 'center', display: 'block' }}
+                                className="text-[11px] block text-center"
                             >
                                 {count}/{required} {isMatch ? '✓' : '⚠'}
                             </Text>
@@ -202,10 +199,10 @@ export default function CreateExportPage() {
         <div className="p-6 max-w-full mx-auto">
             {contextHolder}
             {/* Page Header */}
-            <div style={{ marginBottom: 24 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="mb-6">
+                <div className="flex justify-between items-start">
                     <div>
-                        <Title level={3} style={{ margin: 0 }}>
+                        <Title level={3} className="!m-0">
                             Thêm mới phiếu xuất kho
                         </Title>
                         <Text type="secondary">Tạo mới phiếu xuất kho và danh sách thiết bị đi kèm</Text>
@@ -366,10 +363,10 @@ export default function CreateExportPage() {
                     }
                 >
                     {deviceList.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                        <div className="text-center py-10">
                             <Text type="secondary">Chưa có thiết bị nào</Text>
                             <br />
-                            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDevice} style={{ marginTop: 16 }}>
+                            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddDevice} className="mt-4">
                                 Thêm thiết bị đầu tiên
                             </Button>
                         </div>
@@ -384,23 +381,23 @@ export default function CreateExportPage() {
                                 scroll={{ x: 800 }}
                             />
                             <Divider />
-                            <div style={{ textAlign: 'right' }}>
+                            <div className="text-right">
                                 <Space size="large">
                                     <Text strong>
                                         Tổng mã SP:{' '}
-                                        <Text type="success" style={{ fontSize: 18 }}>
+                                        <Text type="success" className="text-lg">
                                             {deviceList.length}
                                         </Text>
                                     </Text>
                                     <Text strong>
                                         Tổng số lượng:{' '}
-                                        <Text type="success" style={{ fontSize: 18 }}>
+                                        <Text type="success" className="text-lg">
                                             {deviceList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
                                         </Text>
                                     </Text>
                                     <Text strong>
                                         Serial đã chọn:{' '}
-                                        <Text type="warning" style={{ fontSize: 18 }}>
+                                        <Text type="warning" className="text-lg">
                                             0 / {deviceList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
                                         </Text>
                                     </Text>
@@ -411,18 +408,8 @@ export default function CreateExportPage() {
                 </Card>
             </Form>
 
-            <div
-                style={{
-                    position: 'sticky',
-                    bottom: 0,
-                    background: '#fff',
-                    padding: '16px 0',
-                    marginTop: 24,
-                    borderTop: '1px solid #f0f0f0',
-                    zIndex: 10,
-                }}
-            >
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <div className="sticky bottom-0 bg-white py-4 mt-6 border-t border-gray-200 z-10">
+                <div className="flex justify-end gap-2">
                     <Button icon={<SaveOutlined />} onClick={handleSaveDraft} loading={loading} size="large">
                         Lưu nháp
                     </Button>
@@ -449,7 +436,7 @@ export default function CreateExportPage() {
                 <Tabs activeKey={activeTab} onChange={setActiveTab}>
                     <Tabs.TabPane tab="Nhập thủ công" key="manual">
                         <div>
-                            <p style={{ marginBottom: 8, color: '#666' }}>
+                            <p className="mb-2 text-gray-600">
                                 Nhập mỗi serial trên một dòng:
                             </p>
                             <Input.TextArea
@@ -457,17 +444,17 @@ export default function CreateExportPage() {
                                 value={tempSerials}
                                 onChange={(e) => setTempSerials(e.target.value)}
                                 placeholder={'SN001\nSN002\nSN003\n...'}
-                                style={{ fontFamily: 'monospace' }}
+                                className="font-mono"
                             />
-                            <p style={{ marginTop: 8, fontSize: 12, color: '#999' }}>
+                            <p className="mt-2 text-xs text-gray-400">
                                 Đã nhập: {tempSerials.split('\n').filter(s => s.trim()).length} serial
                             </p>
                         </div>
                     </Tabs.TabPane>
 
                     <Tabs.TabPane tab={<span><UploadOutlined /> Upload Excel</span>} key="excel">
-                        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                            <p style={{ marginBottom: 16, color: '#666' }}>
+                        <div className="text-center py-10 px-5">
+                            <p className="mb-4 text-gray-600">
                                 Upload file Excel với danh sách serial (cột A, bỏ qua dòng 1):
                             </p>
                             <Button
@@ -498,7 +485,7 @@ export default function CreateExportPage() {
                             >
                                 Chọn file Excel
                             </Button>
-                            <p style={{ marginTop: 16, fontSize: 12, color: '#999' }}>
+                            <p className="mt-4 text-xs text-gray-400">
                                 Hỗ trợ: .xlsx, .xls
                             </p>
                         </div>

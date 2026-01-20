@@ -74,21 +74,18 @@ export default function TransferModal({ open, onCancel, onConfirm, count, option
                     name="toWarehouse"
                     rules={[{ required: true, message: 'Vui lòng chọn kho đích' }]}
                 >
-                    <Radio.Group style={{ width: '100%' }}>
-                        <Space direction="vertical" style={{ width: '100%' }}>
+                    <Radio.Group className="w-full">
+                        <Space direction="vertical" className="w-full">
                             {options.map((opt) => (
                                 <Card
                                     key={opt.to}
                                     size="small"
-                                    style={{
-                                        cursor: 'pointer',
-                                        borderColor: '#d9d9d9',
-                                    }}
+                                    className="cursor-pointer border-gray-300 hover:border-blue-400 transition-colors"
                                     hoverable
                                     onClick={() => form.setFieldValue('toWarehouse', opt.to)}
                                 >
-                                    <Radio value={opt.to} style={{ width: '100%' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <Radio value={opt.to} className="w-full">
+                                        <div className="flex items-center gap-3">
                                             <span style={{ color: getColor(opt), fontSize: 20 }}>
                                                 {getIcon(opt)}
                                             </span>
@@ -98,7 +95,7 @@ export default function TransferModal({ open, onCancel, onConfirm, count, option
                                                 </div>
                                                 {opt.description && (
                                                     <div>
-                                                        <Text type="secondary" style={{ fontSize: 12 }}>
+                                                        <Text type="secondary" className="text-xs">
                                                             {opt.description}
                                                         </Text>
                                                     </div>

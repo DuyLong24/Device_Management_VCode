@@ -124,7 +124,7 @@ const ExportListPage = () => {
             render: (text: string, record: DeviceExport) => (
                 <div>
                     <div>{text}</div>
-                    {record.customer && <div style={{ fontSize: 12, color: '#999' }}>{record.customer}</div>}
+                    {record.customer && <div className="text-xs text-gray-400">{record.customer}</div>}
                 </div>
             ),
         },
@@ -237,7 +237,7 @@ const ExportListPage = () => {
             {/* Table */}
             <Card>
                 {loading ? (
-                    <div style={{ textAlign: 'center', padding: '50px 0' }}>
+                    <div className="text-center py-12">
                         <Spin size="large" tip="Đang tải dữ liệu..." />
                     </div>
                 ) : filteredData.length === 0 ? (

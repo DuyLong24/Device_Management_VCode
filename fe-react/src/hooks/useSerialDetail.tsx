@@ -82,17 +82,17 @@ const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
 };
 
 export const getTimelineIcon = (event: any) => {
-    if (event.type === 'IMPORT') return <InboxOutlined style={{ color: '#1890ff' }} />;
-    if (event.type === 'EXPORT') return <ExportOutlined style={{ color: '#52c41a' }} />;
-    if (event.type === 'WARRANTY_SEND') return <ToolOutlined style={{ color: '#faad14' }} />;
-    if (event.type === 'WARRANTY_RECEIVE') return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+    if (event.type === 'IMPORT') return <InboxOutlined className="text-blue-500" />;
+    if (event.type === 'EXPORT') return <ExportOutlined className="text-green-500" />;
+    if (event.type === 'WARRANTY_SEND') return <ToolOutlined className="text-yellow-500" />;
+    if (event.type === 'WARRANTY_RECEIVE') return <CheckCircleOutlined className="text-green-500" />;
 
     if (event.type === 'TRANSFER') {
-        if (event.qcResult === 'PASS') return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
-        if (event.qcResult === 'FAIL') return <CloseCircleOutlined style={{ color: '#ff4d4f' }} />;
-        return <SwapOutlined style={{ color: '#1890ff' }} />;
+        if (event.qcResult === 'PASS') return <CheckCircleOutlined className="text-green-500" />;
+        if (event.qcResult === 'FAIL') return <CloseCircleOutlined className="text-red-500" />;
+        return <SwapOutlined className="text-blue-500" />;
     }
-    return <SyncOutlined style={{ color: '#1890ff' }} />;
+    return <SyncOutlined className="text-blue-500" />;
 };
 
 export function useSerialDetail(serial?: string) {

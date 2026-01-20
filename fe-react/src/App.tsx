@@ -15,7 +15,6 @@ import CreateExportPage from './pages/Export/CreateExportPage';
 import ExportDetailPage from './pages/Export/ExportDetailPage';
 import SerialDetailPage from './pages/Warehouse/SerialDetailPage';
 import ExportCheckPage from './pages/Export/ExportCheckPage';
-// import ExportProcessPage from './pages/Export/ExportProcessPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -72,10 +71,8 @@ function App() {
               </Route>
 
               {/* --- CÁC MODULE KHÁC --- */}
-              {/* --- CÁC MODULE KHÁC --- */}
               <Route path="all-serials" element={<AllSerialsPage />} />
               <Route path="serial/:serial" element={<SerialDetailPage />} />
-              {/* Route path="warehouse/PENDING_QC" element={<QCPendingPage />} */}
               <Route path="warehouse/:code" element={<WarehousePage />} />
 
               <Route path="*" element={<div>404 Not Found</div>} />

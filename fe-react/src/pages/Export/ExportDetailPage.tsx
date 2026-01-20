@@ -23,7 +23,7 @@ export default function ExportDetailPage() {
 
     if (loading || !exportInfo) {
         return (
-            <div style={{ textAlign: 'center', padding: '100px 0' }}>
+            <div className="text-center py-24">
                 <Spin size="large" tip="Đang tải dữ liệu..." />
             </div>
         );
@@ -37,7 +37,7 @@ export default function ExportDetailPage() {
                     <Button icon={<ArrowLeftOutlined />} onClick={handleBackToList}>
                         Danh sách
                     </Button>
-                    <Title level={4} style={{ margin: 0 }}>
+                    <Title level={4} className="!m-0">
                         Chi tiết phiếu xuất: {exportInfo.code}
                     </Title>
                 </Space>

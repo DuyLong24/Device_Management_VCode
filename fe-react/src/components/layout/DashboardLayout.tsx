@@ -209,7 +209,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const currentBreadcrumbTitle = (findMenuItemLabel(menuItems, selectedKey) as ReactNode) || MENU_LABELS.DASHBOARD;
 
     return (
-        <Layout style={{ minHeight: '100vh' }}>
+        <Layout className="min-h-screen">
             <Sider
                 collapsible
                 collapsed={collapsed}
@@ -224,6 +224,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     bottom: 0,
                     zIndex: 100,
                 }}
+                className="bg-[#001529]"
                 theme="dark"
             >
                 <div className="flex items-center justify-center p-4 border-b border-gray-700 bg-[#001529] sticky top-0 z-10">
@@ -233,7 +234,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
                 {isLoading ? (
                     <div className="flex justify-center mt-10">
-                        <Spin indicator={<LoadingOutlined style={{ fontSize: 24, color: '#fff' }} spin />} />
+                        <Spin indicator={<LoadingOutlined className="text-2xl text-white" spin />} />
                     </div>
                 ) : (
                     <Menu
@@ -243,41 +244,28 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         openKeys={openKeys}
                         onOpenChange={setOpenKeys}
                         items={menuItems}
-                        style={{ borderRight: 0 }}
+                        className="border-r-0"
                     />
                 )}
             </Sider>
 
             <Layout
-                className="transition-all duration-200 ease-in-out"
-                style={{ marginLeft: collapsed ? 80 : 250 }}
+                className={`transition-all duration-200 ease-in-out ${collapsed ? 'ml-[80px]' : 'ml-[250px]'}`}
             >
                 <Header
-                    style={{
-                        padding: '0 24px',
-                        background: '#fff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 99,
-                        height: 64,
-                        width: '100%'
-                    }}
+                    className="px-6 !bg-white flex items-center justify-between shadow-sm sticky top-0 z-[99] h-16 w-full"
                 >
                     <Breadcrumb items={[{ title: 'Trang chủ' }, { title: currentBreadcrumbTitle }]} />
 
                     <Space size="large">
                         <Dropdown menu={{ items: notificationItems }} trigger={['click']}>
                             <Badge count={8} overflowCount={99}>
-                                <BellOutlined style={{ fontSize: 20, cursor: 'pointer' }} />
+                                <BellOutlined className="text-xl cursor-pointer" />
                             </Badge>
                         </Dropdown>
 
                         <Dropdown menu={{ items: userMenuItems }} trigger={['click']}>
-                            <Space style={{ cursor: 'pointer' }}>
+                            <Space className="cursor-pointer">
                                 <Avatar icon={<UserOutlined />} />
                                 <Text strong>nhanvien</Text>
                             </Space>
@@ -285,11 +273,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </Space>
                 </Header>
 
-                <Content style={{ margin: '24px 16px', overflow: 'initial', minHeight: 'calc(100vh - 112px)' }}>
+                <Content className="m-6 overflow-initial min-h-[calc(100vh-112px)]">
                     {children ? children : <Outlet />}
                 </Content>
 
-                <Footer style={{ textAlign: 'center', padding: '12px 50px', background: '#f0f2f5' }}>
+                <Footer className="text-center py-3 px-12 bg-gray-100">
                     <Text type="secondary">Quản lý kho Alvar © 2026 - Version 1.0.0</Text>
                 </Footer>
             </Layout>

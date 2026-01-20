@@ -224,7 +224,7 @@ export default function ExportProcessPage() {
 
                     {isDraft && (
                         <Card title="Quét thiết bị" className="shadow-sm border-blue-200 border">
-                            <Space.Compact style={{ width: '100%' }} className="mb-4">
+                            <Space.Compact className="w-full mb-4">
                                 <Input
                                     ref={inputRef}
                                     placeholder="Quét serial tại đây..."

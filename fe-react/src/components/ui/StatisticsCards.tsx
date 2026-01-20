@@ -36,7 +36,7 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({ cards }) => {
                             title={card.title}
                             value={card.value}
                             prefix={card.prefix}
-                            valueStyle={{ color: card.color }}
+                            valueStyle={{ color: card.color }} // Keep for dynamic color from Props
                         />
                     </Card>
                 </Col>

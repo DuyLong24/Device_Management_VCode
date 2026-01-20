@@ -42,18 +42,18 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     return (
         <Card className="mb-6">
             <Form form={form} layout="inline" onFinish={onFilter} onValuesChange={onValuesChange}>
-                <Row gutter={16} align="middle" style={{ width: '100%' }}>
+                <Row gutter={16} align="middle" className="w-full">
                     <Col xs={24} sm={24} md={8} lg={8}>
-                        <Form.Item name="keyword" style={{ marginBottom: 0, width: '100%' }}>
+                        <Form.Item name="keyword" className="mb-0 w-full">
                             <Input placeholder={searchPlaceholder} prefix={<SearchOutlined />} allowClear />
                         </Form.Item>
                     </Col>
 
                     {showDateRange && (
                         <Col xs={24} sm={12} md={6} lg={6}>
-                            <Form.Item name="dateRange" style={{ marginBottom: 0, width: '100%' }}>
+                            <Form.Item name="dateRange" className="mb-0 w-full">
                                 <RangePicker
-                                    style={{ width: '100%' }}
+                                    className="w-full"
                                     format="DD/MM/YYYY"
                                     placeholder={['Từ ngày', 'Đến ngày']}
                                 />
@@ -63,14 +63,14 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
                     {statusOptions.length > 0 && (
                         <Col xs={24} sm={12} md={6} lg={6}>
-                            <Form.Item name="status" style={{ marginBottom: 0, width: '100%' }}>
+                            <Form.Item name="status" className="mb-0 w-full">
                                 <Select placeholder={statusPlaceholder} allowClear options={statusOptions} />
                             </Form.Item>
                         </Col>
                     )}
 
                     <Col xs={24} sm={24} md={4} lg={4}>
-                        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                        <Space className="w-full justify-end">
                             {onFilter && (
                                 <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
                                     Lọc

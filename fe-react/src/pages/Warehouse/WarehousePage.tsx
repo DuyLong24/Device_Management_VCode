@@ -180,22 +180,22 @@ export default function WarehousePage() {
     if (!code) return null;
 
     return (
-        <div style={{ padding: 24 }}>
+        <div className="p-6">
             {/* Header */}
-            <div style={{ marginBottom: 16 }}>
+            <div className="mb-4">
                 <Button
                     type="link"
                     icon={<ArrowLeftOutlined />}
                     onClick={() => navigate('/dashboard')}
-                    style={{ paddingLeft: 0, marginBottom: 8 }}
+                    className="pl-0 mb-2"
                 >
                     Quay lại Danh sách tổng
                 </Button>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="flex justify-between items-center">
                     <div>
-                        <Title level={3} style={{ margin: 0 }}>
+                        <Title level={3} className="!m-0">
                             📦 {currentWarehouse ? currentWarehouse.name : code}
-                            <span style={{ fontSize: 16, color: '#8c8c8c', marginLeft: 12, fontWeight: 'normal' }}>
+                            <span className="text-base text-gray-400 ml-3 font-normal">
                                 {deviceData?.totalResults || 0} serial
                             </span>
                         </Title>
@@ -205,7 +205,7 @@ export default function WarehousePage() {
             </div>
 
             {/* Toolbar */}
-            <Card size="small" style={{ marginBottom: 16 }}>
+            <Card size="small" className="mb-4">
                 <Space wrap>
                     {currentWarehouse?.config?.actions?.includes('scan') && (
                         <Button type="primary" icon={<ScanOutlined />}>Quét mã</Button>
@@ -230,19 +230,19 @@ export default function WarehousePage() {
             </Card>
 
             {/* Filters */}
-            <Card size="small" style={{ marginBottom: 16 }}>
+            <Card size="small" className="mb-4">
                 <Space wrap>
                     <Input
                         placeholder="Tìm serial, mã SP..."
                         prefix={<SearchOutlined />}
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
-                        style={{ width: 300 }}
+                        className="w-[300px]"
                         allowClear
                     />
                     <Select
                         placeholder="Lọc theo sản phẩm"
-                        style={{ width: 200 }}
+                        className="w-[200px]"
                         value={selectedProduct}
                         onChange={setSelectedProduct}
                         allowClear
@@ -254,7 +254,7 @@ export default function WarehousePage() {
             {/* Table Area */}
             <Card bodyStyle={{ padding: 0 }}>
                 {selectedRowKeys.length > 0 && (
-                    <div style={{ padding: '8px 16px', backgroundColor: '#e6f7ff', borderBottom: '1px solid #f0f0f0' }}>
+                    <div className="px-4 py-2 bg-blue-50 border-b border-gray-200">
                         <Space>
                             <Checkbox
                                 checked={true}

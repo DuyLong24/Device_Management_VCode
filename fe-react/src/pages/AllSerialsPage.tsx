@@ -54,7 +54,7 @@ export default function AllSerialsPage() {
             dataIndex: 'serial',
             key: 'serial',
             fixed: 'left',
-            width: 'auto',
+            width: 200, // Fixed width to prevent overlap
             render: (text) => (
                 <Button
                     type="link"
@@ -217,7 +217,7 @@ export default function AllSerialsPage() {
                         <Select
                             mode="multiple"
                             placeholder="Lọc theo trạng thái"
-                            style={{ width: '100%' }}
+                            className="w-full"
                             value={selectedWarehouses}
                             onChange={setSelectedWarehouses}
                             options={warehouseOptions}
@@ -228,7 +228,7 @@ export default function AllSerialsPage() {
                     <Col xs={24} md={6}>
                         <RangePicker
                             placeholder={['Từ ngày', 'Đến ngày']}
-                            style={{ width: '100%' }}
+                            className="w-full"
                             value={dateRange}
                             onChange={setDateRange}
                             format="DD/MM/YYYY"

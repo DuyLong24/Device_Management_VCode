@@ -13,7 +13,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, extra }
     return (
         <div className="mb-6 flex justify-between items-center">
             <div>
-                <Title level={3} style={{ margin: 0 }}>
+                <Title level={3} className="!m-0">
                     {title}
                 </Title>
                 {subtitle && <Typography.Text type="secondary">{subtitle}</Typography.Text>}

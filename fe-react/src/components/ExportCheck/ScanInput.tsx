@@ -27,7 +27,7 @@ export const ScanInput = ({ onScan, disabled = false }: ScanInputProps) => {
 
     return (
         <Card title="Quét Serial" className="mb-4">
-            <Space.Compact style={{ width: '100%' }}>
+            <Space.Compact className="w-full">
                 <Input
                     size="large"
                     placeholder="Quét hoặc nhập serial..."
@@ -43,7 +43,7 @@ export const ScanInput = ({ onScan, disabled = false }: ScanInputProps) => {
                 </Button>
             </Space.Compact>
 
-            <Space style={{ marginTop: 16 }}>
+            <Space className="mt-4">
                 <Button icon={<PlusOutlined />} disabled={disabled}>
                     Nhập thủ công
                 </Button>

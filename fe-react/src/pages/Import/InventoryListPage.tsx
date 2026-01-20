@@ -183,26 +183,26 @@ export default function InventoryListPage() {
     ];
 
     return (
-        <div style={{ padding: 24 }}>
-            <Title level={3} style={{ marginBottom: 8, marginTop: 0 }}>{INVENTORY_LABELS.PAGE_TITLE_LIST}</Title>
+        <div className="p-6">
+            <Title level={3} className="!mb-2 !mt-0">{INVENTORY_LABELS.PAGE_TITLE_LIST}</Title>
 
-            <Card>
+            <Card className="mb-4">
                 <Alert
                     message="Điều kiện kiểm kê"
                     description={
                         <div>
                             <Text>Chỉ hiển thị các phiếu nhập đáp ứng điều kiện sau:</Text>
-                            <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: 20 }}>
+                            <ul className="mt-2 mb-0 pl-5">
                                 <li>
                                     <Text strong type="secondary">Chưa kiểm kê:</Text> Phiếu mới nhập, chưa thực hiện kiểm kê
                                 </li>
                                 <li>
-                                    <Text strong style={{ color: '#1890ff' }}>Đang kiểm kê:</Text> Phiếu đang trong quá trình kiểm kê, có thể tiếp tục quét serial
+                                    <Text strong className="text-blue-500">Đang kiểm kê:</Text> Phiếu đang trong quá trình kiểm kê, có thể tiếp tục quét serial
                                 </li>
                             </ul>
-                            <Divider style={{ margin: '12px 0' }} />
+                            <Divider className="my-3" />
                             <Text type="secondary">Các phiếu bị ẩn (không hiển thị trong danh sách):</Text>
-                            <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: 20 }}>
+                            <ul className="mt-2 mb-0 pl-5">
                                 <li>
                                     <Text type="success">Đã kiểm kê:</Text> Phiếu đã hoàn tất, không thể kiểm kê lại
                                 </li>
@@ -211,15 +211,14 @@ export default function InventoryListPage() {
                     }
                     type="info"
                     showIcon
-                    style={{ marginBottom: 16 }}
                 />
             </Card>
 
-            <Card size="small" style={{ marginBottom: 16 }}>
+            <Card size="small" className="mb-4">
                 <Form form={form} layout="inline" onValuesChange={handleFilter}>
                     <Form.Item name="keyword"><Input prefix={<SearchOutlined />} placeholder={INVENTORY_LABELS.SEARCH_PLACEHOLDER} /></Form.Item>
                     <Form.Item name="status">
-                        <Select style={{ width: 150 }} placeholder="Trạng thái" allowClear>
+                        <Select className="w-[150px]" placeholder="Trạng thái" allowClear>
                             <Select.Option value="pending">Chưa kiểm kê</Select.Option>
                             <Select.Option value="in-progress">Đang kiểm kê</Select.Option>
                         </Select>
@@ -248,17 +247,17 @@ export default function InventoryListPage() {
                 width={600}
             >
                 {selectedImport && (
-                    <Space direction="vertical" style={{ width: '100%' }} size="large">
-                        <div style={{ background: '#e6f7ff', border: '1px solid #91caff', padding: 16, borderRadius: 6 }}>
-                            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-                                <div style={{ background: '#1890ff', color: '#fff', borderRadius: '50%', width: 20, height: 20, textAlign: 'center', fontSize: 12 }}>i</div>
+                    <Space direction="vertical" className="w-full" size="large">
+                        <div className="bg-blue-50 border border-blue-300 p-4 rounded-md">
+                            <div className="flex gap-2 items-center mb-2">
+                                <div className="bg-blue-500 text-white rounded-full w-5 h-5 text-center text-xs leading-5">i</div>
                                 <Text strong>Phiếu nhập: {selectedImport.code}</Text>
                             </div>
-                            <div style={{ paddingLeft: 28, fontSize: 13, color: '#555' }}>
+                            <div className="pl-7 text-sm text-gray-600">
                                 <div>Nhà cung cấp: <b>{selectedImport.supplier}</b></div>
                                 <div>Tổng số lượng: <b>{selectedImport.totalQuantity}</b></div>
-                                <div style={{ marginTop: 4 }}>
-                                    <Text style={{ color: '#1890ff' }}>{getInventoryStatusConfig(selectedImport.inventoryStatus).text}</Text>
+                                <div className="mt-1">
+                                    <Text className="text-blue-500">{getInventoryStatusConfig(selectedImport.inventoryStatus).text}</Text>
                                     <Text type="secondary"> - Serial đã quét: <b>{selectedImport.serialImported || 0}</b></Text>
                                 </div>
                             </div>
@@ -290,8 +289,8 @@ export default function InventoryListPage() {
                                         />
                                     </List.Item>
                                 )}
-                                locale={{ emptyText: <Text type="secondary" style={{ padding: 10, display: 'block' }}>Chưa có phiên nào.</Text> }}
-                                style={{ marginTop: 8, border: '1px solid #f0f0f0', borderRadius: 4, padding: '0 12px' }}
+                                locale={{ emptyText: <Text type="secondary" className="p-2.5 block">Chưa có phiên nào.</Text> }}
+                                className="mt-2 border border-gray-200 rounded px-3"
                             />
                         </div>
 

@@ -89,7 +89,7 @@ export default function SerialDetailPage() {
                         >
                             Quay lại
                         </Button>
-                        <Title level={3} className="!m-0">
+                        <Title level={3} className="m-0!">
                             Chi tiết Serial: {device.serial}
                         </Title>
                         <Text type="secondary">ID: {device.id}</Text>

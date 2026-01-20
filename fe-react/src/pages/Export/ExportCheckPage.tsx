@@ -37,7 +37,7 @@ export default function ExportCheckPage() {
                     >
                         {currentStep === 'select' ? 'Danh sách xuất' : 'Chọn phiếu khác'}
                     </Button>
-                    <Title level={3} style={{ margin: 0 }}>
+                    <Title level={3} className="!m-0">
                         {currentStep === 'select' ? 'Quét Tuân Thủ - Chọn Phiếu Xuất' : `Quét Serial - ${selectedExport?.exportCode}`}
                     </Title>
                 </Space>

@@ -145,11 +145,11 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
                 </Button>,
             ]}
         >
-            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+            <Space direction="vertical" size={16} className="w-full">
                 <Alert type="warning" message="Sản phẩm sẽ chuyển sang Kho Lỗi (Defect)." showIcon />
 
                 <Card size="small" title="Nhập/Quét Serial">
-                    <Space.Compact style={{ width: '100%' }}>
+                    <Space.Compact className="w-full">
                         <Input
                             ref={serialInputRef}
                             placeholder="Nhập serial..."

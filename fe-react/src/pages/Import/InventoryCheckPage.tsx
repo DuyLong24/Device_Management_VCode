@@ -313,11 +313,11 @@ export default function InventoryCheckPage() {
       {sessionStatus === 'in-progress' && (
         <>
           <Card title="Quét serial kiểm kê" className="mb-6 shadow-sm">
-            <Space direction="vertical" style={{ width: '100%' }} size="middle">
+            <Space direction="vertical" className="w-full" size="middle">
               <div className="bg-blue-50 p-4 rounded border border-blue-100">
                 <Text strong className="block mb-2 text-blue-800">1. Chọn sản phẩm đang kiểm kê <span className="text-red-500">*</span></Text>
                 <Select
-                  style={{ width: '100%' }}
+                  className="w-full"
                   size="large"
                   placeholder="-- Chọn mã sản phẩm --"
                   options={productOptions}
@@ -329,7 +329,7 @@ export default function InventoryCheckPage() {
               <Row gutter={16}>
                 <Col span={24}>
                   <Text strong className="block mb-2">2. Quét hoặc nhập Serial</Text>
-                  <Space.Compact style={{ width: '100%' }}>
+                  <Space.Compact className="w-full">
                     <Input
                       ref={inputRef}
                       size="large"
@@ -365,7 +365,7 @@ export default function InventoryCheckPage() {
 
               <Row gutter={16}>
                 <Col xs={24} md={12}>
-                  <Space direction="vertical" style={{ width: '100%' }} size="small">
+                  <Space direction="vertical" className="w-full" size="small">
                     <Text strong>Nhập thủ công nhiều serial</Text>
                     <Input.TextArea
                       rows={5}
@@ -380,7 +380,7 @@ export default function InventoryCheckPage() {
                 </Col>
 
                 <Col xs={24} md={12}>
-                  <Space direction="vertical" style={{ width: '100%' }} size="small">
+                  <Space direction="vertical" className="w-full" size="small">
                     <Text strong>Import từ file Excel</Text>
                     <Dragger
                       beforeUpload={() => false}
@@ -440,7 +440,7 @@ export default function InventoryCheckPage() {
           <Card className={`shadow-sm border-l-4 ${stats.missingCount > 0 ? 'border-l-red-500 bg-red-50' : 'border-l-green-500 bg-green-50'}`}>
             <Flex justify="space-between" align="center">
               <div>
-                <Text strong style={{ fontSize: 16 }}>Hoàn tất kiểm kê</Text>
+                <Text strong className="text-base">Hoàn tất kiểm kê</Text>
                 <br />
                 <Text type="secondary">
                   {stats.missingCount > 0 ? (

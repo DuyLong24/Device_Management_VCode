@@ -245,7 +245,7 @@ export default function ImportListPage() {
             key: 'totalQuantity',
             width: 100,
             align: 'center',
-            render: (value) => <Tag color="blue" style={{ fontSize: 14, fontWeight: 500 }}>{value}</Tag>,
+            render: (value) => <Tag color="blue" className="text-sm font-medium">{value}</Tag>,
         },
         {
             title: IMPORT_TABLE_COLUMNS.STATUS,
@@ -267,7 +267,7 @@ export default function ImportListPage() {
             render: (notes) =>
                 notes ? (
                     <Tooltip title={notes}>
-                        <InfoCircleOutlined style={{ fontSize: 16, color: '#1890ff', cursor: 'pointer' }} />
+                        <InfoCircleOutlined className="text-base text-blue-500 cursor-pointer" />
                     </Tooltip>
                 ) : (
                     <Text type="secondary">—</Text>
@@ -293,7 +293,7 @@ export default function ImportListPage() {
     ];
 
     return (
-        <div style={{ minHeight: '100%', padding: 24 }}>
+        <div className="min-h-full p-6">
             <PageHeader
                 title={IMPORT_LABELS.PAGE_TITLE}
                 extra={
@@ -322,11 +322,11 @@ export default function ImportListPage() {
 
             <Card bordered={false} bodyStyle={{ padding: 0 }}>
                 {loading && data.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '50px 0' }}>
+                    <div className="text-center py-12">
                         <Spin size="large" tip="Đang tải dữ liệu..." />
                     </div>
                 ) : filteredData.length === 0 ? (
-                    <Empty description={IMPORT_LABELS.NOT_FOUND} image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ padding: 40 }}>
+                    <Empty description={IMPORT_LABELS.NOT_FOUND} image={Empty.PRESENTED_IMAGE_SIMPLE} className="p-10">
                         <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/import/create')}>
                             {IMPORT_LABELS.CREATE_NOW}
                         </Button>

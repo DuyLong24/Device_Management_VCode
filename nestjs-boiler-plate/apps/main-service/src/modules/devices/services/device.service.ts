@@ -126,12 +126,14 @@ export class DeviceService {
    * 2. Check rule transition
    * 3. Update Device
    * 4. Write History
+   * 4. Write History
    */
   async transfer(
     deviceId: string,
     toWarehouseId: string,
     userId: string, // ID người thực hiện
-    note?: string
+    note?: string,
+    errorReason?: string // Added
   ): Promise<Device> {
     // 1. Lấy thông tin thiết bị
     const device = await this.deviceModel.findById(deviceId);
@@ -174,7 +176,31 @@ export class DeviceService {
       device.qcStatus = 'PASS';
     } else if (transition.transitionType === 'QC_FAIL') {
       device.qcStatus = 'FAIL';
+      if (errorReason) device.qcNote = errorReason;
     }
+
+    // Check target Warehouse for REMOVED logic
+    // This requires fetching the warehouse, but strictly speaking we can infer from transition potentially,
+    // OR we can just fetch it. To save perf, we might assume frontend sends right data,
+    // but better to check backend side or just save errorReason to qcNote/removeReason based on logic.
+    // For now, if errorReason is passed, we save it.
+    // However, user specifically asked for "reason" when moving to DEFECT or REMOVED.
+
+    // We should probably check the warehouse code.
+    const toWarehouse = await this.warehouseService.findById(toWarehouseId);
+    if (toWarehouse) {
+      if (toWarehouse.code === 'REMOVED') {
+        device.removeReason = errorReason;
+        device.removeDate = new Date();
+      }
+      // If DEFECT (assumed code 'DEFECT' based on user prompt), we put in qcNote
+      if (toWarehouse.code === 'DEFECT' || transition.transitionType === 'QC_FAIL') {
+        device.qcNote = errorReason;
+      }
+    }
+
+    // Always save note if standard (optional)
+    // But errorReason is special.
 
     const savedDevice = await device.save();
 
@@ -185,7 +211,7 @@ export class DeviceService {
       toWarehouseId: toWarehouseId,
       actorId: userId,
       action: transition.transitionType || 'TRANSFER',
-      note: note || 'Chuyển kho thủ công', // Có thể chuyển sang constant nếu cần, tạm giữ
+      note: note || (errorReason ? `Lỗi: ${errorReason}` : 'Chuyển kho thủ công'),
       createdAt: new Date()
     });
 
@@ -196,14 +222,15 @@ export class DeviceService {
     deviceIds: string[],
     toWarehouseId: string,
     userId: string,
-    note?: string
+    note?: string,
+    errorReason?: string // Added
   ): Promise<{ success: string[]; errors: any[] }> {
     const results = { success: [], errors: [] };
 
     // Use Promise.all to process in parallel, but catch errors individually
     await Promise.all(deviceIds.map(async (id) => {
       try {
-        await this.transfer(id, toWarehouseId, userId, note);
+        await this.transfer(id, toWarehouseId, userId, note, errorReason);
         results.success.push(id);
       } catch (error) {
         results.errors.push({ id, message: error.message });

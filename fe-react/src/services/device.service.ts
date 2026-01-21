@@ -71,7 +71,7 @@ export const deviceService = {
         return response.data;
     },
 
-    bulkTransfer: async (data: { deviceIds: string[], toWarehouseId: string, note?: string }) => {
+    bulkTransfer: async (data: { deviceIds: string[], toWarehouseId: string, note?: string, errorReason?: string }) => {
         const response = await axiosInstance.post('/devices/bulk-transfer', data);
         return response.data;
     },

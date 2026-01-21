@@ -47,6 +47,8 @@ export default function SerialDetailPage() {
         isTransferring
     } = useSerialDetail(serial);
 
+    const isTransferringToError = Form.useWatch('toWarehouseCode', form) === 'DEFECT' || Form.useWatch('toWarehouseCode', form) === 'REMOVED';
+
     const handleTransferSubmit = () => {
         form.validateFields().then(values => {
             if (!device) return;
@@ -60,7 +62,8 @@ export default function SerialDetailPage() {
             transferDevice({
                 deviceIds: [device.id],
                 toWarehouseId: targetTransition.targetId,
-                note: values.note
+                note: values.note,
+                errorReason: values.errorReason
             }, {
                 onSuccess: () => {
                     setTransferModalVisible(false);
@@ -213,6 +216,18 @@ export default function SerialDetailPage() {
                             </Space>
                         </Radio.Group>
                     </Form.Item>
+
+                    {isTransferringToError && (
+                        <Form.Item
+                            name="errorReason"
+                            label="Nguyên do lỗi (Bắt buộc)"
+                            rules={[{ required: true, message: 'Vui lòng nhập nguyên do lỗi' }]}
+                            className="mb-4"
+                        >
+                            <TextArea rows={2} placeholder="Mô tả lỗi của thiết bị..." />
+                        </Form.Item>
+                    )}
+
                     <Form.Item name="note" label="Ghi chú">
                         <TextArea rows={2} />
                     </Form.Item>

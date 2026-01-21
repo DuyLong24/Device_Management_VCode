@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Form, message, Modal } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { Form, App } from 'antd';
+import { useNavigate, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { logger } from '../utils/logger';
 import { EXPORT_STATUS } from '../constants/export-status.constant';
@@ -38,6 +38,7 @@ interface DeviceOption {
     value: string;
     label: string;
     inStock: number;
+    // id: string; // warehouseId not strictly needed here if we filter by READY_TO_EXPORT
 }
 
 interface CategoryOption {
@@ -47,7 +48,12 @@ interface CategoryOption {
 
 export const useCreateExport = () => {
     const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
+    const isEditMode = !!id;
+
     const [form] = Form.useForm();
+    const { message, modal } = App.useApp();
+
     const [loading, setLoading] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [deviceList, setDeviceList] = useState<DeviceItem[]>([]);
@@ -56,17 +62,64 @@ export const useCreateExport = () => {
     const [loadingDevices, setLoadingDevices] = useState(false);
     const [loadingCategories, setLoadingCategories] = useState(false);
 
-    // Generate auto code
+    // Initial Load
     useEffect(() => {
-        const today = dayjs();
-        const code = `PX-${today.format('YYYY-MM')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-        form.setFieldValue('code', code);
-    }, []);
+        const initData = async () => {
+            await Promise.all([fetchDeviceCodes(), fetchCategories()]);
 
-    useEffect(() => {
-        fetchDeviceCodes();
-        fetchCategories();
-    }, []);
+            if (isEditMode && id) {
+                await fetchExportDetail(id);
+            } else {
+                // Generate auto code only for create mode
+                const today = dayjs();
+                const code = `PX-${today.format('YYYY-MM')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+                form.setFieldValue('code', code);
+            }
+        };
+        initData();
+    }, [id, isEditMode]);
+
+    const fetchExportDetail = async (exportId: string) => {
+        try {
+            setLoading(true);
+            const res = await exportService.getDetail(exportId);
+            const data = res.data;
+
+            if (data.status !== EXPORT_STATUS.DRAFT) {
+                message.warning('Chỉ có thể sửa phiếu xuất ở trạng thái NHÁP');
+                navigate('/export/list');
+                return;
+            }
+
+            // Map form fields
+            form.setFieldsValue({
+                ...data,
+                // deliveryAddress, notes, etc. map automatically
+            });
+
+            // Map requirements to deviceList
+            if (data.requirements) {
+                const mappedDevices: DeviceItem[] = data.requirements.map((req: any, index: number) => ({
+                    key: `prod-${index}-${Date.now()}`,
+                    deviceModel: req.productCode,
+                    name: req.productName || '',
+                    quantity: req.quantity,
+                    inStock: 0, // Will be updated by getDeviceStock logic handled by options
+                    expectedSerials: req.expectedSerials || []
+                }));
+                // Update inStock after deviceOptions are loaded (they are loaded in parallel in useEffect)
+                // Or we can just set them and let the UI get stock from getDeviceStock
+                setDeviceList(mappedDevices);
+            }
+
+        } catch (error) {
+            logger.error('Failed to fetch export detail', { error });
+            message.error('Không thể tải chi tiết phiếu xuất');
+            navigate('/export/list');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchDeviceCodes = async () => {
         setLoadingDevices(true);
@@ -112,7 +165,6 @@ export const useCreateExport = () => {
                 }));
 
                 setDeviceOptions(options);
-                logger.info(`Loaded device codes from ${DEVICE_STATUS.READY_TO_EXPORT}`, { count: options.length });
             }
         } catch (error) {
             logger.error('Failed to fetch device codes', { error });
@@ -202,14 +254,17 @@ export const useCreateExport = () => {
                 return { valid: false, message: 'Số lượng phải lớn hơn 0' };
             }
 
+            // Validation tồn kho: chỉ check lúc tạo mới hoặc edit.
             const inStock = getDeviceStock(device.deviceModel);
+            // Có thể cần logic phức tạp hơn cho edit (e.g. cộng lại sl cũ), nhưng tạm thời check đơn giản
             if (device.quantity > inStock) {
+                // Warning instead of blocking? Or blocking logic
+                // Tạm thời block để đảm bảo logic
                 return {
                     valid: false,
                     message: `Thiết bị ${device.deviceModel} chỉ còn ${inStock} chiếc trong kho`,
                 };
             }
-
         }
 
         return { valid: true };
@@ -229,7 +284,6 @@ export const useCreateExport = () => {
 
             const payload = {
                 ...formValues,
-                // code is now in formValues
                 status: EXPORT_STATUS.DRAFT,
                 requirements: deviceList.map((d) => ({
                     productCode: d.deviceModel,
@@ -239,16 +293,31 @@ export const useCreateExport = () => {
                 })),
                 totalProductCodes: deviceList.length,
                 totalQuantity: deviceList.reduce((sum, d) => sum + d.quantity, 0),
-                items: [],
+                items: [], // Reset items logic not handled here
             };
 
-            const res = await exportService.create(payload);
-            if (res.data) {
-                message.success('Lưu nháp phiếu xuất thành công');
-                setHasUnsavedChanges(false);
+            let finalId = id;
+            if (isEditMode && id) {
+                await exportService.update(id, payload);
+                message.success('Cập nhật nháp phiếu xuất thành công');
+            } else {
+                const res = await exportService.create(payload);
                 const exportData = res.data as DeviceExport;
-                navigate(`/export/${exportData.id || exportData._id}`);
+                finalId = exportData.id || exportData._id;
+                message.success('Tạo nháp phiếu xuất thành công');
             }
+
+            setHasUnsavedChanges(false);
+
+            // Logic điều hướng
+            if (isEditMode) {
+                // Đang edit thì ở lại
+            } else {
+                // Tạo mới thì chuyển sang edit
+                if (finalId) navigate(`/export/edit/${finalId}`);
+                else navigate('/export/list');
+            }
+
         } catch (error: any) {
             logger.error('Failed to save draft', { error });
             if (error.errorFields && error.errorFields.length > 0) {
@@ -277,7 +346,6 @@ export const useCreateExport = () => {
 
             const payload = {
                 ...formValues,
-                // code is now in formValues
                 status: EXPORT_STATUS.DRAFT,
                 requirements: deviceList.map((d) => ({
                     productCode: d.deviceModel,
@@ -287,24 +355,28 @@ export const useCreateExport = () => {
                 })),
                 totalProductCodes: deviceList.length,
                 totalQuantity: deviceList.reduce((sum, d) => sum + d.quantity, 0),
-                items: [],
             };
 
-            // 1. Tạo Draft
-            const res = await exportService.create(payload);
+            let finalId = id;
 
-            if (res.data) {
+            // 1. Save / Update Draft First
+            if (isEditMode && id) {
+                await exportService.update(id, payload);
+                finalId = id;
+            } else {
+                const res = await exportService.create(payload);
                 const exportData = res.data as DeviceExport;
-                const exportId = exportData.id || exportData._id;
-
-                if (exportId) {
-                    // 2. Gửi duyệt
-                    await exportService.submitForApproval(exportId);
-                    message.success('Tạo phiếu xuất và gửi duyệt thành công!');
-                    setHasUnsavedChanges(false);
-                    navigate(`/export/${exportId}`);
-                }
+                finalId = exportData.id || exportData._id;
             }
+
+            // 2. Submit for Approval
+            if (finalId) {
+                await exportService.submitForApproval(finalId);
+                message.success('Gửi duyệt phiếu xuất thành công!');
+                setHasUnsavedChanges(false);
+                navigate(`/export/${finalId}`);
+            }
+
         } catch (error: any) {
             logger.error('Failed to submit export', { error });
             if (error.errorFields && error.errorFields.length > 0) {
@@ -312,7 +384,7 @@ export const useCreateExport = () => {
                 message.error(firstError.errors[0]);
                 form.scrollToField(firstError.name);
             } else {
-                message.error('Không thể tạo phiếu xuất');
+                message.error(error?.response?.data?.message || 'Không thể gửi duyệt phiếu xuất');
             }
         } finally {
             setLoading(false);
@@ -321,7 +393,7 @@ export const useCreateExport = () => {
 
     const handleCancel = () => {
         if (hasUnsavedChanges) {
-            Modal.confirm({
+            modal.confirm({
                 title: 'Xác nhận thoát',
                 content: 'Bạn có thay đổi chưa được lưu. Bạn có chắc muốn thoát?',
                 okText: 'Thoát',
@@ -345,6 +417,7 @@ export const useCreateExport = () => {
         categoryOptions,
         loadingDevices,
         loadingCategories,
+        isEditMode, // Expose this
 
         handleAddDevice,
         handleDeleteDevice,

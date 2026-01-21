@@ -16,7 +16,7 @@ interface TransferOption {
 interface TransferModalProps {
     open: boolean;
     onCancel: () => void;
-    onConfirm: (toWarehouse: string, note: string) => void;
+    onConfirm: (toWarehouse: string, note: string, errorReason?: string) => void;
     count: number;
     options: TransferOption[];
 }
@@ -30,9 +30,12 @@ export default function TransferModal({ open, onCancel, onConfirm, count, option
         }
     }, [open, form]);
 
+    const toWarehouseCode = Form.useWatch('toWarehouse', form);
+    const isErrorTransfer = toWarehouseCode && (toWarehouseCode.includes('DEFECT') || toWarehouseCode.includes('REMOVED'));
+
     const handleSubmit = () => {
         form.validateFields().then((values) => {
-            onConfirm(values.toWarehouse, values.note);
+            onConfirm(values.toWarehouse, values.note, values.errorReason);
         });
     };
 
@@ -108,6 +111,21 @@ export default function TransferModal({ open, onCancel, onConfirm, count, option
                         </Space>
                     </Radio.Group>
                 </Form.Item>
+
+                {isErrorTransfer && (
+                    <Form.Item
+                        label={<Text strong type="danger">Nguyên do lỗi (Bắt buộc)</Text>}
+                        name="errorReason"
+                        rules={[{ required: true, message: 'Vui lòng nhập nguyên do lỗi' }]}
+                    >
+                        <TextArea
+                            placeholder="Mô tả lỗi của thiết bị..."
+                            rows={2}
+                            maxLength={500}
+                            showCount
+                        />
+                    </Form.Item>
+                )}
 
                 <Form.Item label={<Text strong>Ghi chú</Text>} name="note">
                     <TextArea

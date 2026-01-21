@@ -4,7 +4,7 @@ import {
   Body,
   Get,
   Query,
-  Put,
+  Patch,
   Delete,
   Param,
   HttpStatus,
@@ -67,7 +67,7 @@ export class DeviceExportController {
     return this.deviceExportService.findById(id);
   }
 
-  @Put(':id')
+  @Patch(':id')
   async update(@Param('id') id: string, @Body() updateDeviceExportDto: UpdateDeviceExportDto) {
     return this.deviceExportService.update(id, updateDeviceExportDto);
   }

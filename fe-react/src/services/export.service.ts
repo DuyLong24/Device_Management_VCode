@@ -20,6 +20,10 @@ export const exportService = {
         return axiosInstance.post<DeviceExport>('/device-exports', data);
     },
 
+    update: async (id: string, data: Partial<CreateExportDto>) => {
+        return axiosInstance.patch<DeviceExport>(`/device-exports/${id}`, data);
+    },
+
     getDetail: async (id: string) => {
         return axiosInstance.get<DeviceExport>(`/device-exports/${id}`);
     },

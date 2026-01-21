@@ -22,6 +22,7 @@ export default function CreateExportPage() {
         handleSaveAndSubmit,
         handleCancel,
         setHasUnsavedChanges,
+        isEditMode,
     } = useCreateExport();
 
     // Cột bảng thiết bị
@@ -114,16 +115,18 @@ export default function CreateExportPage() {
                 <div className="flex justify-between items-start">
                     <div>
                         <Title level={3} className="!m-0">
-                            Thêm mới phiếu xuất kho
+                            {isEditMode ? 'Cập nhật phiếu xuất kho' : 'Thêm mới phiếu xuất kho'}
                         </Title>
-                        <Text type="secondary">Tạo mới phiếu xuất kho và danh sách thiết bị đi kèm</Text>
+                        <Text type="secondary">
+                            {isEditMode ? 'Chỉnh sửa thông tin phiếu xuất nháp' : 'Tạo mới phiếu xuất kho và danh sách thiết bị đi kèm'}
+                        </Text>
                     </div>
                     <Space>
                         <Button icon={<SaveOutlined />} onClick={handleSaveDraft} loading={loading}>
-                            Lưu nháp
+                            {isEditMode ? 'Cập nhật nháp' : 'Lưu nháp'}
                         </Button>
                         <Button type="primary" icon={<SendOutlined />} onClick={handleSaveAndSubmit} loading={loading}>
-                            Lưu & gửi duyệt
+                            {isEditMode ? 'Cập nhật & Gửi duyệt' : 'Lưu & Gửi duyệt'}
                         </Button>
                         <Button danger icon={<CloseOutlined />} onClick={handleCancel}>
                             Hủy
@@ -197,7 +200,7 @@ export default function CreateExportPage() {
                                 label="Tên phiếu xuất"
                                 rules={[{ required: true, message: 'Vui lòng nhập tên phiếu' }]}
                             >
-                                <Input placeholder="Ví dụ: Xuất bán hàng cho Đại lý A" />
+                                <Input />
                             </Form.Item>
                         </Col>
                     </Row>
@@ -209,12 +212,12 @@ export default function CreateExportPage() {
                                 label="Đơn vị nhận"
                                 rules={[{ required: true, message: 'Vui lòng nhập đơn vị nhận' }]}
                             >
-                                <Input placeholder="Công ty / Phòng ban nhận" />
+                                <Input />
                             </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
                             <Form.Item name="receiverPerson" label="Người nhận">
-                                <Input placeholder="Tên người nhận hàng" />
+                                <Input />
                             </Form.Item>
                         </Col>
                     </Row>
@@ -318,10 +321,10 @@ export default function CreateExportPage() {
             <div className="sticky bottom-0 bg-white py-4 mt-6 border-t border-gray-200 z-10">
                 <div className="flex justify-end gap-2">
                     <Button icon={<SaveOutlined />} onClick={handleSaveDraft} loading={loading} size="large">
-                        Lưu nháp
+                        {isEditMode ? 'Cập nhật nháp' : 'Lưu nháp'}
                     </Button>
                     <Button type="primary" icon={<SendOutlined />} onClick={handleSaveAndSubmit} loading={loading} size="large">
-                        Lưu & gửi duyệt
+                        {isEditMode ? 'Cập nhật & Gửi duyệt' : 'Lưu & Gửi duyệt'}
                     </Button>
                     <Button danger icon={<CloseOutlined />} onClick={handleCancel} size="large">
                         Hủy

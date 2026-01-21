@@ -1,5 +1,5 @@
 import { Card, Table, Button, Tag, Space, Tooltip, Empty, Spin, Typography } from 'antd';
-import { PlusOutlined, EyeOutlined, FileExcelOutlined } from '@ant-design/icons';
+import { PlusOutlined, EyeOutlined, FileExcelOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 import type { DeviceExport } from '../../types/export.type';
@@ -28,6 +28,7 @@ const ExportListPage = () => {
         handleCreate,
         handleViewDetail,
         handleExportExcel,
+        handleDelete,
     } = useExportList();
 
     const statisticsCards = [
@@ -80,7 +81,7 @@ const ExportListPage = () => {
             width: 130,
             fixed: 'left' as const,
             render: (text: string, record: DeviceExport) => (
-                <Button type="link" onClick={() => handleViewDetail(record.id || record._id || '')}>
+                <Button type="link" onClick={() => handleViewDetail(record.id || record._id || '', record.status === 'DRAFT')}>
                     {text}
                 </Button>
             ),
@@ -203,16 +204,27 @@ const ExportListPage = () => {
             align: 'center' as const,
             render: (_: any, record: DeviceExport) => {
                 const isCompleted = record.status === 'COMPLETED';
+                const isDraft = record.status === 'DRAFT';
                 return (
                     <Space size="small">
                         <Button
                             type="primary"
                             size="small"
                             icon={<EyeOutlined />}
-                            onClick={() => handleViewDetail(record.id || record._id || '')}
+                            onClick={() => handleViewDetail(record.id || record._id || '', isDraft)}
                         >
-                            Chi tiết
+                            {isDraft ? 'Sửa' : 'Chi tiết'}
                         </Button>
+                        {isDraft && (
+                            <Button
+                                danger
+                                size="small"
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleDelete(record.id || record._id || '')}
+                            >
+                                Xóa
+                            </Button>
+                        )}
                         <Tooltip title={!isCompleted ? 'Chỉ phiếu đã xuất mới được phép xuất file' : 'Xuất phiếu xuất kho'}>
                             <Button
                                 size="small"

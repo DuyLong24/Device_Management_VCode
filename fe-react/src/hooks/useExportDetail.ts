@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { message } from 'antd';
+import { App } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import { exportService } from '../services/export.service';
@@ -9,6 +9,7 @@ import { logger } from '../utils/logger';
 export const useExportDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { message, modal } = App.useApp();
     const [exportInfo, setExportInfo] = useState<DeviceExport | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -115,6 +116,33 @@ export const useExportDetail = () => {
         }
     };
 
+    const handleEdit = () => {
+        if (id) {
+            navigate(`/export/edit/${id}`);
+        }
+    };
+
+    const handleDelete = () => {
+        if (!id) return;
+        modal.confirm({
+            title: 'Xóa phiếu xuất',
+            content: 'Bạn có chắc chắn muốn xóa phiếu xuất này? Hành động này không thể hoàn tác.',
+            okText: 'Xóa',
+            okType: 'danger',
+            cancelText: 'Hủy',
+            onOk: async () => {
+                try {
+                    await exportService.delete(id);
+                    message.success('Đã xóa phiếu xuất thành công');
+                    navigate('/export/list');
+                } catch (error) {
+                    message.error('Xóa phiếu xuất thất bại');
+                    logger.error('Failed to delete export', { error, id });
+                }
+            },
+        });
+    };
+
     const handleBackToList = () => {
         navigate('/export/list');
     };
@@ -130,9 +158,11 @@ export const useExportDetail = () => {
         handleSubmit,
         handleApprove,
         handleReject,
-        handleConfirm, // Added
+        handleConfirm,
         handleNavigateToScan,
         handleBackToList,
+        handleEdit,   // Added
+        handleDelete, // Added
 
         // Navigation
         navigate,

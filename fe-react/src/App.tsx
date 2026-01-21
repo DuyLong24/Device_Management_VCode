@@ -72,6 +72,7 @@ function App() {
                 <Route path="export">
                   <Route path="list" element={<ExportListPage />} />
                   <Route path="create" element={<CreateExportPage />} />
+                  <Route path="edit/:id" element={<CreateExportPage />} />
                   <Route path="check" element={<ExportCheckListPage />} />
                   <Route path=":id" element={<ExportDetailPage />} />
                   <Route path=":id/check" element={<ExportProcessPage />} />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Form, message } from 'antd';
+import { Form, App } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
@@ -11,6 +11,7 @@ import { EXPORT_STATUS } from '../constants/export-status.constant';
 export const useExportList = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
+    const { message, modal } = App.useApp();
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<DeviceExport[]>([]);
     const [filteredData, setFilteredData] = useState<DeviceExport[]>([]);
@@ -105,8 +106,32 @@ export const useExportList = () => {
     };
 
     // Trang chi tiết
-    const handleViewDetail = (id: string) => {
-        navigate(`/export/${id}`);
+    const handleViewDetail = (id: string, isDraft = false) => {
+        if (isDraft) {
+            navigate(`/export/edit/${id}`);
+        } else {
+            navigate(`/export/${id}`);
+        }
+    };
+
+    // Delete Draft
+    const handleDelete = async (id: string) => {
+        modal.confirm({
+            title: 'Xóa phiếu xuất',
+            content: 'Bạn có chắc chắn muốn xóa phiếu xuất này? Hành động này không thể hoàn tác.',
+            okText: 'Xóa',
+            okType: 'danger',
+            cancelText: 'Hủy',
+            onOk: async () => {
+                try {
+                    await exportService.delete(id);
+                    message.success('Đã xóa phiếu xuất');
+                    fetchData(); // Reload data
+                } catch (error) {
+                    message.error('Không thể xóa phiếu xuất');
+                }
+            },
+        });
     };
 
     // xuất Excel
@@ -132,6 +157,7 @@ export const useExportList = () => {
         handleReset,
         handleCreate,
         handleViewDetail,
+        handleDelete, // Added
         handleExportExcel,
 
         // Navigation

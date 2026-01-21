@@ -124,21 +124,21 @@ export class DeviceController {
   @Patch(':id/transfer')
   async transfer(
     @Param('id') id: string,
-    @Body() body: { toWarehouseId: string; note?: string },
+    @Body() body: { toWarehouseId: string; note?: string; errorReason?: string },
     // @User() user: any // Sau này sẽ lấy từ Token
   ) {
     // Tạm thời hardcode userId
     const userId = '69685cb83e015da83ef00a85';
 
-    return this.deviceService.transfer(id, body.toWarehouseId, userId, body.note);
+    return this.deviceService.transfer(id, body.toWarehouseId, userId, body.note, body.errorReason);
   }
 
   @Post('bulk-transfer')
   async bulkTransfer(
-    @Body() body: { deviceIds: string[]; toWarehouseId: string; note?: string },
+    @Body() body: { deviceIds: string[]; toWarehouseId: string; note?: string; errorReason?: string },
   ) {
     const userId = '69685cb83e015da83ef00a85'; // Hardcoded
-    return this.deviceService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note);
+    return this.deviceService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note, body.errorReason);
   }
 
   @Post('validate-serials')

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Table, Typography, Space, Button, Checkbox, Input, Select, message } from 'antd';
+import { Card, Table, Typography, Space, Button, Checkbox, Input, Select, App } from 'antd';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     ArrowLeftOutlined,
@@ -25,6 +25,7 @@ export default function WarehousePage() {
     const { code } = useParams();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { message } = App.useApp(); // Use Context
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
 
@@ -78,7 +79,7 @@ export default function WarehousePage() {
         onError: () => message.error('Có lỗi xảy ra khi xử lý')
     });
 
-    const handleTransferSubmit = (toWarehouse: string, note: string) => {
+    const handleTransferSubmit = (toWarehouse: string, note: string, errorReason?: string) => {
         const targetWh = warehouses?.find(w => w.code === toWarehouse);
         if (!targetWh) {
             message.error('Kho đích không hợp lệ');
@@ -87,7 +88,8 @@ export default function WarehousePage() {
         transferDevices({
             deviceIds: selectedRowKeys as string[],
             toWarehouseId: targetWh.id,
-            note
+            note,
+            errorReason
         });
     };
 

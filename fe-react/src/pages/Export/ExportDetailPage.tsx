@@ -1,5 +1,5 @@
 import { Button, Typography, Space, Spin, Alert } from 'antd';
-import { ArrowLeftOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import { useExportDetail } from '../../hooks/useExportDetail';
 import { ExportInfoCard } from '../../components/Export/ExportInfoCard';
@@ -22,7 +22,9 @@ export default function ExportDetailPage() {
         handleReject,
         handleNavigateToScan,
         handleBackToList,
-        handleConfirm, // Added
+        handleConfirm,
+        handleEdit,
+        handleDelete,
     } = useExportDetail();
 
     const { sessions, createSession } = useExportSession(id);
@@ -56,15 +58,23 @@ export default function ExportDetailPage() {
                     </Title>
                 </Space>
 
-                <ApprovalActions
-                    status={exportInfo.status}
-                    exportId={id || ''}
-                    onSubmit={handleSubmit}
-                    onApprove={handleApprove}
-                    onReject={handleReject}
-                    onNavigateToScan={handleNavigateToScan}
-                    onConfirm={handleConfirm}
-                />
+                <Space>
+                    {exportInfo.status === 'DRAFT' && (
+                        <>
+                            <Button icon={<EditOutlined />} onClick={handleEdit}>Sửa</Button>
+                            <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>Xóa</Button>
+                        </>
+                    )}
+                    <ApprovalActions
+                        status={exportInfo.status}
+                        exportId={id || ''}
+                        onSubmit={handleSubmit}
+                        onApprove={handleApprove}
+                        onReject={handleReject}
+                        onNavigateToScan={handleNavigateToScan}
+                        onConfirm={handleConfirm}
+                    />
+                </Space>
             </div>
 
             {/* Alerts */}

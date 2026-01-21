@@ -100,19 +100,19 @@ export class DeviceExportService {
   async addItems(id: string, serials: string[]): Promise<DeviceExport> {
     const exportRecord = await this.findById(id);
 
+    // 1. Validation: Chỉ đã duyệt và đang scan mới được scan
     const allowedStatuses = [
       ExportStatusEnum.APPROVED,
-      ExportStatusEnum.IN_PROGRESS,
-      ExportStatusEnum.DRAFT
+      ExportStatusEnum.IN_PROGRESS
     ];
 
     if (!allowedStatuses.includes(exportRecord.status as any)) {
       throw new BadRequestException(
-        `Không thể quét thiết bị khi phiếu đang ở trạng thái ${exportRecord.status}`
+        `Không thể quét thiết bị khi phiếu chưa được Duyệt (Status: ${exportRecord.status}). Vui lòng gửi duyệt trước.`
       );
     }
 
-    // 1. Validate Devices
+    // 2. Validate Devices
     const devices = await this.deviceService.findBySerials(serials);
     const foundSerials = devices.map(d => d.serial);
     const missingSerials = serials.filter(s => !foundSerials.includes(s));
@@ -130,15 +130,9 @@ export class DeviceExportService {
     if (exportRecord.requirements && exportRecord.requirements.length > 0) {
       for (const device of devices) {
         const req = exportRecord.requirements.find(r => r.productCode === device.deviceModel);
-
         if (!req) {
           throw new BadRequestException(`Sản phẩm ${device.deviceModel} (Serial: ${device.serial}) không có trong yêu cầu xuất kho.`);
         }
-
-        const currentCount = exportRecord.items.filter(i => i.productCode === device.deviceModel).length;
-        const currentBatchCount = devices.filter(d => d.deviceModel === device.deviceModel && d.serial !== device.serial && serials.includes(d.serial)).length;
-        const scannedCountOfThisType = exportRecord.items.filter(i => i.productCode === device.deviceModel).length
-          + devices.filter(d => d.deviceModel === device.deviceModel).length;
       }
 
       const devicesByModel = devices.reduce((acc, d) => {
@@ -169,6 +163,7 @@ export class DeviceExportService {
       totalItems: exportRecord.items.length + newItems.length
     };
 
+    // Auto switch APPROVED -> IN_PROGRESS 
     if (exportRecord.status === ExportStatusEnum.APPROVED) {
       updateDto.status = ExportStatusEnum.IN_PROGRESS as any;
     }
@@ -176,14 +171,27 @@ export class DeviceExportService {
     return this.update(id, updateDto);
   }
 
-  async approve(id: string, userFn?: any): Promise<DeviceExport> {
+  async submitForApproval(id: string): Promise<DeviceExport> {
+    const exportRecord = await this.findById(id);
+    if (exportRecord.status !== ExportStatusEnum.DRAFT) {
+      throw new BadRequestException('Chỉ có thể gửi duyệt phiếu ở trạng thái Nháp (DRAFT).');
+    }
+    // Kiểm tra yêu cầu xuất kho
+    if (!exportRecord.requirements || exportRecord.requirements.length === 0) {
+      throw new BadRequestException('Phiếu xuất chưa có danh sách hàng hóa yêu cầu.');
+    }
+
+    return this.update(id, { status: ExportStatusEnum.PENDING_APPROVAL as any } as any);
+  }
+
+  async approve(id: string, user: any): Promise<DeviceExport> {
     const exportRecord = await this.findById(id);
     if (exportRecord.status !== ExportStatusEnum.PENDING_APPROVAL) {
-      throw new BadRequestException('Chỉ có thể duyệt phiếu đang chờ duyệt');
+      throw new BadRequestException('Chỉ có thể duyệt phiếu đang Chờ duyệt (PENDING_APPROVAL).');
     }
     return this.update(id, {
       status: ExportStatusEnum.APPROVED as any,
-      approvedBy: userFn,
+      approvedBy: user._id,
       approvedDate: new Date()
     } as any);
   }
@@ -191,7 +199,7 @@ export class DeviceExportService {
   async reject(id: string, reason: string): Promise<DeviceExport> {
     const exportRecord = await this.findById(id);
     if (exportRecord.status !== ExportStatusEnum.PENDING_APPROVAL) {
-      throw new BadRequestException('Chỉ có thể từ chối phiếu đang chờ duyệt');
+      throw new BadRequestException('Chỉ có thể từ chối phiếu đang Chờ duyệt (PENDING_APPROVAL).');
     }
     return this.update(id, {
       status: ExportStatusEnum.REJECTED as any,
@@ -199,19 +207,10 @@ export class DeviceExportService {
     } as any);
   }
 
-  async submitForApproval(id: string): Promise<DeviceExport> {
-    const exportRecord = await this.findById(id);
-    if (exportRecord.status !== ExportStatusEnum.DRAFT) {
-      throw new BadRequestException('Chỉ có thể gửi duyệt phiếu Nháp');
-    }
-    return this.update(id, { status: ExportStatusEnum.PENDING_APPROVAL as any } as any);
-  }
-
-
   async confirm(id: string): Promise<DeviceExport> {
     const exportRecord = await this.findById(id);
 
-    if (exportRecord.status === ExportStatus.COMPLETED) {
+    if (exportRecord.status === ExportStatusEnum.COMPLETED) {
       throw new BadRequestException('Phiếu xuất đã hoàn thành');
     }
 
@@ -220,7 +219,7 @@ export class DeviceExportService {
     }
 
     const serials = exportRecord.items.map(i => i.serial);
-    await this.deviceService.bulkUpdateStatus(serials, 'SOLD', 'Xuất kho theo phiếu ' + exportRecord.code);
+    await this.deviceService.moveToSoldWarehouse(serials, exportRecord.code);
 
     return this.update(id, {
       status: ExportStatus.COMPLETED,

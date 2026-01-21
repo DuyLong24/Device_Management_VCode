@@ -26,12 +26,9 @@ export class DeviceExportRepository {
     const paginateOptions: any = {
       page: Number(page),
       limit: Number(limit),
-      sortBy: sortBy || 'createdAt:desc'
+      sortBy: sortBy || 'createdAt:desc',
+      populate: populate || { path: 'approvedBy', select: 'fullName' }
     };
-
-    if (populate) {
-      paginateOptions.populate = populate;
-    }
 
     // Use the paginate plugin
     return this.deviceexportModel.paginate(filter, paginateOptions);

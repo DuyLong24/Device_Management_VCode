@@ -74,7 +74,7 @@ const ExportListPage = () => {
 
     const columns = [
         {
-            title: 'Mã phiếu',
+            title: 'Mã phiếu xuất',
             dataIndex: 'code',
             key: 'code',
             width: 130,
@@ -86,20 +86,10 @@ const ExportListPage = () => {
             ),
         },
         {
-            title: 'Tên phiếu',
-            dataIndex: 'exportName',
-            key: 'exportName',
-            width: 180,
-        },
-        {
-            title: 'Loại xuất',
+            title: 'Loại hàng hóa',
             dataIndex: 'type',
             key: 'type',
             width: 120,
-            render: (type: ExportTypeType) => {
-                const color = EXPORT_TYPE_COLORS[type] || 'default';
-                return <Tag color={color}>{type}</Tag>;
-            },
         },
         {
             title: 'Lý do xuất',
@@ -117,30 +107,45 @@ const ExportListPage = () => {
             },
         },
         {
+            title: 'Ngày xuất',
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+            width: 110,
+            render: (date: string) => (date ? dayjs(date).format('DD/MM/YYYY') : '-'),
+        },
+        {
+            title: 'Người tạo',
+            dataIndex: 'createdBy',
+            key: 'createdBy',
+            width: 130,
+            render: (text: string) => text || '-',
+        },
+        {
             title: 'Đơn vị nhận',
             dataIndex: 'receiver',
             key: 'receiver',
             width: 180,
-            render: (text: string, record: DeviceExport) => (
-                <div>
-                    <div>{text}</div>
-                    {record.customer && <div className="text-xs text-gray-400">{record.customer}</div>}
-                </div>
-            ),
+        },
+        {
+            title: 'Người nhận',
+            dataIndex: 'receiverPerson',
+            key: 'receiverPerson',
+            width: 130,
+            render: (text: string) => text || '-',
         },
         {
             title: 'Dự án',
             dataIndex: 'project',
             key: 'project',
-            width: 150,
+            width: 180,
             render: (text: string) => text || <Text type="secondary">-</Text>,
         },
         {
-            title: 'Ngày tạo',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            width: 120,
-            render: (date: string) => (date ? dayjs(date).format('DD/MM/YYYY') : '-'),
+            title: 'Khách hàng',
+            dataIndex: 'customer',
+            key: 'customer',
+            width: 150,
+            render: (text: string) => text || <Text type="secondary">-</Text>,
         },
         {
             title: 'Tổng mã SP',
@@ -154,7 +159,7 @@ const ExportListPage = () => {
             title: 'Tổng SL',
             dataIndex: 'totalQuantity',
             key: 'totalQuantity',
-            width: 100,
+            width: 90,
             align: 'center' as const,
             render: (qty: number) => <Tag color="cyan">{qty || 0}</Tag>,
         },
@@ -167,46 +172,60 @@ const ExportListPage = () => {
                 const exported = record.items?.length || 0;
                 const total = record.totalQuantity || 0;
                 return (
-                    <Text>
-                        {exported} / {total}
-                    </Text>
+                    <Space direction="vertical" size={0}>
+                        <Text strong>
+                            {exported}/{total}
+                        </Text>
+                    </Space>
                 );
             },
         },
         {
-            title: 'Trạng thái',
+            title: 'Trạng thái duyệt',
             dataIndex: 'status',
             key: 'status',
-            width: 120,
+            width: 130,
+            align: 'center' as const,
             render: (status: ExportStatusType) => getExportStatusTag(status),
+        },
+        {
+            title: 'Người duyệt',
+            dataIndex: 'approvedBy',
+            key: 'approvedBy',
+            width: 130,
+            render: (approvedBy: any) => approvedBy?.fullName || <Text type="secondary">-</Text>,
         },
         {
             title: 'Thao tác',
             key: 'action',
             width: 180,
             fixed: 'right' as const,
-            render: (_: any, record: DeviceExport) => (
-                <Space>
-                    <Button
-                        type="primary"
-                        size="small"
-                        icon={<EyeOutlined />}
-                        onClick={() => handleViewDetail(record.id || record._id || '')}
-                    >
-                        Chi tiết
-                    </Button>
-                    <Tooltip title={record.status !== 'COMPLETED' ? 'Chỉ export Excel cho phiếu đã hoàn tất' : ''}>
+            align: 'center' as const,
+            render: (_: any, record: DeviceExport) => {
+                const isCompleted = record.status === 'COMPLETED';
+                return (
+                    <Space size="small">
                         <Button
+                            type="primary"
                             size="small"
-                            icon={<FileExcelOutlined />}
-                            onClick={() => handleExportExcel(record)}
-                            disabled={record.status !== 'COMPLETED'}
+                            icon={<EyeOutlined />}
+                            onClick={() => handleViewDetail(record.id || record._id || '')}
                         >
-                            Xuất
+                            Chi tiết
                         </Button>
-                    </Tooltip>
-                </Space>
-            ),
+                        <Tooltip title={!isCompleted ? 'Chỉ phiếu đã xuất mới được phép xuất file' : 'Xuất phiếu xuất kho'}>
+                            <Button
+                                size="small"
+                                icon={<FileExcelOutlined />}
+                                disabled={!isCompleted}
+                                onClick={() => handleExportExcel(record)}
+                            >
+                                Xuất
+                            </Button>
+                        </Tooltip>
+                    </Space>
+                );
+            },
         },
     ];
 

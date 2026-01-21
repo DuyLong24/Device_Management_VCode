@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { message, Modal } from 'antd';
+import { message } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import { exportService } from '../services/export.service';
@@ -55,25 +55,19 @@ export const useExportDetail = () => {
 
     const handleApprove = async () => {
         if (!id) return;
-        Modal.confirm({
-            title: 'Duyệt phiếu xuất kho?',
-            content: 'Bạn xác nhận duyệt phiếu này để bắt đầu xuất kho.',
-            onOk: async () => {
-                try {
-                    await exportService.approve(id);
-                    message.success('Đã duyệt phiếu!');
-                    fetchDetail();
-                } catch (error) {
-                    logger.error('Lỗi khi duyệt', {
-                        error,
-                        module: 'useExportDetail',
-                        action: 'handleApprove',
-                        exportId: id,
-                    });
-                    message.error('Lỗi khi duyệt');
-                }
-            },
-        });
+        try {
+            await exportService.approve(id);
+            message.success('Đã duyệt phiếu!');
+            fetchDetail();
+        } catch (error) {
+            logger.error('Lỗi khi duyệt', {
+                error,
+                module: 'useExportDetail',
+                action: 'handleApprove',
+                exportId: id,
+            });
+            message.error('Lỗi khi duyệt');
+        }
     };
 
     const handleReject = async () => {
@@ -96,8 +90,12 @@ export const useExportDetail = () => {
         }
     };
 
-    const handleNavigateToScan = () => {
-        navigate(`/export/${id}/check`);
+    const handleNavigateToScan = (sessionId?: string) => {
+        if (sessionId) {
+            navigate(`/export/${id}/check?sessionId=${sessionId}`);
+        } else {
+            navigate(`/export/${id}/check`);
+        }
     };
 
     const handleBackToList = () => {

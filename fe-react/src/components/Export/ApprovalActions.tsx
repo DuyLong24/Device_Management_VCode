@@ -1,4 +1,4 @@
-import { Button, Space } from 'antd';
+import { Button, Space, Popconfirm } from 'antd';
 import {
     CheckCircleOutlined,
     CloseCircleOutlined,
@@ -25,10 +25,7 @@ export const ApprovalActions = ({
     onNavigateToScan,
 }: ApprovalActionsProps) => {
     const handleRejectClick = () => {
-        const reason = prompt('Nhập lý do từ chối:');
-        if (reason !== null) {
-            onReject();
-        }
+        onReject();
     };
 
     return (
@@ -44,14 +41,22 @@ export const ApprovalActions = ({
                     <Button danger icon={<CloseCircleOutlined />} onClick={handleRejectClick}>
                         Từ chối
                     </Button>
-                    <Button
-                        type="primary"
-                        className="bg-green-600"
-                        icon={<CheckCircleOutlined />}
-                        onClick={onApprove}
+                    <Popconfirm
+                        title="Duyệt phiếu xuất kho?"
+                        description="Bạn xác nhận duyệt phiếu này để bắt đầu xuất kho."
+                        onConfirm={onApprove}
+                        okText="Duyệt"
+                        cancelText="Hủy"
+                        okButtonProps={{ className: 'bg-green-600' }}
                     >
-                        Duyệt
-                    </Button>
+                        <Button
+                            type="primary"
+                            className="bg-green-600"
+                            icon={<CheckCircleOutlined />}
+                        >
+                            Duyệt
+                        </Button>
+                    </Popconfirm>
                 </>
             )}
 

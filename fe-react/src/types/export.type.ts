@@ -47,6 +47,7 @@ export interface DeviceExport {
 
     totalItems: number;
     totalQuantity: number;
+    totalProductCodes?: number;
 
     exportDate?: string;
     approvedDate?: string;

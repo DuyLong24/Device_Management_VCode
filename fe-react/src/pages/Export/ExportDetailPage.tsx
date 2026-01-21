@@ -1,13 +1,16 @@
-import { Button, Typography, Space, Spin } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { Button, Typography, Space, Spin, Alert } from 'antd';
+import { ArrowLeftOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
 import { useExportDetail } from '../../hooks/useExportDetail';
 import { ExportInfoCard } from '../../components/Export/ExportInfoCard';
-// import { RequirementsTable } from '../../components/Export/RequirementsTable';
+import { ExportSessionList } from '../../components/Export/ExportSessionList';
+import { useExportSession } from '../../hooks/useExportSession';
 import { ActualItemsTable } from '../../components/Export/ActualItemsTable';
 import { ApprovalActions } from '../../components/Export/ApprovalActions';
 
-const { Title } = Typography;
+import dayjs from 'dayjs';
+
+const { Title, Text } = Typography;
 
 export default function ExportDetailPage() {
     const {
@@ -20,6 +23,16 @@ export default function ExportDetailPage() {
         handleNavigateToScan,
         handleBackToList,
     } = useExportDetail();
+
+    const { sessions, createSession } = useExportSession(id);
+
+    const handleCreateSession = () => {
+        createSession();
+    };
+
+    const handleContinueSession = (sessionId: string) => {
+        handleNavigateToScan(sessionId);
+    };
 
     if (loading || !exportInfo) {
         return (
@@ -52,6 +65,48 @@ export default function ExportDetailPage() {
                 />
             </div>
 
+            {/* Alerts */}
+            {exportInfo.status === 'PENDING_APPROVAL' && (
+                <Alert
+                    message="Phiếu xuất đang chờ duyệt"
+                    description="Phiếu xuất kho này đang chờ lãnh đạo duyệt. Sau khi được duyệt, bạn có thể tiến hành chọn serial và xuất kho."
+                    type="warning"
+                    showIcon
+                    icon={<InfoCircleOutlined />}
+                    className="mb-4"
+                />
+            )}
+
+            {exportInfo.status === 'REJECTED' && (
+                <Alert
+                    message="Phiếu xuất đã bị từ chối"
+                    description={
+                        <div>
+                            <Text strong>Lý do từ chối:</Text> {exportInfo.rejectedReason}
+                        </div>
+                    }
+                    type="error"
+                    showIcon
+                    className="mb-4"
+                />
+            )}
+
+            {exportInfo.status === 'APPROVED' && (
+                <Alert
+                    message="Phiếu xuất đã được duyệt"
+                    description={
+                        <div>
+                            Phiếu đã được duyệt bởi <Text strong>{exportInfo.approvedBy}</Text> vào lúc{' '}
+                            <Text strong>{exportInfo.approvedDate ? dayjs(exportInfo.approvedDate).format('DD/MM/YYYY HH:mm') : ''}</Text>. Có thể tiến hành chọn
+                            serial và xuất kho.
+                        </div>
+                    }
+                    type="success"
+                    showIcon
+                    className="mb-4"
+                />
+            )}
+
             {/* Thông tin phiếu xuất */}
             <ExportInfoCard exportInfo={exportInfo} />
 
@@ -62,6 +117,16 @@ export default function ExportDetailPage() {
 
             {/* Bảng thiết bị */}
             <ActualItemsTable items={exportInfo.items || []} />
+
+            {/* Session Management */}
+            {['APPROVED', 'IN_PROGRESS'].includes(exportInfo.status) && (
+                <ExportSessionList
+                    sessions={sessions}
+                    onCreateSession={handleCreateSession}
+                    onContinueSession={handleContinueSession}
+                    canCreate={exportInfo.status === 'APPROVED' || exportInfo.status === 'IN_PROGRESS'}
+                />
+            )}
         </div>
     );
 }

@@ -72,7 +72,6 @@ export default function CreateImportPage() {
     const [tempSerials, setTempSerials] = useState<string>('');
     const [activeTab, setActiveTab] = useState('manual');
 
-    // NEW: Auto generate code
     const generateImportCode = () => {
         const today = dayjs();
         const dateStr = today.format('DD/MM/YYYY');
@@ -84,7 +83,6 @@ export default function CreateImportPage() {
     useEffect(() => {
         const initData = async () => {
             try {
-                // Set default code
                 form.setFieldValue('code', generateImportCode());
 
                 const [users, categories, devices] = await Promise.all([
@@ -146,7 +144,6 @@ export default function CreateImportPage() {
         setProductList(productList.map(item => {
             if (item.key === key) {
                 const newItem = { ...item, [field]: value };
-                // Removed auto-calc quantity logic
                 if (field === 'productCode') {
                     newItem.expectedSerials = [];
                 }
@@ -167,7 +164,6 @@ export default function CreateImportPage() {
 
     const handleSaveSerials = () => {
         if (!currentProductKey) return;
-
         // 1. Parse text thành mảng & loại bỏ dòng trống
         const rawList = tempSerials.split('\n').map(s => s.trim()).filter(s => s !== '');
 
@@ -205,7 +201,7 @@ export default function CreateImportPage() {
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
 
                 const extractedSerials: string[] = [];
-                // Bỏ qua dòng đầu (index 0) coi như header
+                // Bỏ qua dòng đầu (index 0)
                 jsonData.slice(1).forEach(row => {
                     if (row[0]) extractedSerials.push(String(row[0]).trim());
                 });
@@ -234,7 +230,6 @@ export default function CreateImportPage() {
             if (!p.productCode) return { valid: false, message: 'Vui lòng chọn Mã sản phẩm' };
             if (p.quantity <= 0) return { valid: false, message: 'Số lượng phải lớn hơn 0' };
 
-            // Removed strict serial count check
         }
         return { valid: true };
     };
@@ -252,7 +247,7 @@ export default function CreateImportPage() {
             setLoading(true);
 
             const payload = {
-                code: values.code, // Send code to BE
+                code: values.code,
                 productType: values.productType,
                 origin: values.origin,
                 importDate: values.importDate.toISOString(),
@@ -535,7 +530,7 @@ export default function CreateImportPage() {
                         Lưu nháp
                     </Button>
                     <Button type="primary" icon={<SaveOutlined />} onClick={() => submitImport('PENDING')} loading={loading} size="large" className="bg-blue-600 hover:bg-blue-700 min-w-50">
-                        Lưu & tiếp tục nhập serial
+                        Lưu & đóng
                     </Button>
                     <Button danger icon={<CloseOutlined />} onClick={handleCancel} size="large" className="min-w-25">
                         Hủy
@@ -562,7 +557,7 @@ export default function CreateImportPage() {
                 />
 
                 <Tabs activeKey={activeTab} onChange={setActiveTab}>
-                    {/* TAB 1: NHẬP TAY */}
+                    {/* NHẬP TAY */}
                     <TabPane
                         tab={<span><FileTextOutlined /> Nhập thủ công</span>}
                         key="manual"
@@ -582,7 +577,7 @@ export default function CreateImportPage() {
                         </div>
                     </TabPane>
 
-                    {/* TAB 2: EXCEL */}
+                    {/* EXCEL */}
                     <TabPane
                         tab={<span><FileExcelOutlined /> Upload Excel</span>}
                         key="excel"

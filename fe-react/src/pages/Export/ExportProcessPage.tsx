@@ -1,278 +1,397 @@
-import { useState, useEffect, useRef } from 'react';
-import { Card, Descriptions, Button, Table, Typography, Input, message, Tag, Space, Modal } from 'antd';
+import { useState, useEffect } from 'react';
+import {
+    Button, Typography, message, Tag, Space, Modal, Card, Descriptions, Row, Col, Statistic, Divider, Progress, Alert, Input, Upload, Table, Popconfirm
+} from 'antd';
 import {
     ArrowLeftOutlined,
-    ScanOutlined,
     CheckCircleOutlined,
-    DeleteOutlined,
-    SaveOutlined,
-    ExclamationCircleOutlined
+    ExclamationCircleOutlined,
+    ScanOutlined,
+    UploadOutlined,
+    DownloadOutlined,
+    FileExcelOutlined,
+    DeleteOutlined
 } from '@ant-design/icons';
-import { useParams, useNavigate } from 'react-router-dom';
+import type { UploadFile } from 'antd/es/upload/interface';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 
 import { exportService } from '../../services/export.service';
+import { exportSessionService } from '../../services/export-session.service';
+import { getExportStatusTag } from '../../utils/export-status.util';
 import type { DeviceExport } from '../../types/export.type';
 import { useScanSound } from '../../hooks/useScanSound';
 
-const { Text } = Typography;
-const { confirm } = Modal;
-
-interface ScannedItem {
-    serial: string;
-    key: string;
-    error?: boolean;
-}
+const { Text, Title } = Typography;
+const { Dragger } = Upload;
 
 export default function ExportProcessPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const sessionId = searchParams.get('sessionId');
     const { playSuccess, playError } = useScanSound();
+    const [messageApi, contextHolder] = message.useMessage();
+    const [modal, modalContextHolder] = Modal.useModal();
 
+    // Data State
     const [exportInfo, setExportInfo] = useState<DeviceExport | null>(null);
+    const [sessionData, setSessionData] = useState<any>(null);
+    const [sessionItems, setSessionItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+
+    // Form/Input State
     const [scannedInput, setScannedInput] = useState('');
-    const [pendingItems, setPendingItems] = useState<ScannedItem[]>([]);
+    const [manualSerials, setManualSerials] = useState('');
+    const [fileList, setFileList] = useState<UploadFile[]>([]);
 
-    const inputRef = useRef<any>(null);
-
+    // Logic: Fetch Data
     const fetchDetail = async () => {
-        if (!id) return;
+        let currentExportId = id;
 
-        const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(id);
-        if (!isValidObjectId) {
-            if (id === 'check' || id === 'create') {
-                navigate('/export/list', { replace: true });
-            } else {
-                message.error('Mã phiếu không hợp lệ');
-            }
+        if (!currentExportId && !sessionId) {
+            messageApi.warning('Vui lòng chọn phiếu xuất để quét');
+            navigate('/export/list');
             return;
         }
 
-        setLoading(true);
         try {
-            const res = await exportService.getDetail(id);
-            setExportInfo(res.data);
+            if (sessionId) {
+                const sessionRes = await exportSessionService.getDetail(sessionId);
+                if (sessionRes.data) {
+                    setSessionData(sessionRes.data);
+                    setSessionItems(sessionRes.data.items || []);
+                    if (!currentExportId) {
+                        currentExportId = sessionRes.data.exportId;
+                    }
+                }
+            }
+
+            // 2. Get Export Detail
+            if (currentExportId) {
+                const res = await exportService.getDetail(currentExportId);
+                setExportInfo(res.data);
+            }
         } catch (error) {
-            message.error('Không tải được thông tin phiếu xuất');
-            console.error('Fetch detail failed', error);
-        } finally {
-            setLoading(false);
+            messageApi.error('Lỗi tải dữ liệu');
+            // navigate('/export/list');
         }
     };
 
     useEffect(() => {
         fetchDetail();
-    }, [id]);
+    }, [id, sessionId]);
 
-    const handleScan = () => {
+    // Handle Scan
+    const handleScanSerial = async () => {
+        if (!scannedInput.trim() || !sessionId) return;
         const code = scannedInput.trim();
-        if (!code) return;
 
-        if (pendingItems.some(i => i.serial === code)) {
+        // Local Duplicate Check
+        if (sessionItems.some((i: any) => i.serial === code)) {
             playError();
-            message.warning(`Serial ${code} đã ở trong danh sách chờ lưu`);
+            messageApi.warning(`Serial ${code} đã được quét trong phiên này`);
             setScannedInput('');
             return;
         }
 
-        if (exportInfo?.items.some(i => i.serial === code)) {
-            playError();
-            message.warning(`Serial ${code} ĐÃ ĐƯỢC thêm vào phiếu trước đó`);
-            setScannedInput('');
-            return;
-        }
-
-        setPendingItems(prev => [{ serial: code, key: `${code}-${Date.now()}` }, ...prev]);
-        playSuccess();
-        setScannedInput('');
-        message.success(`Đã quét: ${code}`);
-    };
-
-    const handleSaveItems = async () => {
-        if (pendingItems.length === 0 || !id) return;
-
+        setLoading(true);
         try {
-            await exportService.addItems(id, pendingItems.map(i => i.serial));
-            message.success(`Đã thêm ${pendingItems.length} thiết bị vào phiếu`);
-            setPendingItems([]);
-            fetchDetail();
+            const res = await exportSessionService.scanSerial(sessionId, code);
             playSuccess();
+            messageApi.success(`Đã quét: ${code}`);
+            setScannedInput('');
+
+            // Refresh items
+            setSessionItems(prev => [...prev, {
+                serial: code,
+                productCode: res.data?.items?.find((i: any) => i.serial === code)?.productCode || 'N/A',
+                scannedAt: new Date().toISOString()
+            }]);
+
+            const newCount = (sessionData?.serialChecked || 0) + 1;
+            setSessionData({ ...sessionData, serialChecked: newCount });
+
         } catch (error: any) {
-            console.error(error);
             playError();
-
-            const msg = error.response?.data?.message || 'Lỗi khi thêm thiết bị';
-            message.error(msg);
-
-            if (typeof msg === 'string') {
-                const match = msg.match(/:\s*([\w\s,]+)$/);
-                if (match && match[1]) {
-                    const invalidSerials = match[1].split(',').map(s => s.trim());
-                    setPendingItems(prev => prev.map(item => ({
-                        ...item,
-                        error: invalidSerials.includes(item.serial)
-                    })));
-                }
-            }
+            messageApi.error(error.response?.data?.message || 'Lỗi khi quét');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleRemovePending = (serial: string) => {
-        setPendingItems(prev => prev.filter(i => i.serial !== serial));
+    const handleRemoveSerial = async (serial: string) => {
+        if (!sessionId) return;
+        try {
+            await exportSessionService.removeSerial(sessionId, serial);
+            messageApi.success(`Đã xóa serial ${serial}`);
+
+            // Remove 
+            setSessionItems(prev => prev.filter(item => item.serial !== serial));
+
+            // Update count
+            const newCount = Math.max(0, (sessionData?.serialChecked || 0) - 1);
+            setSessionData({ ...sessionData, serialChecked: newCount });
+
+        } catch (error: any) {
+            messageApi.error(error.response?.data?.message || 'Lỗi khi xóa serial');
+        }
     };
 
-    const handleConfirmExport = () => {
-        confirm({
-            title: 'Xác nhận Xuất kho?',
+    // Import (Text Area)
+    const handleManualImport = async () => {
+        if (!manualSerials.trim() || !sessionId) return;
+        const codes = manualSerials.split('\n').map(s => s.trim()).filter(Boolean);
+        if (codes.length === 0) return;
+
+        await processBulkScan(codes);
+        setManualSerials('');
+    };
+
+    const handleFileImport = (file: File) => {
+        setFileList([file as unknown as UploadFile]);
+        messageApi.info('Tính năng import Excel đang được cập nhật (cần thư viện xlsx)');
+        return false;
+    };
+
+    const processBulkScan = async (codes: string[]) => {
+        setLoading(true);
+        try {
+            const res = await exportSessionService.scanBulk(sessionId!, codes);
+            messageApi.success(`Đã xử lý ${codes.length} mã.`);
+            if (res.data?.errors?.length) {
+                messageApi.warning(`Có ${res.data.errors.length} mã lỗi`);
+            }
+
+            fetchDetail();
+        } catch (error) {
+            messageApi.error('Lỗi import danh sách');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const handleCompleteExport = () => {
+        modal.confirm({
+            title: 'Hoàn tất Phiên Xuất kho?',
             icon: <ExclamationCircleOutlined />,
-            content: 'Thao tác này sẽ chuyển trạng thái các thiết bị sang ĐÃ XUẤT và không thể hoàn tác.',
+            content: 'Các serial đã quét sẽ được lưu lại. Bạn có thể tiếp tục tạo phiên mới nếu cần.',
+            okText: 'Hoàn thành phiên',
+            cancelText: 'Hủy',
             onOk: async () => {
                 try {
-                    if (!id) return;
-                    await exportService.confirm(id);
-                    message.success('Xuất kho thành công!');
-                    fetchDetail();
-                } catch (error) {
-                    message.error('Lỗi khi xác nhận xuất kho');
+                    if (!sessionId) return;
+                    await exportSessionService.complete(sessionId);
+                    messageApi.success('Hoàn tất phiên thành công!');
+                    navigate('/export/list');
+                } catch (error: any) {
+                    messageApi.error(error.response?.data?.message || 'Lỗi khi hoàn tất phiên');
                 }
             }
         });
     };
 
-    const columns = [
-        { title: 'STT', key: 'index', render: (_: any, __: any, index: number) => index + 1 },
-        {
-            title: 'Serial',
-            dataIndex: 'serial',
-            key: 'serial',
-            render: (t: string) => <Text strong className="text-blue-600 font-mono">{t}</Text>
-        },
-        { title: 'Model', dataIndex: 'deviceModel', key: 'deviceModel' },
-        { title: 'Sản phẩm', dataIndex: 'productCode', key: 'productCode' },
-    ];
+    if (!exportInfo) return <div>Loading...</div>;
 
-    const pendingColumns = [
+    // TÍnh dữ liệu
+    const totalRequired = exportInfo.totalQuantity || 0;
+    const matchCount = sessionItems.length;
+    const missingCount = Math.max(0, totalRequired - matchCount);
+
+    // Cột Serial List
+    const serialColumns = [
+        { title: 'Sản phẩm', dataIndex: 'productCode', key: 'productCode', width: 150 },
+        { title: 'Serial', dataIndex: 'serial', key: 'serial', width: 200, render: (t: string) => <b>{t}</b> },
+        { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t: string) => t ? dayjs(t).format('HH:mm:ss DD/MM') : '' },
+        { title: 'Trạng thái', key: 'status', render: () => <Tag color="blue">Mới quét</Tag> },
         {
-            title: 'Serial đang chờ lưu',
-            dataIndex: 'serial',
-            key: 'serial',
-            render: (t: string, r: ScannedItem) => (
-                <Space>
-                    <Text strong className={r.error ? "text-red-600 underline" : "text-orange-600 font-mono"}>{t}</Text>
-                    {r.error && <Tag color="error">Lỗi</Tag>}
-                </Space>
-            )
-        },
-        {
-            title: '',
+            title: 'Thao tác',
             key: 'action',
-            render: (_: any, r: ScannedItem) => (
-                <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleRemovePending(r.serial)} />
+            render: (_: any, record: any) => (
+                <Popconfirm
+                    title="Xóa serial này?"
+                    description="Bạn có chắc chắn muốn xóa serial này khỏi phiên?"
+                    onConfirm={() => handleRemoveSerial(record.serial)}
+                    okText="Xóa"
+                    cancelText="Hủy"
+                >
+                    <Button type="text" danger icon={<DeleteOutlined />} />
+                </Popconfirm>
             )
         }
     ];
 
-    if (!exportInfo) return <div>Loading...</div>;
-
-    const isDraft = exportInfo.status === 'DRAFT';
-
     return (
         <div className="p-6 max-w-7xl mx-auto">
-            <div className="mb-4">
-                <Button
-                    icon={<ArrowLeftOutlined />}
-                    onClick={() => navigate('/export/list')}
-                >
-                    Danh sách Xuất kho
-                </Button>
+            {contextHolder}
+            {modalContextHolder}
+            {/* Header */}
+            <div className="mb-6">
+                <Space className="mb-4">
+                    <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/export/check')}>
+                        Quay lại
+                    </Button>
+                </Space>
+
+                <div className="mb-4">
+                    <Title level={3} className="!mb-2">
+                        {sessionData?.sessionName || 'Phiên xuất kho'}
+                    </Title>
+                    <Space>
+                        <Tag color="blue">{sessionData?.code || 'SESSION-ID'}</Tag>
+                        <Tag>{exportInfo.code}</Tag>
+                        {getExportStatusTag(exportInfo.status)}
+                    </Space>
+                </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-6">
-                {/* LEFT: Info & Scan */}
-                <div className="w-full md:w-1/3">
-                    <Card title="Thông tin phiếu" className="mb-4 shadow-sm" loading={loading}>
-                        <Descriptions column={1} size="small" bordered>
-                            <Descriptions.Item label="Mã phiếu">{exportInfo.code}</Descriptions.Item>
-                            <Descriptions.Item label="Tên phiếu">{exportInfo.exportName}</Descriptions.Item>
-                            <Descriptions.Item label="Loại">{exportInfo.type}</Descriptions.Item>
-                            <Descriptions.Item label="Người nhận">{exportInfo.receiver}</Descriptions.Item>
-                            <Descriptions.Item label="Khách hàng">{exportInfo.customer || '---'}</Descriptions.Item>
-                            <Descriptions.Item label="Trạng thái">
-                                <Tag color={isDraft ? 'processing' : 'success'}>{exportInfo.status}</Tag>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Ngày tạo">{dayjs(exportInfo.createdAt).format('DD/MM/YYYY')}</Descriptions.Item>
-                        </Descriptions>
+            {/* Session Info */}
+            <Card title="Thông tin phiên xuất kho" className="mb-4">
+                <Descriptions column={2} size="small" bordered>
+                    <Descriptions.Item label="Mã phiên">{sessionData?.code}</Descriptions.Item>
+                    <Descriptions.Item label="Mã phiếu xuất">{exportInfo.code}</Descriptions.Item>
+                    <Descriptions.Item label="Ngày xuất">{dayjs(exportInfo.exportDate).format('DD/MM/YYYY')}</Descriptions.Item>
+                    <Descriptions.Item label="Người tạo">{sessionData?.createdBy || 'N/A'}</Descriptions.Item>
+                </Descriptions>
+            </Card>
 
-                        {isDraft && exportInfo.items.length > 0 && (
-                            <div className="mt-4">
-                                <Button
-                                    type="primary"
-                                    block
-                                    size="large"
-                                    className="bg-green-600 hover:bg-green-700"
-                                    icon={<CheckCircleOutlined />}
-                                    onClick={handleConfirmExport}
-                                    disabled={pendingItems.length > 0}
-                                >
-                                    XÁC NHẬN XUẤT KHO
-                                </Button>
-                                {pendingItems.length > 0 && <div className="text-red-500 text-xs mt-1 text-center">Vui lòng lưu danh sách chờ trước khi xác nhận</div>}
-                            </div>
-                        )}
-                    </Card>
+            {/* Statistics */}
+            <Card className="mb-4">
+                <Row gutter={16}>
+                    <Col span={6}><Statistic title="Tổng cần xuất" value={totalRequired} /></Col>
+                    <Col span={6}><Statistic title="Đã quét" value={matchCount} suffix={`/ ${totalRequired}`} valueStyle={{ color: '#1890ff' }} /></Col>
+                    <Col span={6}><Statistic title="Còn thiếu" value={missingCount} valueStyle={{ color: '#ff4d4f' }} /></Col>
+                </Row>
+                <Divider />
+                <Progress percent={Math.round((matchCount / totalRequired) * 100)} status="active" />
+            </Card>
 
-                    {isDraft && (
-                        <Card title="Quét thiết bị" className="shadow-sm border-blue-200 border">
-                            <Space.Compact className="w-full mb-4">
-                                <Input
-                                    ref={inputRef}
-                                    placeholder="Quét serial tại đây..."
-                                    value={scannedInput}
-                                    onChange={e => setScannedInput(e.target.value)}
-                                    onPressEnter={handleScan}
-                                    autoFocus
-                                    prefix={<ScanOutlined />}
-                                />
-                                <Button type="primary" onClick={handleScan}>Quét</Button>
-                            </Space.Compact>
+            {/* Scan Section */}
+            <Card title="Quét serial xuất kho" className="mb-4">
+                <Space direction="vertical" className="w-full" size="middle">
+                    <Alert
+                        message="Hướng dẫn quét serial"
+                        description={
+                            <ul className="mb-0 list-disc pl-5 space-y-1">
+                                <li>
+                                    <Text strong>Serial KHỚP:</Text>{' '}
+                                    Serial thuộc phiếu xuất và ở trạng thái &quot;Đã nhập kho&quot; (VD:
+                                    CAM-IN-001-000001)
+                                </li>
 
-                            {pendingItems.length > 0 && (
-                                <div className="bg-orange-50 p-2 rounded border border-orange-200">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <Text strong>Đang chờ lưu ({pendingItems.length})</Text>
-                                        <Button size="small" type="primary" icon={<SaveOutlined />} onClick={handleSaveItems}>Lưu</Button>
-                                    </div>
-                                    <Table
-                                        dataSource={pendingItems}
-                                        columns={pendingColumns}
-                                        size="small"
-                                        pagination={{ pageSize: 5 }}
-                                        showHeader={false}
-                                        rowKey="key"
-                                    />
-                                </div>
-                            )}
-                        </Card>
-                    )}
-                </div>
+                                <li>
+                                    <Text strong type="warning">
+                                        Serial THỪA:
+                                    </Text>{' '}
+                                    Serial KHÔNG thuộc phiếu xuất này (VD: CAM-IN-001-000099)
+                                </li>
 
-                {/* RIGHT: Items List */}
-                <div className="w-full md:w-2/3">
-                    <Card
-                        title={`Danh sách thiết bị (${exportInfo.items.length})`}
-                        className="shadow-sm h-full"
-                        extra={!isDraft && <Tag color="success">ĐÃ XUẤT KHO</Tag>}
-                    >
-                        <Table
-                            dataSource={exportInfo.items}
-                            columns={columns}
-                            rowKey="serial"
-                            size="small"
+                                <li>
+                                    <Text strong type="danger">
+                                        Serial ĐÃ XUẤT:
+                                    </Text>{' '}
+                                    Serial đã được xuất kho trước đó, KHÔNG thể xuất lại (VD:
+                                    CAM-IN-001-000003)
+                                </li>
+
+                                <li>
+                                    <Text strong type="danger">
+                                        Thiếu serial:
+                                    </Text>{' '}
+                                    Cảnh báo nếu chưa đủ số lượng khi hoàn tất
+                                </li>
+                            </ul>
+                        }
+                        type="info"
+                        showIcon
+                    />
+
+
+                    <div className="flex gap-2">
+                        <Input
+                            size="large"
+                            placeholder="Quét serial..."
+                            prefix={<ScanOutlined />}
+                            value={scannedInput}
+                            onChange={e => setScannedInput(e.target.value)}
+                            onPressEnter={handleScanSerial}
+                            autoFocus
+                            disabled={loading}
                         />
-                    </Card>
+                        <Button type="primary" size="large" onClick={handleScanSerial} icon={<CheckCircleOutlined />} loading={loading}>Quét</Button>
+                    </div>
+
+                    <Divider>Hoặc</Divider>
+
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Space direction="vertical" className="w-full">
+                                <Text strong>Nhập thủ công (Nhiều dòng)</Text>
+                                <Input.TextArea
+                                    rows={5}
+                                    placeholder="Serial 1&#10;Serial 2..."
+                                    value={manualSerials}
+                                    onChange={e => setManualSerials(e.target.value)}
+                                    disabled={loading}
+                                />
+                                <Button block onClick={handleManualImport} icon={<CheckCircleOutlined />} loading={loading}>Nhập danh sách</Button>
+                            </Space>
+                        </Col>
+                        <Col span={12}>
+                            <Space direction="vertical" className="w-full">
+                                <Text strong>Import Excel</Text>
+                                <Dragger
+                                    fileList={fileList}
+                                    beforeUpload={handleFileImport}
+                                    showUploadList={false}
+                                    height={120}
+                                    disabled={loading}
+                                >
+                                    <p className="ant-upload-drag-icon"><UploadOutlined /></p>
+                                    <p className="ant-upload-text">Kéo thả file Excel vào đây</p>
+                                </Dragger>
+                                <Button block icon={<DownloadOutlined />}>Tải template</Button>
+                            </Space>
+                        </Col>
+                    </Row>
+                </Space>
+            </Card>
+
+            {/* List */}
+            <Card
+                title="Danh sách serial"
+                extra={<Button icon={<FileExcelOutlined />}>Xuất Excel</Button>}
+                className="mb-4"
+            >
+                <Table
+                    columns={serialColumns}
+                    dataSource={sessionItems}
+                    rowKey="serial"
+                    size="small"
+                    pagination={{ pageSize: 10 }}
+                />
+            </Card>
+
+            {/* Complete */}
+            <Card>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <Text strong className="text-lg">Hoàn thành phiên xuất kho</Text>
+                        <div className="text-gray-500">
+                            Lưu các serial đã quét vào hệ thống.
+                        </div>
+                    </div>
+                    <Button
+                        type="primary"
+                        size="large"
+                        icon={<CheckCircleOutlined />}
+                        onClick={handleCompleteExport}
+                    >
+                        Hoàn thành phiên xuất kho
+                    </Button>
                 </div>
-            </div>
+            </Card>
         </div>
     );
 }
+

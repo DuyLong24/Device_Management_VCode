@@ -73,12 +73,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     return gId === whGroupId;
                 }) || (typeof wh.groupId === 'object' ? wh.groupId : { _id: 'other', name: 'Khác', code: 'OTHER' });
 
-                console.log(`[MENU] Warehouse: ${wh.name} (${wh.code})`);
-                console.log(`       whGroupId: ${whGroupId}`);
-                console.log(`       Mapped Group: ${group?.name} (${group?.code})`);
-
-                console.log(`[MENU] Warehouse: ${wh.name}, Group: ${group.name}, GroupCode: ${group.code}`);
-
                 const item = {
                     key: `warehouse-${wh.code}`,
                     label: renderBadgeLabel(wh.name, wh.count, wh.color),
@@ -88,13 +82,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
                 // Logic phân nhóm kho theo code
                 if (group.code === 'INTERNAL' || group.name === 'Kho nội bộ') {
-                    console.log(`  -> Added to INTERNAL`);
+                    // console.log(`  -> Added to INTERNAL`);
                     internalItems.push(item);
                 } else if (group.code === 'EXPORTED' || group.name === 'Đã xuất') {
-                    console.log(`  -> Added to EXPORTED`);
+                    // console.log(`  -> Added to EXPORTED`);
                     exportedItems.push(item);
                 } else {
-                    console.log(`  -> NOT MATCHED - group.code: ${group.code}, group.name: ${group.name}`);
+                    // console.log(`  -> NOT MATCHED - group.code: ${group.code}, group.name: ${group.name}`);
                 }
             });
         }

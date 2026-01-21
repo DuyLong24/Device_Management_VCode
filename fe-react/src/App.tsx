@@ -15,7 +15,8 @@ import ExportListPage from './pages/Export/ExportListPage';
 import CreateExportPage from './pages/Export/CreateExportPage';
 import ExportDetailPage from './pages/Export/ExportDetailPage';
 import SerialDetailPage from './pages/Warehouse/SerialDetailPage';
-import ExportCheckPage from './pages/Export/ExportCheckPage';
+import ExportProcessPage from './pages/Export/ExportProcessPage';
+import ExportCheckListPage from './pages/Export/ExportCheckListPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -69,9 +70,9 @@ function App() {
               <Route path="export">
                 <Route path="list" element={<ExportListPage />} />
                 <Route path="create" element={<CreateExportPage />} />
-                <Route path="check" element={<ExportCheckPage />} />
+                <Route path="check" element={<ExportCheckListPage />} />
                 <Route path=":id" element={<ExportDetailPage />} />
-                <Route path=":id/check" element={<ExportCheckPage />} />
+                <Route path=":id/check" element={<ExportProcessPage />} />
               </Route>
 
               {/* --- CÁC MODULE KHÁC --- */}

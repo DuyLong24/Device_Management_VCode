@@ -218,13 +218,65 @@ export class DeviceService {
     return this.deviceModel.find({ serial: { $in: serials } }).exec();
   }
 
-  async bulkUpdateStatus(serials: string[], status: string, note?: string): Promise<any> {
+  async findBySerial(serial: string): Promise<Device | null> {
+    return this.deviceModel.findOne({ serial }).exec();
+  }
+
+  async moveToSoldWarehouse(
+    serials: string[],
+    exportCode: string
+  ): Promise<any> {
+    try {
+      if (!serials || serials.length === 0) return;
+      console.log(`[moveToSoldWarehouse] START: Processing ${serials.length} serials. ExportCode: ${exportCode}`);
+
+      // 1. tìm SOLD Warehouse
+      const warehouses = await this.warehouseService.findAll({ code: 'SOLD' });
+      console.log(`[moveToSoldWarehouse] Warehouses found (code=SOLD): ${warehouses.length}`);
+      const soldWarehouse = warehouses[0];
+      if (!soldWarehouse) {
+        throw new BadRequestException('Không tìm thấy kho "Đã xuất - trong bảo hành" (Code: SOLD)');
+      }
+
+      const devices = await this.deviceModel.find({ serial: { $in: serials } });
+
+      // 2. Process updates
+      for (const device of devices) {
+        const fromWarehouseId = device.warehouseId;
+
+        if (fromWarehouseId && fromWarehouseId.toString() === soldWarehouse._id.toString()) {
+          continue;
+        }
+
+        // Update Device
+        device.warehouseId = soldWarehouse._id as any;
+        device.warehouseUpdatedAt = new Date();
+
+        await device.save();
+      }
+
+      return { success: true, count: devices.length };
+    } catch (error) {
+      console.error('[moveToSoldWarehouse] CRITICAL ERROR:', error);
+      throw error;
+    }
+  }
+
+  async bulkUpdateStatus(serials: string[], status: string, note?: string, customer?: string): Promise<any> {
     if (!serials || serials.length === 0) return;
+
+    const updatePayload: any = {
+      qcStatus: status
+    };
+
+    if (customer) {
+      // updatePayload.customer = customer; // Assuming device has customer field?
+    }
 
     const result = await this.deviceModel.updateMany(
       { serial: { $in: serials } },
       {
-        $set: { qcStatus: status }
+        $set: updatePayload
       }
     ).exec();
 
@@ -234,7 +286,7 @@ export class DeviceService {
   async validateSerials(dto: ValidateSerialsDto): Promise<ValidateSerialsResponse> {
     const { serials, deviceModel, warehouseCode } = dto;
 
-    // Get warehouse by code using WarehouseService
+    // tìm kho với code kho
     const warehouses = await this.warehouseService.findAll({ code: warehouseCode });
     const warehouse = warehouses[0];
 
@@ -264,7 +316,7 @@ export class DeviceService {
         continue;
       }
 
-      // Find by serial
+      // Tìm = serial
       const device = await this.deviceModel.findOne({ serial })
         .populate('warehouseId')
         .exec();

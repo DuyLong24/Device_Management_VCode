@@ -1,8 +1,7 @@
-import { Card, Button, Space, Form, Input, Select, InputNumber, Table, Typography, Row, Col, Tooltip, Divider, Modal, Tabs } from 'antd';
-import { SaveOutlined, CloseOutlined, PlusOutlined, DeleteOutlined, InfoCircleOutlined, WarningOutlined, SendOutlined, UploadOutlined } from '@ant-design/icons';
+import { Card, Button, Space, Form, Input, Select, InputNumber, Table, Typography, Row, Col, Tooltip, Divider } from 'antd';
+import { SaveOutlined, CloseOutlined, PlusOutlined, DeleteOutlined, InfoCircleOutlined, WarningOutlined, SendOutlined } from '@ant-design/icons';
 
-import { useCreateExport, type SerialValidationResult } from '../../hooks/useCreateExport';
-import { parseExcelSerials } from '../../utils/excel.utils';
+import { useCreateExport } from '../../hooks/useCreateExport';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
@@ -20,63 +19,11 @@ export default function CreateExportPage() {
         handleDeleteDevice,
         handleDeviceChange,
         getDeviceStock,
-        openSerialModal,
-        handleSaveSerials,
         handleSaveDraft,
         handleSaveAndSubmit,
         handleCancel,
         setHasUnsavedChanges,
-
-        // Serial modal states
-        isSerialModalOpen,
-        setIsSerialModalOpen,
-        tempSerials,
-        setTempSerials,
-        activeTab,
-        setActiveTab,
-        validatingSerials,
-        saveValidSerials,
     } = useCreateExport();
-
-    // Use Modal hook để hiển thị error modal
-    const [modal, contextHolder] = Modal.useModal();
-
-    const handleValidationError = (validation: SerialValidationResult, uniqueSerials: string[]) => {
-        modal.error({
-            title: 'Phát hiện serial không hợp lệ',
-            width: 700,
-            content: (
-                <div>
-                    <p className="mb-3 text-sm">
-                        Có <strong className="text-red-500">{validation.invalidSerials.length}</strong> serial không hợp lệ
-                        trên tổng <strong>{uniqueSerials.length}</strong> serial.
-                    </p>
-                    <div className="max-h-[300px] overflow-auto border border-gray-200 rounded p-3">
-                        {validation.errors.map((err, idx) => (
-                            <div key={idx} className={`py-2 ${idx < validation.errors.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                                <Text strong className="text-red-500">{err.serial}</Text>
-                                <br />
-                                <Text type="secondary" className="text-xs">{err.message}</Text>
-                            </div>
-                        ))}
-                    </div>
-                    {validation.validSerials.length > 0 && (
-                        <p className="mt-4 mb-0">
-                            Bạn có muốn chỉ lưu <strong className="text-green-500">{validation.validSerials.length}</strong> serial hợp lệ không?
-                        </p>
-                    )}
-                </div>
-            ),
-            okText: validation.validSerials.length > 0 ? `Lưu ${validation.validSerials.length} serial hợp lệ` : 'Đóng',
-            cancelText: 'Quay lại sửa',
-            okButtonProps: { danger: validation.validSerials.length === 0 },
-            onOk: () => {
-                if (validation.validSerials.length > 0) {
-                    saveValidSerials(validation.validSerials);
-                }
-            }
-        });
-    };
 
     // Cột bảng thiết bị
     const deviceColumns = [
@@ -151,40 +98,6 @@ export default function CreateExportPage() {
             },
         },
         {
-            title: 'Serial đã chọn',
-            key: 'serial',
-            width: 130,
-            align: 'center' as const,
-            render: (_: any, record: any) => {
-                const count = record.expectedSerials?.length || 0;
-                const required = record.quantity || 0;
-                const isMatch = count === required;
-                const isEmpty = count === 0;
-
-                return (
-                    <Space direction="vertical" size={4} className="w-full">
-                        <Button
-                            type={isEmpty ? 'dashed' : 'default'}
-                            size="small"
-                            onClick={() => openSerialModal(record)}
-                            disabled={!record.deviceModel}
-                            block
-                        >
-                            {isEmpty ? 'Nhập Serial' : `${count} serial`}
-                        </Button>
-                        {!isEmpty && (
-                            <Text
-                                type={isMatch ? 'success' : 'danger'}
-                                className="text-[11px] block text-center"
-                            >
-                                {count}/{required} {isMatch ? '✓' : '⚠'}
-                            </Text>
-                        )}
-                    </Space>
-                );
-            },
-        },
-        {
             title: 'Thao tác',
             key: 'action',
             width: 80,
@@ -197,7 +110,6 @@ export default function CreateExportPage() {
 
     return (
         <div className="p-6 max-w-full mx-auto">
-            {contextHolder}
             {/* Page Header */}
             <div className="mb-6">
                 <div className="flex justify-between items-start">
@@ -224,7 +136,7 @@ export default function CreateExportPage() {
             {/* Form */}
             <Form form={form} layout="vertical" onValuesChange={setHasUnsavedChanges}>
                 {/* Card A - Thông tin chung */}
-                <Card title="Thông tin chung phiếu xuất" style={{ marginBottom: 24 }}>
+                <Card title="Thông tin chung phiếu xuất" className="mb-6 shadow-sm">
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
                             <Form.Item
@@ -232,12 +144,12 @@ export default function CreateExportPage() {
                                     <span>
                                         Mã phiếu xuất{' '}
                                         <Tooltip title="Mã tự sinh theo đợt xuất kho">
-                                            <InfoCircleOutlined style={{ color: '#999' }} />
+                                            <InfoCircleOutlined className="text-gray-400" />
                                         </Tooltip>
                                     </span>
                                 }
                             >
-                                <Input value={autoExportCode} disabled style={{ fontWeight: 600, color: '#1677ff' }} />
+                                <Input value={autoExportCode} disabled className="font-semibold text-blue-600" />
                             </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
@@ -348,10 +260,11 @@ export default function CreateExportPage() {
 
                 {/* Card B - Danh sách thiết bị */}
                 <Card
+                    className="mb-6 shadow-sm"
                     title={
                         <span>
                             Danh sách mã thiết bị xuất kho{' '}
-                            <Text type="secondary" style={{ fontSize: 14, fontWeight: 'normal' }}>
+                            <Text type="secondary" className="text-sm font-normal">
                                 ({deviceList.length} thiết bị)
                             </Text>
                         </span>
@@ -395,12 +308,6 @@ export default function CreateExportPage() {
                                             {deviceList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
                                         </Text>
                                     </Text>
-                                    <Text strong>
-                                        Serial đã chọn:{' '}
-                                        <Text type="warning" className="text-lg">
-                                            0 / {deviceList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
-                                        </Text>
-                                    </Text>
                                 </Space>
                             </div>
                         </>
@@ -422,76 +329,6 @@ export default function CreateExportPage() {
                 </div>
             </div>
 
-            {/* Serial Input Modal */}
-            <Modal
-                title="Nhập danh sách Serial"
-                open={isSerialModalOpen}
-                onOk={() => handleSaveSerials(handleValidationError)}
-                onCancel={() => setIsSerialModalOpen(false)}
-                width={700}
-                okText="Lưu Serial"
-                cancelText="Hủy"
-                confirmLoading={validatingSerials}
-            >
-                <Tabs activeKey={activeTab} onChange={setActiveTab}>
-                    <Tabs.TabPane tab="Nhập thủ công" key="manual">
-                        <div>
-                            <p className="mb-2 text-gray-600">
-                                Nhập mỗi serial trên một dòng:
-                            </p>
-                            <Input.TextArea
-                                rows={12}
-                                value={tempSerials}
-                                onChange={(e) => setTempSerials(e.target.value)}
-                                placeholder={'SN001\nSN002\nSN003\n...'}
-                                className="font-mono"
-                            />
-                            <p className="mt-2 text-xs text-gray-400">
-                                Đã nhập: {tempSerials.split('\n').filter(s => s.trim()).length} serial
-                            </p>
-                        </div>
-                    </Tabs.TabPane>
-
-                    <Tabs.TabPane tab={<span><UploadOutlined /> Upload Excel</span>} key="excel">
-                        <div className="text-center py-10 px-5">
-                            <p className="mb-4 text-gray-600">
-                                Upload file Excel với danh sách serial (cột A, bỏ qua dòng 1):
-                            </p>
-                            <Button
-                                icon={<UploadOutlined />}
-                                size="large"
-                                onClick={async () => {
-                                    const input = document.createElement('input');
-                                    input.type = 'file';
-                                    input.accept = '.xlsx,.xls';
-                                    input.onchange = async (e: any) => {
-                                        const file = e.target?.files?.[0];
-                                        if (file) {
-                                            try {
-                                                const serials = await parseExcelSerials(file);
-                                                const current = tempSerials.split('\n').filter(s => s.trim());
-                                                const merged = [...current, ...serials];
-                                                const unique = [...new Set(merged)];
-
-                                                setTempSerials(unique.join('\n'));
-                                                setActiveTab('manual');
-                                            } catch (err) {
-                                                console.error(err);
-                                            }
-                                        }
-                                    };
-                                    input.click();
-                                }}
-                            >
-                                Chọn file Excel
-                            </Button>
-                            <p className="mt-4 text-xs text-gray-400">
-                                Hỗ trợ: .xlsx, .xls
-                            </p>
-                        </div>
-                    </Tabs.TabPane>
-                </Tabs>
-            </Modal>
         </div>
     );
 }

@@ -31,7 +31,6 @@ interface DeviceItem {
     name: string;
     quantity: number;
     inStock?: number;
-    expectedSerials: string[];
 }
 
 interface DeviceOption {
@@ -57,13 +56,6 @@ export const useCreateExport = () => {
     const [loadingDevices, setLoadingDevices] = useState(false);
     const [loadingCategories, setLoadingCategories] = useState(false);
 
-    // Serial modal states
-    const [isSerialModalOpen, setIsSerialModalOpen] = useState(false);
-    const [currentDeviceKey, setCurrentDeviceKey] = useState<string | null>(null);
-    const [tempSerials, setTempSerials] = useState<string>('');
-    const [activeTab, setActiveTab] = useState('manual');
-    const [validatingSerials, setValidatingSerials] = useState(false);
-
     // Generate auto code
     useEffect(() => {
         const today = dayjs();
@@ -71,7 +63,6 @@ export const useCreateExport = () => {
         setAutoExportCode(code);
     }, []);
 
-    // Fetch device codes and categories
     useEffect(() => {
         fetchDeviceCodes();
         fetchCategories();
@@ -160,7 +151,6 @@ export const useCreateExport = () => {
             deviceModel: '',
             name: '',
             quantity: 1,
-            expectedSerials: [],
         };
         setDeviceList([...deviceList, newDevice]);
         setHasUnsavedChanges(true);
@@ -182,7 +172,6 @@ export const useCreateExport = () => {
                             deviceModel: value,
                             name: device?.label.split(' - ')[1] || '',
                             inStock: device?.inStock || 0,
-                            expectedSerials: [],
                         };
                     }
                     return { ...item, [field]: value };
@@ -193,99 +182,6 @@ export const useCreateExport = () => {
         setHasUnsavedChanges(true);
     };
 
-    const openSerialModal = (record: DeviceItem) => {
-        if (!record.deviceModel) {
-            message.warning('Vui lòng chọn mã thiết bị trước');
-            return;
-        }
-        setCurrentDeviceKey(record.key);
-        setTempSerials(record.expectedSerials.join('\n'));
-        setIsSerialModalOpen(true);
-        setActiveTab('manual');
-    };
-
-    // Validate serials with backend API
-    const validateSerials = async (
-        serials: string[],
-        deviceModel: string
-    ): Promise<SerialValidationResult> => {
-        try {
-            setValidatingSerials(true);
-
-            const response = await axiosInstance.post('/devices/validate-serials', {
-                serials,
-                deviceModel,
-                warehouseCode: DEVICE_STATUS.READY_TO_EXPORT,
-                operation: 'EXPORT'
-            });
-
-            return response.data;
-        } catch (error: any) {
-            logger.error('Serial validation failed', { error });
-            message.error('Không thể validate serial');
-            return {
-                valid: false,
-                validSerials: [],
-                invalidSerials: serials,
-                errors: [{
-                    serial: 'API_ERROR',
-                    reason: 'NOT_FOUND',
-                    message: 'Lỗi kết nối API validation'
-                }]
-            };
-        } finally {
-            setValidatingSerials(false);
-        }
-    };
-
-    // Lưu serials
-    const handleSaveSerials = async (
-        onValidationError?: (result: SerialValidationResult, uniqueSerials: string[]) => void
-    ) => {
-        if (!currentDeviceKey) return;
-
-        const currentDevice = deviceList.find(d => d.key === currentDeviceKey);
-        if (!currentDevice || !currentDevice.deviceModel) {
-            message.error('Vui lòng chọn mã thiết bị trước');
-            return;
-        }
-
-        const rawSerials = tempSerials.split('\n').map(s => s.trim()).filter(s => s);
-        const uniqueSerials = [...new Set(rawSerials)];
-
-        if (rawSerials.length !== uniqueSerials.length) {
-            message.warning(`Đã loại bỏ ${rawSerials.length - uniqueSerials.length} serial trùng lặp`);
-        }
-
-        if (uniqueSerials.length === 0) {
-            message.warning('Vui lòng nhập ít nhất 1 serial');
-            return;
-        }
-
-        // Validate = backend
-        const validation = await validateSerials(uniqueSerials, currentDevice.deviceModel);
-
-        if (!validation.valid) {
-            if (onValidationError) {
-                onValidationError(validation, uniqueSerials);
-            }
-            return;
-        }
-
-        saveValidSerials(validation.validSerials);
-    };
-
-    const saveValidSerials = (serials: string[]) => {
-        setDeviceList(prev => prev.map(d =>
-            d.key === currentDeviceKey
-                ? { ...d, expectedSerials: serials }
-                : d
-        ));
-
-        setIsSerialModalOpen(false);
-        setTempSerials('');
-        message.success(`Đã lưu ${serials.length} serial hợp lệ`);
-    };
 
     const validateDeviceList = (): { valid: boolean; message?: string } => {
         if (deviceList.length === 0) {
@@ -314,14 +210,6 @@ export const useCreateExport = () => {
                 };
             }
 
-            if (device.expectedSerials && device.expectedSerials.length > 0) {
-                if (device.expectedSerials.length !== device.quantity) {
-                    return {
-                        valid: false,
-                        message: `Thiết bị ${device.deviceModel}: Số serial (${device.expectedSerials.length}) không khớp số lượng (${device.quantity})`
-                    };
-                }
-            }
         }
 
         return { valid: true };
@@ -390,7 +278,7 @@ export const useCreateExport = () => {
             const payload = {
                 ...formValues,
                 code: autoExportCode,
-                status: EXPORT_STATUS.PENDING_APPROVAL,
+                status: EXPORT_STATUS.DRAFT,
                 requirements: deviceList.map((d) => ({
                     productCode: d.deviceModel,
                     productName: d.name,
@@ -402,12 +290,20 @@ export const useCreateExport = () => {
                 items: [],
             };
 
+            // 1. Tạo Draft
             const res = await exportService.create(payload);
+
             if (res.data) {
-                message.success('Tạo phiếu xuất và gửi duyệt thành công!');
-                setHasUnsavedChanges(false);
                 const exportData = res.data as DeviceExport;
-                navigate(`/export/${exportData.id || exportData._id}`);
+                const exportId = exportData.id || exportData._id;
+
+                if (exportId) {
+                    // 2. Gửi duyệt
+                    await exportService.submitForApproval(exportId);
+                    message.success('Tạo phiếu xuất và gửi duyệt thành công!');
+                    setHasUnsavedChanges(false);
+                    navigate(`/export/${exportId}`);
+                }
             }
         } catch (error: any) {
             logger.error('Failed to submit export', { error });
@@ -457,21 +353,8 @@ export const useCreateExport = () => {
         getDeviceStock,
 
         // Serial functions
-        openSerialModal,
-        handleSaveSerials,
-        saveValidSerials,
-
         handleSaveDraft,
         handleSaveAndSubmit,
         handleCancel,
-
-        // Serial modal states
-        isSerialModalOpen,
-        setIsSerialModalOpen,
-        tempSerials,
-        setTempSerials,
-        activeTab,
-        setActiveTab,
-        validatingSerials,
     };
 };

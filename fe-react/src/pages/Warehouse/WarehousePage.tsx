@@ -18,6 +18,8 @@ import { warehouseService } from '../../services/warehouse.service';
 import { WAREHOUSE_LABELS } from '../../constants/warehouse.constants';
 
 import TransferModal from './components/TransferModal';
+import { ImportWizardModal } from '../../components/ImportWizard/ImportWizardModal';
+import { type FieldDefinition } from '../../components/ImportWizard/steps/Step3_Mapping';
 
 const { Title, Text } = Typography;
 
@@ -37,7 +39,16 @@ export default function WarehousePage() {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
     // Modal States
+    // Modal States
     const [transferModalVisible, setTransferModalVisible] = useState(false);
+    const [importModalVisible, setImportModalVisible] = useState(false);
+
+    // Import Fields
+    const DEVICE_IMPORT_FIELDS: FieldDefinition[] = [
+        { key: 'serial', label: 'Serial Number', required: true, description: 'Mã định danh duy nhất' },
+        { key: 'deviceModel', label: 'Mã Model', required: true, description: 'Mã sản phẩm (SKU)' },
+        { key: 'name', label: 'Tên thiết bị', description: 'Tên hiển thị (nếu trống sẽ dùng Model)' },
+    ];
 
     // 1. Get Warehouse Info
     const { data: warehouses } = useQuery({
@@ -213,7 +224,7 @@ export default function WarehousePage() {
                         <Button type="primary" icon={<ScanOutlined />}>Quét mã</Button>
                     )}
                     {currentWarehouse?.config?.actions?.includes('import_excel') && (
-                        <Button icon={<ImportOutlined />}>Import Excel</Button>
+                        <Button icon={<ImportOutlined />} onClick={() => setImportModalVisible(true)}>Import Excel</Button>
                     )}
 
                     {currentWarehouse?.config?.actions?.includes('transfer') && (
@@ -301,6 +312,17 @@ export default function WarehousePage() {
                 onConfirm={handleTransferSubmit}
                 count={selectedRowKeys.length}
                 options={transferOptions}
+            />
+
+            <ImportWizardModal
+                open={importModalVisible}
+                onCancel={() => setImportModalVisible(false)}
+                onSuccess={() => {
+                    refetch();
+                }}
+                strategy="DEVICE"
+                fieldDefinitions={DEVICE_IMPORT_FIELDS}
+                payload={{ warehouseId: currentWarehouse?.id }}
             />
         </div>
     );

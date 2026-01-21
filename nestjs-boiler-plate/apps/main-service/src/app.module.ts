@@ -27,6 +27,7 @@ import { DeviceExportModule } from './modules/device-exports/device-exports.modu
 import { DeviceHistoryModule } from './modules/device-histories/device-historys.module';
 import { InventorySessionModule } from './modules/inventory-sessions/inventory-sessions.module';
 import { ExcelModule } from './common/excel/excel.module';
+import { DataImportModule } from './modules/data-import/data-import.module'; // NEW
 
 import { FncRole, FncRoleSchema } from './fnc-roles/entities/fnc-role.entity';
 import { User, UserSchema } from './users/entities/user.entity';
@@ -116,6 +117,7 @@ import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schem
     DeviceHistoryModule,
     InventorySessionModule,
     ExcelModule,
+    DataImportModule,
   ],
   controllers: [HealthController],
   providers: [

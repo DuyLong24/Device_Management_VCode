@@ -41,6 +41,10 @@ import { userService } from '../../services/user.service';
 import { categoryService } from '../../services/category.service';
 import { deviceService } from '../../services/device.service';
 
+import { ImportWizardModal } from '../../components/ImportWizard/ImportWizardModal';
+import { type FieldDefinition } from '../../components/ImportWizard/steps/Step3_Mapping';
+// import type { DataImportSession } from '../../services/data-import.service';
+
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { TabPane } = Tabs;
@@ -76,6 +80,16 @@ export default function CreateImportPage() {
     const [currentProductKey, setCurrentProductKey] = useState<string | null>(null);
     const [tempSerials, setTempSerials] = useState<string>('');
     const [activeTab, setActiveTab] = useState('manual');
+    const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
+
+    // Import Fields Definition
+    const IMPORT_TICKET_FIELDS: FieldDefinition[] = [
+        { key: 'productCode', label: 'Mã sản phẩm', required: true, description: 'SKU của sản phẩm' },
+        { key: 'serial', label: 'Serial Number', required: false, description: 'Mã định danh (nếu có)' },
+        { key: 'quantity', label: 'Số lượng', required: false, description: 'Mặc định là 1 nếu có serial' },
+        { key: 'boxCount', label: 'Số hộp', required: false },
+        { key: 'itemsPerBox', label: 'Số SP/Hộp', required: false },
+    ];
 
     const generateImportCode = () => {
         const today = dayjs();
@@ -564,7 +578,7 @@ export default function CreateImportPage() {
                     bordered={false}
                     extra={
                         <Space>
-                            <Button icon={<ImportOutlined />}>Import Excel (Mẫu)</Button>
+                            <Button icon={<ImportOutlined />} onClick={() => setIsImportWizardOpen(true)}>Import Excel Tổng</Button>
                             <Button type="primary" icon={<PlusOutlined />} onClick={handleAddProduct} className="bg-blue-600 hover:bg-blue-700">
                                 Thêm mã sản phẩm
                             </Button>
@@ -590,8 +604,9 @@ export default function CreateImportPage() {
                         </div>
                     )}
                 </Card>
-            </section>
+            </section >
 
+            {/* Sticky Footer */}
             {/* Sticky Footer */}
             <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
                 <div className="max-w-7xl mx-auto flex justify-end gap-3">
@@ -670,7 +685,84 @@ export default function CreateImportPage() {
                         </div>
                     </TabPane>
                 </Tabs>
+
             </Modal>
+
+            {/* IMPORT WIZARD - Moved outside of Serial Modal */}
+            <ImportWizardModal
+                open={isImportWizardOpen}
+                onCancel={() => setIsImportWizardOpen(false)}
+                strategy="IMPORT_TICKET"
+                fieldDefinitions={IMPORT_TICKET_FIELDS}
+                onSuccess={(details) => {
+                    if (!details || details.length === 0) return;
+
+                    // Aggregate data by Product Code
+                    const productMap = new Map<string, {
+                        quantity: number;
+                        boxCount: number | null;
+                        itemsPerBox: number | null;
+                        serials: string[];
+                    }>();
+
+                    details.forEach((row: any) => {
+                        const pCode = row.productCode;
+                        if (!pCode) return;
+
+                        const current = productMap.get(pCode) || {
+                            quantity: 0,
+                            boxCount: row.boxCount || null,
+                            itemsPerBox: row.itemsPerBox || null,
+                            serials: [] as string[]
+                        };
+
+                        let qty = Number(row.quantity) || 0;
+                        if (row.serial && qty === 0) qty = 1;
+
+                        current.quantity += qty;
+                        if (row.serial) current.serials.push(row.serial);
+
+                        // Update packaging info
+                        if (!current.boxCount && row.boxCount) current.boxCount = row.boxCount;
+                        if (!current.itemsPerBox && row.itemsPerBox) current.itemsPerBox = row.itemsPerBox;
+
+                        productMap.set(pCode, current);
+                    });
+
+                    // Merge into existing productList
+                    setProductList(prev => {
+                        const nextList = [...prev];
+
+                        productMap.forEach((data, code) => {
+                            const existingIndex = nextList.findIndex(p => p.productCode === code);
+
+                            if (existingIndex > -1) {
+                                // Update existing
+                                const existing = nextList[existingIndex];
+                                nextList[existingIndex] = {
+                                    ...existing,
+                                    quantity: existing.quantity + data.quantity,
+                                    expectedSerials: [...new Set([...existing.expectedSerials, ...data.serials])],
+                                };
+                            } else {
+                                // Add new
+                                nextList.push({
+                                    key: `import-${code}-${Date.now()}`,
+                                    productCode: code,
+                                    quantity: data.quantity,
+                                    boxCount: data.boxCount,
+                                    itemsPerBox: data.itemsPerBox,
+                                    serialImported: 0,
+                                    expectedSerials: data.serials
+                                });
+                            }
+                        });
+                        return nextList;
+                    });
+
+                    setHasUnsavedChanges(true);
+                }}
+            />
         </main>
     );
 }

@@ -98,6 +98,23 @@ export const useExportDetail = () => {
         }
     };
 
+    const handleConfirm = async () => {
+        if (!id) return;
+        try {
+            await exportService.confirm(id);
+            message.success('Đã hoàn tất phiếu xuất kho!');
+            fetchDetail();
+        } catch (error: any) {
+            logger.error('Lỗi khi hoàn tất phiếu', {
+                error,
+                module: 'useExportDetail',
+                action: 'handleConfirm',
+                exportId: id,
+            });
+            message.error(error?.response?.data?.message || 'Lỗi khi hoàn tất phiếu');
+        }
+    };
+
     const handleBackToList = () => {
         navigate('/export/list');
     };
@@ -113,6 +130,7 @@ export const useExportDetail = () => {
         handleSubmit,
         handleApprove,
         handleReject,
+        handleConfirm, // Added
         handleNavigateToScan,
         handleBackToList,
 

@@ -1,8 +1,6 @@
 export const ImportStatus = {
     DRAFT: 'DRAFT',
-    PENDING: 'PENDING',
-    COMPLETED: 'COMPLETED',
-    CANCELLED: 'CANCELLED',
+    PUBLIC: 'PUBLIC',
 } as const;
 
 export type ImportStatus = keyof typeof ImportStatus;

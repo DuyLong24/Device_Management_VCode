@@ -15,6 +15,7 @@ interface ApprovalActionsProps {
     onApprove: () => Promise<void>;
     onReject: () => Promise<void>;
     onNavigateToScan: () => void;
+    onConfirm?: () => Promise<void>;
 }
 
 export const ApprovalActions = ({
@@ -23,6 +24,7 @@ export const ApprovalActions = ({
     onApprove,
     onReject,
     onNavigateToScan,
+    onConfirm
 }: ApprovalActionsProps) => {
     const handleRejectClick = () => {
         onReject();
@@ -61,9 +63,25 @@ export const ApprovalActions = ({
             )}
 
             {(status === EXPORT_STATUS.APPROVED || status === EXPORT_STATUS.IN_PROGRESS) && (
-                <Button type="primary" icon={<ScanOutlined />} onClick={onNavigateToScan}>
-                    Quét Tuân Thủ (Scan)
-                </Button>
+                <>
+                    <Button type="default" icon={<ScanOutlined />} onClick={onNavigateToScan}>
+                        Quét Tuân Thủ (Scan)
+                    </Button>
+                    {onConfirm && status === EXPORT_STATUS.IN_PROGRESS && (
+                        <Popconfirm
+                            title="Hoàn tất phiếu xuất kho?"
+                            description="Hành động này sẽ chốt danh sách và chuyển thiết bị vào kho ĐÃ BÁN. Không thể hoàn tác."
+                            onConfirm={onConfirm}
+                            okText="Hoàn tất"
+                            cancelText="Hủy"
+                            okButtonProps={{ className: 'bg-green-600' }}
+                        >
+                            <Button type="primary" className="bg-green-600" icon={<CheckCircleOutlined />}>
+                                Hoàn tất Phiếu
+                            </Button>
+                        </Popconfirm>
+                    )}
+                </>
             )}
 
             {status === EXPORT_STATUS.COMPLETED && (

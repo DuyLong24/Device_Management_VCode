@@ -19,8 +19,8 @@ export class DeviceImportService {
   ) { }
 
   async create(createDto: CreateDeviceImportDto, userId: string): Promise<DeviceImport> {
-    // Kiểm tra Serial trước khi tạo mới -> Chỉ check kỹ khi trạng thái là PENDING (Lưu chính thức)
-    if (createDto.status === 'PENDING') {
+    // Kiểm tra Serial trước khi tạo mới -> Chỉ check kỹ khi trạng thái là PUBLIC (Lưu chính thức)
+    if (createDto.status === 'PUBLIC') {
       const products = createDto.products || [];
       for (const product of products) {
         const p: any = product;
@@ -89,7 +89,7 @@ export class DeviceImportService {
     return deviceimport;
   }
 
-  async update(id: string, updateDto: UpdateDeviceImportDto, userId: string): Promise<DeviceImport> {
+  async update(id: string, updateDto: UpdateDeviceImportDto, userId: string | null): Promise<DeviceImport> {
     const existing = await this.findById(id);
 
     // Chỉ cho sửa khi đang DRAFT
@@ -177,14 +177,15 @@ export class DeviceImportService {
     }
 
     // Nếu đang làm dở -> Update trạng thái phiếu thành IN_PROGRESS (để không còn là PENDING/DRAFT)
-    if (newStatus === 'in-progress') {
-      updatePayload.status = 'IN_PROGRESS';
-    }
+    // REMOVED: Status should remain PUBLIC once created. InventoryStatus tracks progress.
+    // if (newStatus === 'in-progress') {
+    //   updatePayload.status = 'IN_PROGRESS';
+    // }
 
     return this.deviceImportRepository.update(id, updatePayload);
   }
 
-  async complete(id: string, userId: string): Promise<DeviceImport> {
+  async complete(id: string, userId: string | null): Promise<DeviceImport> {
     const ticket = await this.findById(id);
     if (!ticket) throw new NotFoundException(ERROR_MESSAGES.DEVICE_IMPORT.NOT_FOUND);
 
@@ -207,7 +208,7 @@ export class DeviceImportService {
     // 3. Cập nhật trạng thái
     return this.deviceImportRepository.update(id, {
       inventoryStatus: 'completed',
-      status: 'COMPLETED',
+      // status: 'COMPLETED', // Keep PUBLIC
       updatedBy: userId
     } as any);
   }

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, App as AntdApp } from 'antd';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import enUS from 'antd/locale/en_US';
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -41,49 +41,52 @@ function App() {
           },
         }}
       >
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<div>Login Page</div>} />
+        <AntdApp>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<div>Login Page</div>} />
 
-            <Route path="/" element={<DashboardLayout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<div>Nội dung Dashboard</div>} />
+              <Route path="/" element={<DashboardLayout />}>
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<div>Nội dung Dashboard</div>} />
 
-              {/* MODULE NHẬP KHO */}
-              <Route path="import">
-                {/* 1. Danh sách tổng: /import/list */}
-                <Route path="list" element={<ImportListPage />} />
+                {/* MODULE NHẬP KHO */}
+                <Route path="import">
+                  {/* 1. Danh sách tổng: /import/list */}
+                  <Route path="list" element={<ImportListPage />} />
 
-                {/* 2. Tạo mới: /import/create */}
-                <Route path="create" element={<CreateImportPage />} />
+                  {/* 2. Tạo mới: /import/create */}
+                  <Route path="create" element={<CreateImportPage />} />
+                  <Route path="edit/:id" element={<CreateImportPage />} />
 
-                {/* 3. Danh sách chọn kiểm kê: /import/inventory-list */}
-                <Route path="inventory-list" element={<InventoryListPage />} />
+                  {/* 3. Danh sách chọn kiểm kê: /import/inventory-list */}
+                  <Route path="inventory-list" element={<InventoryListPage />} />
 
-                <Route path="inventory-check/:importId" element={<InventoryCheckPage />} />
+                  <Route path="inventory-check/:importId" element={<InventoryCheckPage />} />
 
-                {/* 4. Chi tiết: /import/:id */}
-                <Route path=":id" element={<ImportDetailPage />} />
+                  {/* 4. Chi tiết: /import/:id */}
+                  <Route path=":id" element={<ImportDetailPage />} />
+                </Route>
+
+                {/* MODULE XUẤT KHO */}
+                <Route path="export">
+                  <Route path="list" element={<ExportListPage />} />
+                  <Route path="create" element={<CreateExportPage />} />
+                  <Route path="check" element={<ExportCheckListPage />} />
+                  <Route path=":id" element={<ExportDetailPage />} />
+                  <Route path=":id/check" element={<ExportProcessPage />} />
+                </Route>
+
+                {/* --- CÁC MODULE KHÁC --- */}
+                <Route path="all-serials" element={<AllSerialsPage />} />
+                <Route path="serial/:serial" element={<SerialDetailPage />} />
+                <Route path="warehouse/:code" element={<WarehousePage />} />
+
+                <Route path="*" element={<div>404 Not Found</div>} />
               </Route>
-
-              {/* MODULE XUẤT KHO */}
-              <Route path="export">
-                <Route path="list" element={<ExportListPage />} />
-                <Route path="create" element={<CreateExportPage />} />
-                <Route path="check" element={<ExportCheckListPage />} />
-                <Route path=":id" element={<ExportDetailPage />} />
-                <Route path=":id/check" element={<ExportProcessPage />} />
-              </Route>
-
-              {/* --- CÁC MODULE KHÁC --- */}
-              <Route path="all-serials" element={<AllSerialsPage />} />
-              <Route path="serial/:serial" element={<SerialDetailPage />} />
-              <Route path="warehouse/:code" element={<WarehousePage />} />
-
-              <Route path="*" element={<div>404 Not Found</div>} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+            </Routes>
+          </BrowserRouter>
+        </AntdApp>
       </ConfigProvider>
     </QueryClientProvider>
   );

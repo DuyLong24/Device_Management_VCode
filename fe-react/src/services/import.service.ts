@@ -26,5 +26,13 @@ export const importService = {
 
     completeImport: async (id: string) => {
         return axiosInstance.post(`/device-imports/${id}/complete`);
+    },
+
+    updateImport: async (id: string, data: Partial<CreateImportDto>) => {
+        return axiosInstance.patch<DeviceImport>(`/device-imports/${id}`, data);
+    },
+
+    deleteImport: async (id: string) => {
+        return axiosInstance.delete(`/device-imports/${id}`);
     }
 };

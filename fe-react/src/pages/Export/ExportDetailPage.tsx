@@ -22,6 +22,7 @@ export default function ExportDetailPage() {
         handleReject,
         handleNavigateToScan,
         handleBackToList,
+        handleConfirm, // Added
     } = useExportDetail();
 
     const { sessions, createSession } = useExportSession(id);
@@ -62,6 +63,7 @@ export default function ExportDetailPage() {
                     onApprove={handleApprove}
                     onReject={handleReject}
                     onNavigateToScan={handleNavigateToScan}
+                    onConfirm={handleConfirm}
                 />
             </div>
 

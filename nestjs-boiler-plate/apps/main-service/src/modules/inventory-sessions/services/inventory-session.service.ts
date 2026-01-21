@@ -29,7 +29,8 @@ export class InventorySessionService {
     async create(createDto: CreateInventorySessionDto, userId: string): Promise<InventorySession> {
         const importTicket = await this.deviceImportService.findById(createDto.importId);
         if (!importTicket) throw new NotFoundException(ERROR_MESSAGES.INVENTORY.IMPORT_NOT_FOUND);
-        if (importTicket.status === 'COMPLETED') throw new BadRequestException(ERROR_MESSAGES.INVENTORY.IMPORT_ALREADY_COMPLETED);
+        if (importTicket.status !== 'PUBLIC') throw new BadRequestException('Phiếu nhập phải ở trạng thái PUBLIC mới được kiểm kê');
+        if (importTicket.inventoryStatus === 'completed') throw new BadRequestException(ERROR_MESSAGES.INVENTORY.IMPORT_ALREADY_COMPLETED);
 
         const today = new Date();
         const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { message, Modal } from 'antd';
+import { App } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { importService } from '../services/import.service';
 import { inventorySessionService } from '../services/inventory-session.service';
@@ -9,6 +9,7 @@ import { exportImportPDF } from '../utils/export-import-pdf';
 export const useImportDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { modal, message } = App.useApp();
 
     // 1. Fetch Import Detail
     const { data: importData, isLoading: isLoadingImport } = useQuery({
@@ -58,21 +59,29 @@ export const useImportDetail = () => {
     };
 
     const handleEdit = () => {
-        message.info('Tính năng sửa đang phát triển');
+        if (!importData) return;
+        if (importData.status !== 'DRAFT') {
+            message.warning('Chỉ có thể sửa phiếu ở trạng thái NHÁP');
+            return;
+        }
+        navigate(`/import/edit/${id}`);
     };
 
     const handleDelete = () => {
-        Modal.confirm({
+        modal.confirm({
             title: 'Xóa phiếu nhập',
             content: 'Bạn có chắc chắn muốn xóa phiếu nhập này? Hành động này không thể hoàn tác.',
             okText: 'Xóa',
             okType: 'danger',
             cancelText: 'Hủy',
             onOk: async () => {
-                message.info('Tính năng xóa đang phát triển (API chưa hỗ trợ)');
-                // await importService.delete(id);
-                // message.success('Đã xóa phiếu nhập');
-                // navigate('/import/list');
+                try {
+                    await importService.deleteImport(id!);
+                    message.success('Đã xóa phiếu nhập');
+                    navigate('/import/list');
+                } catch (error: any) {
+                    message.error(error?.response?.data?.message || 'Không thể xóa phiếu nhập');
+                }
             }
         });
     };

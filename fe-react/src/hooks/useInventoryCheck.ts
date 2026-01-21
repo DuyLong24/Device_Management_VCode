@@ -33,6 +33,8 @@ export const useInventoryCheck = () => {
 
     const [scannedInput, setScannedInput] = useState('');
     const [manualSerials, setManualSerials] = useState('');
+    const [otherCompletedCount, setOtherCompletedCount] = useState(0);
+
     const [selectedProductCode, setSelectedProductCode] = useState<string | null>(null);
 
     const inputRef = useRef<any>(null);
@@ -82,6 +84,11 @@ export const useInventoryCheck = () => {
             } else {
                 activeSession = sessions.find(s => s.status === 'processing');
             }
+
+            // Calculate other completed count
+            const completedSessions = sessions.filter(s => s.status === 'completed' && s.id !== activeSession?.id);
+            const othersCount = completedSessions.reduce((acc, s) => acc + (s.totalScanned || 0), 0);
+            setOtherCompletedCount(othersCount);
 
             if (activeSession) {
                 setSession(activeSession);
@@ -133,7 +140,7 @@ export const useInventoryCheck = () => {
         }
     };
 
-    const handleScanSerial = () => {
+    const handleScanSerial = async () => {
         const code = scannedInput.trim();
         if (!code) return;
 
@@ -143,7 +150,8 @@ export const useInventoryCheck = () => {
             return;
         }
 
-        const isDup = [...localItems, ...serverItems].some(i => i.serial === code);
+        // Check trùng (Server Only now)
+        const isDup = serverItems.some(i => i.serial === code);
         if (isDup) {
             playError();
             message.warning(`Serial ${code} đã tồn tại!`);
@@ -151,71 +159,77 @@ export const useInventoryCheck = () => {
             return;
         }
 
-        playSuccess();
+        try {
+            // Save Immediately
+            setIsSaving(true);
+            const payload = {
+                scannedItems: [{
+                    serial: code,
+                    deviceModel: selectedProductCode,
+                    productCode: selectedProductCode
+                }]
+            };
 
-        const newItem: LocalScannedItem = {
-            serial: code,
-            model: selectedProductCode,
-            productCode: selectedProductCode,
-            scannedAt: new Date().toISOString()
-        } as any;
-
-        setLocalItems(prev => [newItem, ...prev]);
-        setScannedInput('');
-        inputRef.current?.focus();
+            const updated = await inventorySessionService.update(session!.id, payload);
+            if (updated && updated.details) {
+                playSuccess();
+                message.success(`Đã lưu serial: ${code}`);
+                setServerItems(updated.details);
+            }
+        } catch (e) {
+            playError();
+            message.error('Lỗi khi lưu serial này. Vui lòng thử lại.');
+        } finally {
+            setIsSaving(false);
+            setScannedInput('');
+            inputRef.current?.focus();
+        }
     };
 
-    const handleManualImport = () => {
+    const handleManualImport = async () => {
         if (!manualSerials.trim() || !selectedProductCode) {
             message.warning('Vui lòng chọn sản phẩm và nhập danh sách serial');
             return;
         }
 
         const codes = manualSerials.split('\n').map(s => s.trim()).filter(Boolean);
-        const newItems: LocalScannedItem[] = [];
-        const duplicates: string[] = [];
+        if (codes.length === 0) return;
+
+        const dups: string[] = [];
+        const validItems: any[] = [];
 
         codes.forEach(code => {
-            const isDup = [...localItems, ...serverItems, ...newItems].some(i => i.serial === code);
-            if (isDup) duplicates.push(code);
-            else newItems.push({
+            const isDup = serverItems.some(i => i.serial === code) || validItems.some(i => i.serial === code);
+            if (isDup) dups.push(code);
+            else validItems.push({
                 serial: code,
-                model: selectedProductCode,
-                productCode: selectedProductCode,
-                scannedAt: new Date().toISOString()
-            } as any);
+                deviceModel: selectedProductCode,
+                productCode: selectedProductCode
+            });
         });
 
-        if (newItems.length > 0) {
-            setLocalItems(prev => [...newItems, ...prev]);
-            message.success(`Đã thêm ${newItems.length} serial.`);
+        if (validItems.length > 0) {
+            try {
+                setIsSaving(true);
+                const updated = await inventorySessionService.update(session!.id, { scannedItems: validItems });
+                if (updated && updated.details) {
+                    setServerItems(updated.details);
+                    message.success(`Đã lưu ${validItems.length} serial.`);
+                }
+            } catch (e) {
+                message.error('Lỗi lưu danh sách');
+            } finally {
+                setIsSaving(false);
+            }
         }
-        if (duplicates.length > 0) {
-            message.warning(`${duplicates.length} serial bị trùng đã bị bỏ qua.`);
+
+        if (dups.length > 0) {
+            message.warning(`${dups.length} serial trùng lặp đã bị bỏ qua.`);
         }
         setManualSerials('');
     };
 
-    const handleSaveItems = async () => {
-        if (!session || localItems.length === 0) return;
-        try {
-            setIsSaving(true);
-            const payload = {
-                scannedItems: localItems.map(i => ({
-                    serial: i.serial,
-                    deviceModel: i.deviceModel,
-                    productCode: i.productCode
-                }))
-            };
-            const updated = await inventorySessionService.update(session.id, payload);
-            if (updated && updated.details) {
-                setServerItems(updated.details);
-                setLocalItems([]);
-                message.success(`Đã lưu thành công ${payload.scannedItems.length} mã vào hệ thống!`);
-            }
-        } catch (e) { message.error('Lỗi lưu dữ liệu'); }
-        finally { setIsSaving(false); }
-    };
+    // Removed handleSaveItems
 
     const [duplicateSerials, setDuplicateSerials] = useState<string[]>([]);
 
@@ -262,10 +276,11 @@ export const useInventoryCheck = () => {
         selectedProductCode, setSelectedProductCode, inputRef,
         completeModalVisible, setCompleteModalVisible,
         handleStartSession, handleScanSerial, handleManualImport,
-        handleSaveItems, handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
+        handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
         navigate,
         removeServerItem,
         setLocalItems,
         duplicateSerials,
+        otherCompletedCount
     };
 };

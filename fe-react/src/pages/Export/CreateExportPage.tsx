@@ -10,7 +10,6 @@ export default function CreateExportPage() {
         form,
         loading,
         deviceList,
-        autoExportCode,
         deviceOptions,
         categoryOptions,
         loadingDevices,
@@ -140,16 +139,18 @@ export default function CreateExportPage() {
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
                             <Form.Item
+                                name="code"
                                 label={
                                     <span>
                                         Mã phiếu xuất{' '}
-                                        <Tooltip title="Mã tự sinh theo đợt xuất kho">
+                                        <Tooltip title="Mã tự sinh theo đợt xuất kho, có thể chỉnh sửa">
                                             <InfoCircleOutlined className="text-gray-400" />
                                         </Tooltip>
                                     </span>
                                 }
+                                rules={[{ required: true, message: 'Vui lòng nhập mã phiếu' }]}
                             >
-                                <Input value={autoExportCode} disabled className="font-semibold text-blue-600" />
+                                <Input placeholder="Nhập mã phiếu xuất" className="font-semibold text-blue-600" />
                             </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
@@ -242,7 +243,6 @@ export default function CreateExportPage() {
                             <Form.Item
                                 name="deliveryAddress"
                                 label="Địa chỉ giao hàng"
-                                rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
                             >
                                 <Input placeholder="Nhập địa chỉ giao hàng" />
                             </Form.Item>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
+    App,
     Card,
     Button,
     Space,
@@ -11,12 +12,12 @@ import {
     Table,
     Tag,
     Typography,
-    message,
     Modal,
     Tabs,
     Upload,
     Badge,
-    Alert
+    Alert,
+    Tooltip
 } from 'antd';
 import {
     SaveOutlined,
@@ -27,11 +28,12 @@ import {
     UploadOutlined,
     FileExcelOutlined,
     FileTextOutlined,
-    ImportOutlined
+    ImportOutlined,
+    InfoCircleOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType, UploadProps } from 'antd';
 import dayjs from 'dayjs';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 
 import { importService } from '../../services/import.service';
@@ -55,7 +57,10 @@ interface ProductItem {
 
 export default function CreateImportPage() {
     const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
+    const isEditMode = !!id;
     const [form] = Form.useForm();
+    const { message, modal } = App.useApp();
 
     const [loading, setLoading] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -83,8 +88,7 @@ export default function CreateImportPage() {
     useEffect(() => {
         const initData = async () => {
             try {
-                form.setFieldValue('code', generateImportCode());
-
+                // Load Dropdown Options
                 const [users, categories, devices] = await Promise.all([
                     userService.getAll(),
                     categoryService.getAll(),
@@ -95,18 +99,51 @@ export default function CreateImportPage() {
                 setCategoryOptions(categories.map((c: any) => ({ label: c.name, value: c.name })));
 
                 const deviceList = (devices as any).docs || (devices as any).data || (Array.isArray(devices) ? devices : []);
-
                 const models = [...new Set(deviceList.map((d: any) => d.deviceModel))];
                 setModelOptions(models.map(m => ({ label: m as string, value: m as string })));
 
+                // Handle Edit Mode or Create Mode
+                if (isEditMode) {
+                    const res = await importService.getImportDetail(id!);
+                    const data = res.data;
+
+                    if (data.status !== 'DRAFT') {
+                        message.warning('Chỉ có thể sửa phiếu nhập ở trạng thái NHÁP');
+                        navigate('/import/list');
+                        return;
+                    }
+
+                    form.setFieldsValue({
+                        ...data,
+                        importDate: dayjs(data.importDate),
+                        // details map automatically if names match
+                    });
+
+                    // Map products
+                    const mappedProducts: ProductItem[] = data.products.map((p: any, index: number) => ({
+                        key: p._id || `prod-${index}`,
+                        productCode: p.productCode,
+                        quantity: p.quantity,
+                        boxCount: p.boxCount,
+                        itemsPerBox: p.itemsPerBox,
+                        serialImported: p.serialImported || 0,
+                        expectedSerials: p.expectedSerials || [],
+                    }));
+                    setProductList(mappedProducts);
+
+                } else {
+                    // Create Mode: New Code
+                    form.setFieldValue('code', generateImportCode());
+                }
+
             } catch (error) {
                 console.error('Init data failed:', error);
-                message.error('Không thể tải dữ liệu danh mục');
+                message.error('Không thể tải dữ liệu');
             }
         };
 
         initData();
-    }, []);
+    }, [id, isEditMode]);
 
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -234,7 +271,7 @@ export default function CreateImportPage() {
         return { valid: true };
     };
 
-    const submitImport = async (targetStatus: 'DRAFT' | 'PENDING') => {
+    const submitImport = async (targetStatus: 'DRAFT' | 'PUBLIC') => {
         try {
             const values = await form.validateFields();
             const validation = validateProductList();
@@ -265,25 +302,43 @@ export default function CreateImportPage() {
                 })),
             };
 
-            const res = await importService.createImport(payload);
-            message.success(targetStatus === 'DRAFT' ? 'Lưu nháp thành công' : 'Tạo phiếu thành công');
+            let finalId = id;
+
+            if (isEditMode) {
+                await importService.updateImport(id!, payload);
+                message.success(targetStatus === 'DRAFT' ? 'Cập nhật nháp thành công' : 'Cập nhật & Chuyển trạng thái thành công');
+            } else {
+                const res = await importService.createImport(payload);
+                message.success(targetStatus === 'DRAFT' ? 'Lưu nháp thành công' : 'Tạo phiếu thành công');
+                finalId = res?.data?.id || (res?.data as any)?._id;
+            }
+
             setHasUnsavedChanges(false);
 
             if (targetStatus === 'DRAFT') {
-                navigate('/import/list');
-            } else {
-                const newId = res.data.id || (res.data as any)._id;
-                if (newId) {
-                    navigate(`/import/inventory-check/${newId}`);
+                if (isEditMode) {
+                    // Nếu đang sửa nháp -> Ở lại trang để sửa tiếp
+                    message.success('Cập nhật nháp thành công');
                 } else {
-                    message.warning('Phiếu đã tạo nhưng không lấy được ID để chuyển trang.');
+                    // Nếu tạo mới nháp -> Chuyển sang trang edit
+                    if (finalId) {
+                        navigate(`/import/edit/${finalId}`);
+                    } else {
+                        navigate('/import/list');
+                    }
+                }
+            } else {
+                if (finalId) {
+                    navigate(`/import/${finalId}`);
+                } else {
+                    message.warning('Phiếu đã xử lý nhưng không lấy được ID để chuyển trang.');
                     navigate('/import/list');
                 }
             }
 
         } catch (error) {
             console.error(error);
-            message.error('Có lỗi xảy ra khi tạo phiếu');
+            message.error('Có lỗi xảy ra khi xử lý phiếu');
         } finally {
             setLoading(false);
         }
@@ -291,7 +346,7 @@ export default function CreateImportPage() {
 
     const handleCancel = () => {
         if (hasUnsavedChanges) {
-            Modal.confirm({
+            modal.confirm({
                 title: 'Xác nhận thoát',
                 content: 'Dữ liệu chưa lưu sẽ bị mất? Bạn có chắc chắn muốn hủy?',
                 okText: 'Thoát',
@@ -395,7 +450,7 @@ export default function CreateImportPage() {
 
                 return (
                     <Space direction="vertical" size="small">
-                        {!serialEmpty && (serialMatch ? <Tag color="blue">Serial OK</Tag> : <Tag color="warning">Serial chưa khớp SL</Tag>)}
+                        {!serialEmpty && (serialMatch ? <Tag color="blue">Đủ Serial</Tag> : <Tag color="warning">Serial chưa khớp SL</Tag>)}
                         {serialEmpty && <Tag color="default">Chưa nhập Serial</Tag>}
                     </Space>
                 )
@@ -422,15 +477,19 @@ export default function CreateImportPage() {
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
-                    <Title level={2} className="mb-1! text-2xl! font-bold text-gray-800">Thêm mới phiếu nhập kho</Title>
-                    <Text className="text-gray-500">Tạo phiếu nhập và khai báo Serial (nếu có)</Text>
+                    <Title level={2} className="mb-1! text-2xl! font-bold text-gray-800">
+                        {isEditMode ? 'Cập nhật phiếu nhập kho' : 'Thêm mới phiếu nhập kho'}
+                    </Title>
+                    <Text className="text-gray-500">
+                        {isEditMode ? 'Chỉnh sửa thông tin phiếu nhập' : 'Tạo phiếu nhập và khai báo Serial (nếu có)'}
+                    </Text>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <Button icon={<SaveOutlined />} onClick={() => submitImport('DRAFT')} loading={loading}>
-                        Lưu nháp
+                        {isEditMode ? 'Cập nhật Nháp' : 'Lưu nháp'}
                     </Button>
-                    <Button type="primary" icon={<SaveOutlined />} onClick={() => submitImport('PENDING')} loading={loading} className="bg-blue-600 hover:bg-blue-700">
-                        Lưu & Nhập Serial
+                    <Button type="primary" icon={<SaveOutlined />} onClick={() => submitImport('PUBLIC')} loading={loading} className="bg-blue-600 hover:bg-blue-700">
+                        Lưu & đóng
                     </Button>
                     <Button danger icon={<CloseOutlined />} onClick={handleCancel}>
                         Hủy
@@ -439,7 +498,7 @@ export default function CreateImportPage() {
             </header>
 
             {/* Form Section */}
-            <section aria-labelledby="general-info-heading">
+            <section aria-labelledby="general-info-headikng">
                 <Card title={<span id="general-info-heading" className="text-lg font-semibold">Thông tin chung phiếu nhập</span>} className="mb-6 shadow-sm border-gray-200" bordered={false}>
                     <Form
                         form={form}
@@ -448,8 +507,18 @@ export default function CreateImportPage() {
                         initialValues={{ importDate: dayjs(), origin: 'IMPORT', productType: 'Camera' }}
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6"
                     >
-                        <Form.Item name="code" label="Mã phiếu nhập" className="col-span-1" rules={[{ required: true, message: 'Vui lòng nhập mã phiếu' }]}>
-                            <Input placeholder="PN-dd/mm/yyyy-xxx" />
+                        <Form.Item
+                            name="code"
+                            label={
+                                <span>
+                                    Mã phiếu nhập{' '}
+                                    <Tooltip title="Mã tự sinh theo đợt xuất kho, có thể chỉnh sửa">
+                                        <InfoCircleOutlined className="text-gray-400" />
+                                    </Tooltip>
+                                </span>
+                            }
+                            className="col-span-1" rules={[{ required: true, message: 'Vui lòng nhập mã phiếu' }]}>
+                            <Input placeholder="Nhập mã phiếu nhập" className="font-semibold text-blue-600" />
                         </Form.Item>
 
                         <Form.Item name="productType" label="Loại hàng hóa" rules={[{ required: true }]} className="col-span-1 md:col-span-2 lg:col-span-1">
@@ -529,7 +598,7 @@ export default function CreateImportPage() {
                     <Button icon={<SaveOutlined />} onClick={() => submitImport('DRAFT')} loading={loading} size="large" className="min-w-30">
                         Lưu nháp
                     </Button>
-                    <Button type="primary" icon={<SaveOutlined />} onClick={() => submitImport('PENDING')} loading={loading} size="large" className="bg-blue-600 hover:bg-blue-700 min-w-50">
+                    <Button type="primary" icon={<SaveOutlined />} onClick={() => submitImport('PUBLIC')} loading={loading} size="large" className="bg-blue-600 hover:bg-blue-700 min-w-50">
                         Lưu & đóng
                     </Button>
                     <Button danger icon={<CloseOutlined />} onClick={handleCancel} size="large" className="min-w-25">

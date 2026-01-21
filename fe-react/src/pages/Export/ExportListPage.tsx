@@ -3,7 +3,7 @@ import { PlusOutlined, EyeOutlined, FileExcelOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs';
 
 import type { DeviceExport } from '../../types/export.type';
-import { EXPORT_TYPE_COLORS, type ExportStatusType, type ExportTypeType } from '../../constants/export-status.constant';
+import { type ExportStatusType } from '../../constants/export-status.constant';
 import { getExportStatusTag } from '../../utils/export-status.util';
 import { useExportList } from '../../hooks/useExportList';
 import { StatisticsCards, PageHeader, FilterBar } from '../../components/ui';
@@ -245,7 +245,7 @@ const ExportListPage = () => {
 
             <FilterBar
                 form={form}
-                onFilter={handleFilter}
+                onValuesChange={handleFilter}
                 onReset={handleReset}
                 searchPlaceholder="Tìm theo mã/tên phiếu, đơn vị nhận, dự án, khách hàng..."
                 showDateRange={true}

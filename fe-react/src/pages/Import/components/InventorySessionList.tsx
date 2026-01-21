@@ -19,6 +19,7 @@ export interface InventorySession {
 interface InventorySessionListProps {
     sessions: InventorySession[];
     importStatus: string;
+    ticketStatus: string; // [NEW]
     onContinue: (sessionId: string) => void;
     onExport: (sessionId: string) => void;
     onViewInfo: (sessionId: string) => void;
@@ -28,6 +29,7 @@ interface InventorySessionListProps {
 export const InventorySessionList: React.FC<InventorySessionListProps> = ({
     sessions,
     importStatus,
+    ticketStatus,
     onContinue,
     onExport,
     onViewInfo,
@@ -46,6 +48,7 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
     return (
         <Card title="Thao tác kiểm kê" className="mb-4 shadow-sm">
             <Space direction="vertical" className="w-full" size="middle">
+                {/* ... existing sessions list ... */}
                 {sessions.length > 0 ? (
                     <div>
                         <Text strong className="block mb-2">
@@ -114,8 +117,8 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
                     </div>
                 )}
 
-                {/* Button Tạo phiên mới - Chỉ hiển thị khi chưa hoàn thành kiểm kê tổng thể */}
-                {importStatus !== 'completed' && (
+                {/* Button Tạo phiên mới */}
+                {importStatus !== 'completed' && ticketStatus === 'PUBLIC' && (
                     <Button
                         block
                         icon={<PlusOutlined />}
@@ -124,6 +127,12 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
                     >
                         Tạo phiên kiểm kê mới
                     </Button>
+                )}
+                {ticketStatus === 'DRAFT' && (
+                    <div className="text-center text-amber-600 mt-2 bg-amber-50 p-2 rounded border border-amber-200">
+                        <InfoCircleOutlined className="mr-2" />
+                        Phiếu đang ở trạng thái NHÁP. Không thể tạo phiên kiểm kê.
+                    </div>
                 )}
             </Space>
         </Card>

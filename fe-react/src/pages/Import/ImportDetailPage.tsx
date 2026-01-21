@@ -36,6 +36,7 @@ const ImportDetailPage = () => {
     const {
         code,
         inventoryStatus,
+        status,
         supplier,
         importDate,
         importedBy,
@@ -45,8 +46,6 @@ const ImportDetailPage = () => {
         serialImported,
         totalItem
     } = importData;
-
-    // --- Prepare Data for Components ---
 
     // Info Card Items
     const infoItems: InfoItem[] = [
@@ -71,6 +70,7 @@ const ImportDetailPage = () => {
             <ImportHeader
                 code={code}
                 inventoryStatus={inventoryStatus}
+                status={status}
                 onBack={() => navigate('/import/list')}
                 onPrint={handlePrint}
                 onEdit={handleEdit}
@@ -100,7 +100,7 @@ const ImportDetailPage = () => {
                     extra={
                         <Button
                             icon={<FileTextOutlined />}
-                            onClick={handlePrint} // Reused PDF Export here as requested
+                            onClick={handlePrint}
                         >
                             Xuất danh sách
                         </Button>
@@ -113,8 +113,9 @@ const ImportDetailPage = () => {
                 <InventorySessionList
                     sessions={sessions}
                     importStatus={inventoryStatus}
+                    ticketStatus={status} // [NEW]
                     onContinue={handleContinueSession}
-                    onExport={handlePrint} // Also reuse for now, though session might need specific export
+                    onExport={handlePrint}
                     onViewInfo={() => { }}
                     onCreateNew={handleCreateSession}
                 />

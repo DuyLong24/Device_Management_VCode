@@ -13,6 +13,7 @@ const { Title, Text } = Typography;
 interface ImportHeaderProps {
     code: string;
     inventoryStatus: string;
+    status?: string; // [NEW]
     onBack: () => void;
     onPrint: () => void;
     onEdit: () => void;
@@ -22,6 +23,7 @@ interface ImportHeaderProps {
 export const ImportHeader: React.FC<ImportHeaderProps> = ({
     code,
     inventoryStatus,
+    status,
     onBack,
     onPrint,
     onEdit,
@@ -52,9 +54,13 @@ export const ImportHeader: React.FC<ImportHeaderProps> = ({
                         <Text strong className="text-base">
                             {code}
                         </Text>
-                        <Tag color={statusConfig.color}>
-                            {statusConfig.text}
-                        </Tag>
+                        {status === 'DRAFT' ? (
+                            <Tag color="default" className="text-base px-3 py-0.5">NHÁP (DRAFT)</Tag>
+                        ) : (
+                            <Tag color={statusConfig.color}>
+                                {statusConfig.text}
+                            </Tag>
+                        )}
                     </Space>
                 </div>
 

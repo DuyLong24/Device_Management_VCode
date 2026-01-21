@@ -63,7 +63,7 @@ export class DeviceImport extends Document {
   @Prop({ required: true })
   totalQuantity!: number;
 
-  @Prop({ default: 'DRAFT' })
+  @Prop({ default: 'DRAFT', enum: ['DRAFT', 'PUBLIC'] })
   status!: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })

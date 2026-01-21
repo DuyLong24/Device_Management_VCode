@@ -229,12 +229,6 @@ export class ExportSessionService {
         const serials = session.items.map(i => i.serial);
         const exportRecord = await this.deviceExportRepository.findById(session.exportId as any); // Populate might be needed if exportId is object
 
-        await this.deviceService.bulkUpdateStatus(
-            serials,
-            'SOLD',
-            `Xuất kho theo phiếu ${exportRecord?.code} - Phiên ${session.sessionCode}`,
-            exportRecord?.customer
-        );
         const exportItems = session.items.map(i => ({
             serial: i.serial,
             deviceModel: i.deviceModel,

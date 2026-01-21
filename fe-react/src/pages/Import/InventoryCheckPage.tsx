@@ -32,11 +32,11 @@ import {
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { useInventoryCheck } from '../../hooks/useInventoryCheck';
-import type { LocalScannedItem } from '../../hooks/useInventoryCheck';
-import { useScanSound } from '../../hooks/useScanSound';
+// import type { LocalScannedItem } from '../../hooks/useInventoryCheck';
+// import { useScanSound } from '../../hooks/useScanSound';
 import { INVENTORY_LABELS } from '../../constants/inventory.constants';
 
 const { Dragger } = Upload;
@@ -56,18 +56,19 @@ const getSerialStatus = (serial: string, productCode: string | undefined, import
 };
 
 export default function InventoryCheckPage() {
-  const { playSuccess, playError } = useScanSound();
+  // const { playSuccess, playError } = useScanSound();
   const {
     loading, isSaving, session, importInfo, serverItems, localItems, sessionStatus,
     scannedInput, setScannedInput,
     selectedProductCode, setSelectedProductCode, inputRef,
     completeModalVisible, setCompleteModalVisible,
-    handleStartSession,
-    handleSaveItems, handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
+    handleStartSession, handleScanSerial, handleManualImport,
+    handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
     navigate,
     removeServerItem,
-    setLocalItems,
-    duplicateSerials
+    duplicateSerials,
+    manualSerials, setManualSerials,
+    otherCompletedCount
   } = useInventoryCheck();
 
   // Logic thống kê Matching
@@ -88,7 +89,9 @@ export default function InventoryCheckPage() {
   }, [allItems, importInfo, duplicateSerials]);
 
   const stats = useMemo(() => {
-    const totalRequired = importInfo?.totalQuantity || 0;
+    // Tổng cần kiểm = Tổng Import - Đã kiểm ở các phiên DONE
+    const totalImport = importInfo?.totalQuantity || 0;
+    const totalRequired = Math.max(0, totalImport - otherCompletedCount);
     const scannedCount = processedItems.length;
 
     let matchCount = 0;
@@ -106,7 +109,7 @@ export default function InventoryCheckPage() {
     return {
       totalRequired, scannedCount, matchCount, missingCount, excessCount, duplicateCount
     };
-  }, [importInfo, processedItems]);
+  }, [importInfo, processedItems, otherCompletedCount]);
 
   const sessionInfo = {
     sessionName: session?.name || 'Phiên kiểm kê mới',
@@ -118,90 +121,6 @@ export default function InventoryCheckPage() {
     supplier: importInfo?.supplier || '---',
     createdBy: (session as any)?.createdBy || '---',
     createdAt: session?.createdAt ? dayjs(session.createdAt).format('DD/MM/YYYY HH:mm') : '---',
-  };
-
-  // [NEW] State for Manual Import
-  const [manualSerials, setManualSerials] = useState('');
-
-  const handleManualImport = () => {
-    if (!selectedProductCode) {
-      message.warning('Vui lòng chọn sản phẩm trước khi nhập!');
-      return;
-    }
-    if (!manualSerials.trim()) return;
-
-    const lines = manualSerials.split(/\n/).map(s => s.trim()).filter(Boolean);
-    if (lines.length === 0) return;
-
-    let addedCount = 0;
-    const newItems: LocalScannedItem[] = [];
-
-    lines.forEach(serial => {
-      // Check local duplicate in new batch or existing items
-      const isDup = allItems.some(i => i.serial === serial) || newItems.some(i => i.serial === serial);
-      if (!isDup) {
-        newItems.push({
-          serial,
-          deviceModel: selectedProductCode,
-          productCode: selectedProductCode,
-          scannedAt: new Date().toISOString()
-        } as any);
-        addedCount++;
-      }
-    });
-
-    if (newItems.length > 0) {
-      setLocalItems(prev => [...newItems, ...prev]);
-      message.success(`Đã thêm ${newItems.length} serial.`);
-      playSuccess();
-      setManualSerials('');
-    }
-
-    if (addedCount < lines.length) {
-      message.warning(`Đã bỏ qua ${lines.length - addedCount} serial trùng lặp.`);
-    }
-  };
-
-  // Override handleScanSerial để có âm thanh & status
-  const onScanSerial = () => {
-    const code = scannedInput.trim();
-    if (!code) return;
-
-    if (!selectedProductCode) {
-      playError();
-      message.warning('Vui lòng CHỌN SẢN PHẨM trước khi quét!');
-      return;
-    }
-
-    // Check trùng
-    const isDup = allItems.some(i => i.serial === code);
-    if (isDup) {
-      playError();
-      message.warning(`Serial ${code} đã tồn tại!`);
-      setScannedInput('');
-      return;
-    }
-
-    // Check status & Sound
-    const status = getSerialStatus(code, selectedProductCode, importInfo?.products || []);
-    if (status === 'MATCHED') {
-      playSuccess();
-      message.success(`Đã quét: ${code}`);
-    } else {
-      playError();
-      message.warning(`Cảnh báo: Serial ${code} KHÔNG CÓ trong phiếu nhập`);
-    }
-
-    const newItem: LocalScannedItem = {
-      serial: code,
-      deviceModel: selectedProductCode,
-      productCode: selectedProductCode,
-      scannedAt: new Date().toISOString()
-    } as any;
-
-    setLocalItems(prev => [newItem, ...prev]);
-    setScannedInput('');
-    inputRef.current?.focus();
   };
 
   // Columns
@@ -351,30 +270,17 @@ export default function InventoryCheckPage() {
                       placeholder={selectedProductCode ? "Đặt trỏ chuột vào đây và quét..." : "Vui lòng chọn sản phẩm trước"}
                       value={scannedInput}
                       onChange={(e) => setScannedInput(e.target.value)}
-                      onPressEnter={onScanSerial}
+                      onPressEnter={handleScanSerial}
                       prefix={<ScanOutlined />}
-                      disabled={!selectedProductCode}
+                      disabled={!selectedProductCode || isSaving}
                       autoFocus
                     />
-                    <Button type="primary" size="large" onClick={onScanSerial} disabled={!selectedProductCode} icon={<CheckCircleOutlined />}>
+                    <Button type="primary" size="large" onClick={handleScanSerial} disabled={!selectedProductCode || isSaving} loading={isSaving} icon={<CheckCircleOutlined />}>
                       Quét
                     </Button>
                   </Space.Compact>
                 </Col>
               </Row>
-
-              {localItems.length > 0 && (
-                <Alert
-                  message={`Bạn có ${localItems.length} mã mới chưa lưu.`}
-                  type="warning"
-                  showIcon
-                  action={
-                    <Button size="small" type="primary" onClick={handleSaveItems} loading={isSaving}>
-                      Lưu ngay
-                    </Button>
-                  }
-                />
-              )}
 
               <Divider>Hoặc nhập liệu nâng cao</Divider>
 
@@ -482,10 +388,10 @@ export default function InventoryCheckPage() {
                 size="large"
                 icon={<CheckCircleOutlined />}
                 onClick={handleCompleteInventory}
-                disabled={localItems.length > 0 || isSaving}
+                disabled={isSaving}
                 className={stats.missingCount > 0 || stats.duplicateCount > 0 ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
               >
-                {localItems.length > 0 ? 'Lưu dữ liệu trước' : INVENTORY_LABELS.BTN_COMPLETE}
+                {INVENTORY_LABELS.BTN_COMPLETE}
               </Button>
             </Flex>
           </Card>

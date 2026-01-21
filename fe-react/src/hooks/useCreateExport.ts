@@ -31,6 +31,7 @@ interface DeviceItem {
     name: string;
     quantity: number;
     inStock?: number;
+    expectedSerials?: string[];
 }
 
 interface DeviceOption {
@@ -50,7 +51,6 @@ export const useCreateExport = () => {
     const [loading, setLoading] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [deviceList, setDeviceList] = useState<DeviceItem[]>([]);
-    const [autoExportCode, setAutoExportCode] = useState('');
     const [deviceOptions, setDeviceOptions] = useState<DeviceOption[]>([]);
     const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
     const [loadingDevices, setLoadingDevices] = useState(false);
@@ -60,7 +60,7 @@ export const useCreateExport = () => {
     useEffect(() => {
         const today = dayjs();
         const code = `PX-${today.format('YYYY-MM')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-        setAutoExportCode(code);
+        form.setFieldValue('code', code);
     }, []);
 
     useEffect(() => {
@@ -229,7 +229,7 @@ export const useCreateExport = () => {
 
             const payload = {
                 ...formValues,
-                code: autoExportCode,
+                // code is now in formValues
                 status: EXPORT_STATUS.DRAFT,
                 requirements: deviceList.map((d) => ({
                     productCode: d.deviceModel,
@@ -277,7 +277,7 @@ export const useCreateExport = () => {
 
             const payload = {
                 ...formValues,
-                code: autoExportCode,
+                // code is now in formValues
                 status: EXPORT_STATUS.DRAFT,
                 requirements: deviceList.map((d) => ({
                     productCode: d.deviceModel,
@@ -341,7 +341,6 @@ export const useCreateExport = () => {
         setHasUnsavedChanges: () => setHasUnsavedChanges(true),
 
         deviceList,
-        autoExportCode,
         deviceOptions,
         categoryOptions,
         loadingDevices,

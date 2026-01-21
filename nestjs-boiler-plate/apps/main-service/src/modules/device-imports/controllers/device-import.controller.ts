@@ -4,7 +4,7 @@ import {
   Body,
   Get,
   Query,
-  Put,
+  Patch,
   Delete,
   Param,
   HttpStatus,
@@ -60,13 +60,13 @@ export class DeviceImportController {
     return this.deviceImportService.findById(id);
   }
 
-  @Put(':id')
+  @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() updateDeviceImportDto: UpdateDeviceImportDto,
     @Request() req: any
   ) {
-    const userId = req.user?.id || req.user?.sub || req.headers['x-auth-user'] || 'system';
+    const userId = req.user?.id || req.user?.sub || req.headers['x-auth-user'] || null;
     return this.deviceImportService.update(id, updateDeviceImportDto, userId);
   }
 
@@ -77,7 +77,7 @@ export class DeviceImportController {
 
   @Post(':id/complete')
   async complete(@Param('id') id: string, @Request() req: any) {
-    const userId = req.user?.id || req.user?.sub || req.headers['x-auth-user'] || 'system';
+    const userId = req.user?.id || req.user?.sub || req.headers['x-auth-user'] || null;
     return this.deviceImportService.complete(id, userId);
   }
 }

@@ -252,6 +252,10 @@ export class DeviceService {
         device.warehouseId = soldWarehouse._id as any;
         device.warehouseUpdatedAt = new Date();
 
+        if (device.qcStatus === 'SOLD') {
+          device.qcStatus = 'PASS';
+        }
+
         await device.save();
       }
 

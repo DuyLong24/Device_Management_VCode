@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, ConflictException, Inject, forwardRef } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { InventorySessionRepository } from '../repositories/inventory-session.repository';
@@ -18,6 +18,7 @@ export class InventorySessionService {
 
     constructor(
         private readonly sessionRepo: InventorySessionRepository,
+        @Inject(forwardRef(() => DeviceImportService))
         private readonly deviceImportService: DeviceImportService,
         private readonly deviceService: DeviceService,
         private readonly warehouseRepo: WarehouseRepository,
@@ -80,6 +81,20 @@ export class InventorySessionService {
     }
 
     private async completeSession(session: InventorySession, userId: string): Promise<InventorySession> {
+        // [CHECK DUPLICATE] Trước khi xử lý
+        const serialsToCheck = session.details.map(d => d.serial);
+        if (serialsToCheck.length > 0) {
+            const existingDevices = await this.deviceService.findBySerials(serialsToCheck);
+            if (existingDevices.length > 0) {
+                const duplicateSerials = existingDevices.map(d => d.serial);
+                throw new ConflictException({
+                    message: `Phát hiện ${duplicateSerials.length} serial đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.`,
+                    error: 'DUPLICATE_SERIALS',
+                    duplicates: duplicateSerials
+                });
+            }
+        }
+
         const mongoSession = await this.connection.startSession();
         mongoSession.startTransaction();
 
@@ -123,9 +138,12 @@ export class InventorySessionService {
             const currentImported = importTicket.serialImported || 0;
             const newTotal = currentImported + session.totalScanned;
 
+            // [MODIFIED] Only update to 'in-progress' if pending. Do NOT auto-complete.
             let newImportStatus = importTicket.inventoryStatus;
-            if (newTotal > 0 && newTotal < importTicket.totalQuantity) newImportStatus = 'in-progress';
-            if (newTotal >= importTicket.totalQuantity) newImportStatus = 'completed';
+            if (newImportStatus === 'pending' && newTotal > 0) {
+                newImportStatus = 'in-progress';
+            }
+            // WAS: if (newTotal >= importTicket.totalQuantity) newImportStatus = 'completed'; (REMOVED)
 
             // Calculate per-product counts from this session
             const productCounts: Record<string, number> = {};
@@ -166,6 +184,23 @@ export class InventorySessionService {
     }
 
     async findById(id: string): Promise<InventorySession> {
-        return this.sessionRepo.findById(id) as Promise<InventorySession>;
+        return this.sessionRepo.findById(id);
+    }
+
+    async removeItem(sessionId: string, serial: string): Promise<InventorySession> {
+        const session = await this.sessionRepo.findById(sessionId);
+        if (!session) throw new NotFoundException(ERROR_MESSAGES.INVENTORY.SESSION_NOT_FOUND);
+        if (session.status === 'completed') throw new BadRequestException(ERROR_MESSAGES.INVENTORY.ALREADY_COMPLETED);
+
+        // Filter out the item
+        const initialCount = session.details.length;
+        session.details = session.details.filter(item => item.serial !== serial);
+
+        if (session.details.length === initialCount) {
+            throw new NotFoundException(`Serial ${serial} not found in session.`);
+        }
+
+        session.totalScanned = session.details.length;
+        return session.save();
     }
 }

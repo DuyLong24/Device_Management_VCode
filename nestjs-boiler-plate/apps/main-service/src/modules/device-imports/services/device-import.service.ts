@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { DeviceImportRepository } from '../repositories/device-import.repository';
 import { CreateDeviceImportDto } from '../dto/create-device-import.dto';
 import { UpdateDeviceImportDto } from '../dto/update-device-import.dto';
@@ -7,12 +7,15 @@ import { DeviceImport } from '../schemas/device-import.schemas';
 import { DeviceService } from '../../devices/services/device.service';
 import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
 import { FilterQuery } from 'mongoose';
+import { InventorySessionService } from '../../inventory-sessions/services/inventory-session.service';
 
 @Injectable()
 export class DeviceImportService {
   constructor(
     private readonly deviceImportRepository: DeviceImportRepository,
     private readonly deviceService: DeviceService,
+    @Inject(forwardRef(() => InventorySessionService))
+    private readonly inventorySessionService: InventorySessionService,
   ) { }
 
   async create(createDto: CreateDeviceImportDto, userId: string): Promise<DeviceImport> {
@@ -144,10 +147,8 @@ export class DeviceImportService {
     let newStatus = ticket.inventoryStatus;
 
     // 1. Tính toán trạng thái kiểm kê dựa trên số lượng đã quét
-    if (data.serialImported > 0 && data.serialImported < ticket.totalQuantity) {
+    if (data.serialImported > 0) {
       newStatus = 'in-progress';
-    } else if (data.serialImported >= ticket.totalQuantity && ticket.totalQuantity > 0) {
-      newStatus = 'completed';
     }
 
     const updatePayload: any = {
@@ -175,15 +176,39 @@ export class DeviceImportService {
       });
     }
 
-    // Nếu kiểm kê xong (completed) -> Update luôn trạng thái phiếu (status) thành COMPLETED
-    if (newStatus === 'completed') {
-      updatePayload.status = 'COMPLETED';
-    }
     // Nếu đang làm dở -> Update trạng thái phiếu thành IN_PROGRESS (để không còn là PENDING/DRAFT)
-    else if (newStatus === 'in-progress') {
+    if (newStatus === 'in-progress') {
       updatePayload.status = 'IN_PROGRESS';
     }
 
     return this.deviceImportRepository.update(id, updatePayload);
+  }
+
+  async complete(id: string, userId: string): Promise<DeviceImport> {
+    const ticket = await this.findById(id);
+    if (!ticket) throw new NotFoundException(ERROR_MESSAGES.DEVICE_IMPORT.NOT_FOUND);
+
+    if (ticket.inventoryStatus === 'completed') {
+      throw new BadRequestException('Phiếu nhập đã hoàn tất kiểm kê trước đó.');
+    }
+
+    // 1. Kiểm tra số lượng
+    if (ticket.serialImported < ticket.totalQuantity) {
+      throw new BadRequestException(`Chưa đủ số lượng (${ticket.serialImported}/${ticket.totalQuantity}). Không thể hoàn tất.`);
+    }
+
+    // 2. Kiểm tra các phiên kiểm kê
+    const sessions = await this.inventorySessionService.findAll({ importId: id });
+    const hasPendingSession = sessions.some(s => s.status !== 'completed');
+    if (hasPendingSession) {
+      throw new BadRequestException('Tất cả các phiên kiểm kê phải được hoàn tất trước khi đóng phiếu nhập.');
+    }
+
+    // 3. Cập nhật trạng thái
+    return this.deviceImportRepository.update(id, {
+      inventoryStatus: 'completed',
+      status: 'COMPLETED',
+      updatedBy: userId
+    } as any);
   }
 }

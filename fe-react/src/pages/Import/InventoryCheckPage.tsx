@@ -42,7 +42,7 @@ import { INVENTORY_LABELS } from '../../constants/inventory.constants';
 const { Dragger } = Upload;
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
+
 
 const getSerialStatus = (serial: string, productCode: string | undefined, importProducts: any[]) => {
   if (!importProducts || !productCode) return 'UNKNOWN';
@@ -66,7 +66,8 @@ export default function InventoryCheckPage() {
     handleSaveItems, handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
     navigate,
     removeServerItem,
-    setLocalItems
+    setLocalItems,
+    duplicateSerials
   } = useInventoryCheck();
 
   // Logic thống kê Matching
@@ -74,11 +75,17 @@ export default function InventoryCheckPage() {
 
   const processedItems = useMemo(() => {
     if (!importInfo) return [];
-    return allItems.map(item => ({
-      ...item,
-      status: getSerialStatus(item.serial, (item as any).productCode || (item as any).deviceModel, importInfo.products)
-    }));
-  }, [allItems, importInfo]);
+    return allItems.map(item => {
+      let status = getSerialStatus(item.serial, (item as any).productCode || (item as any).deviceModel, importInfo.products);
+      if (duplicateSerials.includes(item.serial)) {
+        status = 'DUPLICATE';
+      }
+      return {
+        ...item,
+        status
+      };
+    });
+  }, [allItems, importInfo, duplicateSerials]);
 
   const stats = useMemo(() => {
     const totalRequired = importInfo?.totalQuantity || 0;
@@ -86,16 +93,18 @@ export default function InventoryCheckPage() {
 
     let matchCount = 0;
     let excessCount = 0;
+    let duplicateCount = 0;
 
     processedItems.forEach(i => {
       if (i.status === 'MATCHED') matchCount++;
       if (i.status === 'EXCESS') excessCount++;
+      if (i.status === 'DUPLICATE') duplicateCount++;
     });
 
     const missingCount = Math.max(0, totalRequired - matchCount);
 
     return {
-      totalRequired, scannedCount, matchCount, missingCount, excessCount, duplicateCount: 0
+      totalRequired, scannedCount, matchCount, missingCount, excessCount, duplicateCount
     };
   }, [importInfo, processedItems]);
 
@@ -204,6 +213,7 @@ export default function InventoryCheckPage() {
       title: 'So khớp',
       key: 'match',
       render: (_, r) => {
+        if (r.status === 'DUPLICATE') return <Tag color="error" icon={<WarningOutlined />}>Đã tồn tại</Tag>;
         if (r.status === 'MATCHED') return <Tag color="success" icon={<CheckCircleOutlined />}>Khớp</Tag>;
         if (r.status === 'EXCESS') return <Tag color="warning" icon={<WarningOutlined />}>Thừa</Tag>;
         return <Tag>Unknown</Tag>;
@@ -283,6 +293,11 @@ export default function InventoryCheckPage() {
           <Col xs={12} sm={8} md={4}>
             <Statistic title="Thừa" value={stats.excessCount} valueStyle={{ color: '#faad14' }} />
           </Col>
+          {stats.duplicateCount > 0 && (
+            <Col xs={12} sm={8} md={4}>
+              <Statistic title="Lỗi Trùng" value={stats.duplicateCount} valueStyle={{ color: '#cf1322' }} prefix={<WarningOutlined />} />
+            </Col>
+          )}
         </Row>
         <Divider className="my-4" />
         <Progress
@@ -400,51 +415,63 @@ export default function InventoryCheckPage() {
           </Card>
 
           <Card className="mb-6 shadow-sm">
-            <Tabs defaultActiveKey="1">
-              <TabPane tab={`Danh sách quét (${stats.scannedCount})`} key="1">
-                <Table
-                  columns={serialColumns}
-                  dataSource={[...processedItems].reverse()}
-                  pagination={{ pageSize: 20 }}
-                  size="small"
-                  bordered
-                  rowKey={(r) => r.serial + r.scannedAt}
-                  scroll={{ x: 1000, y: 500 }}
-                />
-              </TabPane>
-              <TabPane tab="Serial mẫu (Đối chiếu)" key="2">
-                {!selectedProductCode ? (
-                  <div className="p-4 text-center text-gray-500">Chọn sản phẩm để xem danh sách serial cần quét</div>
-                ) : (
-                  <div className="p-4">
-                    <Text strong>Serial dự kiến của {selectedProductCode}:</Text>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {importInfo?.products
-                        .find(p => p.productCode === selectedProductCode)
-                        ?.expectedSerials?.map(s => {
-                          const isScanned = processedItems.some(i => i.serial === s);
-                          return (
-                            <Tag key={s} color={isScanned ? 'green' : 'default'}>
-                              {s} {isScanned && <CheckCircleOutlined />}
-                            </Tag>
-                          )
-                        })
-                      }
+            <Tabs
+              defaultActiveKey="1"
+              items={[
+                {
+                  key: '1',
+                  label: `Danh sách quét (${stats.scannedCount})`,
+                  children: (
+                    <Table
+                      columns={serialColumns}
+                      dataSource={[...processedItems].reverse()}
+                      pagination={{ pageSize: 20 }}
+                      size="small"
+                      bordered
+                      rowKey={(r) => r.serial + r.scannedAt}
+                      scroll={{ x: 1000, y: 500 }}
+                      rowClassName={(record) => record.status === 'DUPLICATE' ? 'bg-red-50' : ''}
+                    />
+                  )
+                },
+                {
+                  key: '2',
+                  label: 'Serial mẫu (Đối chiếu)',
+                  children: !selectedProductCode ? (
+                    <div className="p-4 text-center text-gray-500">Chọn sản phẩm để xem danh sách serial cần quét</div>
+                  ) : (
+                    <div className="p-4">
+                      <Text strong>Serial dự kiến của {selectedProductCode}:</Text>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {importInfo?.products
+                          .find(p => p.productCode === selectedProductCode)
+                          ?.expectedSerials?.map(s => {
+                            const isScanned = processedItems.some(i => i.serial === s);
+                            return (
+                              <Tag key={s} color={isScanned ? 'green' : 'default'}>
+                                {s} {isScanned && <CheckCircleOutlined />}
+                              </Tag>
+                            )
+                          })
+                        }
+                      </div>
                     </div>
-                  </div>
-                )}
-              </TabPane>
-            </Tabs>
+                  )
+                }
+              ]}
+            />
           </Card>
 
-          <Card className={`shadow-sm border-l-4 ${stats.missingCount > 0 ? 'border-l-red-500 bg-red-50' : 'border-l-green-500 bg-green-50'}`}>
+          <Card className={`shadow-sm border-l-4 ${stats.duplicateCount > 0 ? 'border-l-red-500 bg-red-50' : stats.missingCount > 0 ? 'border-l-orange-500 bg-orange-50' : 'border-l-green-500 bg-green-50'}`}>
             <Flex justify="space-between" align="center">
               <div>
                 <Text strong className="text-base">Hoàn tất kiểm kê</Text>
                 <br />
                 <Text type="secondary">
-                  {stats.missingCount > 0 ? (
-                    <Text type="danger">Còn thiếu {stats.missingCount} serial so với phiếu nhập.</Text>
+                  {stats.duplicateCount > 0 ? (
+                    <Text type="danger" strong>Phát hiện {stats.duplicateCount} serial trùng lặp! Vui lòng xóa trước khi hoàn tất.</Text>
+                  ) : stats.missingCount > 0 ? (
+                    <Text type="warning">Còn thiếu {stats.missingCount} serial so với phiếu nhập.</Text>
                   ) : (
                     <Text type="success">Đã đủ số lượng yêu cầu.</Text>
                   )}
@@ -456,7 +483,7 @@ export default function InventoryCheckPage() {
                 icon={<CheckCircleOutlined />}
                 onClick={handleCompleteInventory}
                 disabled={localItems.length > 0 || isSaving}
-                className={stats.missingCount > 0 ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+                className={stats.missingCount > 0 || stats.duplicateCount > 0 ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
               >
                 {localItems.length > 0 ? 'Lưu dữ liệu trước' : INVENTORY_LABELS.BTN_COMPLETE}
               </Button>
@@ -474,19 +501,36 @@ export default function InventoryCheckPage() {
         cancelText="Hủy"
         confirmLoading={isSaving}
       >
-        <Alert
-          message="Xác nhận hoàn tất kiểm kê"
-          description={
-            <ul className="pl-5 mt-2 mb-0">
-              <li><b>Số serial đã khớp:</b> {stats.matchCount}</li>
-              <li><b>Số serial thừa:</b> {stats.excessCount}</li>
-              <li><b>Còn thiếu:</b> {stats.missingCount}</li>
-              <li>Hệ thống sẽ tạo thiết bị và cập nhật trạng thái phiếu nhập.</li>
-            </ul>
-          }
-          type={stats.missingCount > 0 ? "warning" : "success"}
-          showIcon
-        />
+        {duplicateSerials.length > 0 ? (
+          <Alert
+            message="Lỗi hoàn tất phiên"
+            description={
+              <div>
+                <Text type="danger">Phát hiện {duplicateSerials.length} serial đã tồn tại trong hệ thống:</Text>
+                <div className="max-h-32 overflow-y-auto mt-2 bg-white p-2 border rounded">
+                  {duplicateSerials.map(s => <Tag color="red" key={s}>{s}</Tag>)}
+                </div>
+                <div className="mt-2">Vui lòng xóa các serial này khỏi danh sách quét trước khi thử lại.</div>
+              </div>
+            }
+            type="error"
+            showIcon
+          />
+        ) : (
+          <Alert
+            message="Xác nhận hoàn tất kiểm kê"
+            description={
+              <ul className="pl-5 mt-2 mb-0">
+                <li><b>Số serial đã khớp:</b> {stats.matchCount}</li>
+                <li><b>Số serial thừa:</b> {stats.excessCount}</li>
+                <li><b>Còn thiếu:</b> {stats.missingCount}</li>
+                <li>Hệ thống sẽ tạo thiết bị và cập nhật trạng thái phiếu nhập.</li>
+              </ul>
+            }
+            type={stats.missingCount > 0 ? "warning" : "success"}
+            showIcon
+          />
+        )}
       </Modal>
     </div>
   );

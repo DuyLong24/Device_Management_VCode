@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Query, Put, Param, Request, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, Put, Param, Request, HttpStatus, HttpCode, Delete } from '@nestjs/common';
 import { InventorySessionService } from '../services/inventory-session.service';
 import { CreateInventorySessionDto } from '../dto/create-inventory-session.dto';
 import { UpdateInventorySessionDto } from '../dto/update-inventory-session.dto';
@@ -46,5 +46,10 @@ export class InventorySessionController {
     @Get(':id')
     async findById(@Param('id') id: string) {
         return this.sessionService.findById(id);
+    }
+
+    @Delete(':id/items/:serial')
+    async removeItem(@Param('id') id: string, @Param('serial') serial: string) {
+        return this.sessionService.removeItem(id, serial);
     }
 }

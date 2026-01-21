@@ -22,5 +22,9 @@ export const importService = {
 
     getImportDetail: async (id: string) => {
         return axiosInstance.get<DeviceImport>(`/device-imports/${id}`);
+    },
+
+    completeImport: async (id: string) => {
+        return axiosInstance.post(`/device-imports/${id}/complete`);
     }
 };

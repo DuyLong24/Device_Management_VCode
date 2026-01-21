@@ -228,6 +228,18 @@ export default function ImportListPage() {
         { value: 'completed', label: 'Đã kiểm kê' },
     ];
 
+    const handleCompleteImport = async (record: ImportRecord) => {
+        try {
+            message.loading({ content: 'Đang xử lý hoàn tất...', key: 'complete_import' });
+            await importService.completeImport(record.key);
+            message.success({ content: 'Đã hoàn tất phiếu nhập kho!', key: 'complete_import' });
+            fetchData();
+        } catch (error: any) {
+            const msg = error.response?.data?.message || 'Không thể hoàn tất phiếu nhập';
+            message.error({ content: msg, key: 'complete_import' });
+        }
+    };
+
     const columns: TableColumnsType<ImportRecord> = [
         {
             title: IMPORT_TABLE_COLUMNS.CODE,
@@ -315,19 +327,32 @@ export default function ImportListPage() {
         {
             title: IMPORT_TABLE_COLUMNS.ACTION,
             key: 'action',
-            width: 180,
+            width: 250,
             fixed: 'right',
             align: 'center',
-            render: (_, record) => (
-                <Space size="small">
-                    <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.key)}>
-                        {IMPORT_LABELS.BTN_DETAIL}
-                    </Button>
-                    <Button size="small" icon={<FileTextOutlined />} onClick={() => handleExportPdf(record)}>
-                        {IMPORT_LABELS.BTN_EXPORT_SERIAL}
-                    </Button>
-                </Space>
-            ),
+            render: (_, record) => {
+                const canComplete = record.inventoryStatus !== 'completed' && record.serialImported >= record.totalQuantity;
+                return (
+                    <Space size="small">
+                        <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.key)}>
+                            {IMPORT_LABELS.BTN_DETAIL}
+                        </Button>
+                        <Button
+                            size="small"
+                            icon={<CheckCircleOutlined />}
+                            disabled={!canComplete}
+                            onClick={() => handleCompleteImport(record)}
+                            type={canComplete ? 'primary' : 'default'}
+                            danger={canComplete}
+                        >
+                            Hoàn tất
+                        </Button>
+                        <Button size="small" icon={<FileTextOutlined />} onClick={() => handleExportPdf(record)}>
+                            PDF
+                        </Button>
+                    </Space>
+                )
+            },
         },
     ];
 

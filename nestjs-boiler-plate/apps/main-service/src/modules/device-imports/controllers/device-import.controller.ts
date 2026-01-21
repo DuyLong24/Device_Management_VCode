@@ -74,4 +74,10 @@ export class DeviceImportController {
   async delete(@Param('id') id: string) {
     return this.deviceImportService.delete(id);
   }
+
+  @Post(':id/complete')
+  async complete(@Param('id') id: string, @Request() req: any) {
+    const userId = req.user?.id || req.user?.sub || req.headers['x-auth-user'] || 'system';
+    return this.deviceImportService.complete(id, userId);
+  }
 }

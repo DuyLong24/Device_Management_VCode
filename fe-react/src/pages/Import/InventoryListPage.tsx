@@ -4,7 +4,7 @@ import {
     Divider
 } from 'antd';
 import {
-    ReloadOutlined, PlusOutlined, SearchOutlined
+    ReloadOutlined, PlusOutlined, SearchOutlined, CheckCircleOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
@@ -170,17 +170,46 @@ export default function InventoryListPage() {
             title: 'Thao tác',
             key: 'action',
             align: 'center',
-            render: (_, record) => (
-                <Button
-                    type="primary"
-                    size="small"
-                    onClick={() => handleOpenSelectModal(record)}
-                >
-                    Chọn
-                </Button>
-            ),
+            width: 200,
+            render: (_, record) => {
+                const canComplete = record.serialImported >= record.totalQuantity;
+                return (
+                    <Space size="small">
+                        <Button
+                            type="primary"
+                            size="small"
+                            onClick={() => handleOpenSelectModal(record)}
+                        >
+                            Chọn
+                        </Button>
+                        <Button
+                            size="small"
+                            type={canComplete ? "primary" : "default"}
+                            danger={canComplete}
+                            disabled={!canComplete}
+                            icon={<CheckCircleOutlined />}
+                            onClick={() => handleCompleteImport(record)}
+                        >
+                            Hoàn tất
+                        </Button>
+                    </Space>
+                );
+            },
         }
     ];
+
+    const handleCompleteImport = async (record: DeviceImport) => {
+        try {
+            message.loading({ content: 'Đang xử lý hoàn tất...', key: 'complete_import' });
+            await importService.completeImport(record.id);
+            message.success({ content: 'Đã hoàn tất phiếu nhập kho!', key: 'complete_import' });
+            // Refresh list
+            fetchData();
+        } catch (error: any) {
+            const msg = error.response?.data?.message || 'Không thể hoàn tất phiếu nhập';
+            message.error({ content: msg, key: 'complete_import' });
+        }
+    };
 
     return (
         <div className="p-6">

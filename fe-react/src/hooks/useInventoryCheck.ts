@@ -109,6 +109,7 @@ export const useInventoryCheck = () => {
         try {
             await inventorySessionService.removeItem(session.id, serial);
             setServerItems(prev => prev.filter(i => i.serial !== serial));
+            setDuplicateSerials(prev => prev.filter(s => s !== serial)); // Clear from duplicate list
             message.success(`Đã xóa serial ${serial}`);
         } catch (e) {
             message.error('Không thể xóa item đã lưu');
@@ -216,11 +217,14 @@ export const useInventoryCheck = () => {
         finally { setIsSaving(false); }
     };
 
+    const [duplicateSerials, setDuplicateSerials] = useState<string[]>([]);
+
     const handleCompleteInventory = () => {
         if (localItems.length > 0) {
             message.warning('Vui lòng bấm LƯU các serial mới trước khi hoàn tất!');
             return;
         }
+        setDuplicateSerials([]); // Clear old errors
         setCompleteModalVisible(true);
     };
 
@@ -228,14 +232,22 @@ export const useInventoryCheck = () => {
         if (!session) return;
         try {
             setIsSaving(true);
+            setDuplicateSerials([]);
             await inventorySessionService.update(session.id, { status: 'completed' });
             message.success('Hoàn tất kiểm kê thành công!');
             setSessionStatus('completed');
             setCompleteModalVisible(false);
             navigate('/import/list');
         } catch (e: any) {
-            const msg = e.response?.data?.message || 'Lỗi hoàn tất phiên';
-            message.error(msg);
+            const data = e.response?.data;
+            const msg = data?.message || 'Lỗi hoàn tất phiên';
+
+            if (data?.duplicates && Array.isArray(data.duplicates)) {
+                setDuplicateSerials(data.duplicates);
+                message.error(`Có ${data.duplicates.length} serial bị trùng lặp!`);
+            } else {
+                message.error(msg);
+            }
         } finally { setIsSaving(false); }
     };
 
@@ -254,5 +266,6 @@ export const useInventoryCheck = () => {
         navigate,
         removeServerItem,
         setLocalItems,
+        duplicateSerials,
     };
 };

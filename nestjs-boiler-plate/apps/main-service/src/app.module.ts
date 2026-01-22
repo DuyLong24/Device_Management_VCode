@@ -28,6 +28,7 @@ import { DeviceHistoryModule } from './modules/device-histories/device-historys.
 import { InventorySessionModule } from './modules/inventory-sessions/inventory-sessions.module';
 import { ExcelModule } from './common/excel/excel.module';
 import { DataImportModule } from './modules/data-import/data-import.module'; // NEW
+import { SharedDataModule } from './modules/shared-data/shared-data.module'; // NEW
 
 import { FncRole, FncRoleSchema } from './fnc-roles/entities/fnc-role.entity';
 import { User, UserSchema } from './users/entities/user.entity';
@@ -118,6 +119,7 @@ import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schem
     InventorySessionModule,
     ExcelModule,
     DataImportModule,
+    SharedDataModule,
   ],
   controllers: [HealthController],
   providers: [

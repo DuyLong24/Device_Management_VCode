@@ -8,6 +8,7 @@ import type { DeviceExport } from '../types/export.type';
 import { exportService } from '../services/export.service';
 import { axiosInstance } from '../configs/axios.config';
 import { DEVICE_STATUS } from '../constants/dashboard.constants';
+import { sharedDataService } from '../services/shared-data.service';
 
 // Export types
 export interface SerialValidationError {
@@ -59,25 +60,126 @@ export const useCreateExport = () => {
     const [deviceList, setDeviceList] = useState<DeviceItem[]>([]);
     const [deviceOptions, setDeviceOptions] = useState<DeviceOption[]>([]);
     const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+    const [projectOptions, setProjectOptions] = useState<any[]>([]);
+
+    // [NEW] Project Creation State
+    const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+    const [pendingProjectName, setPendingProjectName] = useState('');
+    const [projectSearchValue, setProjectSearchValue] = useState('');
+
     const [loadingDevices, setLoadingDevices] = useState(false);
     const [loadingCategories, setLoadingCategories] = useState(false);
 
     // Initial Load
     useEffect(() => {
         const initData = async () => {
-            await Promise.all([fetchDeviceCodes(), fetchCategories()]);
+            try {
+                await Promise.all([fetchDeviceCodes(), fetchCategories(), fetchProjects()]);
 
-            if (isEditMode && id) {
-                await fetchExportDetail(id);
-            } else {
-                // Generate auto code only for create mode
-                const today = dayjs();
-                const code = `PX-${today.format('YYYY-MM')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-                form.setFieldValue('code', code);
+                if (isEditMode && id) {
+                    await fetchExportDetail(id);
+                } else {
+                    // Generate auto code only for create mode
+                    const today = dayjs();
+                    const code = `PX-${today.format('YYYY-MM')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+                    form.setFieldValue('code', code);
+                }
+            } catch (error) {
+                console.error('Failed to initialize export page data', error);
+                // Avoid using logger with full error object if it has circular refs
             }
         };
         initData();
     }, [id, isEditMode]);
+
+    const fetchProjects = async () => {
+        try {
+            const projects = await sharedDataService.getDataByGroupCode('PROJECT');
+            if (projects && projects.length > 0) {
+                setProjectOptions(projects.map(p => ({
+                    label: p.name,
+                    value: p.code
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to fetch projects', error);
+        }
+    };
+
+    // [NEW] Handle Project Selection/Creation
+    const onProjectSearch = (value: string) => {
+        setProjectSearchValue(value);
+    };
+
+    const handleProjectBlur = () => {
+        // Delay slightly to ensure search value is current (optional, but good for safety)
+        setTimeout(() => {
+            const searchText = projectSearchValue.trim();
+            const currentVal = form.getFieldValue('project');
+
+            // Only trigger if no valid project selected AND we have a search text
+            if (!currentVal && searchText) {
+                // Check if it matches an existing label exactly
+                const exists = projectOptions.some(p => p.label.toLowerCase() === searchText.toLowerCase());
+                if (!exists) {
+                    setPendingProjectName(searchText);
+                    setIsProjectModalOpen(true);
+                }
+            }
+        }, 100);
+    };
+
+    const handleProjectKeyDown = (e: any) => {
+        if (e.key === 'Enter') {
+            // Let Blur handle it, or force trigger
+            e.preventDefault(); // Prevent form submission
+            handleProjectBlur();
+        }
+    };
+
+    const handleCreateProject = async (code: string, name: string) => {
+        try {
+            // 1. Get Project Group ID 
+            const groups = await sharedDataService.getGroups();
+            const projectGroup = groups.find(g => g.code === 'PROJECT');
+
+            if (!projectGroup) {
+                message.error('Không tìm thấy nhóm dữ liệu Dự án');
+                return;
+            }
+
+            const newData = await sharedDataService.createData({
+                code: code,
+                name: name,
+                description: 'Auto-created via Export Form',
+                groupId: projectGroup._id,
+                order: 99
+            });
+
+            message.success('Đã tạo dự án mới');
+
+            // 2. Update Options
+            const newOption = { label: newData.name, value: newData.code };
+            setProjectOptions([...projectOptions, newOption]);
+
+            // 3. Select it
+            form.setFieldValue('project', newData.code);
+
+            setIsProjectModalOpen(false);
+            setProjectSearchValue(''); // Reset search
+
+        } catch (error) {
+            logger.error('Failed to create project', { error });
+            message.error('Không thể tạo dự án mới');
+        }
+    };
+
+    const handleCancelProjectCreation = () => {
+        setIsProjectModalOpen(false);
+        setPendingProjectName('');
+        setProjectSearchValue('');
+        form.setFieldValue('project', undefined); // Clear selection if cancelled
+    };
 
     const fetchExportDetail = async (exportId: string) => {
         try {
@@ -198,13 +300,14 @@ export const useCreateExport = () => {
     };
 
     const handleAddDevice = () => {
-        const newDevice: DeviceItem = {
-            key: `device-${Date.now()}`,
+        const newItem: DeviceItem = {
+            key: `new-${Date.now()}`,
             deviceModel: '',
             name: '',
             quantity: 1,
+            inStock: 0
         };
-        setDeviceList([...deviceList, newDevice]);
+        setDeviceList([...deviceList, newItem]);
         setHasUnsavedChanges(true);
     };
 
@@ -213,179 +316,80 @@ export const useCreateExport = () => {
         setHasUnsavedChanges(true);
     };
 
-    const handleDeviceChange = (key: string, field: string, value: any) => {
-        setDeviceList(
-            deviceList.map((item) => {
-                if (item.key === key) {
-                    if (field === 'deviceModel') {
-                        const device = deviceOptions.find((d) => d.value === value);
-                        return {
-                            ...item,
-                            deviceModel: value,
-                            name: device?.label.split(' - ')[1] || '',
-                            inStock: device?.inStock || 0,
-                        };
+    const handleDeviceChange = (key: string, field: keyof DeviceItem, value: any) => {
+        const newList = deviceList.map((item) => {
+            if (item.key === key) {
+                const updated = { ...item, [field]: value };
+                if (field === 'deviceModel') {
+                    // Update name and stock when model changes
+                    const option = deviceOptions.find(o => o.value === value);
+                    if (option) {
+                        // Extract name from label "Model - Name"
+                        const namePart = option.label.includes(' - ') ? option.label.split(' - ')[1] : '';
+                        updated.name = namePart;
+                        updated.inStock = option.inStock;
                     }
-                    return { ...item, [field]: value };
                 }
-                return item;
-            })
-        );
+                return updated;
+            }
+            return item;
+        });
+        setDeviceList(newList);
         setHasUnsavedChanges(true);
     };
 
+    const handleSaveDraft = () => handleSave(EXPORT_STATUS.DRAFT);
+    const handleSaveAndSubmit = () => handleSave(EXPORT_STATUS.PENDING_APPROVAL);
 
-    const validateDeviceList = (): { valid: boolean; message?: string } => {
-        if (deviceList.length === 0) {
-            return { valid: false, message: 'Phiếu xuất phải có ít nhất 1 thiết bị' };
-        }
-
-        const deviceModels = deviceList.map((d) => d.deviceModel);
-        const duplicates = deviceModels.filter((code, index) => code && deviceModels.indexOf(code) !== index);
-        if (duplicates.length > 0) {
-            return { valid: false, message: `Mã thiết bị ${duplicates[0]} đã tồn tại trong phiếu` };
-        }
-
-        for (const device of deviceList) {
-            if (!device.deviceModel) {
-                return { valid: false, message: 'Vui lòng chọn mã thiết bị cho tất cả các dòng' };
-            }
-            if (!device.quantity || device.quantity <= 0) {
-                return { valid: false, message: 'Số lượng phải lớn hơn 0' };
-            }
-
-            // Validation tồn kho: chỉ check lúc tạo mới hoặc edit.
-            const inStock = getDeviceStock(device.deviceModel);
-            // Có thể cần logic phức tạp hơn cho edit (e.g. cộng lại sl cũ), nhưng tạm thời check đơn giản
-            if (device.quantity > inStock) {
-                // Warning instead of blocking? Or blocking logic
-                // Tạm thời block để đảm bảo logic
-                return {
-                    valid: false,
-                    message: `Thiết bị ${device.deviceModel} chỉ còn ${inStock} chiếc trong kho`,
-                };
-            }
-        }
-
-        return { valid: true };
-    };
-
-    const handleSaveDraft = async () => {
+    const handleSave = async (status: string) => {
         try {
-            const formValues = await form.validateFields();
-            const deviceValidation = validateDeviceList();
+            const values = await form.validateFields();
 
-            if (!deviceValidation.valid) {
-                message.error(deviceValidation.message);
+            // Validate device list
+            if (deviceList.length === 0) {
+                message.error('Vui lòng thêm ít nhất một thiết bị');
+                return;
+            }
+
+            // Check if any device has quantity > stock
+            const hasStockError = deviceList.some(d => {
+                const stock = getDeviceStock(d.deviceModel);
+                return d.quantity > stock;
+            });
+
+            if (hasStockError) {
+                message.error('Có thiết bị vượt quá số lượng tồn kho!');
                 return;
             }
 
             setLoading(true);
 
-            const payload = {
-                ...formValues,
-                status: EXPORT_STATUS.DRAFT,
-                requirements: deviceList.map((d) => ({
+            // Prepare payload
+            const payload: Partial<DeviceExport> = {
+                ...values,
+                status,
+                requirements: deviceList.map(d => ({
                     productCode: d.deviceModel,
                     productName: d.name,
                     quantity: d.quantity,
-                    expectedSerials: d.expectedSerials || [],
-                })),
-                totalProductCodes: deviceList.length,
-                totalQuantity: deviceList.reduce((sum, d) => sum + d.quantity, 0),
-                items: [], // Reset items logic not handled here
-            };
+                    // expectedSerials?
+                }))
+            } as any;
 
-            let finalId = id;
             if (isEditMode && id) {
-                await exportService.update(id, payload);
-                message.success('Cập nhật nháp phiếu xuất thành công');
+                await exportService.update(id, payload as any);
+                message.success('Cập nhật phiếu xuất thành công');
             } else {
-                const res = await exportService.create(payload);
-                const exportData = res.data as DeviceExport;
-                finalId = exportData.id || exportData._id;
-                message.success('Tạo nháp phiếu xuất thành công');
+                await exportService.create(payload as any);
+                message.success('Tạo phiếu xuất thành công');
             }
 
             setHasUnsavedChanges(false);
+            navigate('/export/list');
 
-            // Logic điều hướng
-            if (isEditMode) {
-                // Đang edit thì ở lại
-            } else {
-                // Tạo mới thì chuyển sang edit
-                if (finalId) navigate(`/export/edit/${finalId}`);
-                else navigate('/export/list');
-            }
-
-        } catch (error: any) {
-            logger.error('Failed to save draft', { error });
-            if (error.errorFields && error.errorFields.length > 0) {
-                const firstError = error.errorFields[0];
-                message.error(firstError.errors[0]);
-                form.scrollToField(firstError.name);
-            } else {
-                message.error('Không thể lưu nháp phiếu xuất');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSaveAndSubmit = async () => {
-        try {
-            const formValues = await form.validateFields();
-            const deviceValidation = validateDeviceList();
-
-            if (!deviceValidation.valid) {
-                message.error(deviceValidation.message);
-                return;
-            }
-
-            setLoading(true);
-
-            const payload = {
-                ...formValues,
-                status: EXPORT_STATUS.DRAFT,
-                requirements: deviceList.map((d) => ({
-                    productCode: d.deviceModel,
-                    productName: d.name,
-                    quantity: d.quantity,
-                    expectedSerials: d.expectedSerials || [],
-                })),
-                totalProductCodes: deviceList.length,
-                totalQuantity: deviceList.reduce((sum, d) => sum + d.quantity, 0),
-            };
-
-            let finalId = id;
-
-            // 1. Save / Update Draft First
-            if (isEditMode && id) {
-                await exportService.update(id, payload);
-                finalId = id;
-            } else {
-                const res = await exportService.create(payload);
-                const exportData = res.data as DeviceExport;
-                finalId = exportData.id || exportData._id;
-            }
-
-            // 2. Submit for Approval
-            if (finalId) {
-                await exportService.submitForApproval(finalId);
-                message.success('Gửi duyệt phiếu xuất thành công!');
-                setHasUnsavedChanges(false);
-                navigate(`/export/${finalId}`);
-            }
-
-        } catch (error: any) {
-            logger.error('Failed to submit export', { error });
-            if (error.errorFields && error.errorFields.length > 0) {
-                const firstError = error.errorFields[0];
-                message.error(firstError.errors[0]);
-                form.scrollToField(firstError.name);
-            } else {
-                message.error(error?.response?.data?.message || 'Không thể gửi duyệt phiếu xuất');
-            }
+        } catch (error) {
+            logger.error('Save export failed', { error });
+            message.error('Có lỗi xảy ra khi lưu phiếu');
         } finally {
             setLoading(false);
         }
@@ -395,10 +399,9 @@ export const useCreateExport = () => {
         if (hasUnsavedChanges) {
             modal.confirm({
                 title: 'Xác nhận thoát',
-                content: 'Bạn có thay đổi chưa được lưu. Bạn có chắc muốn thoát?',
+                content: 'Dữ liệu chưa lưu sẽ bị mất? Bạn có chắc chắn muốn hủy?',
                 okText: 'Thoát',
                 cancelText: 'Ở lại',
-                okButtonProps: { danger: true },
                 onOk: () => navigate('/export/list'),
             });
         } else {
@@ -409,24 +412,29 @@ export const useCreateExport = () => {
     return {
         form,
         loading,
-        hasUnsavedChanges,
-        setHasUnsavedChanges: () => setHasUnsavedChanges(true),
-
         deviceList,
         deviceOptions,
         categoryOptions,
+        projectOptions,
         loadingDevices,
         loadingCategories,
-        isEditMode, // Expose this
-
         handleAddDevice,
         handleDeleteDevice,
         handleDeviceChange,
         getDeviceStock,
-
-        // Serial functions
         handleSaveDraft,
         handleSaveAndSubmit,
         handleCancel,
+        setHasUnsavedChanges,
+        isEditMode,
+        // Project Creation
+        isProjectModalOpen,
+        pendingProjectName,
+        onProjectSearch,
+        handleProjectBlur,
+        handleProjectKeyDown, // [NEW]
+        handleCreateProject,
+        handleCancelProjectCreation,
+        setIsProjectModalOpen
     };
 };

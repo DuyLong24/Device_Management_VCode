@@ -37,6 +37,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 
 import { importService } from '../../services/import.service';
+import { sharedDataService } from '../../services/shared-data.service';
 import { userService } from '../../services/user.service';
 import { categoryService } from '../../services/category.service';
 import { deviceService } from '../../services/device.service';
@@ -54,7 +55,6 @@ interface ProductItem {
     productCode: string;
     quantity: number;
     boxCount: number | null;
-    itemsPerBox: number | null;
     itemsPerBox: number | null;
     macImported: number;
     expectedMacs: string[];
@@ -82,8 +82,9 @@ export default function CreateImportPage() {
     const [tempMacs, setTempMacs] = useState<string>('');
     const [activeTab, setActiveTab] = useState('manual');
     const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
+    const [originOptions, setOriginOptions] = useState<any[]>([]); // Data from Shared Data Service
 
-    // Import Fields Definition
+    // Field Definitions
     const IMPORT_TICKET_FIELDS: FieldDefinition[] = [
         { key: 'productCode', label: 'Mã sản phẩm', required: true, description: 'SKU của sản phẩm' },
         { key: 'mac', label: 'MAC Address', required: true, description: 'Địa chỉ MAC (Duy nhất)' },
@@ -114,9 +115,18 @@ export default function CreateImportPage() {
                 setUserOptions(users.map((u: any) => ({ label: u.name, value: u.username })));
                 setCategoryOptions(categories.map((c: any) => ({ label: c.name, value: c.name })));
 
-                const deviceList = (devices as any).docs || (devices as any).data || (Array.isArray(devices) ? devices : []);
-                const models = [...new Set(deviceList.map((d: any) => d.deviceModel))];
-                setModelOptions(models.map(m => ({ label: m as string, value: m as string })));
+                // [NEW] Load Shared Data (Model)
+                const models = await sharedDataService.getDataByGroupCode('MODEL');
+                if (models && models.length > 0) {
+                    setModelOptions(models.map(m => ({ label: m.name, value: m.code })));
+                } else {
+                    // Fallback to existing devices if no shared data found (optional, but good for transition)
+                    const deviceList = (devices as any).docs || (devices as any).data || (Array.isArray(devices) ? devices : []);
+                    const fallbackModels = [...new Set(deviceList.map((d: any) => d.deviceModel))];
+                    if (fallbackModels.length > 0) {
+                        setModelOptions(fallbackModels.map(m => ({ label: m as string, value: m as string })));
+                    }
+                }
 
                 // Handle Edit Mode or Create Mode
                 if (isEditMode) {
@@ -142,7 +152,6 @@ export default function CreateImportPage() {
                         quantity: p.quantity,
                         boxCount: p.boxCount,
                         itemsPerBox: p.itemsPerBox,
-                        serialImported: p.serialImported || 0,
                         expectedMacs: p.expectedMacs || [],
                         macImported: p.macImported || 0,
                     }));
@@ -151,6 +160,15 @@ export default function CreateImportPage() {
                 } else {
                     // Create Mode: New Code
                     form.setFieldValue('code', generateImportCode());
+                }
+
+                // [NEW] Load Shared Data (Origin)
+                const origins = await sharedDataService.getDataByGroupCode('ORIGIN');
+                if (origins && origins.length > 0) {
+                    setOriginOptions(origins.map((o: any) => ({
+                        label: o.name,
+                        value: o.code
+                    })));
                 }
 
             } catch (error) {
@@ -182,7 +200,6 @@ export default function CreateImportPage() {
             quantity: 1,
             boxCount: null,
             itemsPerBox: null,
-            serialImported: 0,
             expectedMacs: [],
             macImported: 0
         };
@@ -544,11 +561,7 @@ export default function CreateImportPage() {
                         </Form.Item>
 
                         <Form.Item name="origin" label="Nguồn gốc" rules={[{ required: true }]} className="col-span-1">
-                            <Select>
-                                <Select.Option value="DOMESTIC">Nội địa</Select.Option>
-                                <Select.Option value="IMPORT">Nhập khẩu</Select.Option>
-                                <Select.Option value="WARRANTY_RETURN">Trả bảo hành</Select.Option>
-                            </Select>
+                            <Select options={originOptions} placeholder="Chọn nguồn gốc" />
                         </Form.Item>
 
                         <Form.Item name="importDate" label="Ngày nhập" rules={[{ required: true }]} className="col-span-1">

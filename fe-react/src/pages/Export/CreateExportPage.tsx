@@ -1,4 +1,4 @@
-import { Card, Button, Space, Form, Input, Select, InputNumber, Table, Typography, Row, Col, Tooltip, Divider } from 'antd';
+import { Card, Button, Space, Form, Input, Select, InputNumber, Table, Typography, Row, Col, Tooltip, Divider, Modal } from 'antd';
 import { SaveOutlined, CloseOutlined, PlusOutlined, DeleteOutlined, InfoCircleOutlined, WarningOutlined, SendOutlined } from '@ant-design/icons';
 
 import { useCreateExport } from '../../hooks/useCreateExport';
@@ -23,6 +23,14 @@ export default function CreateExportPage() {
         handleCancel,
         setHasUnsavedChanges,
         isEditMode,
+        projectOptions, // [NEW] From Hook
+        isProjectModalOpen,
+        pendingProjectName,
+        onProjectSearch,
+        handleProjectBlur,
+        handleProjectKeyDown, // [NEW]
+        handleCreateProject,
+        handleCancelProjectCreation
     } = useCreateExport();
 
     // Cột bảng thiết bị
@@ -194,6 +202,27 @@ export default function CreateExportPage() {
                                 </Select>
                             </Form.Item>
                         </Col>
+
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                name="project"
+                                label="Dự án nhận"
+                                rules={[{ required: true, message: 'Vui lòng chọn hoặc nhập dự án' }]}
+                            >
+                                <Select
+                                    placeholder="Chọn hoặc nhập tên dự án mới"
+                                    options={projectOptions}
+                                    showSearch
+                                    onSearch={onProjectSearch}
+                                    onBlur={handleProjectBlur}
+                                    onInputKeyDown={handleProjectKeyDown}
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                />
+                            </Form.Item>
+                        </Col>
+
                         <Col xs={24} md={12}>
                             <Form.Item
                                 name="exportName"
@@ -223,14 +252,6 @@ export default function CreateExportPage() {
                     </Row>
 
                     <Row gutter={16}>
-                        <Col xs={24} md={12}>
-                            <Form.Item
-                                name="project"
-                                label="Dự án"
-                            >
-                                <Input placeholder="Nhập tên dự án (nếu có)" />
-                            </Form.Item>
-                        </Col>
                         <Col xs={24} md={12}>
                             <Form.Item
                                 name="customer"
@@ -332,6 +353,48 @@ export default function CreateExportPage() {
                 </div>
             </div>
 
+            {/* Modal Confirm Create Project */}
+            <Modal
+                title="Tạo Dự án Mới?"
+                open={isProjectModalOpen}
+                onCancel={handleCancelProjectCreation}
+                footer={null}
+            >
+                <div className="p-4">
+                    <p className="mb-4 text-gray-600">
+                        Dự án <strong>"{pendingProjectName}"</strong> chưa tồn tại. Bạn có muốn tạo mới không?
+                    </p>
+                    <Form
+                        layout="vertical"
+                        onFinish={(values) => handleCreateProject(values.code, values.name)}
+                        initialValues={{
+                            name: pendingProjectName,
+                            code: 'DA_' + pendingProjectName.toUpperCase().replace(/\s+/g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                        }}
+                    >
+                        <Form.Item
+                            name="name"
+                            label="Tên dự án"
+                            rules={[{ required: true, message: 'Vui lòng nhập tên dự án' }]}
+                        >
+                            <Input />
+                        </Form.Item>
+                        <Form.Item
+                            name="code"
+                            label="Mã dự án (Tự sinh)"
+                            rules={[{ required: true, message: 'Vui lòng nhập mã dự án' }]}
+                        >
+                            <Input />
+                        </Form.Item>
+                        <div className="flex justify-end space-x-2 mt-6">
+                            <Button onClick={handleCancelProjectCreation}>Hủy</Button>
+                            <Button type="primary" htmlType="submit">
+                                Tạo Dự án
+                            </Button>
+                        </div>
+                    </Form>
+                </div>
+            </Modal>
         </div>
     );
 }

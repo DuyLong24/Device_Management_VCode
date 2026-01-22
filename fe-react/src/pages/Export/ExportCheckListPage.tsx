@@ -293,14 +293,14 @@ export default function ExportCheckListPage() {
                 </Form>
             </Card>
 
-            <Card styles={{ body: { padding: 0 } }} bordered={false}>
+            <Card styles={{ body: { padding: 0 } }} variant="borderless">
                 <Table
                     columns={columns}
                     dataSource={filteredData}
                     rowKey={r => r.id || r._id || 'unknown'}
                     loading={loading}
                     pagination={{ pageSize: 12 }}
-                    bordered={false}
+                    variant="borderless"
                 />
             </Card>
 

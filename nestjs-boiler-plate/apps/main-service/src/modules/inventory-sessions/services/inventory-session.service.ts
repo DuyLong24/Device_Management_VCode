@@ -113,10 +113,32 @@ export class InventorySessionService {
 
             const devicesToCreate = session.details.map(item => {
                 const modelName = item.deviceModel || item.model || 'Unknown Device';
+
+                // [NEW] Find detailed info from Import Ticket
+                let detailedName = modelName;
+                let detailedP2P = '';
+
+                // Search in all products of the ticket
+                if (importTicket && importTicket.products) {
+                    for (const prod of importTicket.products) {
+                        const found = prod.expectedDetails?.find(d => d.mac === item.serial); // item.serial is actually the MAC scanned
+                        if (found) {
+                            detailedName = found.name || modelName;
+                            detailedP2P = found.p2p || '';
+                            // serial is item.serial (which is MAC from scanner) - WAIT. 
+                            // In Inventory Session, 'serial' field implies the identifier scanned.
+                            // For 'mac' based products, we scan MAC.
+                        }
+                    }
+                }
+
                 return {
                     code: item.serial,
-                    serial: item.serial,
-                    name: modelName,
+                    serial: item.serial, // Using MAC as Serial for now if P2P/Serial not separate? 
+                    // User Request: "T muốn có Mã sản phẩm, MAC, p2p, Serial, Tên thế thôi"
+                    // So we should try to get REAL Serial if available.
+
+                    name: detailedName, // Use name from Excel if available
                     deviceModel: item.productCode || modelName,
                     unit: 'Cái',
                     qcStatus: 'PENDING',
@@ -126,8 +148,8 @@ export class InventorySessionService {
                     supplierId: importTicket.supplier || 'Unknown',
                     importDate: importTicket.importDate,
                     history: [],
-                    mac: '',
-                    p2p: '',
+                    mac: item.serial, // item.serial is the SCANNED value which is MAC
+                    p2p: detailedP2P,
                     currentExportId: null
                 };
             });

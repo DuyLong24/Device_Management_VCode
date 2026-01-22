@@ -1,3 +1,4 @@
+// Trigger Reload
 import { IsString, IsNotEmpty, IsDateString, IsOptional, IsArray, ValidateNested, IsNumber, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -25,6 +26,12 @@ class ImportProductDto {
 
   @IsOptional()
   key?: string;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => ImportDetailDto)
+  expectedDetails?: ImportDetailDto[];
 }
 
 class ImportDetailDto {
@@ -36,6 +43,10 @@ class ImportDetailDto {
 
   @IsString()
   mac: string;
+
+  @IsString()
+  @IsOptional()
+  name?: string;
 
 }
 
@@ -72,7 +83,8 @@ export class CreateDeviceImportDto {
   notes?: string;
 
   @IsOptional()
-  @IsEnum(['DRAFT', 'COMPLETED', 'CANCELLED'])
+  @IsOptional()
+  @IsEnum(['DRAFT', 'PUBLIC', 'COMPLETED', 'CANCELLED'])
   status?: string;
 
   @IsArray()

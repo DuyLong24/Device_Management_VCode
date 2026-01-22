@@ -57,7 +57,14 @@ interface ProductItem {
     boxCount: number | null;
     itemsPerBox: number | null;
     macImported: number;
+
     expectedMacs: string[];
+    expectedDetails: Array<{
+        mac: string;
+        serial: string;
+        p2p: string;
+        name: string;
+    }>;
 }
 
 export default function CreateImportPage() {
@@ -88,7 +95,9 @@ export default function CreateImportPage() {
     const IMPORT_TICKET_FIELDS: FieldDefinition[] = [
         { key: 'productCode', label: 'Mã sản phẩm', required: true, description: 'SKU của sản phẩm' },
         { key: 'mac', label: 'MAC Address', required: true, description: 'Địa chỉ MAC (Duy nhất)' },
-        { key: 'serial', label: 'Serial Number', required: false, description: 'Số Serial (Tùy chọn)' },
+        { key: 'name', label: 'Tên thiết bị', required: false, description: 'Tên hiển thị' },
+        { key: 'p2p', label: 'P2P', required: false, description: 'Mã P2P (Cloud)' },
+        { key: 'serial', label: 'Serial Number', required: false, description: 'Số Serial' },
         { key: 'quantity', label: 'Số lượng', required: false, description: 'Mặc định là 1 nếu có MAC' },
         { key: 'boxCount', label: 'Số hộp', required: false },
         { key: 'itemsPerBox', label: 'Số SP/Hộp', required: false },
@@ -113,6 +122,7 @@ export default function CreateImportPage() {
                 ]);
 
                 setUserOptions(users.map((u: any) => ({ label: u.name, value: u.username })));
+                console.log('Categories fetched:', categories);
                 setCategoryOptions(categories.map((c: any) => ({ label: c.name, value: c.name })));
 
                 // [NEW] Load Shared Data (Model)
@@ -152,8 +162,9 @@ export default function CreateImportPage() {
                         quantity: p.quantity,
                         boxCount: p.boxCount,
                         itemsPerBox: p.itemsPerBox,
-                        expectedMacs: p.expectedMacs || [],
-                        macImported: p.macImported || 0,
+                        expectedMacs: p.expectedSerials || [], // Backend uses expectedSerials
+                        macImported: p.serialImported || 0,
+                        expectedDetails: p.expectedDetails || []
                     }));
                     setProductList(mappedProducts);
 
@@ -201,7 +212,8 @@ export default function CreateImportPage() {
             boxCount: null,
             itemsPerBox: null,
             expectedMacs: [],
-            macImported: 0
+            macImported: 0,
+            expectedDetails: []
         };
         setProductList([...productList, newProduct]);
         setHasUnsavedChanges(true);
@@ -333,7 +345,8 @@ export default function CreateImportPage() {
                     quantity: p.quantity,
                     boxCount: p.boxCount || undefined,
                     itemsPerBox: p.itemsPerBox || undefined,
-                    expectedMacs: p.expectedMacs
+                    expectedSerials: p.expectedMacs, // Map expectedMacs to expectedSerials (backend name)
+                    expectedDetails: p.expectedDetails // [NEW] Pass detailed info
                 })),
             };
 
@@ -534,12 +547,12 @@ export default function CreateImportPage() {
 
             {/* Form Section */}
             <section aria-labelledby="general-info-headikng">
-                <Card title={<span id="general-info-heading" className="text-lg font-semibold">Thông tin chung phiếu nhập</span>} className="mb-6 shadow-sm border-gray-200" bordered={false}>
+                <Card title={<span id="general-info-heading" className="text-lg font-semibold">Thông tin chung phiếu nhập</span>} className="mb-6 shadow-sm border-gray-200" variant="borderless">
                     <Form
                         form={form}
                         layout="vertical"
                         onValuesChange={handleFormChange}
-                        initialValues={{ importDate: dayjs(), origin: 'IMPORT', productType: 'Camera' }}
+                        initialValues={{ importDate: dayjs(), origin: 'IMPORT' }}
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6"
                     >
                         <Form.Item
@@ -719,6 +732,7 @@ export default function CreateImportPage() {
                         boxCount: number | null;
                         itemsPerBox: number | null;
                         serials: string[];
+                        details: any[];
                     }>();
 
                     details.forEach((row: any) => {
@@ -729,14 +743,23 @@ export default function CreateImportPage() {
                             quantity: 0,
                             boxCount: row.boxCount || null,
                             itemsPerBox: row.itemsPerBox || null,
-                            serials: [] as string[]
+                            serials: [] as string[],
+                            details: [] as any[]
                         };
 
                         let qty = Number(row.quantity) || 0;
                         if (row.mac && qty === 0) qty = 1;
 
                         current.quantity += qty;
-                        if (row.mac) current.serials.push(row.mac);
+                        if (row.mac) {
+                            current.serials.push(row.mac);
+                            current.details.push({
+                                mac: row.mac,
+                                serial: row.serial || '',
+                                p2p: row.p2p || '',
+                                name: row.name || ''
+                            });
+                        }
 
                         // Update packaging info
                         if (!current.boxCount && row.boxCount) current.boxCount = row.boxCount;
@@ -755,10 +778,18 @@ export default function CreateImportPage() {
                             if (existingIndex > -1) {
                                 // Update existing
                                 const existing = nextList[existingIndex];
+                                // We merge explicit details. Note: expectedMacs is just a list of strings.
+                                // expectedDetails is the rich object list.
+
+                                // Avoid duplicates in details if re-importing? 
+                                // Simple strategy: Concat and allow user to handle duplicates via UI if any, 
+                                // but here we are just merging lists.
+
                                 nextList[existingIndex] = {
                                     ...existing,
                                     quantity: existing.quantity + data.quantity,
                                     expectedMacs: [...new Set([...existing.expectedMacs, ...data.serials])],
+                                    expectedDetails: [...(existing.expectedDetails || []), ...data.details]
                                 };
                             } else {
                                 // Add new
@@ -769,7 +800,8 @@ export default function CreateImportPage() {
                                     boxCount: data.boxCount,
                                     itemsPerBox: data.itemsPerBox,
                                     macImported: 0,
-                                    expectedMacs: data.serials
+                                    expectedMacs: data.serials,
+                                    expectedDetails: data.details
                                 });
                             }
                         });

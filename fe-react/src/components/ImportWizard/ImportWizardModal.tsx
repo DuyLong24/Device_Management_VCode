@@ -129,7 +129,7 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
 
     const handleDownloadTemplate = () => {
         // Create headers from fieldDefinitions
-        const headers = fieldDefinitions.map(f => f.label);
+        const headers = fieldDefinitions.map(f => f.key);
         const ws = XLSX.utils.aoa_to_sheet([headers]);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Template");

@@ -31,8 +31,11 @@ export class ImportTicketStrategy implements ImportStrategy {
 
         for (const [index, row] of data.entries()) {
             const errors: string[] = [];
-            const productCode = row['productCode']; // Mapped field
-            const mac = row['mac']; // Mapped field
+            const productCode = row['productCode'];
+            const mac = row['mac'];
+            const serial = row['serial'];
+            const p2p = row['p2p'];
+            const name = row['name'];
 
             if (!productCode) {
                 errors.push('Thiếu Mã sản phẩm (productCode)');
@@ -60,7 +63,14 @@ export class ImportTicketStrategy implements ImportStrategy {
 
             details.push({
                 row: index,
-                data: row,
+                data: {
+                    ...row,
+                    mac,
+                    serial,
+                    p2p,
+                    name,
+                    productCode
+                },
                 valid: errors.length === 0,
                 errors
             });

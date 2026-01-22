@@ -56,6 +56,7 @@ export default function ImportListPage() {
     const [filteredData, setFilteredData] = useState<ImportRecord[]>([]);
 
     const mapApiToUi = (apiData: DeviceImport[]): ImportRecord[] => {
+        if (!Array.isArray(apiData)) return [];
         return apiData.map((item) => {
             const products: ProductItem[] = item.products.map((prod: ImportProduct, index) => {
                 const serialImported = prod.serialImported || 0;
@@ -401,10 +402,10 @@ export default function ImportListPage() {
                 }}
             />
 
-            <Card bordered={false} bodyStyle={{ padding: 0 }}>
+            <Card variant="borderless" styles={{ body: { padding: 0 } }}>
                 {loading && data.length === 0 ? (
                     <div className="text-center py-12">
-                        <Spin size="large" tip="Đang tải dữ liệu..." />
+                        <Spin size="large" fullscreen={false} />
                     </div>
                 ) : filteredData.length === 0 ? (
                     <Empty description={IMPORT_LABELS.NOT_FOUND} image={Empty.PRESENTED_IMAGE_SIMPLE} className="p-10">

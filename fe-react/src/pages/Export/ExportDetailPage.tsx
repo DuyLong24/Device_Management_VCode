@@ -40,7 +40,7 @@ export default function ExportDetailPage() {
     if (loading || !exportInfo) {
         return (
             <div className="text-center py-24">
-                <Spin size="large" tip="Đang tải dữ liệu..." />
+                <Spin size="large" fullscreen={false} />
             </div>
         );
     }

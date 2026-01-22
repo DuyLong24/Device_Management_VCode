@@ -144,7 +144,7 @@ export default function CreateExportPage() {
             </div>
 
             {/* Form */}
-            <Form form={form} layout="vertical" onValuesChange={setHasUnsavedChanges}>
+            <Form form={form} layout="vertical" onValuesChange={() => setHasUnsavedChanges(true)}>
                 {/* Card A - Thông tin chung */}
                 <Card title="Thông tin chung phiếu xuất" className="mb-6 shadow-sm">
                     <Row gutter={16}>

@@ -38,7 +38,16 @@ export class DeviceImport extends Document {
       boxCount: Number,
       itemsPerBox: Number,
       serialImported: { type: Number, default: 0 },
-      expectedSerials: { type: [String], default: [] }
+      expectedSerials: { type: [String], default: [] },
+      expectedDetails: {
+        type: [{
+          mac: String,
+          serial: String,
+          p2p: String,
+          name: String
+        }],
+        default: []
+      }
     }],
     default: []
   })
@@ -48,7 +57,14 @@ export class DeviceImport extends Document {
     boxCount: number;
     itemsPerBox: number;
     serialImported: number;
+
     expectedSerials: string[];
+    expectedDetails: Array<{
+      mac: string;
+      serial: string;
+      p2p: string;
+      name: string;
+    }>;
   }>;
 
   @Prop({ default: 0 })

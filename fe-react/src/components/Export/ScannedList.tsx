@@ -85,7 +85,7 @@ export const ScannedList = ({ items, loading }: ScannedListProps) => {
                 </div>
             }
             className="shadow-sm flex-1 flex flex-col h-full"
-            bodyStyle={{ flex: 1, overflow: 'hidden', padding: 0 }}
+            styles={{ body: { flex: 1, overflow: 'hidden', padding: 0 } }}
         >
             <Table
                 dataSource={sortedItems}

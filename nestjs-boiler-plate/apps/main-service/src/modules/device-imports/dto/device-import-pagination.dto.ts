@@ -7,14 +7,15 @@ export class DeviceImportPaginationDto {
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  page?: number = 1;
+  @Min(1)
+  page?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
   @Max(100)
-  limit?: number = 10;
+  limit?: number;
 
   @IsOptional()
   @IsString()

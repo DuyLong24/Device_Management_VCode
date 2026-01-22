@@ -269,7 +269,7 @@ const ExportListPage = () => {
             <Card>
                 {loading ? (
                     <div className="text-center py-12">
-                        <Spin size="large" tip="Đang tải dữ liệu..." />
+                        <Spin size="large" fullscreen={false} />
                     </div>
                 ) : filteredData.length === 0 ? (
                     <Empty description="Chưa có phiếu xuất nào">

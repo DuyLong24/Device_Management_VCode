@@ -256,14 +256,13 @@ export default function InventoryListPage() {
                 </Form>
             </Card>
 
-            <Card bodyStyle={{ padding: 0 }} bordered={false}>
+            <Card styles={{ body: { padding: 0 } }} variant="borderless">
                 <Table
                     columns={columns}
                     dataSource={filteredData}
                     rowKey="id"
                     loading={loading}
                     pagination={{ pageSize: 10 }}
-                    bordered={false}
                 />
             </Card>
 

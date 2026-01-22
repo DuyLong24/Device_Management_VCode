@@ -28,7 +28,7 @@ const ImportDetailPage = () => {
     if (loading || !importData) {
         return (
             <div className="flex justify-center items-center h-screen">
-                <Spin size="large" tip="Đang tải dữ liệu..." />
+                <Spin size="large" />
             </div>
         );
     }
@@ -96,7 +96,7 @@ const ImportDetailPage = () => {
                 <Card
                     title="Danh sách sản phẩm"
                     className="shadow-sm"
-                    bodyStyle={{ padding: 0 }}
+                    styles={{ body: { padding: 0 } }}
                     extra={
                         <Button
                             icon={<FileTextOutlined />}

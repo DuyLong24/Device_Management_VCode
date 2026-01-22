@@ -6,14 +6,14 @@ export class DevicePaginationDto {
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  page: number = 1;
+  page?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  @Max(100)
-  limit: number = 10;
+  @Max(5000)
+  limit?: number;
 
   @IsOptional()
   @IsString()

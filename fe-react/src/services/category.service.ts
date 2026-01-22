@@ -7,8 +7,16 @@ export interface Category {
 }
 
 export const categoryService = {
-    getAll: async () => {
-        const response = await axiosInstance.get<Category[]>('/categories');
+    getAll: async (params?: any) => {
+        let requestParams = params || {};
+        if (requestParams && requestParams.queryKey) {
+            requestParams = {};
+        }
+        const { client, meta, signal, ...rest } = requestParams;
+
+        const response = await axiosInstance.get<Category[]>('/categories', {
+            params: rest
+        });
         return response.data;
     }
 };

@@ -238,7 +238,8 @@ export const useCreateExport = () => {
                 params: {
                     warehouseId: readyWarehouse.id,
                     limit: 1000,
-                    sortBy: 'deviceModel:asc'
+                    sortBy: 'deviceModel:asc',
+                    page: 1
                 }
             });
 

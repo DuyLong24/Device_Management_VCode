@@ -246,7 +246,7 @@ export default function AllSerialsPage() {
             </Card>
 
             {/* Main Table */}
-            <Card className="shadow-sm border-gray-200" bodyStyle={{ padding: 0 }}>
+            <Card className="shadow-sm border-gray-200" styles={{ body: { padding: 0 } }}>
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                     <Text strong>
                         {/* Hiển thị Total Results từ Server */}

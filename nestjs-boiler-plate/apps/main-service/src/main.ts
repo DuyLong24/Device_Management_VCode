@@ -1,7 +1,9 @@
+// Trigger Restart
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 import { KAFKA_CLIENT_CONFIG } from '@app/shared';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   // Tạo HTTP application (API Gateway)
@@ -34,6 +36,13 @@ async function bootstrap() {
 
   // // Khởi động tất cả microservices
   // await app.startAllMicroservices();
+
+  // Enable Global Validation Pipe
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }));
 
   // Khởi động HTTP server
   await app.listen(3000);

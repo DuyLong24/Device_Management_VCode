@@ -267,7 +267,7 @@ export default function WarehousePage() {
             </Card>
 
             {/* Table Area */}
-            <Card bodyStyle={{ padding: 0 }}>
+            <Card styles={{ body: { padding: 0 } }}>
                 {selectedRowKeys.length > 0 && (
                     <div className="px-4 py-2 bg-blue-50 border-b border-gray-200">
                         <Space>

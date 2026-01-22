@@ -17,7 +17,7 @@ export const ExportInfoCard = ({ exportInfo }: ExportInfoCardProps) => {
     return (
         <>
             {/* Card 1: Thông tin phiếu xuất kho */}
-            <Card title="Thông tin phiếu xuất kho" className="shadow-sm mb-6" bordered={false}>
+            <Card title="Thông tin phiếu xuất kho" className="shadow-sm mb-6" variant="borderless">
                 <Descriptions column={2} bordered size="small">
                     <Descriptions.Item label="Mã phiếu xuất">
                         <Text strong>{exportInfo.code}</Text>
@@ -63,7 +63,7 @@ export const ExportInfoCard = ({ exportInfo }: ExportInfoCardProps) => {
             </Card>
 
             {/* Card 2: Tổng quan */}
-            <Card title="Tổng quan" className="shadow-sm mb-6" bordered={false}>
+            <Card title="Tổng quan" className="shadow-sm mb-6" variant="borderless">
                 <Row gutter={16}>
                     <Col xs={12} sm={8}>
                         <Statistic title="Tổng mã sản phẩm" value={exportInfo.totalProductCodes || 0} />

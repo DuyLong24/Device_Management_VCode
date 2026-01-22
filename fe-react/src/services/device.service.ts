@@ -43,12 +43,19 @@ export interface DeviceQueryParams {
 }
 
 export const deviceService = {
-    getAll: async (params: DeviceQueryParams = {}) => {
+    getAll: async (params: any = {}) => {
+        let requestParams = params || {};
+        // If params appears to be a React Query context (has queryKey), ignore it
+        if (requestParams && requestParams.queryKey) {
+            requestParams = {};
+        }
+        const { client, meta, signal, ...rest } = requestParams;
+
         const finalParams = {
             page: 1,
             limit: 10,
             sortBy: 'createdAt:desc', // Mới nhất lên đầu
-            ...params
+            ...rest
         };
 
         const response = await axiosInstance.get<PaginatedResponse<Device>>('/devices', {

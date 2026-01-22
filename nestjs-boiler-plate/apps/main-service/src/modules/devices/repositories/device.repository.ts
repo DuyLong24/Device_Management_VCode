@@ -18,6 +18,10 @@ export class DeviceRepository {
     return this.deviceModel.insertMany(devices, options);
   }
 
+  async bulkWrite(ops: any[], options: any = {}): Promise<any> {
+    return this.deviceModel.bulkWrite(ops, options);
+  }
+
   async findAll(filter: any = {}): Promise<Device[]> {
     return this.deviceModel.find(filter).exec();
   }

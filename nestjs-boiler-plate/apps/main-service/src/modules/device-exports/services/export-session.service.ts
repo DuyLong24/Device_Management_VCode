@@ -81,10 +81,10 @@ export class ExportSessionService {
         console.log(`[scanSerial] Requirements: ${JSON.stringify(requirements)}`);
 
         // Lấy thông tin thiết và validate
-        const device = await this.deviceService.findBySerial(serial);
+        const device = await this.deviceService.findByMac(serial);
         if (!device) {
             console.warn(`[scanSerial] Device not found: ${serial}`);
-            throw new BadRequestException(`Serial ${serial} không tồn tại trong hệ thống`);
+            throw new BadRequestException(`MAC ${serial} không tồn tại trong hệ thống`);
         }
         console.log(`[scanSerial] Device Found: ${device.serial}, Model=${device.deviceModel}`);
 
@@ -161,14 +161,14 @@ export class ExportSessionService {
         const errors: { serial: string; error: string }[] = [];
         const warnings: { serial: string; warning: string }[] = [];
 
-        const uniqueSerials = [...new Set(serials)];
-        const devices = await this.deviceService.findBySerials(uniqueSerials);
+        const uniqueMacs = [...new Set(serials)];
+        const devices = await this.deviceService.findByMacs(uniqueMacs);
         const deviceMap = new Map();
-        devices.forEach(d => deviceMap.set(d.serial, d));
+        devices.forEach(d => deviceMap.set(d.mac, d));
 
         const newItems: any[] = [];
 
-        for (const serial of uniqueSerials) {
+        for (const serial of uniqueMacs) {
             if (session.items.some(i => i.serial === serial)) {
                 errors.push({ serial, error: 'DOUBLE_SCAN_IN_SESSION' });
                 continue;

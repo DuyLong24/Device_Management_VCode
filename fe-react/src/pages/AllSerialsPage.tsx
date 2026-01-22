@@ -50,9 +50,9 @@ export default function AllSerialsPage() {
 
     const columns: ColumnsType<SerialUI> = [
         {
-            title: 'Serial',
-            dataIndex: 'serial',
-            key: 'serial',
+            title: 'MAC Address',
+            dataIndex: 'mac',
+            key: 'mac',
             fixed: 'left',
             width: 200, // Fixed width to prevent overlap
             render: (text) => (
@@ -119,7 +119,7 @@ export default function AllSerialsPage() {
                         icon={<EyeOutlined />}
                         size="small"
                         title="Xem chi tiết"
-                        onClick={() => navigate(`/serial/${record.serial}`)}
+                        onClick={() => navigate(`/serial/${record.mac}`)}
                     />
                 </Space>
             ),
@@ -206,7 +206,7 @@ export default function AllSerialsPage() {
                 <Row gutter={[16, 16]} align="middle">
                     <Col xs={24} md={6}>
                         <Input
-                            placeholder="Tìm serial, model, tên..."
+                            placeholder="Tìm MAC, model, tên..."
                             prefix={<SearchOutlined className="text-gray-400" />}
                             value={searchText}
                             onChange={(e) => setSearchText(e.target.value)}

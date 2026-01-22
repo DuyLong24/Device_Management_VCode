@@ -113,9 +113,9 @@ export class DeviceExportService {
     }
 
     // 2. Validate Devices
-    const devices = await this.deviceService.findBySerials(serials);
-    const foundSerials = devices.map(d => d.serial);
-    const missingSerials = serials.filter(s => !foundSerials.includes(s));
+    const devices = await this.deviceService.findByMacs(serials); // Serials here are actually MACs
+    const foundMacs = devices.map(d => d.mac);
+    const missingSerials = serials.filter(s => !foundMacs.includes(s));
 
     if (missingSerials.length > 0) {
       throw new BadRequestException(`Các serial sau không tồn tại: ${missingSerials.join(', ')}`);
@@ -145,8 +145,8 @@ export class DeviceExportService {
         if (!req) throw new BadRequestException(`Sản phẩm ${model} không nằm trong kế hoạch xuất kho.`);
 
         const currentScanned = exportRecord.items.filter(i => i.productCode === model).length;
-        if (currentScanned + count > req.quantity) {
-          throw new BadRequestException(`Sản phẩm ${model} vượt quá số lượng yêu cầu (${currentScanned + count}/${req.quantity}).`);
+        if (Number(currentScanned) + Number(count) > Number(req.quantity)) {
+          throw new BadRequestException(`Sản phẩm ${model} vượt quá số lượng yêu cầu (${Number(currentScanned) + Number(count)}/${req.quantity}).`);
         }
       }
     }

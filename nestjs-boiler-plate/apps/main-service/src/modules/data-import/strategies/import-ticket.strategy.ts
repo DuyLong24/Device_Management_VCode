@@ -22,7 +22,7 @@ export class ImportTicketStrategy implements ImportStrategy {
         // Get all existing serials for the incoming batch to check duplicates efficiently?
         // If batch is huge, this is hard. For now, check row by row or bulk check.
 
-        const serialsToCheck = data.map(r => r.serial).filter(s => s);
+        const macsToCheck = data.map(r => r.mac).filter(s => s);
         // We can't easily check all serials at once with current deviceService without a specific method.
         // Let's assume we check individually or just rely on DB index constraint later? 
         // But this is "Validation" step. User wants to know BEFORE import.
@@ -32,24 +32,24 @@ export class ImportTicketStrategy implements ImportStrategy {
         for (const [index, row] of data.entries()) {
             const errors: string[] = [];
             const productCode = row['productCode']; // Mapped field
-            const serial = row['serial']; // Mapped field
+            const mac = row['mac']; // Mapped field
 
             if (!productCode) {
                 errors.push('Thiếu Mã sản phẩm (productCode)');
             }
 
-            if (serial) {
-                // Check if serial already exists in DB
-                const exists = await this.deviceService.findBySerial(serial);
+            if (mac) {
+                // Check if mac already exists in DB
+                const exists = await this.deviceService.findByMac(mac);
                 if (exists) {
-                    errors.push(`Serial "${serial}" đã tồn tại trong hệ thống.`);
+                    errors.push(`MAC "${mac}" đã tồn tại trong hệ thống.`);
                 }
             }
 
             // Check duplicate in the FILE itself
-            const duplicateInFile = data.filter((r, i) => i !== index && r.serial === serial && serial).length > 0;
+            const duplicateInFile = data.filter((r, i) => i !== index && r.mac === mac && mac).length > 0;
             if (duplicateInFile) {
-                errors.push(`Serial "${serial}" bị trùng lặp trong file.`);
+                errors.push(`MAC "${mac}" bị trùng lặp trong file.`);
             }
 
             if (errors.length > 0) {

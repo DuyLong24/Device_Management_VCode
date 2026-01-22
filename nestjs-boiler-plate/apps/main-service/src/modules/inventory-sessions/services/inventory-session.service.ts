@@ -83,15 +83,15 @@ export class InventorySessionService {
 
     private async completeSession(session: InventorySession, userId: string): Promise<InventorySession> {
         // [CHECK DUPLICATE] Trước khi xử lý
-        const serialsToCheck = session.details.map(d => d.serial);
-        if (serialsToCheck.length > 0) {
-            const existingDevices = await this.deviceService.findBySerials(serialsToCheck);
+        const macsToCheck = session.details.map(d => d.serial);
+        if (macsToCheck.length > 0) {
+            const existingDevices = await this.deviceService.findByMacs(macsToCheck);
             if (existingDevices.length > 0) {
-                const duplicateSerials = existingDevices.map(d => d.serial);
+                const duplicateMacs = existingDevices.map(d => d.mac);
                 throw new ConflictException({
-                    message: `Phát hiện ${duplicateSerials.length} serial đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.`,
+                    message: `Phát hiện ${duplicateMacs.length} serial đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.`,
                     error: 'DUPLICATE_SERIALS',
-                    duplicates: duplicateSerials
+                    duplicates: duplicateMacs
                 });
             }
         }

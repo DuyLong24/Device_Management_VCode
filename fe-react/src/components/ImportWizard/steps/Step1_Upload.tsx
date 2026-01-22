@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Upload, Select, InputNumber, Form, Card, Divider, Button } from 'antd';
+import { Upload, Select, InputNumber, Form, Card, Button } from 'antd';
 import { InboxOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { DataImportSession } from '../../../services/data-import.service';
 
@@ -67,7 +67,7 @@ export const Step1_Upload: React.FC<Step1Props> = ({ onUploadFile, onConfigChang
                         </Form.Item>
                     </Form>
 
-                    <Divider orientation="left">Xem trước dữ liệu gốc</Divider>
+                    {/* <Divider orientation="left">Xem trước dữ liệu gốc</Divider>
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-xs border">
                             <thead>
@@ -86,7 +86,7 @@ export const Step1_Upload: React.FC<Step1Props> = ({ onUploadFile, onConfigChang
                         <div className="mt-2 text-gray-500 text-center italic">
                             (Hiển thị 5 dòng đầu tiên / Tổng {session.preview.totalRows} dòng)
                         </div>
-                    </div>
+                    </div> */}
                 </Card>
             )}
         </div>

@@ -165,7 +165,7 @@ const ExportListPage = () => {
             render: (qty: number) => <Tag color="cyan">{qty || 0}</Tag>,
         },
         {
-            title: 'Serial đã xuất',
+            title: 'MAC đã xuất',
             key: 'serialProgress',
             width: 120,
             align: 'center' as const,

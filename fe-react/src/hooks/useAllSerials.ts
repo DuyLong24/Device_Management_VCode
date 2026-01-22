@@ -14,6 +14,7 @@ import type { Category } from '../services/category.service';
 
 export interface SerialUI {
     key: string;
+    mac: string;
     serial: string;
     productCode: string;
     productName: string;
@@ -111,6 +112,7 @@ export const useAllSerials = () => {
 
         return {
             key: d.id,
+            mac: d.mac || 'N/A',
             serial: d.serial,
             productCode: d.deviceModel || 'N/A',
             productName: d.name,

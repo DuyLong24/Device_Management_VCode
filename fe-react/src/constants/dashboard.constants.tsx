@@ -107,14 +107,14 @@ export const MENU_LABELS = {
         CREATE: 'Thêm mới phiếu nhập kho',
         INVENTORY: 'Kiểm kê sản phẩm nhập kho'
     },
-    ALL_SERIALS: 'Danh sách tổng',
+    ALL_SERIALS: 'Danh sách MAC',
     INTERNAL_GROUP: 'Kho nội bộ',
     EXPORTED_GROUP: 'Đã xuất',
     EXPORT: {
         ROOT: 'Quản lý xuất kho',
         LIST: 'Danh sách phiếu xuất kho',
         CREATE: 'Thêm mới phiếu xuất kho',
-        CHECK: 'Xuất kho - Quét Serial'
+        CHECK: 'Xuất kho - Quét MAC'
     },
     WARRANTY: {
         ROOT: 'Quản lý bảo hành',

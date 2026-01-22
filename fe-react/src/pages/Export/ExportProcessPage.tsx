@@ -42,7 +42,7 @@ export default function ExportProcessPage() {
 
     // Form/Input State
     const [scannedInput, setScannedInput] = useState('');
-    const [manualSerials, setManualSerials] = useState('');
+    const [manualMacs, setManualMacs] = useState('');
     const [fileList, setFileList] = useState<UploadFile[]>([]);
 
     // Logic: Fetch Data
@@ -83,14 +83,14 @@ export default function ExportProcessPage() {
     }, [id, sessionId]);
 
     // Handle Scan
-    const handleScanSerial = async () => {
+    const handleScanMac = async () => {
         if (!scannedInput.trim() || !sessionId) return;
         const code = scannedInput.trim();
 
         // Local Duplicate Check
         if (sessionItems.some((i: any) => i.serial === code)) {
             playError();
-            messageApi.warning(`Serial ${code} đã được quét trong phiên này`);
+            messageApi.warning(`MAC ${code} đã được quét trong phiên này`);
             setScannedInput('');
             return;
         }
@@ -140,12 +140,12 @@ export default function ExportProcessPage() {
 
     // Import (Text Area)
     const handleManualImport = async () => {
-        if (!manualSerials.trim() || !sessionId) return;
-        const codes = manualSerials.split('\n').map(s => s.trim()).filter(Boolean);
+        if (!manualMacs.trim() || !sessionId) return;
+        const codes = manualMacs.split('\n').map(s => s.trim()).filter(Boolean);
         if (codes.length === 0) return;
 
         await processBulkScan(codes);
-        setManualSerials('');
+        setManualMacs('');
     };
 
     const handleFileImport = (file: File) => {
@@ -175,7 +175,7 @@ export default function ExportProcessPage() {
         modal.confirm({
             title: 'Hoàn tất Phiên Xuất kho?',
             icon: <ExclamationCircleOutlined />,
-            content: 'Các serial đã quét sẽ được lưu lại. Bạn có thể tiếp tục tạo phiên mới nếu cần.',
+            content: 'Các MAC đã quét sẽ được lưu lại. Bạn có thể tiếp tục tạo phiên mới nếu cần.',
             okText: 'Hoàn thành phiên',
             cancelText: 'Hủy',
             onOk: async () => {
@@ -198,10 +198,10 @@ export default function ExportProcessPage() {
     const matchCount = sessionItems.length;
     const missingCount = Math.max(0, totalRequired - matchCount);
 
-    // Cột Serial List
-    const serialColumns = [
+    // Cột MAC List
+    const macColumns = [
         { title: 'Sản phẩm', dataIndex: 'productCode', key: 'productCode', width: 150 },
-        { title: 'Serial', dataIndex: 'serial', key: 'serial', width: 200, render: (t: string) => <b>{t}</b> },
+        { title: 'MAC Address', dataIndex: 'serial', key: 'serial', width: 200, render: (t: string) => <b>{t}</b> },
         { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t: string) => t ? dayjs(t).format('HH:mm:ss DD/MM') : '' },
         { title: 'Trạng thái', key: 'status', render: () => <Tag color="blue">Mới quét</Tag> },
         {
@@ -209,8 +209,8 @@ export default function ExportProcessPage() {
             key: 'action',
             render: (_: any, record: any) => (
                 <Popconfirm
-                    title="Xóa serial này?"
-                    description="Bạn có chắc chắn muốn xóa serial này khỏi phiên?"
+                    title="Xóa MAC này?"
+                    description="Bạn có chắc chắn muốn xóa MAC này khỏi phiên?"
                     onConfirm={() => handleRemoveSerial(record.serial)}
                     okText="Xóa"
                     cancelText="Hủy"
@@ -267,36 +267,35 @@ export default function ExportProcessPage() {
             </Card>
 
             {/* Scan Section */}
-            <Card title="Quét serial xuất kho" className="mb-4">
+            <Card title="Quét MAC xuất kho" className="mb-4">
                 <Space direction="vertical" className="w-full" size="middle">
                     <Alert
                         message="Hướng dẫn quét serial"
                         description={
                             <ul className="mb-0 list-disc pl-5 space-y-1">
                                 <li>
-                                    <Text strong>Serial KHỚP:</Text>{' '}
-                                    Serial thuộc phiếu xuất và ở trạng thái &quot;Đã nhập kho&quot; (VD:
-                                    CAM-IN-001-000001)
+                                    <Text strong>MAC KHỚP:</Text>{' '}
+                                    MAC thuộc phiếu xuất và ở trạng thái &quot;Đã nhập kho&quot; (VD:
+                                    AA:BB:CC:DD:EE:FF)
                                 </li>
 
                                 <li>
                                     <Text strong type="warning">
-                                        Serial THỪA:
+                                        MAC THỪA:
                                     </Text>{' '}
-                                    Serial KHÔNG thuộc phiếu xuất này (VD: CAM-IN-001-000099)
+                                    MAC KHÔNG thuộc phiếu xuất này
                                 </li>
 
                                 <li>
                                     <Text strong type="danger">
-                                        Serial ĐÃ XUẤT:
+                                        MAC ĐÃ XUẤT:
                                     </Text>{' '}
-                                    Serial đã được xuất kho trước đó, KHÔNG thể xuất lại (VD:
-                                    CAM-IN-001-000003)
+                                    MAC đã được xuất kho trước đó, KHÔNG thể xuất lại
                                 </li>
 
                                 <li>
                                     <Text strong type="danger">
-                                        Thiếu serial:
+                                        Thiếu MAC:
                                     </Text>{' '}
                                     Cảnh báo nếu chưa đủ số lượng khi hoàn tất
                                 </li>
@@ -310,15 +309,15 @@ export default function ExportProcessPage() {
                     <div className="flex gap-2">
                         <Input
                             size="large"
-                            placeholder="Quét serial..."
+                            placeholder="Quét MAC Address..."
                             prefix={<ScanOutlined />}
                             value={scannedInput}
                             onChange={e => setScannedInput(e.target.value)}
-                            onPressEnter={handleScanSerial}
+                            onPressEnter={handleScanMac}
                             autoFocus
                             disabled={loading}
                         />
-                        <Button type="primary" size="large" onClick={handleScanSerial} icon={<CheckCircleOutlined />} loading={loading}>Quét</Button>
+                        <Button type="primary" size="large" onClick={handleScanMac} icon={<CheckCircleOutlined />} loading={loading}>Quét</Button>
                     </div>
 
                     <Divider>Hoặc</Divider>
@@ -329,9 +328,9 @@ export default function ExportProcessPage() {
                                 <Text strong>Nhập thủ công (Nhiều dòng)</Text>
                                 <Input.TextArea
                                     rows={5}
-                                    placeholder="Serial 1&#10;Serial 2..."
-                                    value={manualSerials}
-                                    onChange={e => setManualSerials(e.target.value)}
+                                    placeholder="MAC-001&#10;MAC-002..."
+                                    value={manualMacs}
+                                    onChange={e => setManualMacs(e.target.value)}
                                     disabled={loading}
                                 />
                                 <Button block onClick={handleManualImport} icon={<CheckCircleOutlined />} loading={loading}>Nhập danh sách</Button>
@@ -359,12 +358,12 @@ export default function ExportProcessPage() {
 
             {/* List */}
             <Card
-                title="Danh sách serial"
+                title="Danh sách MAC"
                 extra={<Button icon={<FileExcelOutlined />}>Xuất Excel</Button>}
                 className="mb-4"
             >
                 <Table
-                    columns={serialColumns}
+                    columns={macColumns}
                     dataSource={sessionItems}
                     rowKey="serial"
                     size="small"
@@ -378,7 +377,7 @@ export default function ExportProcessPage() {
                     <div>
                         <Text strong className="text-lg">Hoàn thành phiên xuất kho</Text>
                         <div className="text-gray-500">
-                            Lưu các serial đã quét vào hệ thống.
+                            Lưu các MAC đã quét vào hệ thống.
                         </div>
                     </div>
                     <Button

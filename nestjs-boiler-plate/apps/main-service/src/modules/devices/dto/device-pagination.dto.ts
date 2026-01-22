@@ -47,6 +47,10 @@ export class DevicePaginationDto {
 
   @IsOptional()
   @IsString()
+  mac?: string;
+
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @IsOptional()

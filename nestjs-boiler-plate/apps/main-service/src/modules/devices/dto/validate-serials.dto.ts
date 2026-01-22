@@ -1,9 +1,9 @@
 import { IsString, IsArray, IsEnum } from 'class-validator';
 
-export class ValidateSerialsDto {
+export class ValidateMacsDto {
     @IsArray()
     @IsString({ each: true })
-    serials: string[];
+    macs: string[];
 
     @IsString()
     deviceModel: string;
@@ -15,17 +15,17 @@ export class ValidateSerialsDto {
     operation: 'EXPORT' | 'IMPORT';
 }
 
-export interface SerialValidationError {
-    serial: string;
+export interface MacValidationError {
+    mac: string;
     reason: 'NOT_FOUND' | 'WRONG_MODEL' | 'WRONG_WAREHOUSE' | 'DUPLICATE';
     message: string;
     currentModel?: string;
     currentWarehouse?: string;
 }
 
-export interface ValidateSerialsResponse {
+export interface ValidateMacsResponse {
     valid: boolean;
-    validSerials: string[];
-    invalidSerials: string[];
-    errors: SerialValidationError[];
+    validMacs: string[];
+    invalidMacs: string[];
+    errors: MacValidationError[];
 }

@@ -95,14 +95,14 @@ export const getTimelineIcon = (event: any) => {
     return <SyncOutlined className="text-blue-500" />;
 };
 
-export function useSerialDetail(serial?: string) {
+export function useMacDetail(mac?: string) {
     const queryClient = useQueryClient();
 
     // 1. Fetch Device Detail
     const { data, isLoading, refetch } = useQuery({
-        queryKey: ['serial-detail', serial],
-        queryFn: () => deviceService.getBySerialWithDetail(serial || ''),
-        enabled: !!serial
+        queryKey: ['mac-detail', mac],
+        queryFn: () => deviceService.getByMacWithDetail(mac || ''),
+        enabled: !!mac
     });
 
     // 2. Fetch Warehouses 

@@ -45,7 +45,8 @@ export default function WarehousePage() {
 
     // Import Fields
     const DEVICE_IMPORT_FIELDS: FieldDefinition[] = [
-        { key: 'serial', label: 'Serial Number', required: true, description: 'Mã định danh duy nhất' },
+        { key: 'mac', label: 'MAC Address', required: true, description: 'Địa chỉ MAC (Duy nhất)' },
+        { key: 'serial', label: 'Serial (Optional)', required: false, description: 'Serial Number' },
         { key: 'deviceModel', label: 'Mã Model', required: true, description: 'Mã sản phẩm (SKU)' },
         { key: 'name', label: 'Tên thiết bị', description: 'Tên hiển thị (nếu trống sẽ dùng Model)' },
     ];
@@ -114,7 +115,7 @@ export default function WarehousePage() {
         };
         base.title = colConfig.title || base.title;
 
-        if (colConfig.key === 'serial') {
+        if (colConfig.key === 'mac') {
             return {
                 ...base,
                 render: (text: string) => (
@@ -141,7 +142,7 @@ export default function WarehousePage() {
                         icon={<EyeOutlined />}
                         size="small"
                         title="Xem chi tiết"
-                        onClick={() => navigate(`/serial/${record.serial}`)}
+                        onClick={() => navigate(`/serial/${record.mac}`)}
                     >
                         Chi tiết
                     </Button>
@@ -160,6 +161,7 @@ export default function WarehousePage() {
     const titleMap = (c: any) => {
         const map: Record<string, string> = {
             serial: 'Serial',
+            mac: 'MAC Address',
             name: 'Tên thiết bị',
             model: 'Mã Model',
             importDate: 'Ngày nhập',

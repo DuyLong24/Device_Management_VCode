@@ -93,10 +93,10 @@ export class SeedService implements OnModuleInit {
         icon: 'clock-circle',
         config: {
           columns: [
+            { key: 'mac', title: 'MAC Address', type: 'text' },
             { key: 'serial', title: 'Serial', type: 'text' },
             { key: 'deviceModel', title: 'Mã Model', type: 'text' },
             { key: 'name', title: 'Tên thiết bị', type: 'text' },
-            { key: 'mac', title: 'MAC Address', type: 'text' },
             { key: 'importDate', title: 'Ngày nhập', type: 'date' },
             { key: 'importId.createdBy.fullName', title: 'Người nhập', type: 'text' },
             { key: 'action', title: 'Thao tác', type: 'action' }
@@ -128,10 +128,10 @@ export class SeedService implements OnModuleInit {
         icon: 'check-circle',
         config: {
           columns: [
+            { key: 'mac', title: 'MAC Address', type: 'text' },
             { key: 'serial', title: 'Serial', type: 'text' },
             { key: 'deviceModel', title: 'Mã Model', type: 'text' },
             { key: 'name', title: 'Tên thiết bị', type: 'text' },
-            { key: 'mac', title: 'MAC Address', type: 'text' },
             { key: 'warehouseUpdatedAt', title: 'Ngày QC', type: 'date' },
             { key: 'qcBy.name', title: 'Người QC', type: 'text' },
             { key: 'action', title: 'Thao tác', type: 'action' }
@@ -163,7 +163,7 @@ export class SeedService implements OnModuleInit {
         icon: 'close-circle',
         config: {
           columns: [
-            { key: 'serial', title: 'Serial', type: 'text' },
+            { key: 'mac', title: 'MAC Address', type: 'text' },
             { key: 'deviceModel', title: 'Mã Model', type: 'text' },
             { key: 'name', title: 'Tên thiết bị', type: 'text' },
             { key: 'warehouseUpdatedAt', title: 'Ngày QC', type: 'date' },
@@ -197,7 +197,7 @@ export class SeedService implements OnModuleInit {
         icon: 'tool',
         config: {
           columns: [
-            { key: 'serial', title: 'Serial', type: 'text' },
+            { key: 'mac', title: 'MAC Address', type: 'text' },
             { key: 'deviceModel', title: 'Mã Model', type: 'text' },
             { key: 'name', title: 'Tên thiết bị', type: 'text' },
             { key: 'warehouseUpdatedAt', title: 'Ngày gửi', type: 'date' },
@@ -231,7 +231,7 @@ export class SeedService implements OnModuleInit {
         icon: 'export',
         config: {
           columns: [
-            { key: 'serial', title: 'Serial', type: 'text' },
+            { key: 'mac', title: 'MAC Address', type: 'text' },
             { key: 'deviceModel', title: 'Mã Model', type: 'text' },
             { key: 'name', title: 'Tên thiết bị', type: 'text' },
             { key: 'exportDate', title: 'Ngày xuất', type: 'date' },
@@ -253,7 +253,7 @@ export class SeedService implements OnModuleInit {
         icon: 'field-time',
         config: {
           columns: [
-            { key: 'serial', title: 'Serial', type: 'text' },
+            { key: 'mac', title: 'MAC Address', type: 'text' },
             { key: 'deviceModel', title: 'Mã Model', type: 'text' },
             { key: 'name', title: 'Tên thiết bị', type: 'text' },
             { key: 'exportDate', title: 'Ngày xuất', type: 'date' },
@@ -274,7 +274,7 @@ export class SeedService implements OnModuleInit {
         icon: 'delete',
         config: {
           columns: [
-            { key: 'serial', title: 'Serial', type: 'text' },
+            { key: 'mac', title: 'MAC Address', type: 'text' },
             { key: 'deviceModel', title: 'Mã Model', type: 'text' },
             { key: 'name', title: 'Tên thiết bị', type: 'text' },
             { key: 'removeReason', title: 'Lý do loại bỏ', type: 'text' },

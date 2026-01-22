@@ -76,8 +76,8 @@ export const deviceService = {
         return response.data;
     },
 
-    getBySerialWithDetail: async (serial: string) => {
-        const response = await axiosInstance.get<{ device: Device; history: any[] }>(`/devices/serial/${serial}/detail`);
+    getByMacWithDetail: async (mac: string) => {
+        const response = await axiosInstance.get<{ device: Device; history: any[] }>(`/devices/mac/${mac}/detail`);
         return response.data;
     }
 };

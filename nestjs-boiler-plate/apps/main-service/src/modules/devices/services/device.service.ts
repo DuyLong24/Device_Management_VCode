@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { DeviceRepository } from '../repositories/device.repository';
 import { CreateDeviceDto } from '../dto/create-device.dto';
 import { UpdateDeviceDto } from '../dto/update-device.dto';
-import { ValidateSerialsDto, ValidateSerialsResponse, SerialValidationError } from '../dto/validate-serials.dto';
+import { ValidateMacsDto, ValidateMacsResponse, MacValidationError } from '../dto/validate-serials.dto';
 import { PaginateResult } from '../interfaces/pagination-result.interface';
 import { Device, DeviceModel } from '../schemas/device.schemas';
 import { InjectModel } from '@nestjs/mongoose';
@@ -16,7 +16,7 @@ import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.
 import { WarehouseService } from '../../warehouses/services/warehouse.service';
 
 @Injectable()
-export class DeviceService {
+export class DeviceService implements OnModuleInit {
   constructor(
     private readonly deviceRepository: DeviceRepository,
     @InjectModel(Device.name) private deviceModel: DeviceModel,
@@ -27,12 +27,29 @@ export class DeviceService {
     private readonly warehouseService: WarehouseService,
   ) { }
 
+  async onModuleInit() {
+    try {
+      // Drop legacy unique index on serial if it exists
+      await this.deviceModel.collection.dropIndex('serial_1');
+      console.log('Dropped legacy index: serial_1');
+    } catch (error) {
+      // Ignore error if index doesn't exist
+      if (error.codeName !== 'IndexNotFound') {
+        console.warn('Warning: Could not drop serial_1 index (it might not exist or verify manually)', error.message);
+      }
+    }
+  }
+
   async create(createDeviceDto: CreateDeviceDto): Promise<Device> {
     return this.deviceRepository.create(createDeviceDto);
   }
 
   async insertMany(devices: CreateDeviceDto[], options: any = {}): Promise<Device[]> {
     return this.deviceRepository.insertMany(devices, options);
+  }
+
+  async bulkWrite(ops: any[], options: any = {}): Promise<any> {
+    return this.deviceRepository.bulkWrite(ops, options);
   }
 
   async findAll(filter: any = {}): Promise<Device[]> {
@@ -79,8 +96,8 @@ export class DeviceService {
     return deletedDevice;
   }
 
-  async findBySerialWithDetail(serial: string): Promise<any> {
-    const device = await this.deviceModel.findOne({ serial })
+  async findByMacWithDetail(mac: string): Promise<any> {
+    const device = await this.deviceModel.findOne({ mac })
       .populate('warehouseId')
       //.populate('importId') 
       .populate({
@@ -240,22 +257,22 @@ export class DeviceService {
     return results;
   }
 
-  async findBySerials(serials: string[]): Promise<Device[]> {
-    if (!serials || serials.length === 0) return [];
-    return this.deviceModel.find({ serial: { $in: serials } }).exec();
+  async findByMacs(macs: string[]): Promise<Device[]> {
+    if (!macs || macs.length === 0) return [];
+    return this.deviceModel.find({ mac: { $in: macs } }).exec();
   }
 
-  async findBySerial(serial: string): Promise<Device | null> {
-    return this.deviceModel.findOne({ serial }).exec();
+  async findByMac(mac: string): Promise<Device | null> {
+    return this.deviceModel.findOne({ mac }).exec();
   }
 
   async moveToSoldWarehouse(
-    serials: string[],
+    macs: string[],
     exportCode: string
   ): Promise<any> {
     try {
-      if (!serials || serials.length === 0) return;
-      console.log(`[moveToSoldWarehouse] START: Processing ${serials.length} serials. ExportCode: ${exportCode}`);
+      if (!macs || macs.length === 0) return;
+      console.log(`[moveToSoldWarehouse] START: Processing ${macs.length} macs. ExportCode: ${exportCode}`);
 
       // 1. tìm SOLD Warehouse
       const warehouses = await this.warehouseService.findAll({ code: 'SOLD' });
@@ -265,7 +282,7 @@ export class DeviceService {
         throw new BadRequestException('Không tìm thấy kho "Đã xuất - trong bảo hành" (Code: SOLD)');
       }
 
-      const devices = await this.deviceModel.find({ serial: { $in: serials } });
+      const devices = await this.deviceModel.find({ mac: { $in: macs } });
 
       // 2. Process updates
       for (const device of devices) {
@@ -293,8 +310,8 @@ export class DeviceService {
     }
   }
 
-  async bulkUpdateStatus(serials: string[], status: string, note?: string, customer?: string): Promise<any> {
-    if (!serials || serials.length === 0) return;
+  async bulkUpdateStatus(macs: string[], status: string, note?: string, customer?: string): Promise<any> {
+    if (!macs || macs.length === 0) return;
 
     const updatePayload: any = {
       qcStatus: status
@@ -305,7 +322,7 @@ export class DeviceService {
     }
 
     const result = await this.deviceModel.updateMany(
-      { serial: { $in: serials } },
+      { mac: { $in: macs } },
       {
         $set: updatePayload
       }
@@ -314,8 +331,8 @@ export class DeviceService {
     return result;
   }
 
-  async validateSerials(dto: ValidateSerialsDto): Promise<ValidateSerialsResponse> {
-    const { serials, deviceModel, warehouseCode } = dto;
+  async validateMacs(dto: ValidateMacsDto): Promise<ValidateMacsResponse> {
+    const { macs, deviceModel, warehouseCode } = dto;
 
     // tìm kho với code kho
     const warehouses = await this.warehouseService.findAll({ code: warehouseCode });
@@ -325,50 +342,50 @@ export class DeviceService {
       throw new NotFoundException(`Warehouse with code "${warehouseCode}" not found`);
     }
 
-    const validSerials: string[] = [];
-    const invalidSerials: string[] = [];
-    const errors: SerialValidationError[] = [];
+    const validMacs: string[] = [];
+    const invalidMacs: string[] = [];
+    const errors: MacValidationError[] = [];
 
     // Check duplicates 
-    const serialCounts = new Map<string, number>();
-    serials.forEach(s => serialCounts.set(s, (serialCounts.get(s) || 0) + 1));
+    const macCounts = new Map<string, number>();
+    macs.forEach(s => macCounts.set(s, (macCounts.get(s) || 0) + 1));
 
-    for (const serial of serials) {
+    for (const mac of macs) {
       // Check duplicate
-      if (serialCounts.get(serial)! > 1) {
-        if (!invalidSerials.includes(serial)) {
-          invalidSerials.push(serial);
+      if (macCounts.get(mac)! > 1) {
+        if (!invalidMacs.includes(mac)) {
+          invalidMacs.push(mac);
           errors.push({
-            serial,
+            mac,
             reason: 'DUPLICATE',
-            message: `Serial "${serial}" bị trùng lặp trong danh sách`
+            message: `MAC "${mac}" bị trùng lặp trong danh sách`
           });
         }
         continue;
       }
 
-      // Tìm = serial
-      const device = await this.deviceModel.findOne({ serial })
+      // Tìm = mac
+      const device = await this.deviceModel.findOne({ mac })
         .populate('warehouseId')
         .exec();
 
       if (!device) {
-        invalidSerials.push(serial);
+        invalidMacs.push(mac);
         errors.push({
-          serial,
+          mac,
           reason: 'NOT_FOUND',
-          message: `Serial "${serial}" không tồn tại trong hệ thống`
+          message: `MAC "${mac}" không tồn tại trong hệ thống`
         });
         continue;
       }
 
       // Check device model
       if (device.deviceModel !== deviceModel) {
-        invalidSerials.push(serial);
+        invalidMacs.push(mac);
         errors.push({
-          serial,
+          mac,
           reason: 'WRONG_MODEL',
-          message: `Serial "${serial}" thuộc model "${device.deviceModel}", không phải "${deviceModel}"`,
+          message: `MAC "${mac}" thuộc model "${device.deviceModel}", không phải "${deviceModel}"`,
           currentModel: device.deviceModel
         });
         continue;
@@ -377,24 +394,24 @@ export class DeviceService {
       // Check warehouse
       const currentWarehouse = device.warehouseId as any;
       if (currentWarehouse._id.toString() !== warehouse._id.toString()) {
-        invalidSerials.push(serial);
+        invalidMacs.push(mac);
         errors.push({
-          serial,
+          mac,
           reason: 'WRONG_WAREHOUSE',
-          message: `Serial "${serial}" đang ở kho "${currentWarehouse.name}", không phải "${warehouse.name}"`,
+          message: `MAC "${mac}" đang ở kho "${currentWarehouse.name}", không phải "${warehouse.name}"`,
           currentWarehouse: currentWarehouse.name
         });
         continue;
       }
 
       // All checks passed
-      validSerials.push(serial);
+      validMacs.push(mac);
     }
 
     return {
-      valid: invalidSerials.length === 0,
-      validSerials,
-      invalidSerials,
+      valid: invalidMacs.length === 0,
+      validMacs,
+      invalidMacs,
       errors
     };
   }

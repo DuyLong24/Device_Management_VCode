@@ -17,7 +17,7 @@ import { DeviceService } from '../services/device.service';
 import { CreateDeviceDto } from '../dto/create-device.dto';
 import { UpdateDeviceDto } from '../dto/update-device.dto';
 import { DevicePaginationDto } from '../dto/device-pagination.dto';
-import { ValidateSerialsDto, ValidateSerialsResponse } from '../dto/validate-serials.dto';
+import { ValidateMacsDto, ValidateMacsResponse } from '../dto/validate-serials.dto';
 
 @Controller('devices')
 export class DeviceController {
@@ -58,9 +58,9 @@ export class DeviceController {
     return this.deviceService.findAllWithPagination(filter, options);
   }
 
-  @Get('serial/:serial/detail')
-  async findBySerialWithDetail(@Param('serial') serial: string) {
-    return this.deviceService.findBySerialWithDetail(serial);
+  @Get('mac/:mac/detail')
+  async findByMacWithDetail(@Param('mac') mac: string) {
+    return this.deviceService.findByMacWithDetail(mac);
   }
 
   @Get(':id')
@@ -88,6 +88,7 @@ export class DeviceController {
 
     // 2. Partial Match (Search fields)
     if (query.serial) filter.serial = { $regex: query.serial, $options: 'i' };
+    if (query.mac) filter.mac = { $regex: query.mac, $options: 'i' }; // Added Mac
     if (query.name) filter.name = { $regex: query.name, $options: 'i' };
     if (query.model) filter.deviceModel = { $regex: query.model, $options: 'i' };
 
@@ -96,6 +97,7 @@ export class DeviceController {
       const searchRegex = { $regex: query.search, $options: 'i' };
       const orConditions = [
         { serial: searchRegex },
+        { mac: searchRegex }, // Added Mac
         { name: searchRegex },
         { deviceModel: searchRegex }
       ];
@@ -141,11 +143,11 @@ export class DeviceController {
     return this.deviceService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note, body.errorReason);
   }
 
-  @Post('validate-serials')
+  @Post('validate-macs')
   @HttpCode(HttpStatus.OK)
-  async validateSerials(
-    @Body() dto: ValidateSerialsDto
-  ): Promise<ValidateSerialsResponse> {
-    return this.deviceService.validateSerials(dto);
+  async validateMacs(
+    @Body() dto: ValidateMacsDto
+  ): Promise<ValidateMacsResponse> {
+    return this.deviceService.validateMacs(dto);
   }
 }

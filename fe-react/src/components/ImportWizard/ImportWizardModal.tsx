@@ -9,6 +9,7 @@ import { Step1_Upload } from './steps/Step1_Upload';
 import { Step3_Mapping } from './steps/Step3_Mapping';
 import type { FieldDefinition } from './steps/Step3_Mapping';
 import { Step4_Preview } from './steps/Step4_Preview';
+import { Step2_Configuration } from './steps/Step2_Configuration';
 
 interface ImportWizardModalProps {
     open: boolean;
@@ -29,7 +30,16 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
 
     // Data State
     const [session, setSession] = useState<DataImportSession | null>(null);
-    const [config, setConfig] = useState({ sheetName: '', headerRow: 0 });
+    const [uploadConfig, setUploadConfig] = useState({ sheetName: '', headerRow: 0 }); // Config của Step 1 (đọc file)
+
+    // Config của Step 2 (Logic nhập)
+    const [importConfig, setImportConfig] = useState({
+        mergeStrategy: 'insert' as 'upsert' | 'insert' | 'update',
+        duplicateKey: 'mac',
+        skipEmpty: true,
+        autoCreateCategory: false
+    });
+
     const [mapping, setMapping] = useState<Record<string, string>>({});
     const [validationResult, setValidationResult] = useState<ValidationSummary | null>(null);
 
@@ -38,7 +48,13 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
         if (open) {
             setCurrentStep(0);
             setSession(null);
-            setConfig({ sheetName: '', headerRow: 0 });
+            setUploadConfig({ sheetName: '', headerRow: 0 });
+            setImportConfig({
+                mergeStrategy: 'insert',
+                duplicateKey: 'mac',
+                skipEmpty: true,
+                autoCreateCategory: false
+            });
             setMapping({});
             setValidationResult(null);
         }
@@ -51,7 +67,7 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
         try {
             const res = await dataImportService.upload(file);
             setSession(res);
-            setConfig({ sheetName: res.sheets[0], headerRow: 0 });
+            setUploadConfig({ sheetName: res.sheets[0], headerRow: 0 });
             message.success("Tải file thành công");
         } catch (error) {
             message.error("Lỗi tải file");
@@ -67,7 +83,7 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
             const res = await dataImportService.getPreview(session.sessionId, sheetName, headerRow);
             // Patch session preview
             setSession({ ...session, preview: res });
-            setConfig({ sheetName, headerRow });
+            setUploadConfig({ sheetName, headerRow });
         } catch (error) {
             message.error("Không thể đọc dữ liệu với cấu hình này");
         } finally {
@@ -79,7 +95,11 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
         if (!session) return;
         setLoading(true);
         try {
-            const res = await dataImportService.validate(session.sessionId, mapping, strategy, payload);
+            // Pass importConfig to validate API if needed, or just keep it for Execute step
+            const res = await dataImportService.validate(session.sessionId, mapping, strategy, {
+                ...payload,
+                ...importConfig // Pass config to validation logic
+            });
             setValidationResult(res);
             setCurrentStep(3); // Move to Preview
         } catch (error) {
@@ -93,7 +113,10 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
         if (!session) return;
         setLoading(true);
         try {
-            const res = await dataImportService.execute(session.sessionId, strategy, payload);
+            const res = await dataImportService.execute(session.sessionId, strategy, {
+                ...payload,
+                ...importConfig
+            });
             message.success(`Đã nhập thành công ${res.successCount} dòng. Lỗi ${res.errorCount} dòng.`);
             onSuccess(res.details);
             onCancel();
@@ -142,7 +165,7 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
             content: <Step1_Upload
                 session={session}
                 loading={loading}
-                config={config}
+                config={uploadConfig}
                 onConfigChange={handleConfigChange}
                 onDownloadTemplate={handleDownloadTemplate}
             // Handler injected in main render
@@ -152,10 +175,11 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
             title: 'Cấu hình',
             icon: <SettingOutlined />,
             content: (
-                <div className="py-8 text-center text-gray-500">
-                    <p>Cấu hình mặc định: <b>Thêm mới & Bỏ qua nếu trùng Serial</b></p>
-                    <p>(Tính năng chọn khóa trùng lặp đang phát triển)</p>
-                </div>
+                <Step2_Configuration
+                    config={importConfig}
+                    onChange={setImportConfig}
+                    fieldDefinitions={fieldDefinitions}
+                />
             )
         },
         {
@@ -186,7 +210,7 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
             title={title}
             open={open}
             onCancel={onCancel}
-            width={800}
+            width={850}
             footer={
                 <div className="flex justify-between">
                     <Button onClick={onCancel}>Hủy</Button>
@@ -219,7 +243,7 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
                         <Step1_Upload
                             session={session}
                             loading={loading}
-                            config={config}
+                            config={uploadConfig}
                             onConfigChange={handleConfigChange}
                             onUploadFile={handleUpload}
                             onDownloadTemplate={handleDownloadTemplate}

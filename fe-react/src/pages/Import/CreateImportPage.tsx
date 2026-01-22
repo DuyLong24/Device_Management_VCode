@@ -55,8 +55,9 @@ interface ProductItem {
     quantity: number;
     boxCount: number | null;
     itemsPerBox: number | null;
-    serialImported: number;
-    expectedSerials: string[];
+    itemsPerBox: number | null;
+    macImported: number;
+    expectedMacs: string[];
 }
 
 export default function CreateImportPage() {
@@ -76,17 +77,18 @@ export default function CreateImportPage() {
     const [modelOptions, setModelOptions] = useState<{ label: string, value: string }[]>([]);
 
     // [NEW] Modal State
-    const [isSerialModalOpen, setIsSerialModalOpen] = useState(false);
+    const [isMacModalOpen, setIsMacModalOpen] = useState(false);
     const [currentProductKey, setCurrentProductKey] = useState<string | null>(null);
-    const [tempSerials, setTempSerials] = useState<string>('');
+    const [tempMacs, setTempMacs] = useState<string>('');
     const [activeTab, setActiveTab] = useState('manual');
     const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
 
     // Import Fields Definition
     const IMPORT_TICKET_FIELDS: FieldDefinition[] = [
         { key: 'productCode', label: 'Mã sản phẩm', required: true, description: 'SKU của sản phẩm' },
-        { key: 'serial', label: 'Serial Number', required: false, description: 'Mã định danh (nếu có)' },
-        { key: 'quantity', label: 'Số lượng', required: false, description: 'Mặc định là 1 nếu có serial' },
+        { key: 'mac', label: 'MAC Address', required: true, description: 'Địa chỉ MAC (Duy nhất)' },
+        { key: 'serial', label: 'Serial Number', required: false, description: 'Số Serial (Tùy chọn)' },
+        { key: 'quantity', label: 'Số lượng', required: false, description: 'Mặc định là 1 nếu có MAC' },
         { key: 'boxCount', label: 'Số hộp', required: false },
         { key: 'itemsPerBox', label: 'Số SP/Hộp', required: false },
     ];
@@ -141,7 +143,8 @@ export default function CreateImportPage() {
                         boxCount: p.boxCount,
                         itemsPerBox: p.itemsPerBox,
                         serialImported: p.serialImported || 0,
-                        expectedSerials: p.expectedSerials || [],
+                        expectedMacs: p.expectedMacs || [],
+                        macImported: p.macImported || 0,
                     }));
                     setProductList(mappedProducts);
 
@@ -180,7 +183,8 @@ export default function CreateImportPage() {
             boxCount: null,
             itemsPerBox: null,
             serialImported: 0,
-            expectedSerials: []
+            expectedMacs: [],
+            macImported: 0
         };
         setProductList([...productList, newProduct]);
         setHasUnsavedChanges(true);
@@ -196,7 +200,7 @@ export default function CreateImportPage() {
             if (item.key === key) {
                 const newItem = { ...item, [field]: value };
                 if (field === 'productCode') {
-                    newItem.expectedSerials = [];
+                    newItem.expectedMacs = [];
                 }
                 return newItem;
             }
@@ -206,17 +210,17 @@ export default function CreateImportPage() {
     };
 
 
-    const openSerialModal = (record: ProductItem) => {
+    const openMacModal = (record: ProductItem) => {
         setCurrentProductKey(record.key);
-        setTempSerials(record.expectedSerials.join('\n'));
-        setIsSerialModalOpen(true);
+        setTempMacs(record.expectedMacs.join('\n'));
+        setIsMacModalOpen(true);
         setActiveTab('manual');
     };
 
-    const handleSaveSerials = () => {
+    const handleSaveMacs = () => {
         if (!currentProductKey) return;
         // 1. Parse text thành mảng & loại bỏ dòng trống
-        const rawList = tempSerials.split('\n').map(s => s.trim()).filter(s => s !== '');
+        const rawList = tempMacs.split('\n').map(s => s.trim()).filter(s => s !== '');
 
         // 2. Loại bỏ trùng lặp nội bộ
         const uniqueList = [...new Set(rawList)];
@@ -224,19 +228,19 @@ export default function CreateImportPage() {
         // 3. Update vào productList
         setProductList(productList.map(p => {
             if (p.key === currentProductKey) {
-                return { ...p, expectedSerials: uniqueList };
+                return { ...p, expectedMacs: uniqueList };
             }
             return p;
         }));
 
         // 4. Validate warning UI
         if (uniqueList.length !== rawList.length) {
-            message.warning(`Đã loại bỏ ${rawList.length - uniqueList.length} mã trùng lặp.`);
+            message.warning(`Đã loại bỏ ${rawList.length - uniqueList.length} MAC trùng lặp.`);
         } else {
-            message.success('Đã cập nhật danh sách Serial');
+            message.success('Đã cập nhật danh sách MAC');
         }
 
-        setIsSerialModalOpen(false);
+        setIsMacModalOpen(false);
         setHasUnsavedChanges(true);
     };
 
@@ -258,11 +262,11 @@ export default function CreateImportPage() {
                 });
 
                 // Merge vào textarea hiện tại
-                const current = tempSerials ? tempSerials.split('\n') : [];
+                const current = tempMacs ? tempMacs.split('\n') : [];
                 const merged = [...current, ...extractedSerials].filter(s => s.trim() !== '');
-                setTempSerials(merged.join('\n'));
+                setTempMacs(merged.join('\n'));
 
-                message.success(`Đã đọc được ${extractedSerials.length} serial từ file Excel`);
+                message.success(`Đã đọc được ${extractedSerials.length} MAC từ file Excel`);
                 setActiveTab('manual'); // Chuyển về tab manual để review
 
             } catch (err) {
@@ -312,7 +316,7 @@ export default function CreateImportPage() {
                     quantity: p.quantity,
                     boxCount: p.boxCount || undefined,
                     itemsPerBox: p.itemsPerBox || undefined,
-                    expectedSerials: p.expectedSerials
+                    expectedMacs: p.expectedMacs
                 })),
             };
 
@@ -430,12 +434,12 @@ export default function CreateImportPage() {
             ),
         },
         {
-            title: <span className="font-semibold text-center block">Danh sách Serial</span>,
-            key: 'serials',
+            title: <span className="font-semibold text-center block">Danh sách MAC</span>,
+            key: 'macs',
             width: '20%',
             align: 'center',
             render: (_, record) => {
-                const count = record.expectedSerials.length;
+                const count = record.expectedMacs.length;
                 const isMatch = count === record.quantity;
                 const isEmpty = count === 0;
 
@@ -445,9 +449,9 @@ export default function CreateImportPage() {
                             type={isEmpty ? 'dashed' : 'default'}
                             icon={<BarcodeOutlined />}
                             className={!isMatch && !isEmpty ? 'border-red-500 text-red-500' : ''}
-                            onClick={() => openSerialModal(record)}
+                            onClick={() => openMacModal(record)}
                         >
-                            {isEmpty ? 'Nhập Serial' : 'Chi tiết'}
+                            {isEmpty ? 'Nhập MAC' : 'Chi tiết'}
                         </Button>
                     </Badge>
                 );
@@ -459,13 +463,13 @@ export default function CreateImportPage() {
             width: '15%',
             align: 'center',
             render: (_, record) => {
-                const serialMatch = record.expectedSerials.length === record.quantity;
-                const serialEmpty = record.expectedSerials.length === 0;
+                const serialMatch = record.expectedMacs.length === record.quantity;
+                const serialEmpty = record.expectedMacs.length === 0;
 
                 return (
                     <Space direction="vertical" size="small">
-                        {!serialEmpty && (serialMatch ? <Tag color="blue">Đủ Serial</Tag> : <Tag color="warning">Serial chưa khớp SL</Tag>)}
-                        {serialEmpty && <Tag color="default">Chưa nhập Serial</Tag>}
+                        {!serialEmpty && (serialMatch ? <Tag color="blue">Đủ MAC</Tag> : <Tag color="warning">MAC chưa khớp SL</Tag>)}
+                        {serialEmpty && <Tag color="default">Chưa nhập MAC</Tag>}
                     </Space>
                 )
             }
@@ -622,19 +626,19 @@ export default function CreateImportPage() {
                 </div>
             </footer>
 
-            {/* MODAL NHẬP SERIAL */}
+            {/* MODAL NHẬP MAC */}
             <Modal
-                title="Nhập danh sách Serial"
-                open={isSerialModalOpen}
-                onOk={handleSaveSerials}
-                onCancel={() => setIsSerialModalOpen(false)}
+                title="Nhập danh sách MAC"
+                open={isMacModalOpen}
+                onOk={handleSaveMacs}
+                onCancel={() => setIsMacModalOpen(false)}
                 width={700}
                 okText="Cập nhật"
                 cancelText="Hủy"
             >
                 <Alert
                     message="Hướng dẫn"
-                    description="Bạn có thể nhập thủ công (mỗi serial 1 dòng) hoặc tải lên file Excel (cột A chứa Serial)."
+                    description="Bạn có thể nhập thủ công (mỗi MAC 1 dòng) hoặc tải lên file Excel (cột A chứa MAC)."
                     type="info"
                     showIcon
                     className="mb-4"
@@ -648,13 +652,13 @@ export default function CreateImportPage() {
                     >
                         <TextArea
                             rows={10}
-                            placeholder="SN-001&#10;SN-002&#10;SN-003..."
-                            value={tempSerials}
-                            onChange={(e) => setTempSerials(e.target.value)}
+                            placeholder="MAC-001&#10;MAC-002&#10;MAC-003..."
+                            value={tempMacs}
+                            onChange={(e) => setTempMacs(e.target.value)}
                             className="font-mono text-sm"
                         />
                         <div className="flex justify-between mt-2 text-gray-500">
-                            <span>Đã nhập: {tempSerials.split('\n').filter(s => s.trim()).length} dòng</span>
+                            <span>Đã nhập: {tempMacs.split('\n').filter(s => s.trim()).length} dòng</span>
                             {currentProductKey && (
                                 <span>Yêu cầu: {productList.find(p => p.key === currentProductKey)?.quantity}</span>
                             )}
@@ -670,11 +674,10 @@ export default function CreateImportPage() {
                             <div className="mb-4">
                                 <FileExcelOutlined style={{ fontSize: 48, color: '#52c41a' }} />
                             </div>
-                            <Title level={5}>Tải lên file danh sách Serial</Title>
+                            <Title level={5}>Tải lên file danh sách MAC</Title>
                             <Text type="secondary" className="block mb-4">
-                                File Excel cần có cột đầu tiên (A) chứa mã Serial. Dòng 1 là tiêu đề (bỏ qua).
+                                File Excel cần có cột đầu tiên (A) chứa mã MAC. Dòng 1 là tiêu đề (bỏ qua).
                             </Text>
-
                             <Upload
                                 beforeUpload={handleExcelUpload}
                                 showUploadList={false}
@@ -717,10 +720,10 @@ export default function CreateImportPage() {
                         };
 
                         let qty = Number(row.quantity) || 0;
-                        if (row.serial && qty === 0) qty = 1;
+                        if (row.mac && qty === 0) qty = 1;
 
                         current.quantity += qty;
-                        if (row.serial) current.serials.push(row.serial);
+                        if (row.mac) current.serials.push(row.mac);
 
                         // Update packaging info
                         if (!current.boxCount && row.boxCount) current.boxCount = row.boxCount;
@@ -742,7 +745,7 @@ export default function CreateImportPage() {
                                 nextList[existingIndex] = {
                                     ...existing,
                                     quantity: existing.quantity + data.quantity,
-                                    expectedSerials: [...new Set([...existing.expectedSerials, ...data.serials])],
+                                    expectedMacs: [...new Set([...existing.expectedMacs, ...data.serials])],
                                 };
                             } else {
                                 // Add new
@@ -752,8 +755,8 @@ export default function CreateImportPage() {
                                     quantity: data.quantity,
                                     boxCount: data.boxCount,
                                     itemsPerBox: data.itemsPerBox,
-                                    serialImported: 0,
-                                    expectedSerials: data.serials
+                                    macImported: 0,
+                                    expectedMacs: data.serials
                                 });
                             }
                         });

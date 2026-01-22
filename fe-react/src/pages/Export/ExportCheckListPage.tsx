@@ -253,7 +253,7 @@ export default function ExportCheckListPage() {
         <div className="p-6">
             {contextHolder}
             {modalContextHolder}
-            <Title level={3} className="!mb-2 !mt-0">Xuất kho - Quét Serial</Title>
+            <Title level={3} className="!mb-2 !mt-0">Xuất kho - Quét MAC</Title>
 
             <Card className="mb-4">
                 <Alert

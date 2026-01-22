@@ -10,14 +10,14 @@ import { User } from '../../../users/entities/user.entity';
 
 @Schema({ timestamps: true })
 export class Device extends Document {
-  @Prop({ required: true, unique: true })
-  serial!: string;
-
   @Prop()
+  serial?: string;
+
+  @Prop({ required: true, unique: true })
   mac!: string;
 
   @Prop()
-  p2p!: string;
+  p2p?: string;
 
   @Prop({ required: true })
   name!: string;
@@ -25,19 +25,19 @@ export class Device extends Document {
   @Prop({ required: true })
   deviceModel!: string;
 
-  @Prop({ required: true })
+  @Prop({ default: 'Unit' })
   unit!: string;
 
   @Prop({ type: Object })
   specifications?: Record<string, any>;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Category', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Category', default: '696b38875f5e0185d5a694cd' })
   categoryId!: Category;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Warehouse', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Warehouse', default: '6969ff74c376ce4d439185b9' })
   warehouseId!: Warehouse;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'DeviceImport', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'DeviceImport', required: false })
   importId!: DeviceImport;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'DeviceExport', required: false })

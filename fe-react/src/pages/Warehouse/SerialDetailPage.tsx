@@ -25,13 +25,13 @@ import {
     SwapOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { useSerialDetail, getTimelineIcon } from '../../hooks/useSerialDetail';
+import { useMacDetail, getTimelineIcon } from '../../hooks/useSerialDetail';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 export default function SerialDetailPage() {
-    const { serial } = useParams();
+    const { serial: mac } = useParams(); // URL params might still be named 'serial' if defined in router
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [transferModalVisible, setTransferModalVisible] = useState(false);
@@ -45,7 +45,7 @@ export default function SerialDetailPage() {
         availableTransitions,
         transferDevice,
         isTransferring
-    } = useSerialDetail(serial);
+    } = useMacDetail(mac);
 
     const isTransferringToError = Form.useWatch('toWarehouseCode', form) === 'DEFECT' || Form.useWatch('toWarehouseCode', form) === 'REMOVED';
 
@@ -74,7 +74,7 @@ export default function SerialDetailPage() {
     };
 
     if (isLoading) return <div className="p-10 text-center"><Spin size="large" /></div>;
-    if (!device) return <div className="p-10 text-center"><Text type="danger">Không tìm thấy serial {serial}</Text></div>;
+    if (!device) return <div className="p-10 text-center"><Text type="danger">Không tìm thấy MAC {mac}</Text></div>;
 
     const isRemoved = currentWarehouse?.code === 'REMOVED';
 
@@ -93,7 +93,7 @@ export default function SerialDetailPage() {
                             Quay lại
                         </Button>
                         <Title level={3} className="m-0!">
-                            Chi tiết Serial: {device.serial}
+                            Chi tiết MAC: {device.mac}
                         </Title>
                         <Text type="secondary">ID: {device.id}</Text>
                     </div>
@@ -126,10 +126,10 @@ export default function SerialDetailPage() {
                     {/* Info */}
                     <Card title="📦 Thông tin thiết bị" size="small" className="mb-4">
                         <Descriptions column={2} size="small" bordered>
-                            <Descriptions.Item label="Serial" span={2}><Text strong>{device.serial}</Text></Descriptions.Item>
+                            <Descriptions.Item label="MAC" span={2}><Text strong>{device.mac}</Text></Descriptions.Item>
                             <Descriptions.Item label="Model">{device.deviceModel}</Descriptions.Item>
                             <Descriptions.Item label="Tên">{device.name}</Descriptions.Item>
-                            <Descriptions.Item label="MAC">{device.mac || '-'}</Descriptions.Item>
+                            <Descriptions.Item label="Serial">{device.serial || '-'}</Descriptions.Item>
                         </Descriptions>
                     </Card>
 

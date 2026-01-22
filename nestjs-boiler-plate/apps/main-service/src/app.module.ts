@@ -20,7 +20,7 @@ import { WarehouseGroupsModule } from './modules/warehouse-groups/warehouse-grou
 import { WarehousesModule } from './modules/warehouses/warehouses.module';
 import { WarehouseTransitionsModule } from './modules/warehouse-transitions/warehouse-transitions.module';
 import { CategoriesModule } from './modules/categories/categories.module';
-import { SeedService } from './common/services/seed.service';
+// import { SeedService } from './common/services/seed.service';
 import { DevicesModule } from './modules/devices/devices.module';
 import { DeviceImportModule } from './modules/device-imports/device-imports.module';
 import { DeviceExportModule } from './modules/device-exports/device-exports.module';
@@ -123,12 +123,12 @@ import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schem
   ],
   controllers: [HealthController],
   providers: [
-    SeedService,
-    {
+    // SeedService,
+    // {
 
-      provide: APP_GUARD,
-      useClass: OpaAuthorizationGuard,
-    },
+    //   provide: APP_GUARD,
+    //   useClass: OpaAuthorizationGuard,
+    // },
   ],
 })
 

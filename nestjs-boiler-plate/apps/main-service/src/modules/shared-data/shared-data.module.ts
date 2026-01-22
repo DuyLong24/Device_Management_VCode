@@ -15,6 +15,6 @@ import { SharedData, SharedDataSchema, SharedDataGroup, SharedDataGroupSchema } 
     ],
     controllers: [SharedDataController],
     providers: [SharedDataService, SharedDataRepository],
-    exports: [SharedDataService],
+    exports: [SharedDataService, SharedDataRepository],
 })
 export class SharedDataModule { }

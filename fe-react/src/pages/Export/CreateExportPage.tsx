@@ -43,27 +43,37 @@ export default function CreateExportPage() {
             ),
             dataIndex: 'deviceModel',
             key: 'deviceModel',
+            onCell: () => ({
+                className: 'align-top',
+            }),
             width: 280,
             render: (value: string, record: any) => {
                 const inStock = value ? getDeviceStock(value) : 0;
                 return (
-                    <Space direction="vertical" className="w-full" size={4}>
+                    <Space direction="vertical" className="w-full " size={4}>
                         <Select
                             showSearch
                             value={value || undefined}
                             placeholder="Chọn mã thiết bị"
-                            className="w-full"
+                            className="w-[540px]"
                             options={deviceOptions}
                             loading={loadingDevices}
                             onChange={(val) => handleDeviceChange(record.key, 'deviceModel', val)}
                             allowClear
+                            optionRender={(option) => (
+                                <Space>
+                                    <Text strong>{option.data.value}</Text>
+                                    {option.data.stockName && <Text type="secondary">({option.data.stockName})</Text>}
+                                </Space>
+                            )}
                             filterOption={(input, option) =>
-                                String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                String(option?.value ?? '').toLowerCase().includes(input.toLowerCase()) ||
+                                String(option?.stockName ?? '').toLowerCase().includes(input.toLowerCase())
                             }
                         />
                         {value && (
                             <Text type="secondary" className="text-xs">
-                                Tồn kho:{' '}
+                                Có thể xuất:{' '}
                                 <Text strong className={inStock > 0 ? "text-green-500" : "text-red-500"}>
                                     {inStock}
                                 </Text>
@@ -82,6 +92,9 @@ export default function CreateExportPage() {
             dataIndex: 'quantity',
             key: 'quantity',
             width: 130,
+            onCell: () => ({
+                className: 'align-top',
+            }),
             render: (value: number, record: any) => {
                 const inStock = record.deviceModel ? getDeviceStock(record.deviceModel) : 0;
                 const isExceed = value > inStock;

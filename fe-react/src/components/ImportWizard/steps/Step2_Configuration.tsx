@@ -27,7 +27,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
 
     return (
         <div className="max-w-2xl mx-auto py-4">
-            <Title level={4} className="mb-6 text-center">Cấu hình Quy tắc Nhập liệu</Title>
+            <Title level={4} className="mb-6 text-center">Thiết lập quy tắc nhập liệu</Title>
 
             <Space direction="vertical" size="large" className="w-full">
                 {/* 1. Strategy Selection */}

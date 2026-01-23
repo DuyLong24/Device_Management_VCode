@@ -6,12 +6,10 @@ import type { ImportProduct } from '../../../types/import.type';
 
 const { Text } = Typography;
 
-// Extended type for UI display (combining ImportProduct with calculated fields)
 export interface ImportProductUI extends ImportProduct {
     key: string;
     packaging?: string;
     serialStatus?: 'complete' | 'missing' | 'excess';
-    // Mapping from backend structure if needed
     serialExpected?: number;
 }
 
@@ -64,7 +62,7 @@ export const ImportProductTable: React.FC<ImportProductTableProps> = ({
             )
         },
         {
-            title: 'Serial đã import',
+            title: 'Mac đã import',
             key: 'serialImport',
             width: 200,
             align: 'center',
@@ -92,7 +90,7 @@ export const ImportProductTable: React.FC<ImportProductTableProps> = ({
             },
         },
         {
-            title: 'Trạng thái serial',
+            title: 'Trạng thái mac',
             key: 'serialStatus',
             width: 150,
             align: 'center',
@@ -101,20 +99,20 @@ export const ImportProductTable: React.FC<ImportProductTableProps> = ({
                 const expected = item.quantity || 0;
 
                 if (imported === expected) {
-                    return <Tag color="success">Đủ serial</Tag>;
+                    return <Tag color="success">Đủ mac</Tag>;
                 } else if (imported < expected) {
                     return (
-                        <Tooltip title={`Thiếu ${expected - imported} serial`}>
+                        <Tooltip title={`Thiếu ${expected - imported} mac`}>
                             <Tag color="error" icon={<WarningOutlined />}>
-                                Thiếu serial
+                                Thiếu mac
                             </Tag>
                         </Tooltip>
                     );
                 } else {
                     return (
-                        <Tooltip title={`Thừa ${imported - expected} serial`}>
+                        <Tooltip title={`Thừa ${imported - expected} mac`}>
                             <Tag color="warning" icon={<WarningOutlined />}>
-                                Thừa serial
+                                Thừa mac
                             </Tag>
                         </Tooltip>
                     );

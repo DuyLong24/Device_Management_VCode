@@ -9,7 +9,7 @@ export class CreateWarehouseTransitionDto {
   toWarehouseId!: string;
 
   @IsNotEmpty()
-  type!: string;
+  transitionType!: string;
 
   @IsOptional()
   @IsArray()

@@ -62,6 +62,14 @@ export class DeviceExportController {
     return this.deviceExportService.findAllWithPagination(filter, options);
   }
 
+  @Get('inventory-status')
+  async getInventoryStatus(@Query('model') model: string) {
+    if (!model) {
+      throw new Error('Model is required');
+    }
+    return this.deviceExportService.getInventoryStatus(model);
+  }
+
   @Get(':id')
   async findById(@Param('id') id: string) {
     return this.deviceExportService.findById(id);

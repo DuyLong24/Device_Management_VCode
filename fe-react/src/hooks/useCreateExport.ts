@@ -38,6 +38,7 @@ interface DeviceItem {
 interface DeviceOption {
     value: string;
     label: string;
+    stockName?: string;
     inStock: number;
     // id: string; // warehouseId not strictly needed here if we filter by READY_TO_EXPORT
 }
@@ -69,6 +70,8 @@ export const useCreateExport = () => {
 
     const [loadingDevices, setLoadingDevices] = useState(false);
     const [loadingCategories, setLoadingCategories] = useState(false);
+
+    const [stockMap, setStockMap] = useState<Record<string, { inStock: number; reserved: number; available: number }>>({});
 
     // Initial Load
     useEffect(() => {
@@ -106,20 +109,16 @@ export const useCreateExport = () => {
         }
     };
 
-    // [NEW] Handle Project Selection/Creation
     const onProjectSearch = (value: string) => {
         setProjectSearchValue(value);
     };
 
     const handleProjectBlur = () => {
-        // Delay slightly to ensure search value is current (optional, but good for safety)
         setTimeout(() => {
             const searchText = projectSearchValue.trim();
             const currentVal = form.getFieldValue('project');
 
-            // Only trigger if no valid project selected AND we have a search text
             if (!currentVal && searchText) {
-                // Check if it matches an existing label exactly
                 const exists = projectOptions.some(p => p.label.toLowerCase() === searchText.toLowerCase());
                 if (!exists) {
                     setPendingProjectName(searchText);
@@ -131,15 +130,14 @@ export const useCreateExport = () => {
 
     const handleProjectKeyDown = (e: any) => {
         if (e.key === 'Enter') {
-            // Let Blur handle it, or force trigger
-            e.preventDefault(); // Prevent form submission
+            e.preventDefault();
             handleProjectBlur();
         }
     };
 
     const handleCreateProject = async (code: string, name: string) => {
         try {
-            // 1. Get Project Group ID 
+            // 1. Lấy id nhóm Dự án 
             const groups = await sharedDataService.getGroups();
             const projectGroup = groups.find(g => g.code === 'PROJECT');
 
@@ -158,15 +156,14 @@ export const useCreateExport = () => {
 
             message.success('Đã tạo dự án mới');
 
-            // 2. Update Options
+            // 2. Thêm vào options
             const newOption = { label: newData.name, value: newData.code };
             setProjectOptions([...projectOptions, newOption]);
 
-            // 3. Select it
             form.setFieldValue('project', newData.code);
 
             setIsProjectModalOpen(false);
-            setProjectSearchValue(''); // Reset search
+            setProjectSearchValue('');
 
         } catch (error) {
             logger.error('Failed to create project', { error });
@@ -178,7 +175,7 @@ export const useCreateExport = () => {
         setIsProjectModalOpen(false);
         setPendingProjectName('');
         setProjectSearchValue('');
-        form.setFieldValue('project', undefined); // Clear selection if cancelled
+        form.setFieldValue('project', undefined);
     };
 
     const fetchExportDetail = async (exportId: string) => {
@@ -193,24 +190,19 @@ export const useCreateExport = () => {
                 return;
             }
 
-            // Map form fields
             form.setFieldsValue({
                 ...data,
-                // deliveryAddress, notes, etc. map automatically
             });
 
-            // Map requirements to deviceList
             if (data.requirements) {
                 const mappedDevices: DeviceItem[] = data.requirements.map((req: any, index: number) => ({
                     key: `prod-${index}-${Date.now()}`,
                     deviceModel: req.productCode,
                     name: req.productName || '',
                     quantity: req.quantity,
-                    inStock: 0, // Will be updated by getDeviceStock logic handled by options
+                    inStock: 0,
                     expectedSerials: req.expectedSerials || []
                 }));
-                // Update inStock after deviceOptions are loaded (they are loaded in parallel in useEffect)
-                // Or we can just set them and let the UI get stock from getDeviceStock
                 setDeviceList(mappedDevices);
             }
 
@@ -226,49 +218,54 @@ export const useCreateExport = () => {
     const fetchDeviceCodes = async () => {
         setLoadingDevices(true);
         try {
+            // 1. Fetch Danh mục Model từ SharedData (Source of Truth for Code & Name)
+            const models = await sharedDataService.getDataByGroupCode('MODEL');
+
+            // 2. Fetch Tồn kho thực tế (Ready to Export)
             const warehousesRes = await axiosInstance.get('/warehouses');
             const readyWarehouse = warehousesRes.data?.find((w: any) => w.code === DEVICE_STATUS.READY_TO_EXPORT);
 
-            if (!readyWarehouse) {
-                message.warning('Không tìm thấy kho sẵn sàng xuất');
-                return;
-            }
+            let stockCounts: Record<string, number> = {};
 
-            const response = await axiosInstance.get('/devices', {
-                params: {
-                    warehouseId: readyWarehouse.id,
-                    limit: 1000,
-                    sortBy: 'deviceModel:asc',
-                    page: 1
-                }
-            });
-
-            const devices = response.data?.results || response.data || [];
-
-            if (Array.isArray(devices)) {
-                const grouped = devices.reduce((acc: any, device: any) => {
-                    const model = device.deviceModel;
-                    if (!model) return acc;
-
-                    if (!acc[model]) {
-                        acc[model] = {
-                            deviceModel: model,
-                            name: device.name || '',
-                            count: 0
-                        };
+            if (readyWarehouse) {
+                const response = await axiosInstance.get('/devices', {
+                    params: {
+                        warehouseId: readyWarehouse.id,
+                        limit: 2000, // Fetch large number to count stock
+                        sortBy: 'deviceModel:asc',
+                        page: 1
+                        // Note: For large scale, use a breakdown API instead of fetching all devices
                     }
-                    acc[model].count++;
-                    return acc;
-                }, {});
-
-                const options: DeviceOption[] = Object.values(grouped).map((item: any) => ({
-                    value: item.deviceModel,
-                    label: `${item.deviceModel}${item.name ? ' - ' + item.name : ''}`,
-                    inStock: item.count
-                }));
-
-                setDeviceOptions(options);
+                });
+                const devices = response.data?.results || response.data || [];
+                if (Array.isArray(devices)) {
+                    stockCounts = devices.reduce((acc: any, device: any) => {
+                        const model = device.deviceModel;
+                        if (model) {
+                            acc[model] = (acc[model] || 0) + 1;
+                        }
+                        return acc;
+                    }, {});
+                }
             }
+
+            // 3. Merge Metadata with Stock
+            if (models && models.length > 0) {
+                const options: DeviceOption[] = models.map((m: any) => ({
+                    value: m.code,
+                    label: m.code, // Main Label
+                    stockName: m.name, // Sub Label
+                    inStock: stockCounts[m.code] || 0
+                }));
+                // Sort by Code
+                options.sort((a, b) => a.value.localeCompare(b.value));
+                setDeviceOptions(options);
+
+            } else {
+                // Fallback if SharedData empty?
+                setDeviceOptions([]);
+            }
+
         } catch (error) {
             logger.error('Failed to fetch device codes', { error });
             message.warning('Không thể tải danh sách thiết bị');
@@ -296,6 +293,11 @@ export const useCreateExport = () => {
     };
 
     const getDeviceStock = (deviceModel: string): number => {
+        // Lấy tồn kho khả dụng từ API
+        if (stockMap[deviceModel]) {
+            return stockMap[deviceModel].available;
+        }
+        // Nếu không có tồn kho khả dụng thì lấy từ deviceOptions
         const device = deviceOptions.find((d) => d.value === deviceModel);
         return device?.inStock || 0;
     };
@@ -317,17 +319,15 @@ export const useCreateExport = () => {
         setHasUnsavedChanges(true);
     };
 
-    const handleDeviceChange = (key: string, field: keyof DeviceItem, value: any) => {
+    const handleDeviceChange = async (key: string, field: keyof DeviceItem, value: any) => {
         const newList = deviceList.map((item) => {
             if (item.key === key) {
                 const updated = { ...item, [field]: value };
                 if (field === 'deviceModel') {
-                    // Update name and stock when model changes
                     const option = deviceOptions.find(o => o.value === value);
                     if (option) {
-                        // Extract name from label "Model - Name"
-                        const namePart = option.label.includes(' - ') ? option.label.split(' - ')[1] : '';
-                        updated.name = namePart;
+                        updated.name = option.stockName || '';
+                        // Temp set inStock from option until API returns
                         updated.inStock = option.inStock;
                     }
                 }
@@ -337,6 +337,21 @@ export const useCreateExport = () => {
         });
         setDeviceList(newList);
         setHasUnsavedChanges(true);
+
+        // Lấy tồn kho khả dụng từ API
+        if (field === 'deviceModel' && value) {
+            try {
+                const status = await exportService.getInventoryStatus(value);
+                setStockMap(prev => ({
+                    ...prev,
+                    [value]: status.data || status // Handle response structure
+                }));
+
+                //
+            } catch (error) {
+                console.error('Failed to fetch inventory status', error);
+            }
+        }
     };
 
     const handleSaveDraft = () => handleSave(EXPORT_STATUS.DRAFT);
@@ -346,13 +361,13 @@ export const useCreateExport = () => {
         try {
             const values = await form.validateFields();
 
-            // Validate device list
+            // Kiểm tra danh sách thiết bị
             if (deviceList.length === 0) {
                 message.error('Vui lòng thêm ít nhất một thiết bị');
                 return;
             }
 
-            // Check if any device has quantity > stock
+            // Kiểm tra nếu có thiết bị vượt quá số lượng tồn kho
             const hasStockError = deviceList.some(d => {
                 const stock = getDeviceStock(d.deviceModel);
                 return d.quantity > stock;
@@ -365,7 +380,7 @@ export const useCreateExport = () => {
 
             setLoading(true);
 
-            // Prepare payload
+            // Chuẩn bị payload
             const payload: Partial<DeviceExport> = {
                 ...values,
                 status,
@@ -433,7 +448,7 @@ export const useCreateExport = () => {
         pendingProjectName,
         onProjectSearch,
         handleProjectBlur,
-        handleProjectKeyDown, // [NEW]
+        handleProjectKeyDown,
         handleCreateProject,
         handleCancelProjectCreation,
         setIsProjectModalOpen

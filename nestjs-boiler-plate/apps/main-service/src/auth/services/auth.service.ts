@@ -22,7 +22,7 @@ export class AuthService {
     private readonly fncRoleService: FncRoleService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   async login(loginDto: LoginDto): Promise<TokenResponse> {
     const { username, password } = loginDto;
@@ -151,13 +151,13 @@ export class AuthService {
 
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<void> {
     const user = await this.userService.findById(userId);
-    
+
     // Verify current password
     const isCurrentPasswordValid = await this.verifyPassword(
       changePasswordDto.currentPassword,
       user.password
     );
-    
+
     if (!isCurrentPasswordValid) {
       throw new BadRequestException('Current password is incorrect');
     }
@@ -213,19 +213,19 @@ export class AuthService {
       tokenType: 'refresh',
     };
 
-    const accessTokenExpiresIn = this.configService.get<string>('JWT_ACCESS_TOKEN_EXPIRES_IN') || 
-                                 this.configService.get<string>('JWT_EXPIRATION') || '15m';
-    const refreshTokenExpiresIn = this.configService.get<string>('JWT_REFRESH_TOKEN_EXPIRES_IN') || 
-                                  this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d';
+    const accessTokenExpiresIn = this.configService.get<string>('JWT_ACCESS_TOKEN_EXPIRES_IN') ||
+      this.configService.get<string>('JWT_EXPIRATION') || '15m';
+    const refreshTokenExpiresIn = this.configService.get<string>('JWT_REFRESH_TOKEN_EXPIRES_IN') ||
+      this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d';
 
     const accessToken = this.jwtService.sign(accessTokenPayload, {
       secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: accessTokenExpiresIn,
+      expiresIn: accessTokenExpiresIn as any,
     });
 
     const refreshToken = this.jwtService.sign(refreshTokenPayload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET') || this.configService.get<string>('JWT_SECRET'),
-      expiresIn: refreshTokenExpiresIn,
+      expiresIn: refreshTokenExpiresIn as any,
     });
 
     return {

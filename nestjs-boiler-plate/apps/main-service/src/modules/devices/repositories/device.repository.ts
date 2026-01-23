@@ -15,7 +15,7 @@ export class DeviceRepository {
   }
 
   async insertMany(devices: any[], options: any = {}): Promise<Device[]> {
-    return this.deviceModel.insertMany(devices, options);
+    return this.deviceModel.insertMany(devices, options) as unknown as Promise<Device[]>;
   }
 
   async bulkWrite(ops: any[], options: any = {}): Promise<any> {

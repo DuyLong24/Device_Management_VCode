@@ -5,3 +5,22 @@ body {
   padding: 0;
   background-color: #f0f2f5;
 }
+
+/* Custom Scrollbar for Sider */
+.ant-layout-sider ::-webkit-scrollbar {
+  width: 6px;
+  background-color: #001529;
+}
+
+.ant-layout-sider ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.ant-layout-sider ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.ant-layout-sider ::-webkit-scrollbar-track {
+  background-color: #001529;
+}

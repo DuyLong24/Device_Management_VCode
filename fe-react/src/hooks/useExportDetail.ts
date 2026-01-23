@@ -43,14 +43,14 @@ export const useExportDetail = () => {
             await exportService.submitForApproval(id);
             message.success('Đã gửi duyệt phiếu xuất!');
             fetchDetail();
-        } catch (error) {
+        } catch (error: any) {
             logger.error('Lỗi khi gửi duyệt', {
                 error,
                 module: 'useExportDetail',
                 action: 'handleSubmit',
                 exportId: id,
             });
-            message.error('Lỗi khi gửi duyệt');
+            message.error(error?.response?.data?.message || 'Lỗi khi gửi duyệt');
         }
     };
 
@@ -60,14 +60,14 @@ export const useExportDetail = () => {
             await exportService.approve(id);
             message.success('Đã duyệt phiếu!');
             fetchDetail();
-        } catch (error) {
+        } catch (error: any) {
             logger.error('Lỗi khi duyệt', {
                 error,
                 module: 'useExportDetail',
                 action: 'handleApprove',
                 exportId: id,
             });
-            message.error('Lỗi khi duyệt');
+            message.error(error?.response?.data?.message || 'Lỗi khi duyệt');
         }
     };
 
@@ -80,14 +80,14 @@ export const useExportDetail = () => {
             await exportService.reject(id, reason || '');
             message.success('Đã từ chối phiếu!');
             fetchDetail();
-        } catch (error) {
+        } catch (error: any) {
             logger.error('Lỗi khi từ chối', {
                 error,
                 module: 'useExportDetail',
                 action: 'handleReject',
                 exportId: id,
             });
-            message.error('Lỗi khi từ chối');
+            message.error(error?.response?.data?.message || 'Lỗi khi từ chối');
         }
     };
 

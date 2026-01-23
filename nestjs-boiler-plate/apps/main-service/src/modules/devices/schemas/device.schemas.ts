@@ -60,6 +60,9 @@ export class Device extends Document {
   customer?: { warrantyDays: number };
 
   @Prop()
+  repairNote?: string;
+
+  @Prop()
   warrantyActivatedDate?: Date;
 
   @Prop()

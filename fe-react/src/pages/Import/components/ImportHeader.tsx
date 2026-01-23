@@ -52,13 +52,13 @@ export const ImportHeader: React.FC<ImportHeaderProps> = ({
 
                     <Space>
                         <Text strong className="text-base">
-                            {code}
+                            Mã phiếu: {code}
                         </Text>
                         {status === 'DRAFT' ? (
                             <Tag color="default" className="text-base px-3 py-0.5">NHÁP (DRAFT)</Tag>
                         ) : (
                             <Tag color={statusConfig.color}>
-                                {statusConfig.text}
+                                Trạng thái: {statusConfig.text}
                             </Tag>
                         )}
                     </Space>

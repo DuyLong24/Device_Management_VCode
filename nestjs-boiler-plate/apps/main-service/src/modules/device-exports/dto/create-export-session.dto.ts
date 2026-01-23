@@ -5,9 +5,9 @@ export class CreateExportSessionDto {
     @IsString()
     exportId: string;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
-    sessionName: string;
+    sessionName?: string;
 
     @IsOptional()
     @IsString()

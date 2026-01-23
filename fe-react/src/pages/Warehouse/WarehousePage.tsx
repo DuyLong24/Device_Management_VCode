@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Table, Typography, Space, Button, Checkbox, Input, Select, App } from 'antd';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebounce } from '../../hooks/useDebounce';
 import {
     ArrowLeftOutlined,
     ReloadOutlined,
@@ -15,6 +16,8 @@ import {
 
 import { deviceService } from '../../services/device.service';
 import { warehouseService } from '../../services/warehouse.service';
+import { warehouseTransitionService, type WarehouseTransition } from '../../services/warehouse-transition.service';
+import { sharedDataService } from '../../services/shared-data.service';
 import { WAREHOUSE_LABELS } from '../../constants/warehouse.constants';
 
 import TransferModal from './components/TransferModal';
@@ -33,6 +36,7 @@ export default function WarehousePage() {
 
     // Filter States
     const [searchText, setSearchText] = useState('');
+    const debouncedSearch = useDebounce(searchText, 500);
     const [selectedProduct, setSelectedProduct] = useState<string | undefined>(undefined);
 
     // Selection State
@@ -42,6 +46,15 @@ export default function WarehousePage() {
     // Modal States
     const [transferModalVisible, setTransferModalVisible] = useState(false);
     const [importModalVisible, setImportModalVisible] = useState(false);
+    const [modelOptions, setModelOptions] = useState<{ label: string, value: string, desc?: string }[]>([]);
+
+    useEffect(() => {
+        sharedDataService.getDataByGroupCode('MODEL').then(res => {
+            if (res) {
+                setModelOptions(res.map(m => ({ label: m.code, value: m.code, desc: m.name })));
+            }
+        });
+    }, []);
 
     // Import Fields
     const DEVICE_IMPORT_FIELDS: FieldDefinition[] = [
@@ -62,12 +75,19 @@ export default function WarehousePage() {
 
     // 2. Get Devices in Warehouse
     const { data: deviceData, isLoading, refetch } = useQuery({
-        queryKey: ['devices', code, page, pageSize, searchText, selectedProduct],
-        queryFn: () => deviceService.getAll({
-            page,
-            limit: pageSize,
-            warehouseId: currentWarehouse?.id,
-        }),
+        queryKey: ['devices', code, page, pageSize, debouncedSearch, selectedProduct],
+        queryFn: () => {
+            const params: any = {
+                page,
+                limit: pageSize,
+                warehouseId: currentWarehouse?.id,
+                sortBy: 'updatedAt:desc',
+            };
+            if (debouncedSearch) params.search = debouncedSearch;
+            if (selectedProduct) params.model = selectedProduct;
+
+            return deviceService.getAll(params);
+        },
         enabled: !!currentWarehouse?.id
     });
 
@@ -171,21 +191,44 @@ export default function WarehousePage() {
         return c.title || map[c.key] || c.key;
     };
 
-    const normalizedColumns = (currentWarehouse?.config?.columns || []).map((c: any) => {
+    const columns = currentWarehouse?.config?.columns;
+    const safeColumns = Array.isArray(columns) ? columns : [];
+
+    const normalizedColumns = safeColumns.map((c: any) => {
         if (typeof c === 'string') return { key: c, title: titleMap({ key: c }), type: 'text' };
         return c;
     });
 
     const dataColumns = normalizedColumns.map(getColumnDef);
 
+
+    // 2.5 Get Allowed Transitions (Dynamic)
+    const { data: transitions } = useQuery({
+        queryKey: ['warehouse-transitions', currentWarehouse?.id],
+        queryFn: () => warehouseTransitionService.getBySourceWarehouse(currentWarehouse!.id),
+        enabled: !!currentWarehouse?.id
+    });
+
     const transferOptions = useMemo(() => {
-        if (!currentWarehouse?.config?.quickTransfers) return [];
-        return currentWarehouse.config.quickTransfers.map(qt => ({
-            to: qt.to,
-            label: qt.label,
-            description: qt.description,
-        }));
-    }, [currentWarehouse]);
+        if (!transitions || !warehouses) return [];
+
+        const uniqueTargets = new Set();
+        return transitions.map((t: WarehouseTransition) => {
+            const target = warehouses.find(w => w.id === t.toWarehouseId);
+            if (!target) return null;
+
+            // Deduplicate: If we already have an option for this target, skip
+            if (uniqueTargets.has(target.code)) return null;
+            uniqueTargets.add(target.code);
+
+            return {
+                to: target.code,
+                label: `Chuyển sang ${target.name}`,
+                description: t.requiresApproval ? '(Cần duyệt)' : undefined,
+                // Auto-determine color/icon based on target code or type
+            };
+        }).filter(Boolean) as any[];
+    }, [transitions, warehouses]);
 
     const rowSelection = {
         selectedRowKeys,
@@ -256,12 +299,23 @@ export default function WarehousePage() {
                         allowClear
                     />
                     <Select
-                        placeholder="Lọc theo sản phẩm"
+                        placeholder="Lọc theo mã model"
                         className="w-[200px]"
                         value={selectedProduct}
                         onChange={setSelectedProduct}
                         allowClear
-                        options={[]} // Placeholder
+                        showSearch
+                        options={modelOptions}
+                        optionRender={(option) => (
+                            <Space>
+                                <span className="font-semibold">{option.data.value}</span>
+                                {option.data.desc && <span className="text-gray-500">({option.data.desc})</span>}
+                            </Space>
+                        )}
+                        filterOption={(input, option) =>
+                            String(option?.value ?? '').toLowerCase().includes(input.toLowerCase()) ||
+                            String(option?.desc ?? '').toLowerCase().includes(input.toLowerCase())
+                        }
                     />
                 </Space>
             </Card>

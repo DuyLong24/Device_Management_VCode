@@ -35,7 +35,7 @@ export class WarehouseTransitionPaginationDto {
 
   @IsOptional()
   @IsString()
-  type?: string;
+  transitionType?: string;
 
   @IsOptional()
   @Transform(({ value }) => value === 'true')
@@ -45,7 +45,7 @@ export class WarehouseTransitionPaginationDto {
   // Search fields based on string fields in entity
   @IsOptional()
   @IsString()
-  typeSearch?: string;
+  transitionTypeSearch?: string;
 
   // Date range filters
   @IsOptional()

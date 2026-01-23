@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import {
     DashboardOutlined, InboxOutlined, FileAddOutlined, UnorderedListOutlined, CheckCircleOutlined,
     CloseCircleOutlined, ToolOutlined, ExportOutlined, ClockCircleOutlined, FolderOutlined,
-    AppstoreOutlined, DatabaseOutlined, CustomerServiceOutlined, SettingOutlined, TeamOutlined, SafetyOutlined, UserOutlined, LockOutlined, LogoutOutlined,
+    AppstoreOutlined, DatabaseOutlined, SettingOutlined, TeamOutlined, SafetyOutlined, UserOutlined, LockOutlined, LogoutOutlined,
     SafetyCertificateOutlined,
     FieldTimeOutlined,
     DeleteOutlined
@@ -56,13 +56,14 @@ export const ICON_MAP: Record<string, ReactNode> = {
     'clock-circle': <ClockCircleOutlined />,
     'check-circle': <CheckCircleOutlined />,
     'close-circle': <CloseCircleOutlined />,
-    'tool': <ToolOutlined />,
+    'maintenance': <SettingOutlined />,
     'export': <ExportOutlined />,
     'folder': <FolderOutlined />,
     'safety-certificate': <SafetyCertificateOutlined />,
     'field-time': <FieldTimeOutlined />,
     'delete': <DeleteOutlined />,
-    'default': <AppstoreOutlined />
+    'default': <AppstoreOutlined />,
+    'wrench': <ToolOutlined />
 };
 
 // Menu Labels & Keys
@@ -107,7 +108,7 @@ export const MENU_LABELS = {
         CREATE: 'Thêm mới phiếu nhập kho',
         INVENTORY: 'Kiểm kê sản phẩm nhập kho'
     },
-    ALL_SERIALS: 'Danh sách MAC',
+    ALL_SERIALS: 'Danh sách thiết bị',
     INTERNAL_GROUP: 'Kho nội bộ',
     EXPORTED_GROUP: 'Đã xuất',
     EXPORT: {
@@ -115,10 +116,6 @@ export const MENU_LABELS = {
         LIST: 'Danh sách phiếu xuất kho',
         CREATE: 'Thêm mới phiếu xuất kho',
         CHECK: 'Xuất kho - Quét MAC'
-    },
-    WARRANTY: {
-        ROOT: 'Quản lý bảo hành',
-        LIST: 'Danh sách bảo hành'
     },
     SYSTEM: {
         ROOT: 'Quản trị hệ thống',
@@ -146,8 +143,6 @@ export const SECTION_ICONS = {
     EXPORT_LIST: <UnorderedListOutlined />,
     EXPORT_CREATE: <FileAddOutlined />,
     EXPORT_CHECK: <ScanOutlinedIcon />, // Helper wrapper if needed, or just import scan
-    WARRANTY: <CustomerServiceOutlined />,
-    WARRANTY_LIST: <UnorderedListOutlined />,
     SYSTEM: <SettingOutlined />,
     SYSTEM_USERS: <TeamOutlined />,
     SYSTEM_ROLES: <SafetyOutlined />,

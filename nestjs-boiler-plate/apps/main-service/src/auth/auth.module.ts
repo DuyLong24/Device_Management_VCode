@@ -35,7 +35,7 @@ import { FncRoleModule } from '../fnc-roles/fnc-roles.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRATION') || '15m',
+          expiresIn: (configService.get<string>('JWT_EXPIRATION') || '15m') as any,
         },
       }),
       inject: [ConfigService],
@@ -57,4 +57,4 @@ import { FncRoleModule } from '../fnc-roles/fnc-roles.module';
     PassportModule,
   ],
 })
-export class AuthModule {}
+export class AuthModule { }

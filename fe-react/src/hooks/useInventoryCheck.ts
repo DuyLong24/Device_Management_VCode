@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { importService } from '../services/import.service';
+import { sharedDataService } from '../services/shared-data.service';
 import { inventorySessionService } from '../services/inventory-session.service';
 
 import type { InventorySession, ScannedItem } from '../services/inventory-session.service';
@@ -36,6 +37,7 @@ export const useInventoryCheck = () => {
     const [otherCompletedCount, setOtherCompletedCount] = useState(0);
 
     const [selectedProductCode, setSelectedProductCode] = useState<string | null>(null);
+    const [productModels, setProductModels] = useState<any[]>([]); // [NEW]
 
     const inputRef = useRef<any>(null);
     const { playError, playSuccess } = useScanSound();
@@ -69,8 +71,12 @@ export const useInventoryCheck = () => {
     const loadData = async (id: string) => {
         setLoading(true);
         try {
-            const importRes = await importService.getImportDetail(id);
+            const [importRes, models] = await Promise.all([
+                importService.getImportDetail(id),
+                sharedDataService.getDataByGroupCode('MODEL').catch(() => [])
+            ]);
             setImportInfo(importRes.data);
+            setProductModels(models);
 
             if (importRes.data.products?.length === 1) {
                 setSelectedProductCode(importRes.data.products[0].productCode);
@@ -117,9 +123,9 @@ export const useInventoryCheck = () => {
             await inventorySessionService.removeItem(session.id, serial);
             setServerItems(prev => prev.filter(i => i.serial !== serial));
             setDuplicateSerials(prev => prev.filter(s => s !== serial)); // Clear from duplicate list
-            message.success(`Đã xóa serial ${serial}`);
+            message.success(`Đã xóa mac ${serial}`);
         } catch (e) {
-            message.error('Không thể xóa item đã lưu');
+            message.error('Không thể xóa thiết bị đã lưu');
         }
     };
 
@@ -154,7 +160,7 @@ export const useInventoryCheck = () => {
         const isDup = serverItems.some(i => i.serial === code);
         if (isDup) {
             playError();
-            message.warning(`Serial ${code} đã tồn tại!`);
+            message.warning(`Mac ${code} đã tồn tại!`);
             setScannedInput('');
             return;
         }
@@ -173,12 +179,12 @@ export const useInventoryCheck = () => {
             const updated = await inventorySessionService.update(session!.id, payload);
             if (updated && updated.details) {
                 playSuccess();
-                message.success(`Đã lưu serial: ${code}`);
+                message.success(`Đã lưu mac: ${code}`);
                 setServerItems(updated.details);
             }
         } catch (e) {
             playError();
-            message.error('Lỗi khi lưu serial này. Vui lòng thử lại.');
+            message.error('Lỗi khi lưu mac này. Vui lòng thử lại.');
         } finally {
             setIsSaving(false);
             setScannedInput('');
@@ -188,7 +194,7 @@ export const useInventoryCheck = () => {
 
     const handleManualImport = async () => {
         if (!manualSerials.trim() || !selectedProductCode) {
-            message.warning('Vui lòng chọn sản phẩm và nhập danh sách serial');
+            message.warning('Vui lòng chọn sản phẩm và nhập danh sách mac');
             return;
         }
 
@@ -214,7 +220,7 @@ export const useInventoryCheck = () => {
                 const updated = await inventorySessionService.update(session!.id, { scannedItems: validItems });
                 if (updated && updated.details) {
                     setServerItems(updated.details);
-                    message.success(`Đã lưu ${validItems.length} serial.`);
+                    message.success(`Đã lưu ${validItems.length} mac.`);
                 }
             } catch (e) {
                 message.error('Lỗi lưu danh sách');
@@ -224,7 +230,7 @@ export const useInventoryCheck = () => {
         }
 
         if (dups.length > 0) {
-            message.warning(`${dups.length} serial trùng lặp đã bị bỏ qua.`);
+            message.warning(`${dups.length} mac trùng lặp đã bị bỏ qua.`);
         }
         setManualSerials('');
     };
@@ -235,7 +241,7 @@ export const useInventoryCheck = () => {
 
     const handleCompleteInventory = () => {
         if (localItems.length > 0) {
-            message.warning('Vui lòng bấm LƯU các serial mới trước khi hoàn tất!');
+            message.warning('Vui lòng bấm LƯU các mac mới trước khi hoàn tất!');
             return;
         }
         setDuplicateSerials([]); // Clear old errors
@@ -258,7 +264,7 @@ export const useInventoryCheck = () => {
 
             if (data?.duplicates && Array.isArray(data.duplicates)) {
                 setDuplicateSerials(data.duplicates);
-                message.error(`Có ${data.duplicates.length} serial bị trùng lặp!`);
+                message.error(`Có ${data.duplicates.length} mac bị trùng lặp!`);
             } else {
                 message.error(msg);
             }
@@ -281,6 +287,7 @@ export const useInventoryCheck = () => {
         removeServerItem,
         setLocalItems,
         duplicateSerials,
-        otherCompletedCount
+        otherCompletedCount,
+        productModels // [NEW]
     };
 };

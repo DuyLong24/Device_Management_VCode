@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { message } from 'antd';
+import { App } from 'antd';
 import { axiosInstance } from '../configs/axios.config';
 import { logger } from '../utils/logger';
 
@@ -42,8 +42,14 @@ export const useExportSession = (exportId?: string) => {
         fetchSessions();
     }, [fetchSessions]);
 
+    const { message } = App.useApp();
+
     const createSession = async (name?: string) => {
-        if (!exportId) return;
+        if (!exportId) {
+            console.error('createSession: exportId is missing');
+            return;
+        }
+        console.log('createSession: Sending request', { exportId, sessionName: name });
         try {
             await axiosInstance.post('/device-exports/sessions', {
                 exportId,

@@ -30,7 +30,8 @@ export default function ExportDetailPage() {
     const { sessions, createSession } = useExportSession(id);
 
     const handleCreateSession = () => {
-        createSession();
+        // Explicitly pass undefined to avoid passing Event object if passed by child
+        createSession(undefined);
     };
 
     const handleContinueSession = (sessionId: string) => {
@@ -71,7 +72,7 @@ export default function ExportDetailPage() {
                         onSubmit={handleSubmit}
                         onApprove={handleApprove}
                         onReject={handleReject}
-                        onNavigateToScan={handleNavigateToScan}
+                        // onNavigateToScan={handleNavigateToScan}
                         onConfirm={handleConfirm}
                     />
                 </Space>

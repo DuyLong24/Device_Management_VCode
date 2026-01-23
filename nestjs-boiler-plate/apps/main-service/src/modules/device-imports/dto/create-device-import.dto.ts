@@ -36,10 +36,12 @@ class ImportProductDto {
 
 class ImportDetailDto {
   @IsString()
-  serial: string;
+  @IsOptional()
+  serial?: string;
 
   @IsString()
-  p2p: string;
+  @IsOptional()
+  p2p?: string;
 
   @IsString()
   mac: string;

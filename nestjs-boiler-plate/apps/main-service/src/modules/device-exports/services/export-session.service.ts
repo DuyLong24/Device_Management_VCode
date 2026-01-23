@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ExportSessionRepository } from '../repositories/export-session.repository';
+import mongoose from 'mongoose';
 import { CreateExportSessionDto } from '../dto/create-export-session.dto';
 import { ExportSession, ExportSessionStatus } from '../schemas/export-session.schemas';
 import { DeviceExportRepository } from '../repositories/device-export.repository';
 import { DeviceService } from '../../devices/services/device.service';
 import { ExportStatus } from '../schemas/device-export.schemas';
+import { WarehouseRepository } from '../../warehouses/repositories/warehouse.repository';
 
 @Injectable()
 export class ExportSessionService {
@@ -12,9 +14,16 @@ export class ExportSessionService {
         private readonly exportSessionRepository: ExportSessionRepository,
         private readonly deviceExportRepository: DeviceExportRepository,
         private readonly deviceService: DeviceService,
+        private readonly warehouseRepository: WarehouseRepository,
     ) { }
 
     async create(dto: CreateExportSessionDto, userId: string): Promise<ExportSession> {
+        console.log('ExportSessionService.create DTO:', JSON.stringify(dto));
+
+        if (!mongoose.Types.ObjectId.isValid(dto.exportId)) {
+            throw new BadRequestException(`Invalid Export ID format: ${dto.exportId}`);
+        }
+
         const exportRecord = await this.deviceExportRepository.findById(dto.exportId);
         if (!exportRecord) {
             throw new NotFoundException('Phiếu xuất không tồn tại');
@@ -60,40 +69,20 @@ export class ExportSessionService {
     }
 
     async scanSerial(sessionId: string, serial: string): Promise<ExportSession> {
-        console.log(`[scanSerial] Start: Session=${sessionId}, Serial=${serial}`);
         const session = await this.exportSessionRepository.findById(sessionId);
         if (!session) throw new NotFoundException('Phiên xuất kho không tồn tại');
-
         if (session.status !== ExportSessionStatus.IN_PROGRESS) {
             throw new BadRequestException('Phiên xuất kho đã kết thúc hoặc bị hủy');
-        }
-
-        if (session.items.some(i => i.serial === serial)) {
-            console.warn(`[scanSerial] Duplicate in session: ${serial}`);
-            throw new BadRequestException(`Serial ${serial} đã được quét trong phiên này`);
         }
 
         const exportRecord = await this.deviceExportRepository.findById(session.exportId as any);
         if (!exportRecord) throw new NotFoundException('Phiếu xuất không tồn tại');
 
-        const requirements = exportRecord.requirements.map(r => r.productCode);
-        const requirementMap = new Set(requirements);
-        console.log(`[scanSerial] Requirements: ${JSON.stringify(requirements)}`);
+        // Validation
+        await this.validateScan(serial, session, exportRecord);
 
-        // Lấy thông tin thiết và validate
-        const device = await this.deviceService.findByMac(serial);
-        if (!device) {
-            console.warn(`[scanSerial] Device not found: ${serial}`);
-            throw new BadRequestException(`MAC ${serial} không tồn tại trong hệ thống`);
-        }
-        console.log(`[scanSerial] Device Found: ${device.serial}, Model=${device.deviceModel}`);
-
-        if (!requirementMap.has(device.deviceModel)) {
-            console.warn(`[scanSerial] Validation Failed: DeviceModel=${device.deviceModel} not in Requirements`);
-            throw new BadRequestException(`Vi phạm: Serial ${serial} (${device.deviceModel}) không nằm trong yêu cầu của phiếu xuất này.`);
-        }
-
-        // Add to session items
+        // Add
+        const device = await this.deviceService.findByMac(serial); // Re-fetch to be safe/simple or optimize if needed
         const newItem = {
             serial: device.serial,
             productCode: device.deviceModel,
@@ -106,7 +95,6 @@ export class ExportSessionService {
             $inc: { serialChecked: 1 }
         });
 
-        console.log(`[scanSerial] Success`);
         return updatedSession;
     }
 
@@ -138,18 +126,11 @@ export class ExportSessionService {
     }> {
         const session = await this.exportSessionRepository.findById(sessionId);
         if (!session) throw new NotFoundException('Phiên xuất kho không tồn tại');
-
-        if (session.status !== ExportSessionStatus.IN_PROGRESS) {
-            throw new BadRequestException('Phiên xuất kho đã kết thúc hoặc bị hủy');
-        }
+        if (session.status !== ExportSessionStatus.IN_PROGRESS) throw new BadRequestException('Phiên xuất kho đã đóng');
 
         const exportRecord = await this.deviceExportRepository.findById(session.exportId as any);
-        if (!exportRecord) throw new NotFoundException('Phiếu xuất không tồn tại');
-
         const requirementMap = new Map<string, number>();
-        exportRecord.requirements.forEach(req => {
-            requirementMap.set(req.productCode, req.quantity);
-        });
+        exportRecord.requirements.forEach(req => requirementMap.set(req.productCode, req.quantity));
 
         const scannedMap = new Map<string, number>();
         session.items.forEach(i => {
@@ -160,54 +141,76 @@ export class ExportSessionService {
         const success: string[] = [];
         const errors: { serial: string; error: string }[] = [];
         const warnings: { serial: string; warning: string }[] = [];
-
         const uniqueMacs = [...new Set(serials)];
+
+        // Pre-fetch all devices for performance
         const devices = await this.deviceService.findByMacs(uniqueMacs);
         const deviceMap = new Map();
         devices.forEach(d => deviceMap.set(d.mac, d));
 
-        const newItems: any[] = [];
+        // Get Ready Warehouse ID Once
+        const readyWarehouse = await this.warehouseRepository.findOne({ code: 'READY_TO_EXPORT' });
 
         for (const serial of uniqueMacs) {
-            if (session.items.some(i => i.serial === serial)) {
-                errors.push({ serial, error: 'DOUBLE_SCAN_IN_SESSION' });
-                continue;
+            try {
+                // Custom validate for bulk passing pre-fetched data if possible, but validateScan is robust
+                // For bulk, let's call validateScan but we need to handle "Device Not Found" cleanly
+                // Optimization: Re-implement checks here to avoid N queries
+
+                // 1. Session Duplicate
+                if (session.items.some(i => i.serial === serial)) {
+                    throw new Error('Đã quét trong phiên này');
+                }
+
+                // 2. Existence
+                const device = deviceMap.get(serial);
+                if (!device) throw new Error('Mã MAC không tồn tại');
+
+                // 3. Warehouse Check
+                if (readyWarehouse && String(device.warehouseId) !== String(readyWarehouse._id)) {
+                    throw new Error('Không nằm trong kho Sẵn sàng xuất');
+                }
+
+                // 4. Global Duplicate
+                const otherSession = await this.exportSessionRepository.findOne({
+                    status: ExportSessionStatus.IN_PROGRESS,
+                    'items.serial': serial,
+                    _id: { $ne: session._id }
+                });
+                if (otherSession) throw new Error(`Đang bị treo ở phiếu ${otherSession.sessionCode}`);
+
+                // 5. Model Check
+                if (!requirementMap.has(device.deviceModel)) {
+                    throw new Error(`Sai loại sản phẩm (${device.deviceModel})`);
+                }
+
+                // QUANTITY WARNING
+                const requiredQty = requirementMap.get(device.deviceModel) || 0;
+                const currentQty = scannedMap.get(device.deviceModel) || 0;
+                if (currentQty >= requiredQty) {
+                    warnings.push({ serial, warning: 'Quá số lượng yêu cầu' });
+                }
+
+                success.push(serial);
+                scannedMap.set(device.deviceModel, currentQty + 1);
+
+            } catch (err: any) {
+                errors.push({ serial, error: err.message });
             }
-
-            const device = deviceMap.get(serial);
-            if (!device) {
-                errors.push({ serial, error: 'NOT_FOUND' });
-                continue;
-            }
-
-            const model = device.deviceModel;
-            if (!requirementMap.has(model)) {
-                errors.push({ serial, error: 'WRONG_MODEL' });
-                continue;
-            }
-
-            // Check Quantity (Warning)
-            const requiredQty = requirementMap.get(model) || 0;
-            const currentQty = scannedMap.get(model) || 0;
-
-            if (currentQty >= requiredQty) {
-                warnings.push({ serial, warning: 'EXCESS_QUANTITY' });
-            }
-
-            // Valid
-            success.push(serial);
-            newItems.push({
-                serial: device.serial,
-                productCode: device.deviceModel,
-                deviceModel: device.deviceModel,
-                scannedAt: new Date()
-            });
-
-            scannedMap.set(model, currentQty + 1);
         }
 
-        // 3. Update Session
-        if (newItems.length > 0) {
+        // Insert Valid
+        if (success.length > 0) {
+            const newItems = success.map(serial => {
+                const device = deviceMap.get(serial);
+                return {
+                    serial: device.serial,
+                    productCode: device.deviceModel,
+                    deviceModel: device.deviceModel,
+                    scannedAt: new Date()
+                };
+            });
+
             await this.exportSessionRepository.update(sessionId, {
                 $push: { items: { $each: newItems } },
                 $inc: { serialChecked: newItems.length }
@@ -215,6 +218,40 @@ export class ExportSessionService {
         }
 
         return { success, errors, warnings };
+    }
+
+    private async validateScan(serial: string, session: ExportSession, exportRecord: any): Promise<void> {
+        // 1. Check Duplicate Local
+        if (session.items.some(i => i.serial === serial)) {
+            throw new BadRequestException(`MAC ${serial} đã quét rồi`);
+        }
+
+        // 2. Check Device Existence
+        const device = await this.deviceService.findByMac(serial);
+        if (!device) throw new BadRequestException(`MAC ${serial} không tồn tại`);
+
+        // 3. Check Warehouse Status
+        const readyWarehouse = await this.warehouseRepository.findOne({ code: 'READY_TO_EXPORT' });
+        if (readyWarehouse && String(device.warehouseId) !== String(readyWarehouse._id)) {
+            throw new BadRequestException(`Thiết bị đang ở kho khác, chưa sẵn sàng xuất`);
+        }
+
+        // 4. Check Duplicate Global (Locked in another session)
+        const otherSession = await this.exportSessionRepository.findOne({
+            status: ExportSessionStatus.IN_PROGRESS,
+            'items.serial': serial,
+            _id: { $ne: session._id || session.id }
+        });
+
+        if (otherSession) {
+            throw new BadRequestException(`MAC ${serial} đang được quét ở phiên ${otherSession.sessionCode} (${otherSession.sessionName})`);
+        }
+
+        // 5. Check Model Requirement
+        const requirements = new Set(exportRecord.requirements.map(r => r.productCode));
+        if (!requirements.has(device.deviceModel)) {
+            throw new BadRequestException(`Loại sản phẩm ${device.deviceModel} không nằm trong phiếu xuất này`);
+        }
     }
 
     async completeSession(sessionId: string, userId: string): Promise<ExportSession> {

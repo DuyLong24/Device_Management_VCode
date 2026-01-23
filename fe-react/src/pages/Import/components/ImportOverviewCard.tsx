@@ -44,7 +44,7 @@ export const ImportOverviewCard: React.FC<ImportOverviewCardProps> = ({
                 </Col>
                 <Col xs={24} sm={8}>
                     <Statistic
-                        title="Serial đã import"
+                        title="Mac đã import"
                         value={serialImported}
                         suffix={`/ ${totalQuantity}`}
                         prefix={<CheckCircleOutlined />}

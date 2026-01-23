@@ -214,6 +214,10 @@ export class DeviceService implements OnModuleInit {
       if (toWarehouse.code === 'DEFECT' || transition.transitionType === 'QC_FAIL') {
         device.qcNote = errorReason;
       }
+      // [NEW] If UNDER_REPAIR, save repairNote
+      if (toWarehouse.code === 'UNDER_REPAIR') {
+        device.repairNote = errorReason;
+      }
     }
 
     // Always save note if standard (optional)
@@ -414,5 +418,17 @@ export class DeviceService implements OnModuleInit {
       invalidMacs,
       errors
     };
+  }
+
+  async countReadyToExport(model: string): Promise<number> {
+    const readyWh = await this.warehouseService.findAll({ code: 'READY_TO_EXPORT' });
+    if (!readyWh || readyWh.length === 0) {
+      return 0;
+    }
+    const warehouseId = readyWh[0]._id;
+    return this.deviceModel.countDocuments({
+      deviceModel: model,
+      warehouseId: warehouseId
+    });
   }
 }

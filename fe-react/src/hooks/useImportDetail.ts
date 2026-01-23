@@ -34,11 +34,15 @@ export const useImportDetail = () => {
 
     // 3. Prepare Products Data for UI
     const productsUI: ImportProductUI[] = (importData?.products || []).map((product) => {
+        // [FIX] Fallback to expectedSerials.length if serialImported is 0 (for old tickets)
+        const importedCount = product.serialImported || product.expectedSerials?.length || 0;
+
         return {
             ...product,
+            serialImported: importedCount,
             key: product.productCode,
             packaging: `${product.boxCount || 0} hộp × ${product.itemsPerBox || 0} sp/hộp`,
-            serialStatus: product.serialImported === product.quantity ? 'complete' : product.serialImported && product.serialImported > (product.quantity || 0) ? 'excess' : 'missing',
+            serialStatus: importedCount === product.quantity ? 'complete' : importedCount > (product.quantity || 0) ? 'excess' : 'missing',
             serialExpected: product.quantity,
         };
     });

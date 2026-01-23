@@ -3,7 +3,6 @@ import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     SendOutlined,
-    ScanOutlined,
     PrinterOutlined,
 } from '@ant-design/icons';
 import { EXPORT_STATUS, type ExportStatusType } from '../../constants/export-status.constant';
@@ -14,7 +13,7 @@ interface ApprovalActionsProps {
     onSubmit: () => Promise<void>;
     onApprove: () => Promise<void>;
     onReject: () => Promise<void>;
-    onNavigateToScan: () => void;
+    // onNavigateToScan: () => void;
     onConfirm?: () => Promise<void>;
 }
 
@@ -23,7 +22,7 @@ export const ApprovalActions = ({
     onSubmit,
     onApprove,
     onReject,
-    onNavigateToScan,
+    // onNavigateToScan,
     onConfirm
 }: ApprovalActionsProps) => {
     const handleRejectClick = () => {
@@ -64,9 +63,6 @@ export const ApprovalActions = ({
 
             {(status === EXPORT_STATUS.APPROVED || status === EXPORT_STATUS.IN_PROGRESS) && (
                 <>
-                    <Button type="default" icon={<ScanOutlined />} onClick={onNavigateToScan}>
-                        Quét Tuân Thủ (Scan)
-                    </Button>
                     {onConfirm && status === EXPORT_STATUS.IN_PROGRESS && (
                         <Popconfirm
                             title="Hoàn tất phiếu xuất kho?"

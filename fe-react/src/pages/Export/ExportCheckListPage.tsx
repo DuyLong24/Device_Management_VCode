@@ -89,7 +89,7 @@ export default function ExportCheckListPage() {
                 });
             }
         } catch (error) {
-            messageApi.error('Không thể tải danh sách phiên kiểm kê');
+            messageApi.error('Không thể tải danh sách phiên quét xuất kho');
         } finally {
             setSessionLoading(false);
         }
@@ -228,7 +228,7 @@ export default function ExportCheckListPage() {
                             size="small"
                             onClick={() => handleOpenSelectModal(record)}
                         >
-                            Kiểm kê
+                            Quét xuất kho
                         </Button>
 
                         {record.status !== 'COMPLETED' && (

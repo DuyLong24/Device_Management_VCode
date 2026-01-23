@@ -3,6 +3,7 @@ export enum WarehouseCode {
     PENDING_QC = 'PENDING_QC',
     READY_TO_EXPORT = 'READY_TO_EXPORT',
     DEFECT = 'DEFECT',
+    UNDER_REPAIR = 'UNDER_REPAIR',
 
     // Kho bảo hành
     IN_WARRANTY = 'IN_WARRANTY',
@@ -25,6 +26,7 @@ export enum TransitionType {
     WARRANTY_REPAIR = 'WARRANTY_REPAIR',   // Bảo hành: Sửa xong (-> PENDING_QC)
     SCRAP = 'SCRAP',                       // Thanh lý/Hủy (-> REMOVED)
     CUSTOMER_RETURN = 'CUSTOMER_RETURN',   // Khách trả hàng (-> PENDING_QC)
+    PENDING_QC_TO_UNDER_REPAIR = 'PENDING_QC_TO_UNDER_REPAIR', // QC -> Sửa chữa
 }
 
 export enum ActionType {

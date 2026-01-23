@@ -142,14 +142,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             },
             { type: 'divider' },
             {
-                key: MENU_KEYS.WARRANTY.ROOT,
-                icon: SECTION_ICONS.WARRANTY,
-                label: MENU_LABELS.WARRANTY.ROOT,
-                children: [
-                    { key: MENU_KEYS.WARRANTY.LIST, icon: SECTION_ICONS.WARRANTY_LIST, label: MENU_LABELS.WARRANTY.LIST, onClick: () => navigate('/warranty/list') },
-                ],
-            },
-            {
                 key: MENU_KEYS.SYSTEM.ROOT,
                 icon: SECTION_ICONS.SYSTEM,
                 label: MENU_LABELS.SYSTEM.ROOT,
@@ -202,15 +194,37 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     const currentBreadcrumbTitle = (findMenuItemLabel(menuItems, selectedKey) as ReactNode) || MENU_LABELS.DASHBOARD;
 
+    const breadcrumbItems = [
+        { title: 'Trang chủ' },
+        { title: currentBreadcrumbTitle }
+    ];
+
+    // Detect Detail Page (Import)
+    if (selectedKey === MENU_KEYS.IMPORT.LIST && !location.pathname.endsWith('/list') && location.pathname.includes('/import/')) {
+        breadcrumbItems.push({ title: 'Chi tiết phiếu nhập' });
+    }
+    // Detect Detail Page (Export)
+    if (selectedKey === MENU_KEYS.EXPORT.LIST && !location.pathname.endsWith('/list') && location.pathname.includes('/export/')) {
+        breadcrumbItems.push({ title: 'Chi tiết phiếu xuất' });
+    }
+    // Detect Detail Page (Warehouse Devices -> Serial Detail)
+    if (!selectedKey.startsWith('warehouse-') && location.pathname.includes('/serial/')) {
+        // Override for Serial Detail if needed, or if it falls into All Serials
+        if (selectedKey === MENU_KEYS.ALL_SERIALS) {
+            breadcrumbItems.push({ title: 'Chi tiết thiết bị' });
+        }
+    }
+
     return (
         <Layout className="min-h-screen">
             <Sider
                 collapsible
                 collapsed={collapsed}
                 onCollapse={setCollapsed}
-                width={250}
+                width={280}
                 style={{
-                    overflow: 'auto',
+                    overflowY: 'scroll', // Force scrollbar to prevent layout shift
+                    overflowX: 'hidden',
                     height: '100vh',
                     position: 'fixed',
                     left: 0,
@@ -244,12 +258,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </Sider>
 
             <Layout
-                className={`transition-all duration-200 ease-in-out ${collapsed ? 'ml-[80px]' : 'ml-[250px]'}`}
+                className={`transition-all duration-200 ease-in-out ${collapsed ? 'ml-[80px]' : 'ml-[280px]'}`}
             >
                 <Header
                     className="px-6 !bg-white flex items-center justify-between shadow-sm sticky top-0 z-[99] h-16 w-full"
                 >
-                    <Breadcrumb items={[{ title: 'Trang chủ' }, { title: currentBreadcrumbTitle }]} />
+                    <Breadcrumb items={breadcrumbItems} />
 
                     <Space size="large">
                         <Dropdown menu={{ items: notificationItems }} trigger={['click']}>

@@ -49,9 +49,9 @@ export class DeviceImportService {
       code = `NK-${year}-${month}-${random}`;
     }
 
-    // 2. Tính toán tổng
-    const products = createDto.products || [];
-    const { totalItem, totalQuantity } = this.calculateTotals(products);
+    // 2. Tính toán tổng & Process Products
+    const productsDto = createDto.products || [];
+    const { products, totalItem, totalQuantity, totalSerialImported } = this.processProducts(productsDto);
 
     const details = createDto.details || [];
     const status = createDto.status || 'DRAFT';
@@ -60,10 +60,11 @@ export class DeviceImportService {
     const payload = {
       ...createDto,
       code,
-      products,
+      products, // Use processed products with serialImported set
       details,
       totalItem,
       totalQuantity,
+      serialImported: totalSerialImported, // Set root serialImported
       status,
       createdBy: userId ? userId : null
     };
@@ -104,9 +105,11 @@ export class DeviceImportService {
 
     // Tính lại tổng nếu sửa products
     if (updateDto.products) {
-      const { totalItem, totalQuantity } = this.calculateTotals(updateDto.products);
+      const { products, totalItem, totalQuantity, totalSerialImported } = this.processProducts(updateDto.products);
+      updateData.products = products; // Save processed products
       updateData.totalItem = totalItem;
       updateData.totalQuantity = totalQuantity;
+      updateData.serialImported = totalSerialImported; // Update root serialImported
     }
 
     const updated = await this.deviceImportRepository.update(id, updateData);
@@ -133,13 +136,34 @@ export class DeviceImportService {
     return deleted;
   }
 
-  private calculateTotals(products: any[]) {
-    if (!products || !Array.isArray(products) || products.length === 0) {
-      return { totalItem: 0, totalQuantity: 0 };
+
+  private processProducts(productsDto: any[]) {
+    if (!productsDto || !Array.isArray(productsDto) || productsDto.length === 0) {
+      return {
+        products: [],
+        totalItem: 0,
+        totalQuantity: 0,
+        totalSerialImported: 0
+      };
     }
-    const totalItem = products.length;
-    const totalQuantity = products.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    return { totalItem, totalQuantity };
+
+    const processedProducts = productsDto.map(p => {
+      return {
+        ...p,
+        serialImported: 0
+      };
+    });
+
+    const totalItem = processedProducts.length;
+    const totalQuantity = processedProducts.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const totalSerialImported = 0;
+
+    return {
+      products: processedProducts,
+      totalItem,
+      totalQuantity,
+      totalSerialImported
+    };
   }
 
   async updateProgress(id: string, data: { serialImported: number, productCounts?: Record<string, number> }) {
@@ -176,12 +200,6 @@ export class DeviceImportService {
       });
     }
 
-    // Nếu đang làm dở -> Update trạng thái phiếu thành IN_PROGRESS (để không còn là PENDING/DRAFT)
-    // REMOVED: Status should remain PUBLIC once created. InventoryStatus tracks progress.
-    // if (newStatus === 'in-progress') {
-    //   updatePayload.status = 'IN_PROGRESS';
-    // }
-
     return this.deviceImportRepository.update(id, updatePayload);
   }
 
@@ -208,7 +226,6 @@ export class DeviceImportService {
     // 3. Cập nhật trạng thái
     return this.deviceImportRepository.update(id, {
       inventoryStatus: 'completed',
-      // status: 'COMPLETED', // Keep PUBLIC
       updatedBy: userId
     } as any);
   }

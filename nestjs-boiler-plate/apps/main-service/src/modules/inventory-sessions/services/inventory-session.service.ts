@@ -117,26 +117,26 @@ export class InventorySessionService {
                 // [NEW] Find detailed info from Import Ticket
                 let detailedName = modelName;
                 let detailedP2P = '';
+                let foundDetail: any = null;
 
                 // Search in all products of the ticket
                 if (importTicket && importTicket.products) {
                     for (const prod of importTicket.products) {
-                        const found = prod.expectedDetails?.find(d => d.mac === item.serial); // item.serial is actually the MAC scanned
+                        const found = prod.expectedDetails?.find(d => d.mac === item.serial);
                         if (found) {
+                            foundDetail = found;
                             detailedName = found.name || modelName;
                             detailedP2P = found.p2p || '';
-                            // serial is item.serial (which is MAC from scanner) - WAIT. 
-                            // In Inventory Session, 'serial' field implies the identifier scanned.
-                            // For 'mac' based products, we scan MAC.
+                            break; // Stop searching once found
                         }
                     }
                 }
 
                 return {
                     code: item.serial,
-                    serial: item.serial, // Using MAC as Serial for now if P2P/Serial not separate? 
-                    // User Request: "T muốn có Mã sản phẩm, MAC, p2p, Serial, Tên thế thôi"
-                    // So we should try to get REAL Serial if available.
+
+                    // FIX: Use Real Serial from Excel if found, else use MAC
+                    serial: (foundDetail && foundDetail.serial) ? foundDetail.serial : item.serial,
 
                     name: detailedName, // Use name from Excel if available
                     deviceModel: item.productCode || modelName,
@@ -148,8 +148,9 @@ export class InventorySessionService {
                     supplierId: importTicket.supplier || 'Unknown',
                     importDate: importTicket.importDate,
                     history: [],
-                    mac: item.serial, // item.serial is the SCANNED value which is MAC
-                    p2p: detailedP2P,
+
+                    mac: item.serial, // The scanned item IS the MAC
+                    p2p: detailedP2P, // Use P2P from Excel
                     currentExportId: null
                 };
             });

@@ -160,7 +160,21 @@ export default function ExportProcessPage() {
             const res = await exportSessionService.scanBulk(sessionId!, codes);
             messageApi.success(`Đã xử lý ${codes.length} mã.`);
             if (res.data?.errors?.length) {
-                messageApi.warning(`Có ${res.data.errors.length} mã lỗi`);
+                // messageApi.warning(`Có ${res.data.errors.length} mã lỗi`);
+                const errorList = res.data.errors.map((e: any) =>
+                    `<li><b>${e.serial}</b>: ${e.error}</li>`
+                ).join('');
+
+                Modal.warning({
+                    title: 'Kết quả quét có lỗi',
+                    content: (
+                        <div>
+                            <p>Các mã sau không được chấp nhận:</p>
+                            <ul dangerouslySetInnerHTML={{ __html: errorList }} className="list-disc pl-4 text-red-500" />
+                        </div>
+                    ),
+                    width: 500
+                });
             }
 
             fetchDetail();
@@ -373,6 +387,16 @@ export default function ExportProcessPage() {
 
             {/* Complete */}
             <Card>
+                {matchCount > totalRequired && (
+                    <Alert
+                        message="Cảnh báo: Số lượng quét vượt quá yêu cầu"
+                        description={`Bạn đã quét ${matchCount}/${totalRequired} thiết bị. Vui lòng xóa bớt thiết bị thừa trước khi hoàn tất.`}
+                        type="error"
+                        showIcon
+                        className="mb-4"
+                    />
+                )}
+
                 <div className="flex justify-between items-center">
                     <div>
                         <Text strong className="text-lg">Hoàn thành phiên xuất kho</Text>
@@ -385,6 +409,9 @@ export default function ExportProcessPage() {
                         size="large"
                         icon={<CheckCircleOutlined />}
                         onClick={handleCompleteExport}
+                        disabled={matchCount > totalRequired}
+                        danger={matchCount > totalRequired}
+                        title={matchCount > totalRequired ? 'Vui lòng bỏ bớt thiết bị thừa' : 'Hoàn tất phiên'}
                     >
                         Hoàn thành phiên xuất kho
                     </Button>

@@ -96,7 +96,7 @@ export const ProductListTable = ({ exportInfo }: ProductListTableProps) => {
                     return (
                         <Tooltip title={`Thiếu ${item.serialExpected - item.serialExported} serial`}>
                             <Tag color="error" icon={<WarningOutlined />}>
-                                Thiếu serial
+                                Thiếu mac
                             </Tag>
                         </Tooltip>
                     );

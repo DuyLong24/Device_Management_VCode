@@ -189,6 +189,20 @@ export class DeviceExportService {
     if (exportRecord.status !== ExportStatusEnum.PENDING_APPROVAL) {
       throw new BadRequestException('Chỉ có thể duyệt phiếu đang Chờ duyệt (PENDING_APPROVAL).');
     }
+
+    // Validate Stock Availability
+    if (exportRecord.requirements && exportRecord.requirements.length > 0) {
+      for (const req of exportRecord.requirements) {
+        const stockStatus = await this.getInventoryStatus(req.productCode);
+        // Note: getInventoryStatus already excludes PENDING_APPROVAL, so current export is not in 'reserved'
+        if (stockStatus.available < req.quantity) {
+          throw new BadRequestException(
+            `Không đủ tồn kho khả dụng cho ${req.productCode}. Cần: ${req.quantity}, Khả dụng: ${stockStatus.available}`
+          );
+        }
+      }
+    }
+
     return this.update(id, {
       status: ExportStatusEnum.APPROVED as any,
       approvedBy: user._id,
@@ -225,5 +239,33 @@ export class DeviceExportService {
       status: ExportStatus.COMPLETED,
       exportDate: new Date()
     } as any);
+  }
+  async getInventoryStatus(model: string): Promise<{ inStock: number; reserved: number; available: number }> {
+    const inStock = await this.deviceService.countReadyToExport(model);
+
+    const activeExports = await this.deviceExportRepository.findAll({
+      status: {
+        $in: [
+          ExportStatusEnum.APPROVED,
+          ExportStatusEnum.IN_PROGRESS
+        ]
+      }
+    });
+
+    let reserved = 0;
+    for (const exportRecord of activeExports) {
+      if (exportRecord.requirements) {
+        const req = exportRecord.requirements.find(r => r.productCode === model);
+        if (req) {
+          reserved += req.quantity;
+        }
+      }
+    }
+
+    return {
+      inStock,
+      reserved,
+      available: Math.max(0, inStock - reserved)
+    };
   }
 }

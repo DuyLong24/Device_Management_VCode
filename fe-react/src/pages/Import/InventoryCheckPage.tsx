@@ -68,7 +68,8 @@ export default function InventoryCheckPage() {
     removeServerItem,
     duplicateSerials,
     manualSerials, setManualSerials,
-    otherCompletedCount
+    otherCompletedCount,
+    productModels
   } = useInventoryCheck();
 
   // Logic thống kê Matching
@@ -125,7 +126,7 @@ export default function InventoryCheckPage() {
 
   // Columns
   const serialColumns: TableColumnsType<any> = [
-    { title: 'Serial', dataIndex: 'serial', key: 'serial', render: (t) => <Text strong className="text-blue-600 font-mono">{t}</Text> },
+    { title: 'Mac', dataIndex: 'serial', key: 'serial', render: (t) => <Text strong className="text-blue-600 font-mono">{t}</Text> },
     { title: 'Sản phẩm', dataIndex: 'productCode', key: 'productCode' },
     { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t) => dayjs(t).format('HH:mm:ss') },
     {
@@ -151,14 +152,31 @@ export default function InventoryCheckPage() {
     }
   ];
 
-  const productOptions = importInfo?.products.map(p => {
-    // Đếm số lượng matched
-    const matched = processedItems.filter(i => (i as any).productCode === p.productCode && i.status === 'MATCHED').length;
-    return {
-      label: `${p.productCode} (${matched}/${p.quantity})`,
-      value: p.productCode
-    };
-  }) || [];
+  const productOptions = useMemo(() => {
+    if (!productModels || productModels.length === 0) {
+      return importInfo?.products.map(p => {
+        const matched = processedItems.filter(i => (i as any).productCode === p.productCode && i.status === 'MATCHED').length;
+        return { label: `${p.productCode} (${matched}/${p.quantity})`, value: p.productCode };
+      }) || [];
+    }
+
+    return productModels.map(model => {
+      const importProd = importInfo?.products.find(p => p.productCode === model.code);
+      let suffix = '';
+      if (importProd) {
+        const matched = processedItems.filter(i => (i as any).productCode === model.code && i.status === 'MATCHED').length;
+        suffix = ` (${matched}/${importProd.quantity})`;
+      } else {
+        const scanned = processedItems.filter(i => (i as any).productCode === model.code).length;
+        if (scanned > 0) suffix = ` (Đã quét: ${scanned})`;
+      }
+
+      return {
+        label: `${model.name} - ${model.code}${suffix}`,
+        value: model.code
+      };
+    });
+  }, [productModels, importInfo, processedItems]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -172,10 +190,10 @@ export default function InventoryCheckPage() {
       <div className="mb-6">
         <Title level={3} className="mb-2!">{sessionInfo.sessionName}</Title>
         <Space>
-          <Tag color="blue">{sessionInfo.sessionCode}</Tag>
-          <Tag>{sessionInfo.importCode}</Tag>
+          <Tag>Mã phiếu nhập: {sessionInfo.importCode}</Tag>
+          <Tag color="blue">Mã phiên: {sessionInfo.sessionCode}</Tag>
           <Tag color={sessionStatus === 'in-progress' ? 'processing' : sessionStatus === 'init' ? 'default' : 'success'}>
-            {sessionStatus === 'init' ? 'Chưa bắt đầu' : sessionStatus === 'in-progress' ? 'Đang kiểm kê' : 'Đã hoàn tất'}
+            Trạng thái: {sessionStatus === 'init' ? 'Chưa bắt đầu' : sessionStatus === 'in-progress' ? 'Đang kiểm kê' : 'Đã hoàn tất'}
           </Tag>
         </Space>
       </div>
@@ -183,8 +201,8 @@ export default function InventoryCheckPage() {
       {/* Session Info */}
       <Card title={INVENTORY_LABELS.SESSION_INFO} className="mb-6 shadow-sm">
         <Descriptions column={{ xxl: 4, xl: 3, lg: 2, md: 2, sm: 1, xs: 1 }} size="small" bordered>
-          <Descriptions.Item label={INVENTORY_LABELS.SESSION_CODE}>{sessionInfo.sessionCode}</Descriptions.Item>
           <Descriptions.Item label={INVENTORY_LABELS.IMPORT_TICKET}>{sessionInfo.importCode}</Descriptions.Item>
+          <Descriptions.Item label={INVENTORY_LABELS.SESSION_CODE}>{sessionInfo.sessionCode}</Descriptions.Item>
           <Descriptions.Item label="Ngày nhập">{sessionInfo.importDate}</Descriptions.Item>
           <Descriptions.Item label="Người nhập kho">{sessionInfo.importedBy}</Descriptions.Item>
         </Descriptions>
@@ -246,7 +264,7 @@ export default function InventoryCheckPage() {
       {/* Actions: In-Progress State */}
       {sessionStatus === 'in-progress' && (
         <>
-          <Card title="Quét serial kiểm kê" className="mb-6 shadow-sm">
+          <Card title="Quét mac kiểm kê" className="mb-6 shadow-sm">
             <Space direction="vertical" className="w-full" size="middle">
               <div className="bg-blue-50 p-4 rounded border border-blue-100">
                 <Text strong className="block mb-2 text-blue-800">1. Chọn sản phẩm đang kiểm kê <span className="text-red-500">*</span></Text>
@@ -262,7 +280,7 @@ export default function InventoryCheckPage() {
 
               <Row gutter={16}>
                 <Col span={24}>
-                  <Text strong className="block mb-2">2. Quét hoặc nhập Serial</Text>
+                  <Text strong className="block mb-2">2. Quét hoặc nhập Mac</Text>
                   <Space.Compact className="w-full">
                     <Input
                       ref={inputRef}
@@ -282,25 +300,23 @@ export default function InventoryCheckPage() {
                 </Col>
               </Row>
 
-              <Divider>Hoặc nhập liệu nâng cao</Divider>
-
               <Row gutter={16}>
-                <Col xs={24} md={12}>
-                  <Space direction="vertical" className="w-full" size="small">
-                    <Text strong>Nhập thủ công nhiều serial</Text>
-                    <Input.TextArea
-                      rows={5}
-                      placeholder="Nhập từng serial trên một dòng..."
-                      value={manualSerials}
-                      onChange={(e) => setManualSerials(e.target.value)}
-                    />
-                    <Button block icon={<CheckCircleOutlined />} onClick={handleManualImport}>
-                      Nhập danh sách
-                    </Button>
-                  </Space>
-                </Col>
+                {/* <Col xs={24} md={12}> */}
+                <Space direction="vertical" className="w-full" size="small">
+                  <Divider>Nhập thủ công nhiều mã mac</Divider>
+                  <Input.TextArea
+                    rows={5}
+                    placeholder="Nhập từng mã mac trên một dòng..."
+                    value={manualSerials}
+                    onChange={(e) => setManualSerials(e.target.value)}
+                  />
+                  <Button block icon={<CheckCircleOutlined />} onClick={handleManualImport}>
+                    Nhập danh sách
+                  </Button>
+                </Space>
+                {/* </Col> */}
 
-                <Col xs={24} md={12}>
+                {/* <Col xs={24} md={12}>
                   <Space direction="vertical" className="w-full" size="small">
                     <Text strong>Import từ file Excel</Text>
                     <Dragger
@@ -315,7 +331,7 @@ export default function InventoryCheckPage() {
                       Tải template Excel
                     </Button>
                   </Space>
-                </Col>
+                </Col> */}
               </Row>
             </Space>
           </Card>
@@ -342,12 +358,12 @@ export default function InventoryCheckPage() {
                 },
                 {
                   key: '2',
-                  label: 'Serial mẫu (Đối chiếu)',
+                  label: 'Mac mẫu (Đối chiếu)',
                   children: !selectedProductCode ? (
-                    <div className="p-4 text-center text-gray-500">Chọn sản phẩm để xem danh sách serial cần quét</div>
+                    <div className="p-4 text-center text-gray-500">Chọn sản phẩm để xem danh sách mac cần quét</div>
                   ) : (
                     <div className="p-4">
-                      <Text strong>Serial dự kiến của {selectedProductCode}:</Text>
+                      <Text strong>Mac dự kiến của {selectedProductCode}:</Text>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {importInfo?.products
                           .find(p => p.productCode === selectedProductCode)
@@ -368,16 +384,18 @@ export default function InventoryCheckPage() {
             />
           </Card>
 
-          <Card className={`shadow-sm border-l-4 ${stats.duplicateCount > 0 ? 'border-l-red-500 bg-red-50' : stats.missingCount > 0 ? 'border-l-orange-500 bg-orange-50' : 'border-l-green-500 bg-green-50'}`}>
+          <Card className={`shadow-sm border-l-4 ${stats.duplicateCount > 0 || stats.excessCount > 0 ? 'border-l-red-500 bg-red-50' : stats.missingCount > 0 ? 'border-l-orange-500 bg-orange-50' : 'border-l-green-500 bg-green-50'}`}>
             <Flex justify="space-between" align="center">
               <div>
                 <Text strong className="text-base">Hoàn tất kiểm kê</Text>
                 <br />
                 <Text type="secondary">
                   {stats.duplicateCount > 0 ? (
-                    <Text type="danger" strong>Phát hiện {stats.duplicateCount} serial trùng lặp! Vui lòng xóa trước khi hoàn tất.</Text>
+                    <Text type="danger" strong>Phát hiện {stats.duplicateCount} mã mac trùng lặp! Vui lòng xóa trước khi hoàn tất.</Text>
+                  ) : stats.excessCount > 0 ? (
+                    <Text type="danger" strong>Phát hiện {stats.excessCount} mã mac thừa so với phiếu nhập! Vui lòng kiểm tra lại.</Text>
                   ) : stats.missingCount > 0 ? (
-                    <Text type="warning">Còn thiếu {stats.missingCount} serial so với phiếu nhập.</Text>
+                    <Text type="warning">Còn thiếu {stats.missingCount} mã mac so với phiếu nhập.</Text>
                   ) : (
                     <Text type="success">Đã đủ số lượng yêu cầu.</Text>
                   )}
@@ -388,8 +406,8 @@ export default function InventoryCheckPage() {
                 size="large"
                 icon={<CheckCircleOutlined />}
                 onClick={handleCompleteInventory}
-                disabled={isSaving}
-                className={stats.missingCount > 0 || stats.duplicateCount > 0 ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+                disabled={isSaving || stats.excessCount > 0}
+                className={stats.missingCount > 0 || stats.duplicateCount > 0 || stats.excessCount > 0 ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
               >
                 {INVENTORY_LABELS.BTN_COMPLETE}
               </Button>
@@ -412,11 +430,11 @@ export default function InventoryCheckPage() {
             message="Lỗi hoàn tất phiên"
             description={
               <div>
-                <Text type="danger">Phát hiện {duplicateSerials.length} serial đã tồn tại trong hệ thống:</Text>
+                <Text type="danger">Phát hiện {duplicateSerials.length} mã mac đã tồn tại trong hệ thống:</Text>
                 <div className="max-h-32 overflow-y-auto mt-2 bg-white p-2 border rounded">
                   {duplicateSerials.map(s => <Tag color="red" key={s}>{s}</Tag>)}
                 </div>
-                <div className="mt-2">Vui lòng xóa các serial này khỏi danh sách quét trước khi thử lại.</div>
+                <div className="mt-2">Vui lòng xóa các mã mac này khỏi danh sách quét trước khi thử lại.</div>
               </div>
             }
             type="error"
@@ -427,8 +445,8 @@ export default function InventoryCheckPage() {
             message="Xác nhận hoàn tất kiểm kê"
             description={
               <ul className="pl-5 mt-2 mb-0">
-                <li><b>Số serial đã khớp:</b> {stats.matchCount}</li>
-                <li><b>Số serial thừa:</b> {stats.excessCount}</li>
+                <li><b>Số mac đã khớp:</b> {stats.matchCount}</li>
+                <li><b>Số mac thừa:</b> {stats.excessCount}</li>
                 <li><b>Còn thiếu:</b> {stats.missingCount}</li>
                 <li>Hệ thống sẽ tạo thiết bị và cập nhật trạng thái phiếu nhập.</li>
               </ul>

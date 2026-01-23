@@ -20,15 +20,14 @@ import { WarehouseGroupsModule } from './modules/warehouse-groups/warehouse-grou
 import { WarehousesModule } from './modules/warehouses/warehouses.module';
 import { WarehouseTransitionsModule } from './modules/warehouse-transitions/warehouse-transitions.module';
 import { CategoriesModule } from './modules/categories/categories.module';
-// import { SeedService } from './common/services/seed.service';
 import { DevicesModule } from './modules/devices/devices.module';
 import { DeviceImportModule } from './modules/device-imports/device-imports.module';
 import { DeviceExportModule } from './modules/device-exports/device-exports.module';
 import { DeviceHistoryModule } from './modules/device-histories/device-historys.module';
 import { InventorySessionModule } from './modules/inventory-sessions/inventory-sessions.module';
 import { ExcelModule } from './common/excel/excel.module';
-import { DataImportModule } from './modules/data-import/data-import.module'; // NEW
-import { SharedDataModule } from './modules/shared-data/shared-data.module'; // NEW
+import { DataImportModule } from './modules/data-import/data-import.module';
+import { SharedDataModule } from './modules/shared-data/shared-data.module';
 
 import { FncRole, FncRoleSchema } from './fnc-roles/entities/fnc-role.entity';
 import { User, UserSchema } from './users/entities/user.entity';

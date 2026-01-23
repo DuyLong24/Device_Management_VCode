@@ -8,6 +8,7 @@ import { DeviceExport, DeviceExportSchema } from './schemas/device-export.schema
 import { ExportSession, ExportSessionSchema } from './schemas/export-session.schemas';
 import { ExportSessionRepository } from './repositories/export-session.repository';
 import { DevicesModule } from '../devices/devices.module';
+import { WarehousesModule } from '../warehouses/warehouses.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { DevicesModule } from '../devices/devices.module';
       { name: DeviceExport.name, schema: DeviceExportSchema },
       { name: ExportSession.name, schema: ExportSessionSchema }
     ]),
-    DevicesModule
+    DevicesModule,
+    WarehousesModule
   ],
   controllers: [DeviceExportController],
   providers: [DeviceExportService, ExportSessionService, DeviceExportRepository, ExportSessionRepository],

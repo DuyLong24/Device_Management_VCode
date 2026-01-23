@@ -25,7 +25,7 @@ export class WarehouseRepository {
     }
 
     if (populate) {
-      query = query.populate(populate);
+      query = (query as any).populate(populate);
     }
 
     return query.exec();

@@ -1,18 +1,21 @@
 import { axiosInstance } from '../configs/axios.config';
-import type { DeviceExport, CreateExportDto } from '../types/export.type';
+import type { DeviceExport, CreateExportDto, PaginatedResponse } from '../types/export.type';
 
 export const exportService = {
     getAll: async (_params: any) => {
-        const response = await axiosInstance.get<DeviceExport[]>('/device-exports', {
+        const response = await axiosInstance.get<PaginatedResponse<DeviceExport>>('/device-exports', {
             params: {
                 sortBy: 'createdAt:desc',
                 ..._params
             }
         });
+
+        const items = response.data?.results || [];
+
         return {
-            data: response.data,
+            data: items,
             success: true,
-            total: Array.isArray(response.data) ? response.data.length : 0,
+            total: response.data?.totalResults || items.length,
         };
     },
 
@@ -50,5 +53,11 @@ export const exportService = {
 
     delete: async (id: string) => {
         return axiosInstance.delete(`/device-exports/${id}`);
+    },
+
+    getInventoryStatus: async (model: string) => {
+        return axiosInstance.get<{ inStock: number; reserved: number; available: number }>('/device-exports/inventory-status', {
+            params: { model }
+        });
     }
 };

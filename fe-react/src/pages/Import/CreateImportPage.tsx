@@ -24,12 +24,12 @@ import {
     CloseOutlined,
     PlusOutlined,
     DeleteOutlined,
-    BarcodeOutlined,
     UploadOutlined,
     FileExcelOutlined,
     FileTextOutlined,
     ImportOutlined,
-    InfoCircleOutlined
+    InfoCircleOutlined,
+    NumberOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType, UploadProps } from 'antd';
 import dayjs from 'dayjs';
@@ -39,6 +39,7 @@ import * as XLSX from 'xlsx';
 import { importService } from '../../services/import.service';
 import { sharedDataService } from '../../services/shared-data.service';
 import { userService } from '../../services/user.service';
+import { getCurrentUser } from '../../utils/auth.utils';
 import { categoryService } from '../../services/category.service';
 import { deviceService } from '../../services/device.service';
 
@@ -81,9 +82,8 @@ export default function CreateImportPage() {
     // Data States
     const [userOptions, setUserOptions] = useState<{ label: string, value: string }[]>([]);
     const [categoryOptions, setCategoryOptions] = useState<{ label: string, value: string }[]>([]);
-    const [modelOptions, setModelOptions] = useState<{ label: string, value: string }[]>([]);
+    const [modelOptions, setModelOptions] = useState<any[]>([]);
 
-    // [NEW] Modal State
     const [isMacModalOpen, setIsMacModalOpen] = useState(false);
     const [currentProductKey, setCurrentProductKey] = useState<string | null>(null);
     const [tempMacs, setTempMacs] = useState<string>('');
@@ -128,13 +128,21 @@ export default function CreateImportPage() {
                 // [NEW] Load Shared Data (Model)
                 const models = await sharedDataService.getDataByGroupCode('MODEL');
                 if (models && models.length > 0) {
-                    setModelOptions(models.map(m => ({ label: m.name, value: m.code })));
+                    setModelOptions(models.map(m => ({
+                        label: m.code, // Primary label is Code
+                        value: m.code,
+                        stockName: m.name // Secondary info
+                    })));
                 } else {
                     // Fallback to existing devices if no shared data found (optional, but good for transition)
                     const deviceList = (devices as any).docs || (devices as any).data || (Array.isArray(devices) ? devices : []);
                     const fallbackModels = [...new Set(deviceList.map((d: any) => d.deviceModel))];
                     if (fallbackModels.length > 0) {
-                        setModelOptions(fallbackModels.map(m => ({ label: m as string, value: m as string })));
+                        setModelOptions(fallbackModels.map(m => ({
+                            label: m as string,
+                            value: m as string,
+                            stockName: ''
+                        })));
                     }
                 }
 
@@ -171,6 +179,12 @@ export default function CreateImportPage() {
                 } else {
                     // Create Mode: New Code
                     form.setFieldValue('code', generateImportCode());
+
+                    // [NEW] Auto-fill Logged-in User
+                    const currentUser = getCurrentUser();
+                    if (currentUser && currentUser.username) {
+                        form.setFieldValue('importedBy', currentUser.username);
+                    }
                 }
 
                 // [NEW] Load Shared Data (Origin)
@@ -335,7 +349,7 @@ export default function CreateImportPage() {
                 productType: values.productType,
                 origin: values.origin,
                 importDate: values.importDate.toISOString(),
-                importedBy: values.importedBy,
+                importedBy: values.importedBy || '6969ff74c376ce4d439185ac', // [HARDCODE] Admin ID as requested
                 supplier: values.supplier,
                 handoverPerson: values.handoverPerson,
                 notes: values.notes,
@@ -384,9 +398,16 @@ export default function CreateImportPage() {
                 }
             }
 
-        } catch (error) {
-            console.error(error);
-            message.error('Có lỗi xảy ra khi xử lý phiếu');
+        } catch (error: any) {
+            console.error('Submit Error:', error);
+            const msg = error.response?.data?.message;
+            if (Array.isArray(msg)) {
+                message.error(msg.join(', '));
+            } else if (msg) {
+                message.error(msg);
+            } else {
+                message.error('Có lỗi xảy ra khi xử lý phiếu');
+            }
         } finally {
             setLoading(false);
         }
@@ -422,6 +443,16 @@ export default function CreateImportPage() {
                     className="w-full"
                     options={modelOptions}
                     onChange={(val) => handleProductChange(record.key, 'productCode', val ? val[0] : '')}
+                    optionRender={(option) => (
+                        <Space>
+                            <span className="font-semibold">{option.data.value}</span>
+                            {option.data.stockName && <span className="text-gray-500">({option.data.stockName})</span>}
+                        </Space>
+                    )}
+                    filterOption={(input, option) =>
+                        String(option?.value ?? '').toLowerCase().includes(input.toLowerCase()) ||
+                        String(option?.stockName ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
                 />
             ),
         },
@@ -464,7 +495,7 @@ export default function CreateImportPage() {
             ),
         },
         {
-            title: <span className="font-semibold text-center block">Danh sách MAC</span>,
+            title: <span className="font-semibold text-center block"><span className="text-red-500 mr-1" aria-hidden="true">*</span>Danh sách MAC</span>,
             key: 'macs',
             width: '20%',
             align: 'center',
@@ -477,7 +508,7 @@ export default function CreateImportPage() {
                     <Badge count={count} offset={[-5, 5]} color={isMatch ? '#52c41a' : '#ff4d4f'}>
                         <Button
                             type={isEmpty ? 'dashed' : 'default'}
-                            icon={<BarcodeOutlined />}
+                            icon={<NumberOutlined />}
                             className={!isMatch && !isEmpty ? 'border-red-500 text-red-500' : ''}
                             onClick={() => openMacModal(record)}
                         >
@@ -498,7 +529,7 @@ export default function CreateImportPage() {
 
                 return (
                     <Space direction="vertical" size="small">
-                        {!serialEmpty && (serialMatch ? <Tag color="blue">Đủ MAC</Tag> : <Tag color="warning">MAC chưa khớp SL</Tag>)}
+                        {!serialEmpty && (serialMatch ? <Tag color="blue">Đủ</Tag> : <Tag color="warning">Chưa khớp SL</Tag>)}
                         {serialEmpty && <Tag color="default">Chưa nhập MAC</Tag>}
                     </Space>
                 )
@@ -537,7 +568,7 @@ export default function CreateImportPage() {
                         {isEditMode ? 'Cập nhật Nháp' : 'Lưu nháp'}
                     </Button>
                     <Button type="primary" icon={<SaveOutlined />} onClick={() => submitImport('PUBLIC')} loading={loading} className="bg-blue-600 hover:bg-blue-700">
-                        Lưu & đóng
+                        Hoàn thiện & đóng
                     </Button>
                     <Button danger icon={<CloseOutlined />} onClick={handleCancel}>
                         Hủy
@@ -580,12 +611,12 @@ export default function CreateImportPage() {
                         <Form.Item name="importDate" label="Ngày nhập" rules={[{ required: true }]} className="col-span-1">
                             <DatePicker className="w-full" format="DD/MM/YYYY" />
                         </Form.Item>
-
-                        <Form.Item name="importedBy" label="Người nhập kho" rules={[{ required: true }]} className="col-span-1">
+                        {/* 
+                        <Form.Item name="importedBy" label="Người nhập kho" rules={[{ required: true, message: 'Vui lòng chọn người nhập' }]} className="col-span-1">
                             <Select placeholder="Chọn người nhập" options={userOptions} showSearch optionFilterProp="label" />
-                        </Form.Item>
+                        </Form.Item> */}
 
-                        <Form.Item name="supplier" label="Đơn vị xuất (Tùy chọn)" className="col-span-1 md:col-span-2 lg:col-span-1">
+                        <Form.Item name="supplier" label="Đơn vị xuất" className="col-span-1 md:col-span-2 lg:col-span-1">
                             <Input placeholder="Nhập tên nhà cung cấp" />
                         </Form.Item>
 
@@ -637,14 +668,13 @@ export default function CreateImportPage() {
             </section >
 
             {/* Sticky Footer */}
-            {/* Sticky Footer */}
             <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
                 <div className="max-w-7xl mx-auto flex justify-end gap-3">
                     <Button icon={<SaveOutlined />} onClick={() => submitImport('DRAFT')} loading={loading} size="large" className="min-w-30">
                         Lưu nháp
                     </Button>
                     <Button type="primary" icon={<SaveOutlined />} onClick={() => submitImport('PUBLIC')} loading={loading} size="large" className="bg-blue-600 hover:bg-blue-700 min-w-50">
-                        Lưu & đóng
+                        Hoàn thiện & đóng
                     </Button>
                     <Button danger icon={<CloseOutlined />} onClick={handleCancel} size="large" className="min-w-25">
                         Hủy

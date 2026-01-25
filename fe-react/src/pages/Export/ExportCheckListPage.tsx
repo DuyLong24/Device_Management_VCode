@@ -300,7 +300,7 @@ export default function ExportCheckListPage() {
                     rowKey={r => r.id || r._id || 'unknown'}
                     loading={loading}
                     pagination={{ pageSize: 12 }}
-                    variant="borderless"
+                    className="border-0"
                 />
             </Card>
 

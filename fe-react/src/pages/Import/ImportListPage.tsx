@@ -81,7 +81,6 @@ export default function ImportListPage() {
             });
 
             let inferredStatus = item.status;
-            // Legacy data support: if status missing but inventory active/done -> PUBLIC
             if (!inferredStatus) {
                 if (item.inventoryStatus && item.inventoryStatus !== 'pending') {
                     inferredStatus = 'PUBLIC';
@@ -110,8 +109,6 @@ export default function ImportListPage() {
             };
         });
     };
-    // ... (lines 101-306)
-
 
     const fetchData = async () => {
         try {
@@ -177,11 +174,10 @@ export default function ImportListPage() {
         try {
             message.loading({ content: 'Đang tạo file PDF...', key: 'pdf_export' });
 
-            // Map ImportRecord to DeviceImport for PDF generator
             const deviceImportData: any = {
                 id: record.key,
                 code: record.importCode,
-                status: 'COMPLETED', // Approximate
+                status: 'COMPLETED',
                 inventoryStatus: record.inventoryStatus,
                 productType: record.productType,
                 origin: record.origin || 'IMPORT',
@@ -243,17 +239,7 @@ export default function ImportListPage() {
         { value: 'completed', label: 'Đã kiểm kê' },
     ];
 
-    // const handleCompleteImport = async (record: ImportRecord) => {
-    //     try {
-    //         message.loading({ content: 'Đang xử lý hoàn tất...', key: 'complete_import' });
-    //         await importService.completeImport(record.key);
-    //         message.success({ content: 'Đã hoàn tất phiếu nhập kho!', key: 'complete_import' });
-    //         fetchData();
-    //     } catch (error: any) {
-    //         const msg = error.response?.data?.message || 'Không thể hoàn tất phiếu nhập';
-    //         message.error({ content: msg, key: 'complete_import' });
-    //     }
-    // };
+
 
     const columns: TableColumnsType<ImportRecord> = [
         {
@@ -348,29 +334,16 @@ export default function ImportListPage() {
             width: 250,
             fixed: 'right',
             align: 'center',
-            render: (_, record) => {
-                // const canComplete = record.inventoryStatus !== 'completed' && record.serialImported >= record.totalQuantity;
-                return (
-                    <Space size="small">
-                        <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.key)}>
-                            {IMPORT_LABELS.BTN_DETAIL}
-                        </Button>
-                        {/* <Button
-                            size="small"
-                            icon={<CheckCircleOutlined />}
-                            disabled={!canComplete}
-                            onClick={() => handleCompleteImport(record)}
-                            type={canComplete ? 'primary' : 'default'}
-                            danger={canComplete}
-                        >
-                            Hoàn tất
-                        </Button> */}
-                        <Button size="small" icon={<FileTextOutlined />} onClick={() => handleExportPdf(record)}>
-                            Xuất PDF
-                        </Button>
-                    </Space>
-                )
-            },
+            render: (_, record) => (
+                <Space size="small">
+                    <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.key)}>
+                        {IMPORT_LABELS.BTN_DETAIL}
+                    </Button>
+                    <Button size="small" icon={<FileTextOutlined />} onClick={() => handleExportPdf(record)}>
+                        Xuất PDF
+                    </Button>
+                </Space>
+            ),
         },
     ];
 

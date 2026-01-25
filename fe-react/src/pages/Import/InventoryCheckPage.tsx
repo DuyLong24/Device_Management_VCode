@@ -5,7 +5,6 @@ import {
   Tag,
   Alert,
   Input,
-  message,
   Modal,
   Descriptions,
   Statistic,
@@ -27,16 +26,12 @@ import {
   PlayCircleOutlined,
   DeleteOutlined,
   WarningOutlined,
-  DownloadOutlined,
-  UploadOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
 
 import { useInventoryCheck } from '../../hooks/useInventoryCheck';
-// import type { LocalScannedItem } from '../../hooks/useInventoryCheck';
-// import { useScanSound } from '../../hooks/useScanSound';
 import { INVENTORY_LABELS } from '../../constants/inventory.constants';
 
 const { Dragger } = Upload;
@@ -425,6 +420,15 @@ export default function InventoryCheckPage() {
         cancelText="Hủy"
         confirmLoading={isSaving}
       >
+        {stats.matchCount >= stats.totalRequired && (
+          <Alert
+            message="Lưu ý quan trọng"
+            description="Bạn đã kiểm đủ số lượng. Sau khi hoàn tất phiên này, Phiếu nhập kho sẽ tự động chuyển sang trạng thái ĐÃ HOÀN TẤT và không thể kiểm kê thêm."
+            type="warning"
+            showIcon
+            className="mb-4"
+          />
+        )}
         {duplicateSerials.length > 0 ? (
           <Alert
             message="Lỗi hoàn tất phiên"

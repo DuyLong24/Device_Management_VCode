@@ -162,12 +162,7 @@ export class InventorySessionService {
             const currentImported = importTicket.serialImported || 0;
             const newTotal = currentImported + session.totalScanned;
 
-            // [MODIFIED] Only update to 'in-progress' if pending. Do NOT auto-complete.
-            let newImportStatus = importTicket.inventoryStatus;
-            if (newImportStatus === 'pending' && newTotal > 0) {
-                newImportStatus = 'in-progress';
-            }
-            // WAS: if (newTotal >= importTicket.totalQuantity) newImportStatus = 'completed'; (REMOVED)
+
 
             // Calculate per-product counts from this session
             const productCounts: Record<string, number> = {};

@@ -171,7 +171,9 @@ export class DeviceImportService {
     let newStatus = ticket.inventoryStatus;
 
     // 1. Tính toán trạng thái kiểm kê dựa trên số lượng đã quét
-    if (data.serialImported > 0) {
+    if (data.serialImported >= ticket.totalQuantity) {
+      newStatus = 'completed';
+    } else if (data.serialImported > 0) {
       newStatus = 'in-progress';
     }
 

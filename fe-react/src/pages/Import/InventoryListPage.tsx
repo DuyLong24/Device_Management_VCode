@@ -182,7 +182,7 @@ export default function InventoryListPage() {
                         >
                             Chọn
                         </Button>
-                        <Button
+                        {/* <Button
                             size="small"
                             type={canComplete ? "primary" : "default"}
                             danger={canComplete}
@@ -191,7 +191,7 @@ export default function InventoryListPage() {
                             onClick={() => handleCompleteImport(record)}
                         >
                             Hoàn tất
-                        </Button>
+                        </Button> */}
                     </Space>
                 );
             },

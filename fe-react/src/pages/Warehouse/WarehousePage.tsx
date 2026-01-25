@@ -21,6 +21,7 @@ import { sharedDataService } from '../../services/shared-data.service';
 import { WAREHOUSE_LABELS } from '../../constants/warehouse.constants';
 
 import TransferModal from './components/TransferModal';
+import { ScanSelectionModal } from './components/ScanSelectionModal';
 import { ImportWizardModal } from '../../components/ImportWizard/ImportWizardModal';
 import { type FieldDefinition } from '../../components/ImportWizard/steps/Step3_Mapping';
 
@@ -47,6 +48,7 @@ export default function WarehousePage() {
     const [transferModalVisible, setTransferModalVisible] = useState(false);
     const [importModalVisible, setImportModalVisible] = useState(false);
     const [modelOptions, setModelOptions] = useState<{ label: string, value: string, desc?: string }[]>([]);
+    const [scanModalVisible, setScanModalVisible] = useState(false);
 
     useEffect(() => {
         sharedDataService.getDataByGroupCode('MODEL').then(res => {
@@ -91,11 +93,34 @@ export default function WarehousePage() {
         enabled: !!currentWarehouse?.id
     });
 
+    // Hiển thị thiết bị đã quét
+    const [priorityItems, setPriorityItems] = useState<any[]>([]);
+
     useEffect(() => {
         setPage(1);
         setSelectedRowKeys([]);
         setSearchText('');
+        setPriorityItems([]);
     }, [code]);
+
+    const dataSource = useMemo(() => {
+        const raw = deviceData?.results || [];
+        if (priorityItems.length === 0) return raw;
+
+        const map = new Map();
+
+        // Thêm thiết bị đã quét vào danh sách
+        priorityItems.forEach(item => map.set(item.id, { ...item, _isPriority: true }));
+
+        // Thêm thiết bị trong kho vào danh sách
+        raw.forEach(item => {
+            if (!map.has(item.id)) {
+                map.set(item.id, item);
+            }
+        });
+
+        return Array.from(map.values());
+    }, [deviceData?.results, priorityItems]);
 
 
     // --- Actions ---
@@ -266,7 +291,7 @@ export default function WarehousePage() {
             <Card size="small" className="mb-4">
                 <Space wrap>
                     {currentWarehouse?.config?.actions?.includes('scan') && (
-                        <Button type="primary" icon={<ScanOutlined />}>Quét mã</Button>
+                        <Button type="primary" icon={<ScanOutlined />} onClick={() => setScanModalVisible(true)}>Quét mã</Button>
                     )}
                     {currentWarehouse?.config?.actions?.includes('import_excel') && (
                         <Button icon={<ImportOutlined />} onClick={() => setImportModalVisible(true)}>Import Excel</Button>
@@ -330,7 +355,7 @@ export default function WarehousePage() {
                                 disabled
                             />
                             <Text>Đã chọn <Text strong>{selectedRowKeys.length}</Text> serial</Text>
-                            <Button type="link" size="small" onClick={() => setSelectedRowKeys([])}>Bỏ chọn</Button>
+                            <Button type="link" size="small" onClick={() => { setSelectedRowKeys([]); setPriorityItems([]); }}>Bỏ chọn</Button>
                         </Space>
                     </div>
                 )}
@@ -342,7 +367,7 @@ export default function WarehousePage() {
                 ) : (
                     <Table
                         columns={dataColumns}
-                        dataSource={deviceData?.results || []}
+                        dataSource={dataSource}
                         loading={isLoading}
                         rowKey="id"
                         rowSelection={rowSelection}
@@ -357,6 +382,7 @@ export default function WarehousePage() {
                             showSizeChanger: true,
                             showTotal: (total) => `Tổng ${total} serial`
                         }}
+                        rowClassName={(record: any) => record._isPriority ? 'bg-yellow-50' : ''}
                     />
                 )}
             </Card>
@@ -379,6 +405,29 @@ export default function WarehousePage() {
                 strategy="DEVICE"
                 fieldDefinitions={DEVICE_IMPORT_FIELDS}
                 payload={{ warehouseId: currentWarehouse?.id }}
+            />
+
+            <ScanSelectionModal
+                visible={scanModalVisible}
+                onCancel={() => setScanModalVisible(false)}
+                onSelect={(ids, devices) => {
+                    setSelectedRowKeys(prev => {
+                        const set = new Set([...prev, ...ids]);
+                        return Array.from(set);
+                    });
+
+                    if (devices && devices.length > 0) {
+                        setPriorityItems(prev => {
+                            const newItems = [...devices, ...prev];
+                            const unique = new Map();
+                            newItems.forEach(i => unique.set(i.id, i));
+                            return Array.from(unique.values());
+                        });
+                    }
+
+
+                }}
+                currentWarehouseId={currentWarehouse?.id}
             />
         </div>
     );

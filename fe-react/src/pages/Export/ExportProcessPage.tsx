@@ -6,9 +6,6 @@ import {
     ArrowLeftOutlined,
     CheckCircleOutlined,
     ExclamationCircleOutlined,
-    ScanOutlined,
-    UploadOutlined,
-    DownloadOutlined,
     FileExcelOutlined,
     DeleteOutlined
 } from '@ant-design/icons';
@@ -23,7 +20,7 @@ import type { DeviceExport } from '../../types/export.type';
 import { useScanSound } from '../../hooks/useScanSound';
 
 const { Text, Title } = Typography;
-const { Dragger } = Upload;
+// const { Dragger } = Upload;
 
 export default function ExportProcessPage() {
     const { id } = useParams<{ id: string }>();
@@ -148,11 +145,11 @@ export default function ExportProcessPage() {
         setManualMacs('');
     };
 
-    const handleFileImport = (file: File) => {
-        setFileList([file as unknown as UploadFile]);
-        messageApi.info('Tính năng import Excel đang được cập nhật (cần thư viện xlsx)');
-        return false;
-    };
+    // const handleFileImport = (file: File) => {
+    //     setFileList([file as unknown as UploadFile]);
+    //     messageApi.info('Tính năng import Excel đang được cập nhật');
+    //     return false;
+    // };
 
     const processBulkScan = async (codes: string[]) => {
         setLoading(true);
@@ -284,7 +281,7 @@ export default function ExportProcessPage() {
             <Card title="Quét MAC xuất kho" className="mb-4">
                 <Space direction="vertical" className="w-full" size="middle">
                     <Alert
-                        message="Hướng dẫn quét serial"
+                        message="Hướng dẫn quét mã MAC"
                         description={
                             <ul className="mb-0 list-disc pl-5 space-y-1">
                                 <li>
@@ -318,7 +315,7 @@ export default function ExportProcessPage() {
                         type="info"
                         showIcon
                     />
-
+                    {/* 
 
                     <div className="flex gap-2">
                         <Input
@@ -334,23 +331,23 @@ export default function ExportProcessPage() {
                         <Button type="primary" size="large" onClick={handleScanMac} icon={<CheckCircleOutlined />} loading={loading}>Quét</Button>
                     </div>
 
-                    <Divider>Hoặc</Divider>
+                    <Divider>Hoặc</Divider> */}
 
                     <Row gutter={16}>
-                        <Col span={12}>
-                            <Space direction="vertical" className="w-full">
-                                <Text strong>Nhập thủ công (Nhiều dòng)</Text>
-                                <Input.TextArea
-                                    rows={5}
-                                    placeholder="MAC-001&#10;MAC-002..."
-                                    value={manualMacs}
-                                    onChange={e => setManualMacs(e.target.value)}
-                                    disabled={loading}
-                                />
-                                <Button block onClick={handleManualImport} icon={<CheckCircleOutlined />} loading={loading}>Nhập danh sách</Button>
-                            </Space>
-                        </Col>
-                        <Col span={12}>
+                        {/* <Col span={12}> */}
+                        <Space direction="vertical" className="w-full">
+                            <Text strong>Nhập thủ công (Nhiều dòng)</Text>
+                            <Input.TextArea
+                                rows={5}
+                                placeholder="MAC-001&#10;MAC-002..."
+                                value={manualMacs}
+                                onChange={e => setManualMacs(e.target.value)}
+                                disabled={loading}
+                            />
+                            <Button block onClick={handleManualImport} icon={<CheckCircleOutlined />} loading={loading}>Nhập danh sách</Button>
+                        </Space>
+                        {/* </Col> */}
+                        {/* <Col span={12}>
                             <Space direction="vertical" className="w-full">
                                 <Text strong>Import Excel</Text>
                                 <Dragger
@@ -365,7 +362,7 @@ export default function ExportProcessPage() {
                                 </Dragger>
                                 <Button block icon={<DownloadOutlined />}>Tải template</Button>
                             </Space>
-                        </Col>
+                        </Col> */}
                     </Row>
                 </Space>
             </Card>

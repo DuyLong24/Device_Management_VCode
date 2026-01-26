@@ -117,15 +117,21 @@ export const useCreateExport = () => {
         setTimeout(() => {
             const searchText = projectSearchValue.trim();
             const currentVal = form.getFieldValue('project');
-
             if (!currentVal && searchText) {
                 const exists = projectOptions.some(p => p.label.toLowerCase() === searchText.toLowerCase());
+
                 if (!exists) {
+                    console.log('Project not found, suggesting create:', searchText);
                     setPendingProjectName(searchText);
                     setIsProjectModalOpen(true);
+                } else {
+                    const existingOption = projectOptions.find(p => p.label.toLowerCase() === searchText.toLowerCase());
+                    if (existingOption) {
+                        form.setFieldValue('project', existingOption.value);
+                    }
                 }
             }
-        }, 100);
+        }, 200);
     };
 
     const handleProjectKeyDown = (e: any) => {

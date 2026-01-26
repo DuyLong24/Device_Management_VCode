@@ -399,7 +399,12 @@ export default function ExportCheckListPage() {
                                                         </Text>
                                                         {session.note && <Text type="secondary" className="text-xs italic">"{session.note}"</Text>}
                                                     </div>
-                                                    <Button type="primary" size="small">Tiếp tục</Button>
+                                                    <Button
+                                                        type={session.status === 'COMPLETED' ? 'default' : 'primary'}
+                                                        size="small"
+                                                    >
+                                                        {session.status === 'COMPLETED' ? 'Xem' : 'Tiếp tục'}
+                                                    </Button>
                                                 </div>
                                             </Card>
                                         ))}

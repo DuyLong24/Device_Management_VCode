@@ -278,10 +278,23 @@ export class ExportSessionService {
             $inc: { totalItems: exportItems.length }
         } as any);
 
-        return this.exportSessionRepository.update(sessionId, {
+        await this.deviceService.moveToSoldWarehouse(serials, exportRecord?.code || 'EXPORT-SESSION');
+
+        const sessionUpdateResult = await this.exportSessionRepository.update(sessionId, {
             status: ExportSessionStatus.COMPLETED,
             completedBy: userId,
             completedAt: new Date()
         });
+
+        const updatedExport = await this.deviceExportRepository.findById(session.exportId as any);
+        if (updatedExport && updatedExport.totalItems >= updatedExport.totalQuantity) {
+            await this.deviceExportRepository.update(session.exportId as any, {
+                status: ExportStatus.COMPLETED,
+                completedBy: userId,
+                completedAt: new Date()
+            } as any);
+        }
+
+        return sessionUpdateResult;
     }
 }

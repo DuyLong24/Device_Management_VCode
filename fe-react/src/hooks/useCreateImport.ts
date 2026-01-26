@@ -226,7 +226,7 @@ export const useCreateImport = () => {
                     boxCount: p.boxCount || undefined,
                     itemsPerBox: p.itemsPerBox || undefined,
                     expectedSerials: p.expectedSerials, // Updated
-                    expectedDetails: p.expectedDetails
+                    expectedDetails: p.expectedDetails?.map(({ _id, ...rest }: any) => rest)
                 })),
             };
 

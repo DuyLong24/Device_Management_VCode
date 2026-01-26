@@ -17,6 +17,7 @@ export interface SerialUI {
     mac: string;
     serial: string;
     deviceCode: string;
+    deviceModel?: string; // Added
     deviceName: string;
     warehouseId: string;
     warehouseName: string;
@@ -117,6 +118,7 @@ export const useAllSerials = () => {
             mac: d.mac || 'N/A',
             serial: d.serial,
             deviceCode: d.deviceModel || 'N/A',
+            deviceModel: d.deviceModel || 'N/A',
             deviceName: d.name,
             warehouseId: rawWhIdString,
             warehouseName: wh ? wh.name : safeStatus,

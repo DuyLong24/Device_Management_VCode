@@ -56,7 +56,10 @@ export const DeviceListTable: React.FC<DeviceListTableProps> = ({
             dataIndex: 'deviceModel',
             key: 'deviceModel',
             width: 150,
-            render: (text) => <Text strong>{text}</Text>
+            render: (text, record: any) => {
+                const value = text || record.deviceModel || record.model;
+                return <Text strong>{value || '--'}</Text>
+            }
         },
         {
             title: 'Tên thiết bị',

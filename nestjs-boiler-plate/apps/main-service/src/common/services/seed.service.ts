@@ -150,7 +150,7 @@
 //                     quickTransfers: [
 //                         {
 //                             to: WarehouseCode.SOLD,
-//                             label: 'Đã xuất - Trong BH',
+//                             label: 'Trong BH',
 //                             description: 'Xuất kho cho khách/dự án',
 //                             style: 'primary'
 //                         },
@@ -268,7 +268,7 @@
 //             // 5. Đã xuất - Trong BH
 //             {
 //                 code: WarehouseCode.SOLD,
-//                 name: 'Đã xuất - Trong BH',
+//                 name: 'Trong BH',
 //                 groupId: exportedGroup._id,
 //                 color: 'gray',
 //                 orderIndex: 1,
@@ -290,7 +290,7 @@
 //             // 6. Đã xuất - Hết BH
 //             {
 //                 code: WarehouseCode.SOLD_WARRANTY,
-//                 name: 'Đã xuất - Hết BH',
+//                 name: 'Hết hạn BH',
 //                 groupId: exportedGroup._id,
 //                 color: 'purple',
 //                 orderIndex: 2,

@@ -150,13 +150,14 @@ export default function WarehousePage() {
         });
     };
 
-    /*                               3. DYNAMIC UI                                      */
-
     const getColumnDef = (colConfig: { key: string; title: string; type: string }) => {
+        let key = colConfig.key;
+        if (key === 'model') key = 'deviceModel';
+
         const base = {
             title: titleMap(colConfig),
-            key: colConfig.key,
-            dataIndex: colConfig.key,
+            key: key,
+            dataIndex: key,
         };
         base.title = colConfig.title || base.title;
 
@@ -200,6 +201,18 @@ export default function WarehousePage() {
                 render: (date: string) => date ? new Date(date).toLocaleDateString('vi-VN') : '-'
             };
         }
+
+        if (colConfig.key === 'deviceModel' || colConfig.key === 'model') {
+            return {
+                ...base,
+                render: (text: string, record: any) => {
+                    const value = text || record.deviceModel || record.model;
+                    console.log('Rendering DeviceModel:', { text, recordValue: value, record });
+                    return <Text>{value || '--'}</Text>;
+                }
+            };
+        }
+
         return base;
     };
 
@@ -209,6 +222,7 @@ export default function WarehousePage() {
             mac: 'MAC Address',
             name: 'Tên thiết bị',
             model: 'Mã Model',
+            deviceModel: 'Mã Model', // Updated
             importDate: 'Ngày nhập',
             qcStatus: 'QC Status',
             qcNote: 'QC Note',

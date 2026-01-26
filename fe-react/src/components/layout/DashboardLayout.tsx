@@ -112,10 +112,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             },
             { type: 'divider' },
             {
-                key: MENU_KEYS.ALL_SERIALS,
-                icon: SECTION_ICONS.ALL_SERIALS,
-                label: renderBadgeLabel(MENU_LABELS.ALL_SERIALS),
-                onClick: () => navigate('/all-serials'),
+                key: MENU_KEYS.ALL_DEVICES,
+                icon: SECTION_ICONS.ALL_DEVICES,
+                label: renderBadgeLabel(MENU_LABELS.ALL_DEVICES),
+                onClick: () => navigate('/all-devices'),
             },
             {
                 key: MENU_KEYS.INTERNAL_GROUP,
@@ -210,7 +210,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     // Detect Detail Page (Warehouse Devices -> Serial Detail)
     if (!selectedKey.startsWith('warehouse-') && location.pathname.includes('/serial/')) {
         // Override for Serial Detail if needed, or if it falls into All Serials
-        if (selectedKey === MENU_KEYS.ALL_SERIALS) {
+        if (selectedKey === MENU_KEYS.ALL_DEVICES) {
             breadcrumbItems.push({ title: 'Chi tiết thiết bị' });
         }
     }

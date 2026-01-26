@@ -45,7 +45,6 @@ export interface DeviceQueryParams {
 export const deviceService = {
     getAll: async (params: any = {}) => {
         let requestParams = params || {};
-        // If params appears to be a React Query context (has queryKey), ignore it
         if (requestParams && requestParams.queryKey) {
             requestParams = {};
         }
@@ -85,6 +84,11 @@ export const deviceService = {
 
     getByMacWithDetail: async (mac: string) => {
         const response = await axiosInstance.get<{ device: Device; history: any[] }>(`/devices/mac/${mac}/detail`);
+        return response.data;
+    },
+
+    getStatistics: async (params: any = {}) => {
+        const response = await axiosInstance.get<any>('/devices/stats', { params });
         return response.data;
     }
 };

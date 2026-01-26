@@ -21,10 +21,10 @@ export class DeviceImportService {
   async create(createDto: CreateDeviceImportDto, userId: string): Promise<DeviceImport> {
     // Kiểm tra Serial trước khi tạo mới -> Chỉ check kỹ khi trạng thái là PUBLIC (Lưu chính thức)
     if (createDto.status === 'PUBLIC') {
-      const products = createDto.products || [];
-      for (const product of products) {
-        const p: any = product;
-        const serials = p.expectedSerials || [];
+      const devices = createDto.devices || [];
+      for (const device of devices) {
+        const d: any = device;
+        const serials = d.expectedSerials || [];
 
         // 2. Check trùng lặp nội bộ
         if (serials.length > 0) {
@@ -32,7 +32,7 @@ export class DeviceImportService {
           if (unique.size !== serials.length) {
             throw new BadRequestException(
               ERROR_MESSAGES.DEVICE_IMPORT.SERIAL_DUPLICATE
-                .replace('{product}', p.productCode)
+                .replace('{device}', d.deviceCode)
             );
           }
         }
@@ -49,9 +49,9 @@ export class DeviceImportService {
       code = `NK-${year}-${month}-${random}`;
     }
 
-    // 2. Tính toán tổng & Process Products
-    const productsDto = createDto.products || [];
-    const { products, totalItem, totalQuantity, totalSerialImported } = this.processProducts(productsDto);
+    // 2. Tính toán tổng & Process Devices
+    const devicesDto = createDto.devices || [];
+    const { devices, totalItem, totalQuantity, totalSerialImported } = this.processDevices(devicesDto);
 
     const details = createDto.details || [];
     const status = createDto.status || 'DRAFT';
@@ -60,7 +60,7 @@ export class DeviceImportService {
     const payload = {
       ...createDto,
       code,
-      products, // Use processed products with serialImported set
+      devices, // Use processed devices with serialImported set
       details,
       totalItem,
       totalQuantity,
@@ -103,10 +103,10 @@ export class DeviceImportService {
       updatedBy: userId
     };
 
-    // Tính lại tổng nếu sửa products
-    if (updateDto.products) {
-      const { products, totalItem, totalQuantity, totalSerialImported } = this.processProducts(updateDto.products);
-      updateData.products = products; // Save processed products
+    // Tính lại tổng nếu sửa devices
+    if (updateDto.devices) {
+      const { devices, totalItem, totalQuantity, totalSerialImported } = this.processDevices(updateDto.devices);
+      updateData.devices = devices; // Save processed devices
       updateData.totalItem = totalItem;
       updateData.totalQuantity = totalQuantity;
       updateData.serialImported = totalSerialImported; // Update root serialImported
@@ -137,36 +137,36 @@ export class DeviceImportService {
   }
 
 
-  private processProducts(productsDto: any[]) {
-    if (!productsDto || !Array.isArray(productsDto) || productsDto.length === 0) {
+  private processDevices(devicesDto: any[]) {
+    if (!devicesDto || !Array.isArray(devicesDto) || devicesDto.length === 0) {
       return {
-        products: [],
+        devices: [],
         totalItem: 0,
         totalQuantity: 0,
         totalSerialImported: 0
       };
     }
 
-    const processedProducts = productsDto.map(p => {
+    const processedDevices = devicesDto.map(d => {
       return {
-        ...p,
+        ...d,
         serialImported: 0
       };
     });
 
-    const totalItem = processedProducts.length;
-    const totalQuantity = processedProducts.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const totalItem = processedDevices.length;
+    const totalQuantity = processedDevices.reduce((sum, item) => sum + (item.quantity || 0), 0);
     const totalSerialImported = 0;
 
     return {
-      products: processedProducts,
+      devices: processedDevices,
       totalItem,
       totalQuantity,
       totalSerialImported
     };
   }
 
-  async updateProgress(id: string, data: { serialImported: number, productCounts?: Record<string, number> }) {
+  async updateProgress(id: string, data: { serialImported: number, deviceCounts?: Record<string, number> }) {
     const ticket = await this.findById(id);
     let newStatus = ticket.inventoryStatus;
 
@@ -182,23 +182,23 @@ export class DeviceImportService {
       inventoryStatus: newStatus
     };
 
-    // Update product specific counts if provided
-    if (data.productCounts) {
+    // Update device specific counts if provided
+    if (data.deviceCounts) {
       // Ensure we work with plain objects
-      const currentProducts = ticket.products || [];
+      const currentDevices = ticket.devices || [];
 
-      updatePayload.products = currentProducts.map(p => {
+      updatePayload.devices = currentDevices.map(d => {
         // Convert to plain object if it's a Mongoose document
-        const productObj = (typeof (p as any).toObject === 'function') ? (p as any).toObject() : p;
+        const deviceObj = (typeof (d as any).toObject === 'function') ? (d as any).toObject() : d;
 
-        const additional = data.productCounts?.[productObj.productCode] || 0;
+        const additional = data.deviceCounts?.[deviceObj.deviceCode] || 0;
         if (additional > 0) {
           return {
-            ...productObj,
-            serialImported: (productObj.serialImported || 0) + additional
+            ...deviceObj,
+            serialImported: (deviceObj.serialImported || 0) + additional
           };
         }
-        return productObj;
+        return deviceObj;
       });
     }
 

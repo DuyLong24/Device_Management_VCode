@@ -75,7 +75,7 @@ export const MENU_KEYS = {
         CREATE: 'create-import',
         INVENTORY: 'inventory-list'
     },
-    ALL_SERIALS: 'all-serials',
+    ALL_DEVICES: 'all-devices',
     INTERNAL_GROUP: 'group-internal',
     EXPORTED_GROUP: 'group-exported',
     EXPORT: {
@@ -108,7 +108,7 @@ export const MENU_LABELS = {
         CREATE: 'Thêm mới phiếu nhập kho',
         INVENTORY: 'Kiểm kê sản phẩm nhập kho'
     },
-    ALL_SERIALS: 'Danh sách thiết bị',
+    ALL_DEVICES: 'Danh sách thiết bị',
     INTERNAL_GROUP: 'Kho nội bộ',
     EXPORTED_GROUP: 'Đã xuất',
     EXPORT: {
@@ -136,7 +136,7 @@ export const SECTION_ICONS = {
     IMPORT_LIST: <UnorderedListOutlined />,
     IMPORT_CREATE: <FileAddOutlined />,
     IMPORT_INVENTORY: <CheckCircleOutlined />,
-    ALL_SERIALS: <DatabaseOutlined />,
+    ALL_DEVICES: <DatabaseOutlined />,
     INTERNAL: <AppstoreOutlined />,
     EXPORTED: <ExportOutlined />,
     EXPORT: <ExportOutlined rotate={180} />,

@@ -14,6 +14,9 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { DeviceService } from '../services/device.service';
+import { DeviceStatsService } from '../services/device-stats.service';
+import { DeviceTransferService } from '../services/device-transfer.service';
+import { DeviceValidationService } from '../services/device-validation.service';
 import { CreateDeviceDto } from '../dto/create-device.dto';
 import { UpdateDeviceDto } from '../dto/update-device.dto';
 import { DevicePaginationDto } from '../dto/device-pagination.dto';
@@ -21,7 +24,12 @@ import { ValidateMacsDto, ValidateMacsResponse } from '../dto/validate-serials.d
 
 @Controller('devices')
 export class DeviceController {
-  constructor(private readonly deviceService: DeviceService) { }
+  constructor(
+    private readonly deviceService: DeviceService,
+    private readonly deviceStatsService: DeviceStatsService,
+    private readonly deviceTransferService: DeviceTransferService,
+    private readonly deviceValidationService: DeviceValidationService,
+  ) { }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -58,6 +66,12 @@ export class DeviceController {
     return this.deviceService.findAllWithPagination(filter, options);
   }
 
+  @Get('stats')
+  async getStatistics(@Query() query: DevicePaginationDto) {
+    const filter = this.buildFilter(query);
+    return this.deviceStatsService.getStatistics(filter);
+  }
+
   @Get('mac/:mac/detail')
   async findByMacWithDetail(@Param('mac') mac: string) {
     return this.deviceService.findByMacWithDetail(mac);
@@ -81,23 +95,23 @@ export class DeviceController {
   private buildFilter(query: DevicePaginationDto): any {
     const filter: any = {};
 
-    // 1. Exact Match
+    // 1. Lọc theo kho
     if (query.warehouseId) filter.warehouseId = query.warehouseId;
     if (query.categoryId) filter.categoryId = query.categoryId;
     if (query.importId) filter.importId = query.importId;
 
-    // 2. Partial Match (Search fields)
+    // 2. Lọc theo mã serial, mã MAC, tên thiết bị, model
     if (query.serial) filter.serial = { $regex: query.serial, $options: 'i' };
-    if (query.mac) filter.mac = { $regex: query.mac, $options: 'i' }; // Added Mac
+    if (query.mac) filter.mac = { $regex: query.mac, $options: 'i' };
     if (query.name) filter.name = { $regex: query.name, $options: 'i' };
     if (query.model) filter.deviceModel = { $regex: query.model, $options: 'i' };
 
-    // 3. Global Search (Priority)
+    // 3. Lọc theo từ khóa
     if (query.search) {
       const searchRegex = { $regex: query.search, $options: 'i' };
       const orConditions = [
         { serial: searchRegex },
-        { mac: searchRegex }, // Added Mac
+        { mac: searchRegex },
         { name: searchRegex },
         { deviceModel: searchRegex }
       ];
@@ -108,7 +122,7 @@ export class DeviceController {
       }
     }
 
-    // 4. Date Range
+    // 4. Lọc theo ngày tạo
     if (query.createdFrom || query.createdTo) {
       filter.createdAt = {};
       if (query.createdFrom) filter.createdAt.$gte = new Date(query.createdFrom);
@@ -132,7 +146,7 @@ export class DeviceController {
     // Tạm thời hardcode userId
     const userId = '69685cb83e015da83ef00a85';
 
-    return this.deviceService.transfer(id, body.toWarehouseId, userId, body.note, body.errorReason);
+    return this.deviceTransferService.transfer(id, body.toWarehouseId, userId, body.note, body.errorReason);
   }
 
   @Post('bulk-transfer')
@@ -140,7 +154,7 @@ export class DeviceController {
     @Body() body: { deviceIds: string[]; toWarehouseId: string; note?: string; errorReason?: string },
   ) {
     const userId = '69685cb83e015da83ef00a85'; // Hardcoded
-    return this.deviceService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note, body.errorReason);
+    return this.deviceTransferService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note, body.errorReason);
   }
 
   @Post('validate-macs')
@@ -148,6 +162,6 @@ export class DeviceController {
   async validateMacs(
     @Body() dto: ValidateMacsDto
   ): Promise<ValidateMacsResponse> {
-    return this.deviceService.validateMacs(dto);
+    return this.deviceValidationService.validateMacs(dto);
   }
 }

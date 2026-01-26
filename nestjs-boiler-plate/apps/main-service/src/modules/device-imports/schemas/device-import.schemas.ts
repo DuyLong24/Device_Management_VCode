@@ -11,7 +11,7 @@ export class DeviceImport extends Document {
   code: string;
 
   @Prop()
-  productType: string;
+  deviceType: string;
 
   @Prop({ required: true })
   origin: string;
@@ -33,7 +33,7 @@ export class DeviceImport extends Document {
 
   @Prop({
     type: [{
-      productCode: String,
+      deviceCode: String,
       quantity: Number,
       boxCount: Number,
       itemsPerBox: Number,
@@ -51,8 +51,8 @@ export class DeviceImport extends Document {
     }],
     default: []
   })
-  products: Array<{
-    productCode: string;
+  devices: Array<{
+    deviceCode: string;
     quantity: number;
     boxCount: number;
     itemsPerBox: number;

@@ -42,7 +42,7 @@ export const getActiveKeysFromPath = (path: string): { selectedKey: string, pare
     // [FIX] Detail page check: If path contains /import/ but didn't match above, assume it's detail => highlight List
     if (path.includes('/import/')) return { selectedKey: MENU_KEYS.IMPORT.LIST, parentKey: MENU_KEYS.IMPORT.ROOT };
 
-    if (path.includes('all-serials')) return { selectedKey: MENU_KEYS.ALL_SERIALS };
+    if (path.includes('all-devices')) return { selectedKey: MENU_KEYS.ALL_DEVICES };
 
     if (path.includes('/export/create')) return { selectedKey: MENU_KEYS.EXPORT.CREATE, parentKey: MENU_KEYS.EXPORT.ROOT };
     if (path.includes('/export/check')) return { selectedKey: MENU_KEYS.EXPORT.CHECK, parentKey: MENU_KEYS.EXPORT.ROOT };

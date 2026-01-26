@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DeviceService } from './services/device.service';
+import { DeviceStatsService } from './services/device-stats.service';
+import { DeviceTransferService } from './services/device-transfer.service';
+import { DeviceValidationService } from './services/device-validation.service';
 import { DeviceController } from './controllers/device.controller';
 import { DeviceRepository } from './repositories/device.repository';
 import { Device, DeviceSchema } from './schemas/device.schemas';
@@ -22,7 +25,7 @@ import { WarehousesModule } from '../warehouses/warehouses.module';
     WarehousesModule,
   ],
   controllers: [DeviceController],
-  providers: [DeviceService, DeviceRepository],
-  exports: [DeviceService, DevicesModule],
+  providers: [DeviceService, DeviceStatsService, DeviceTransferService, DeviceValidationService, DeviceRepository],
+  exports: [DeviceService, DeviceStatsService, DeviceTransferService, DeviceValidationService, DevicesModule],
 })
 export class DevicesModule { }

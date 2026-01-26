@@ -38,6 +38,7 @@ export const useAllSerials = () => {
     const [pagination, setPagination] = useState({ page: 1, limit: 10 });
     const [searchText, setSearchText] = useState('');
     const [selectedWarehouses, setSelectedWarehouses] = useState<string[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
 
     // --- 1. DEVICES QUERY ---
@@ -46,12 +47,13 @@ export const useAllSerials = () => {
         isLoading: loadingDevices,
         isFetching,
     } = useQuery<PaginatedResponse<Device>>({
-        queryKey: ['devices', pagination, searchText, selectedWarehouses, dateRange],
+        queryKey: ['devices', pagination, searchText, selectedWarehouses, selectedCategory, dateRange],
         queryFn: () => {
             const params: any = {
                 page: pagination.page,
                 limit: pagination.limit,
                 search: searchText || undefined,
+                categoryId: selectedCategory || undefined,
             };
 
             if (selectedWarehouses.length === 1) {
@@ -143,6 +145,19 @@ export const useAllSerials = () => {
         setPagination(prev => ({ ...prev, page: 1 }));
     };
 
+    const handleFilterCategory = (val: string | null) => {
+        setSelectedCategory(val);
+        setPagination(prev => ({ ...prev, page: 1 }));
+    };
+
+    const handleReset = () => {
+        setSearchText('');
+        setSelectedWarehouses([]);
+        setSelectedCategory(null);
+        setDateRange(null);
+        setPagination({ page: 1, limit: 10 });
+    };
+
     const handleExport = async () => {
         try {
             message.loading({ content: 'Đang xuất file...', key: 'exporting' });
@@ -176,7 +191,29 @@ export const useAllSerials = () => {
         }
     };
 
-    const stats = {
+    // --- 4. Thống kê ---
+    const { data: statsData } = useQuery({
+        queryKey: ['device-stats', searchText, selectedWarehouses, selectedCategory, dateRange],
+        queryFn: () => {
+            const params: any = {
+                search: searchText || undefined,
+                categoryId: selectedCategory || undefined,
+            };
+
+            if (selectedWarehouses.length === 1) {
+                params.warehouseId = selectedWarehouses[0];
+            }
+
+            if (dateRange && dateRange[0] && dateRange[1]) {
+                params.createdFrom = dateRange[0].startOf('day').toISOString();
+                params.createdTo = dateRange[1].endOf('day').toISOString();
+            }
+            return deviceService.getStatistics(params);
+        },
+        staleTime: 1000 * 60 * 2 // 2 mins
+    });
+
+    const stats = statsData || {
         total: totalResults,
         PENDING_QC: 0, READY_TO_EXPORT: 0, DEFECT: 0, IN_WARRANTY: 0, SOLD: 0, REMOVED: 0,
     };
@@ -196,19 +233,24 @@ export const useAllSerials = () => {
         stats,
         warehouseOptions: warehouses.map((w: any) => ({ label: w.name, value: w.id })),
 
-        categoryOptions: categories.map((c: Category) => ({ label: c.name, value: c._id })),
+        rawCategories: categories, // Debug
+        categoryOptions: categories.map((c: any) => {
+            const idVal = c.id || c._id;
+            return {
+                label: c.name,
+                value: idVal ? String(idVal) : `MISSING_ID_${Math.random()}`
+            };
+        }),
+
+        selectedCategory,
+        setSelectedCategory: handleFilterCategory,
 
         searchText, setSearchText: handleSearch,
         selectedWarehouses, setSelectedWarehouses: handleFilterWarehouse,
         dateRange, setDateRange,
 
         handleTableChange,
-        handleReset: () => {
-            setSearchText('');
-            setSelectedWarehouses([]);
-            setDateRange(null);
-            setPagination({ page: 1, limit: 10 });
-        },
+        handleReset,
         handleExport
     };
 };

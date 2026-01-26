@@ -2,10 +2,10 @@
 import { IsString, IsNotEmpty, IsDateString, IsOptional, IsArray, ValidateNested, IsNumber, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 
-class ImportProductDto {
+class ImportDeviceDto {
   @IsString()
   @IsNotEmpty()
-  productCode: string;
+  deviceCode: string;
 
   @IsNumber()
   @IsNotEmpty()
@@ -44,6 +44,7 @@ class ImportDetailDto {
   p2p?: string;
 
   @IsString()
+  @IsNotEmpty()
   mac: string;
 
   @IsString()
@@ -58,7 +59,7 @@ export class CreateDeviceImportDto {
 
   @IsString()
   @IsNotEmpty()
-  productType: string;
+  deviceType: string;
 
   @IsString()
   @IsNotEmpty()
@@ -91,8 +92,8 @@ export class CreateDeviceImportDto {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => ImportProductDto)
-  products: ImportProductDto[];
+  @Type(() => ImportDeviceDto)
+  devices: ImportDeviceDto[];
 
   @IsOptional()
   @IsArray()

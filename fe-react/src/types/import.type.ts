@@ -7,15 +7,23 @@ export type ImportStatus = keyof typeof ImportStatus;
 
 export type InventoryStatus = 'pending' | 'in-progress' | 'completed';
 
-export interface ImportProduct {
+export interface ImportDeviceDetail {
+    mac: string;
+    serial: string;
+    p2p: string;
+    name: string;
+}
+
+export interface ImportDevice {
     _id?: string;
-    productCode: string;
+    deviceCode: string;
     quantity: number;
     boxCount?: number;
     itemsPerBox?: number;
     serialImported?: number;
-    productName?: string;
+    deviceName?: string;
     expectedSerials?: string[];
+    expectedDetails?: ImportDeviceDetail[];
 }
 
 export interface DeviceImport {
@@ -23,14 +31,14 @@ export interface DeviceImport {
     code: string;
     status: ImportStatus;
     inventoryStatus: InventoryStatus;
-    productType: string;
+    deviceType: string;
     origin: string;
     importDate: string;
     importedBy: string;
     supplier: string;
     handoverPerson: string;
     notes?: string;
-    products: ImportProduct[];
+    devices: ImportDevice[];
     totalItem: number;
     totalQuantity: number;
     serialImported: number;
@@ -41,11 +49,11 @@ export interface CreateImportDto {
     notes?: string;
     importDate: string;
     supplier: string;
-    products: {
-        productCode: string;
-        quantity: number;
-        boxCount?: number;
-        itemsPerBox?: number;
-        expectedSerials?: string[];
-    }[];
+    devices: Omit<ImportDevice, '_id' | 'serialImported' | 'deviceName'>[];
+}
+
+export interface DeviceEntry extends Omit<ImportDevice, '_id' | 'boxCount' | 'itemsPerBox'> {
+    key: string;
+    boxCount: number | null | undefined;
+    itemsPerBox: number | null | undefined;
 }

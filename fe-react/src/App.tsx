@@ -9,7 +9,7 @@ import CreateImportPage from './pages/Import/CreateImportPage';
 import InventoryListPage from './pages/Import/InventoryListPage';
 import InventoryCheckPage from './pages/Import/InventoryCheckPage';
 import ImportDetailPage from './pages/Import/ImportDetailPage';
-import AllSerialsPage from './pages/AllSerialsPage';
+import DeviceListPage from './pages/Device/DeviceListPage';
 import WarehousePage from './pages/Warehouse/WarehousePage';
 import ExportListPage from './pages/Export/ExportListPage';
 import CreateExportPage from './pages/Export/CreateExportPage';
@@ -17,6 +17,7 @@ import ExportDetailPage from './pages/Export/ExportDetailPage';
 import SerialDetailPage from './pages/Warehouse/SerialDetailPage';
 import ExportProcessPage from './pages/Export/ExportProcessPage';
 import ExportCheckListPage from './pages/Export/ExportCheckListPage';
+import LoginPage from './pages/Auth/LoginPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,7 +45,7 @@ function App() {
         <AntdApp>
           <BrowserRouter>
             <Routes>
-              <Route path="/login" element={<div>Login Page</div>} />
+              <Route path="/login" element={<LoginPage />} />
 
               <Route path="/" element={<DashboardLayout />}>
                 <Route index element={<Navigate to="/dashboard" replace />} />
@@ -79,7 +80,7 @@ function App() {
                 </Route>
 
                 {/* --- CÁC MODULE KHÁC --- */}
-                <Route path="all-serials" element={<AllSerialsPage />} />
+                <Route path="all-devices" element={<DeviceListPage />} />
                 <Route path="serial/:serial" element={<SerialDetailPage />} />
                 <Route path="warehouse/:code" element={<WarehousePage />} />
 

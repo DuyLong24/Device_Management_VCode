@@ -35,14 +35,14 @@ export class ExportSession extends Document {
     @Prop({
         type: [{
             serial: { type: String, required: true },
-            productCode: { type: String, required: true },
+            deviceCode: { type: String, required: true },
             deviceModel: { type: String },
             scannedAt: { type: Date, default: Date.now }
         }], default: []
     })
     items: {
         serial: string;
-        productCode: string;
+        deviceCode: string;
         deviceModel: string;
         scannedAt: Date;
     }[];

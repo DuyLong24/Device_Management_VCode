@@ -28,7 +28,7 @@ export const ImportOverviewCard: React.FC<ImportOverviewCardProps> = ({
             <Row gutter={16}>
                 <Col xs={12} sm={8}>
                     <Statistic
-                        title="Tổng mã sản phẩm"
+                        title="Tổng mã thiết bị"
                         value={totalItem}
                         prefix={<NumberOutlined />}
                         valueStyle={{ color: '#1677ff' }}

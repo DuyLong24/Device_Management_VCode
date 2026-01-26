@@ -35,6 +35,11 @@ export class WarehouseService {
     return warehouse;
   }
 
+  async findByCode(code: string): Promise<Warehouse | null> {
+    const warehouses = await this.warehouseRepository.findAll({ code });
+    return warehouses.length > 0 ? warehouses[0] : null;
+  }
+
   async update(id: string, updateWarehouseDto: UpdateWarehouseDto): Promise<Warehouse> {
     const warehouse = await this.warehouseRepository.findById(id);
     if (!warehouse) {

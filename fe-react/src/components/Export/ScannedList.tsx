@@ -7,7 +7,7 @@ const { Text } = Typography;
 interface ScannedItem {
     serial: string;
     deviceModel: string;
-    productCode: string;
+    deviceCode: string;
     scannedAt?: string;
     status?: 'success' | 'warning' | 'error'; // local status
     message?: string;
@@ -23,7 +23,7 @@ export const ScannedList = ({ items, loading }: ScannedListProps) => {
 
     const filteredItems = items.filter(i =>
         i.serial.toLowerCase().includes(searchText.toLowerCase()) ||
-        i.productCode?.toLowerCase().includes(searchText.toLowerCase())
+        i.deviceCode?.toLowerCase().includes(searchText.toLowerCase())
     );
 
     const columns = [
@@ -54,7 +54,7 @@ export const ScannedList = ({ items, loading }: ScannedListProps) => {
             )
         },
         { title: 'Model', dataIndex: 'deviceModel', key: 'deviceModel' },
-        { title: 'Sản phẩm', dataIndex: 'productCode', key: 'productCode' },
+        { title: 'Mã thiết bị', dataIndex: 'deviceCode', key: 'deviceCode' },
         {
             title: 'Thời gian',
             dataIndex: 'scannedAt',

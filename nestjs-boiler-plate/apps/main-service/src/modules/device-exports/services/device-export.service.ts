@@ -129,9 +129,9 @@ export class DeviceExportService {
 
     if (exportRecord.requirements && exportRecord.requirements.length > 0) {
       for (const device of devices) {
-        const req = exportRecord.requirements.find(r => r.productCode === device.deviceModel);
+        const req = exportRecord.requirements.find(r => r.deviceCode === device.deviceModel);
         if (!req) {
-          throw new BadRequestException(`Sản phẩm ${device.deviceModel} (Serial: ${device.serial}) không có trong yêu cầu xuất kho.`);
+          throw new BadRequestException(`Thiết bị ${device.deviceModel} (Serial: ${device.serial}) không có trong yêu cầu xuất kho.`);
         }
       }
 
@@ -141,12 +141,12 @@ export class DeviceExportService {
       }, {} as Record<string, number>);
 
       for (const [model, count] of Object.entries(devicesByModel)) {
-        const req = exportRecord.requirements.find(r => r.productCode === model);
-        if (!req) throw new BadRequestException(`Sản phẩm ${model} không nằm trong kế hoạch xuất kho.`);
+        const req = exportRecord.requirements.find(r => r.deviceCode === model);
+        if (!req) throw new BadRequestException(`Thiết bị ${model} không nằm trong kế hoạch xuất kho.`);
 
-        const currentScanned = exportRecord.items.filter(i => i.productCode === model).length;
+        const currentScanned = exportRecord.items.filter(i => i.deviceCode === model).length;
         if (Number(currentScanned) + Number(count) > Number(req.quantity)) {
-          throw new BadRequestException(`Sản phẩm ${model} vượt quá số lượng yêu cầu (${Number(currentScanned) + Number(count)}/${req.quantity}).`);
+          throw new BadRequestException(`Thiết bị ${model} vượt quá số lượng yêu cầu (${Number(currentScanned) + Number(count)}/${req.quantity}).`);
         }
       }
     }
@@ -154,7 +154,7 @@ export class DeviceExportService {
     const newItems = devices.map(d => ({
       serial: d.serial,
       deviceModel: d.deviceModel,
-      productCode: d.deviceModel,
+      deviceCode: d.deviceModel,
       exportPrice: 0
     }));
 
@@ -193,11 +193,11 @@ export class DeviceExportService {
     // Validate Stock Availability
     if (exportRecord.requirements && exportRecord.requirements.length > 0) {
       for (const req of exportRecord.requirements) {
-        const stockStatus = await this.getInventoryStatus(req.productCode);
+        const stockStatus = await this.getInventoryStatus(req.deviceCode);
         // Note: getInventoryStatus already excludes PENDING_APPROVAL, so current export is not in 'reserved'
         if (stockStatus.available < req.quantity) {
           throw new BadRequestException(
-            `Không đủ tồn kho khả dụng cho ${req.productCode}. Cần: ${req.quantity}, Khả dụng: ${stockStatus.available}`
+            `Không đủ tồn kho khả dụng cho ${req.deviceCode}. Cần: ${req.quantity}, Khả dụng: ${stockStatus.available}`
           );
         }
       }
@@ -255,7 +255,7 @@ export class DeviceExportService {
     let reserved = 0;
     for (const exportRecord of activeExports) {
       if (exportRecord.requirements) {
-        const req = exportRecord.requirements.find(r => r.productCode === model);
+        const req = exportRecord.requirements.find(r => r.deviceCode === model);
         if (req) {
           reserved += req.quantity;
         }

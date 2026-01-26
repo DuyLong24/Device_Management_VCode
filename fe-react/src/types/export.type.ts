@@ -11,15 +11,15 @@ export const ExportStatus = {
 export type ExportStatus = keyof typeof ExportStatus;
 
 export interface ExportRequirement {
-    productCode: string;
-    productName?: string;
+    deviceCode: string;
+    deviceName?: string;
     quantity: number;
 }
 
 export interface ExportItem {
     serial: string;
     deviceModel: string;
-    productCode: string;
+    deviceCode: string;
     exportPrice?: number;
 }
 
@@ -47,7 +47,7 @@ export interface DeviceExport {
 
     totalItems: number;
     totalQuantity: number;
-    totalProductCodes?: number;
+    totalDeviceCodes?: number;
 
     exportDate?: string;
     approvedDate?: string;

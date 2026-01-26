@@ -3,7 +3,7 @@ import { FileTextOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 import { DetailInfoCard, type InfoItem } from '../../components/common/DetailInfoCard';
-import { ImportProductTable } from './components/ImportProductTable';
+import { ImportDeviceTable } from './components/ImportDeviceTable';
 import { InventorySessionList } from './components/InventorySessionList';
 import { ImportHeader } from './components/ImportHeader';
 import { ImportOverviewCard } from './components/ImportOverviewCard';
@@ -15,7 +15,7 @@ const ImportDetailPage = () => {
     const {
         importData,
         loading,
-        productsUI,
+        devicesUI,
         sessions,
         handlePrint,
         handleEdit,
@@ -87,14 +87,14 @@ const ImportDetailPage = () => {
 
                 {/* 2. Tổng quan */}
                 <ImportOverviewCard
-                    totalItem={totalItem || productsUI.length}
+                    totalItem={totalItem || devicesUI.length}
                     totalQuantity={totalQuantity || 0}
                     serialImported={serialImported || 0}
                 />
 
-                {/* 3. Danh sách sản phẩm */}
+                {/* 3. Danh sách thiết bị */}
                 <Card
-                    title="Danh sách sản phẩm"
+                    title="Danh sách thiết bị"
                     className="shadow-sm"
                     styles={{ body: { padding: 0 } }}
                     extra={
@@ -106,7 +106,7 @@ const ImportDetailPage = () => {
                         </Button>
                     }
                 >
-                    <ImportProductTable products={productsUI} />
+                    <ImportDeviceTable devices={devicesUI} />
                 </Card>
 
                 {/* 4. Thao tác kiểm kê */}

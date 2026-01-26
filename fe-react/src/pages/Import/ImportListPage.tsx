@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
 import { importService } from '../../services/import.service';
-import type { DeviceImport, ImportProduct } from '../../types/import.type';
+import type { DeviceImport } from '../../types/import.type';
 import { IMPORT_LABELS, IMPORT_TABLE_COLUMNS, IMPORT_STATUS_CONFIG, IMPORT_ORIGIN_CONFIG } from '../../constants/import.constants';
 import { StatisticsCards, PageHeader, FilterBar } from '../../components/ui';
 import { FileTextOutlined, ClockCircleOutlined, SyncOutlined, CheckCircleOutlined } from '@ant-design/icons';
@@ -15,10 +15,10 @@ import { message } from 'antd';
 
 const { Text } = Typography;
 
-interface ProductItem {
+interface DeviceItem {
     key: string;
-    productCode: string;
-    productName: string;
+    deviceCode: string;
+    deviceName: string;
     quantity: number;
     packaging: string;
     boxCount?: number;
@@ -31,12 +31,12 @@ interface ProductItem {
 interface ImportRecord {
     key: string;
     importCode: string;
-    productType: string;
+    deviceType: string;
     importDate: string;
     importedBy: string;
     supplier: string;
     handoverPerson: string;
-    totalProductCodes: number;
+    totalDeviceCodes: number;
     totalQuantity: number;
     serialImported: number;
     serialExpected: number;
@@ -44,7 +44,7 @@ interface ImportRecord {
     status: 'DRAFT' | 'PUBLIC';
     origin?: string;
     notes?: string;
-    products: ProductItem[];
+    devices: DeviceItem[];
 }
 
 export default function ImportListPage() {
@@ -58,22 +58,22 @@ export default function ImportListPage() {
     const mapApiToUi = (apiData: DeviceImport[]): ImportRecord[] => {
         if (!Array.isArray(apiData)) return [];
         return apiData.map((item) => {
-            const products: ProductItem[] = item.products.map((prod: ImportProduct, index) => {
-                const serialImported = prod.serialImported || 0;
-                const serialExpected = prod.quantity || 0;
+            const devices: DeviceItem[] = item.devices.map((dev: any, index) => {
+                const serialImported = dev.serialImported || 0;
+                const serialExpected = dev.quantity || 0;
 
                 let serialStatus: 'complete' | 'missing' | 'excess' = 'complete';
                 if (serialImported < serialExpected) serialStatus = 'missing';
                 if (serialImported > serialExpected) serialStatus = 'excess';
 
                 return {
-                    key: prod._id || `${item.id}-${index}`,
-                    productCode: prod.productCode,
-                    productName: prod.productCode,
-                    quantity: prod.quantity,
-                    packaging: `${prod.boxCount || 0} hộp × ${prod.itemsPerBox || 0} sp/hộp`,
-                    boxCount: prod.boxCount,
-                    itemsPerBox: prod.itemsPerBox,
+                    key: dev._id || `${item.id}-${index}`,
+                    deviceCode: dev.deviceCode,
+                    deviceName: dev.deviceName || dev.deviceCode,
+                    quantity: dev.quantity,
+                    packaging: `${dev.boxCount || 0} hộp × ${dev.itemsPerBox || 0} sp/hộp`,
+                    boxCount: dev.boxCount,
+                    itemsPerBox: dev.itemsPerBox,
                     serialImported,
                     serialExpected,
                     serialStatus,
@@ -92,12 +92,12 @@ export default function ImportListPage() {
             return {
                 key: item.id,
                 importCode: item.code,
-                productType: item.productType || 'Khác',
+                deviceType: item.deviceType || 'Khác',
                 importDate: item.importDate,
                 importedBy: item.importedBy,
                 supplier: item.supplier,
                 handoverPerson: item.handoverPerson || '---',
-                totalProductCodes: item.totalItem,
+                totalDeviceCodes: item.totalItem,
                 totalQuantity: item.totalQuantity,
                 serialImported: item.serialImported,
                 serialExpected: item.totalQuantity,
@@ -105,7 +105,7 @@ export default function ImportListPage() {
                 status: inferredStatus as any,
                 origin: (item as any).origin || 'IMPORT',
                 notes: item.notes,
-                products,
+                devices,
             };
         });
     };
@@ -142,8 +142,8 @@ export default function ImportListPage() {
                     item.supplier.toLowerCase().includes(keyword) ||
                     item.importedBy.toLowerCase().includes(keyword) ||
                     item.handoverPerson.toLowerCase().includes(keyword);
-                const matchProduct = item.products.some((p) => p.productCode.toLowerCase().includes(keyword));
-                return matchBasic || matchProduct;
+                const matchDevice = item.devices.some((p) => p.deviceCode.toLowerCase().includes(keyword));
+                return matchBasic || matchDevice;
             });
         }
 
@@ -179,18 +179,18 @@ export default function ImportListPage() {
                 code: record.importCode,
                 status: 'COMPLETED',
                 inventoryStatus: record.inventoryStatus,
-                productType: record.productType,
+                deviceType: record.deviceType,
                 origin: record.origin || 'IMPORT',
                 importDate: record.importDate,
                 importedBy: record.importedBy,
                 supplier: record.supplier,
                 handoverPerson: record.handoverPerson,
                 notes: record.notes,
-                totalItem: record.totalProductCodes,
+                totalItem: record.totalDeviceCodes,
                 totalQuantity: record.totalQuantity,
                 serialImported: record.serialImported,
-                products: record.products.map(p => ({
-                    productCode: p.productCode,
+                devices: record.devices.map(p => ({
+                    deviceCode: p.deviceCode,
                     quantity: p.quantity,
                     boxCount: p.boxCount || 0,
                     itemsPerBox: p.itemsPerBox || 0,
@@ -256,8 +256,8 @@ export default function ImportListPage() {
         },
         {
             title: IMPORT_TABLE_COLUMNS.TYPE,
-            dataIndex: 'productType',
-            key: 'productType',
+            dataIndex: 'deviceType',
+            key: 'deviceType',
             width: 130,
             render: (text) => <Tag color="blue">{text}</Tag>,
         },

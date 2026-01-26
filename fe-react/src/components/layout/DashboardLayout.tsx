@@ -186,8 +186,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     ];
 
     const notificationItems: MenuProps['items'] = [
-        { key: '1', label: <div className="py-2"><Text strong>Có 5 sản phẩm chờ QC</Text><br /><Text type="secondary" style={{ fontSize: 12 }}>2 phút trước</Text></div> },
-        { key: '2', label: <div className="py-2"><Text strong>3 sản phẩm lỗi cần xử lý</Text><br /><Text type="secondary" style={{ fontSize: 12 }}>15 phút trước</Text></div> },
+        { key: '1', label: <div className="py-2"><Text strong>Có 5 thiết bị chờ QC</Text><br /><Text type="secondary" style={{ fontSize: 12 }}>2 phút trước</Text></div> },
+        { key: '2', label: <div className="py-2"><Text strong>3 thiết bị lỗi cần xử lý</Text><br /><Text type="secondary" style={{ fontSize: 12 }}>15 phút trước</Text></div> },
         { type: 'divider' },
         { key: 'all', label: <Text className="text-blue-500">Xem tất cả thông báo</Text> },
     ];

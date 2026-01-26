@@ -2,27 +2,27 @@ import React from 'react';
 import { Table, Tag, Progress, Space, Tooltip, Typography } from 'antd';
 import { WarningOutlined } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
-import type { ImportProduct } from '../../../types/import.type';
+import type { ImportDevice } from '../../../types/import.type';
 
 const { Text } = Typography;
 
-export interface ImportProductUI extends ImportProduct {
+export interface ImportDeviceUI extends ImportDevice {
     key: string;
     packaging?: string;
     serialStatus?: 'complete' | 'missing' | 'excess';
     serialExpected?: number;
 }
 
-interface ImportProductTableProps {
-    products: ImportProductUI[];
+interface ImportDeviceTableProps {
+    devices: ImportDeviceUI[];
     loading?: boolean;
 }
 
-export const ImportProductTable: React.FC<ImportProductTableProps> = ({
-    products,
+export const ImportDeviceTable: React.FC<ImportDeviceTableProps> = ({
+    devices,
     loading = false,
 }) => {
-    const columns: TableColumnsType<ImportProductUI> = [
+    const columns: TableColumnsType<ImportDeviceUI> = [
         {
             title: 'STT',
             key: 'index',
@@ -31,16 +31,16 @@ export const ImportProductTable: React.FC<ImportProductTableProps> = ({
             render: (_, __, index) => index + 1,
         },
         {
-            title: 'Mã sản phẩm',
-            dataIndex: 'productCode',
-            key: 'productCode',
+            title: 'Mã thiết bị',
+            dataIndex: 'deviceCode',
+            key: 'deviceCode',
             width: 150,
             render: (text) => <Text strong>{text}</Text>,
         },
         {
-            title: 'Tên sản phẩm',
-            dataIndex: 'productName',
-            key: 'productName',
+            title: 'Tên thiết bị',
+            dataIndex: 'deviceName',
+            key: 'deviceName',
             render: (text) => text || <Text type="secondary">--</Text>,
         },
         {
@@ -124,13 +124,13 @@ export const ImportProductTable: React.FC<ImportProductTableProps> = ({
     return (
         <Table
             columns={columns}
-            dataSource={products}
+            dataSource={devices}
             pagination={false}
             size="small"
             bordered
             scroll={{ x: 1000 }}
             loading={loading}
-            rowKey={(record) => record.productCode}
+            rowKey={(record) => record.deviceCode}
         />
     );
 };

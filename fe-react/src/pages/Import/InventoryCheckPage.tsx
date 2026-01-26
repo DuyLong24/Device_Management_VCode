@@ -16,8 +16,7 @@ import {
   Space,
   Divider,
   Flex,
-  Tabs,
-  Upload
+  Tabs
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -34,20 +33,20 @@ import { useMemo } from 'react';
 import { useInventoryCheck } from '../../hooks/useInventoryCheck';
 import { INVENTORY_LABELS } from '../../constants/inventory.constants';
 
-const { Dragger } = Upload;
+// const { Dragger } = Upload;
 
 const { Title, Text } = Typography;
 
 
-const getSerialStatus = (serial: string, productCode: string | undefined, importProducts: any[]) => {
-  if (!importProducts || !productCode) return 'UNKNOWN';
-  const product = importProducts.find(p => p.productCode === productCode);
-  if (!product) return 'UNKNOWN';
+const getSerialStatus = (serial: string, deviceCode: string | undefined, importDevices: any[]) => {
+  if (!importDevices || !deviceCode) return 'UNKNOWN';
+  const device = importDevices.find(p => p.deviceCode === deviceCode);
+  if (!device) return 'UNKNOWN';
 
   // Nếu không có expectedSerials -> Mặc định Match
-  if (!product.expectedSerials || product.expectedSerials.length === 0) return 'MATCHED';
+  if (!device.expectedSerials || device.expectedSerials.length === 0) return 'MATCHED';
 
-  return product.expectedSerials.includes(serial) ? 'MATCHED' : 'EXCESS';
+  return device.expectedSerials.includes(serial) ? 'MATCHED' : 'EXCESS';
 };
 
 export default function InventoryCheckPage() {
@@ -55,7 +54,7 @@ export default function InventoryCheckPage() {
   const {
     loading, isSaving, session, importInfo, serverItems, localItems, sessionStatus,
     scannedInput, setScannedInput,
-    selectedProductCode, setSelectedProductCode, inputRef,
+    selectedDeviceCode, setSelectedDeviceCode, inputRef,
     completeModalVisible, setCompleteModalVisible,
     handleStartSession, handleScanSerial, handleManualImport,
     handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
@@ -64,7 +63,7 @@ export default function InventoryCheckPage() {
     duplicateSerials,
     manualSerials, setManualSerials,
     otherCompletedCount,
-    productModels
+    deviceModels
   } = useInventoryCheck();
 
   // Logic thống kê Matching
@@ -73,7 +72,7 @@ export default function InventoryCheckPage() {
   const processedItems = useMemo(() => {
     if (!importInfo) return [];
     return allItems.map(item => {
-      let status = getSerialStatus(item.serial, (item as any).productCode || (item as any).deviceModel, importInfo.products);
+      let status = getSerialStatus(item.serial, (item as any).deviceCode || (item as any).deviceModel, importInfo.devices);
       if (duplicateSerials.includes(item.serial)) {
         status = 'DUPLICATE';
       }
@@ -111,7 +110,7 @@ export default function InventoryCheckPage() {
     sessionName: session?.name || 'Phiên kiểm kê mới',
     sessionCode: session?.code || '---',
     importCode: importInfo?.code || '---',
-    productType: importInfo?.productType || '---',
+    deviceType: importInfo?.deviceType || '---',
     importDate: importInfo?.importDate ? dayjs(importInfo.importDate).format('DD/MM/YYYY') : '---',
     importedBy: importInfo?.importedBy || '---',
     supplier: importInfo?.supplier || '---',
@@ -122,7 +121,7 @@ export default function InventoryCheckPage() {
   // Columns
   const serialColumns: TableColumnsType<any> = [
     { title: 'Mac', dataIndex: 'serial', key: 'serial', render: (t) => <Text strong className="text-blue-600 font-mono">{t}</Text> },
-    { title: 'Sản phẩm', dataIndex: 'productCode', key: 'productCode' },
+    { title: 'Tên thiết bị', dataIndex: 'deviceCode', key: 'deviceCode' },
     { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t) => dayjs(t).format('HH:mm:ss') },
     {
       title: 'So khớp',
@@ -147,22 +146,22 @@ export default function InventoryCheckPage() {
     }
   ];
 
-  const productOptions = useMemo(() => {
-    if (!productModels || productModels.length === 0) {
-      return importInfo?.products.map(p => {
-        const matched = processedItems.filter(i => (i as any).productCode === p.productCode && i.status === 'MATCHED').length;
-        return { label: `${p.productCode} (${matched}/${p.quantity})`, value: p.productCode };
+  const deviceModelOptions = useMemo(() => {
+    if (!deviceModels || deviceModels.length === 0) {
+      return importInfo?.devices.map(p => {
+        const matched = processedItems.filter(i => (i as any).deviceCode === p.deviceCode && i.status === 'MATCHED').length;
+        return { label: `${p.deviceCode} (${matched}/${p.quantity})`, value: p.deviceCode };
       }) || [];
     }
 
-    return productModels.map(model => {
-      const importProd = importInfo?.products.find(p => p.productCode === model.code);
+    return deviceModels.map(model => {
+      const importProd = importInfo?.devices.find(p => p.deviceCode === model.code);
       let suffix = '';
       if (importProd) {
-        const matched = processedItems.filter(i => (i as any).productCode === model.code && i.status === 'MATCHED').length;
+        const matched = processedItems.filter(i => (i as any).deviceCode === model.code && i.status === 'MATCHED').length;
         suffix = ` (${matched}/${importProd.quantity})`;
       } else {
-        const scanned = processedItems.filter(i => (i as any).productCode === model.code).length;
+        const scanned = processedItems.filter(i => (i as any).deviceCode === model.code).length;
         if (scanned > 0) suffix = ` (Đã quét: ${scanned})`;
       }
 
@@ -171,7 +170,7 @@ export default function InventoryCheckPage() {
         value: model.code
       };
     });
-  }, [productModels, importInfo, processedItems]);
+  }, [deviceModels, importInfo, processedItems]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -262,14 +261,14 @@ export default function InventoryCheckPage() {
           <Card title="Quét mac kiểm kê" className="mb-6 shadow-sm">
             <Space direction="vertical" className="w-full" size="middle">
               <div className="bg-blue-50 p-4 rounded border border-blue-100">
-                <Text strong className="block mb-2 text-blue-800">1. Chọn sản phẩm đang kiểm kê <span className="text-red-500">*</span></Text>
+                <Text strong className="block mb-2 text-blue-800">1. Chọn thiết bị đang kiểm kê <span className="text-red-500">*</span></Text>
                 <Select
                   className="w-full"
                   size="large"
-                  placeholder="-- Chọn mã sản phẩm --"
-                  options={productOptions}
-                  value={selectedProductCode}
-                  onChange={setSelectedProductCode}
+                  placeholder="-- Chọn mã thiết bị --"
+                  options={deviceModelOptions}
+                  value={selectedDeviceCode}
+                  onChange={setSelectedDeviceCode}
                 />
               </div>
 
@@ -280,15 +279,15 @@ export default function InventoryCheckPage() {
                     <Input
                       ref={inputRef}
                       size="large"
-                      placeholder={selectedProductCode ? "Đặt trỏ chuột vào đây và quét..." : "Vui lòng chọn sản phẩm trước"}
+                      placeholder={selectedDeviceCode ? "Đặt trỏ chuột vào đây và quét..." : "Vui lòng chọn thiết bị trước"}
                       value={scannedInput}
                       onChange={(e) => setScannedInput(e.target.value)}
                       onPressEnter={handleScanSerial}
                       prefix={<ScanOutlined />}
-                      disabled={!selectedProductCode || isSaving}
+                      disabled={!selectedDeviceCode || isSaving}
                       autoFocus
                     />
-                    <Button type="primary" size="large" onClick={handleScanSerial} disabled={!selectedProductCode || isSaving} loading={isSaving} icon={<CheckCircleOutlined />}>
+                    <Button type="primary" size="large" onClick={handleScanSerial} disabled={!selectedDeviceCode || isSaving} loading={isSaving} icon={<CheckCircleOutlined />}>
                       Quét
                     </Button>
                   </Space.Compact>
@@ -354,14 +353,14 @@ export default function InventoryCheckPage() {
                 {
                   key: '2',
                   label: 'Mac mẫu (Đối chiếu)',
-                  children: !selectedProductCode ? (
-                    <div className="p-4 text-center text-gray-500">Chọn sản phẩm để xem danh sách mac cần quét</div>
+                  children: !selectedDeviceCode ? (
+                    <div className="p-4 text-center text-gray-500">Chọn thiết bị để xem danh sách mac cần quét</div>
                   ) : (
                     <div className="p-4">
-                      <Text strong>Mac dự kiến của {selectedProductCode}:</Text>
+                      <Text strong>Mac dự kiến của {selectedDeviceCode}:</Text>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {importInfo?.products
-                          .find(p => p.productCode === selectedProductCode)
+                        {importInfo?.devices
+                          .find(p => p.deviceCode === selectedDeviceCode)
                           ?.expectedSerials?.map(s => {
                             const isScanned = processedItems.some(i => i.serial === s);
                             return (

@@ -32,7 +32,7 @@ export const ImportInfoForm: React.FC<ImportInfoFormProps> = ({
                     <Input placeholder="Nhập mã phiếu nhập" className="font-semibold text-blue-600" />
                 </Form.Item>
 
-                <Form.Item name="productType" label="Loại hàng hóa" rules={[{ required: true }]} className="col-span-1 md:col-span-2 lg:col-span-1">
+                <Form.Item name="deviceType" label="Loại hàng hóa" rules={[{ required: true }]} className="col-span-1 md:col-span-2 lg:col-span-1">
                     <Select placeholder="Chọn loại hàng" options={categoryOptions} />
                 </Form.Item>
 

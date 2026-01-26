@@ -13,7 +13,7 @@ export interface InventorySession {
     createdBy: string;
     totalScanned: number;
     totalRequired: number;
-    productCode?: string;
+    deviceCode?: string;
 }
 
 interface InventorySessionListProps {
@@ -70,7 +70,7 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
                                         </div>
                                         <div className="flex justify-between text-xs text-gray-500">
                                             <span>
-                                                {session.productCode ? `Mã SP: ${session.productCode} • ` : ''}
+                                                {session.deviceCode ? `Mã Model: ${session.deviceCode} • ` : ''}
                                                 {session.totalScanned}/{session.totalRequired} serial
                                             </span>
                                             <span>

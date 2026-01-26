@@ -5,7 +5,7 @@ const { Text } = Typography;
 
 interface ExportItem {
     serial: string;
-    productCode: string;
+    deviceCode: string;
     deviceModel?: string;
     scannedAt?: string;
     scannedBy?: string;
@@ -24,9 +24,9 @@ export const ActualItemsTable = ({ items = [] }: ActualItemsTableProps) => {
             render: (text: string) => <Text strong>{text}</Text>,
         },
         {
-            title: 'Mã SP',
-            dataIndex: 'productCode',
-            key: 'productCode',
+            title: 'Mã thiết bị',
+            dataIndex: 'deviceCode',
+            key: 'deviceCode',
         },
         {
             title: 'Model',

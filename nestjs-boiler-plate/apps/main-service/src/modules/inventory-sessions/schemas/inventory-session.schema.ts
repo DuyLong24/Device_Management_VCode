@@ -27,7 +27,7 @@ export class InventorySession extends Document {
             serial: String,
             deviceModel: String,      // Tên hiển thị (VD: Camera Wifi A1) (NEW)
             model: String,            // Legacy field (OLD)
-            productCode: String, // Mã định danh (VD: CAM-001)
+            deviceCode: String,       // Mã định danh (VD: CAM-001) 
             scannedAt: { type: Date, default: Date.now }
         }],
         default: []
@@ -36,7 +36,7 @@ export class InventorySession extends Document {
         serial: string;
         deviceModel: string;
         model?: string;
-        productCode: string;
+        deviceCode: string;
         scannedAt: Date;
     }>;
 

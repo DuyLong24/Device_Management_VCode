@@ -150,8 +150,8 @@ const ExportListPage = () => {
         },
         {
             title: 'Tổng mã SP',
-            dataIndex: 'totalProductCodes',
-            key: 'totalProductCodes',
+            dataIndex: 'totalDeviceCodes',
+            key: 'totalDeviceCodes',
             width: 100,
             align: 'center' as const,
             render: (count: number) => <Tag color="blue">{count || 0}</Tag>,

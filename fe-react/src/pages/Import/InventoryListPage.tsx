@@ -4,7 +4,7 @@ import {
     Divider
 } from 'antd';
 import {
-    ReloadOutlined, PlusOutlined, SearchOutlined, CheckCircleOutlined
+    ReloadOutlined, PlusOutlined, SearchOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
@@ -141,7 +141,7 @@ export default function InventoryListPage() {
                 </a>
             ),
         },
-        { title: 'Loại hàng hóa', dataIndex: 'productType', width: 120, render: t => <Tag color="blue">{t}</Tag> },
+        { title: 'Loại hàng hóa', dataIndex: 'deviceType', width: 120, render: t => <Tag color="blue">{t}</Tag> },
         { title: 'Ngày nhập', dataIndex: 'importDate', width: 120, render: d => d ? dayjs(d).format('DD/MM/YYYY') : '---' },
         { title: 'Người nhập', dataIndex: 'importedBy', width: 150 },
         { title: 'Nhà cung cấp', dataIndex: 'supplier', width: 200 },
@@ -172,7 +172,7 @@ export default function InventoryListPage() {
             align: 'center',
             width: 200,
             render: (_, record) => {
-                const canComplete = record.serialImported >= record.totalQuantity;
+                // const canComplete = record.serialImported >= record.totalQuantity;
                 return (
                     <Space size="small">
                         <Button
@@ -198,18 +198,18 @@ export default function InventoryListPage() {
         }
     ];
 
-    const handleCompleteImport = async (record: DeviceImport) => {
-        try {
-            message.loading({ content: 'Đang xử lý hoàn tất...', key: 'complete_import' });
-            await importService.completeImport(record.id);
-            message.success({ content: 'Đã hoàn tất phiếu nhập kho!', key: 'complete_import' });
-            // Refresh list
-            fetchData();
-        } catch (error: any) {
-            const msg = error.response?.data?.message || 'Không thể hoàn tất phiếu nhập';
-            message.error({ content: msg, key: 'complete_import' });
-        }
-    };
+    // const handleCompleteImport = async (record: DeviceImport) => {
+    //     try {
+    //         message.loading({ content: 'Đang xử lý hoàn tất...', key: 'complete_import' });
+    //         await importService.completeImport(record.id);
+    //         message.success({ content: 'Đã hoàn tất phiếu nhập kho!', key: 'complete_import' });
+    //         // Refresh list
+    //         fetchData();
+    //     } catch (error: any) {
+    //         const msg = error.response?.data?.message || 'Không thể hoàn tất phiếu nhập';
+    //         message.error({ content: msg, key: 'complete_import' });
+    //     }
+    // };
 
     return (
         <div className="p-6">

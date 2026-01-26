@@ -66,7 +66,7 @@ export const ExportInfoCard = ({ exportInfo }: ExportInfoCardProps) => {
             <Card title="Tổng quan" className="shadow-sm mb-6" variant="borderless">
                 <Row gutter={16}>
                     <Col xs={12} sm={8}>
-                        <Statistic title="Tổng mã sản phẩm" value={exportInfo.totalProductCodes || 0} />
+                        <Statistic title="Tổng mã thiết bị" value={exportInfo.totalDeviceCodes || 0} />
                     </Col>
                     <Col xs={12} sm={8}>
                         <Statistic title="Tổng số lượng" value={exportInfo.totalQuantity || 0} />

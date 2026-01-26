@@ -10,7 +10,7 @@ class ScannedDetailDto {
 
     @IsOptional()
     @IsString()
-    productCode?: string;
+    deviceCode?: string;
 }
 
 export class UpdateInventorySessionDto {

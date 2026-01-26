@@ -42,8 +42,8 @@ export class CreateDeviceExportDto {
   @IsOptional()
   @IsArray()
   requirements?: {
-    productCode: string;
-    productName: string;
+    deviceCode: string;
+    deviceName: string;
     quantity: number;
   }[];
 

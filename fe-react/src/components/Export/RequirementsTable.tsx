@@ -3,8 +3,8 @@ import { Card, Table, Typography, Progress, Tag } from 'antd';
 const { Text } = Typography;
 
 interface Requirement {
-    productCode: string;
-    productName: string;
+    deviceCode: string;
+    deviceName: string;
     quantity: number;
 }
 
@@ -16,15 +16,15 @@ interface RequirementsTableProps {
 export const RequirementsTable = ({ requirements = [], items = [] }: RequirementsTableProps) => {
     const columns = [
         {
-            title: 'Mã Sản Phẩm',
-            dataIndex: 'productCode',
-            key: 'productCode',
+            title: 'Mã Thiết Bị',
+            dataIndex: 'deviceCode',
+            key: 'deviceCode',
             render: (text: string) => <Text strong>{text}</Text>,
         },
         {
-            title: 'Tên Sản Phẩm',
-            dataIndex: 'productName',
-            key: 'productName',
+            title: 'Tên Thiết Bị',
+            dataIndex: 'deviceName',
+            key: 'deviceName',
         },
         {
             title: 'Yêu Cầu',
@@ -38,7 +38,7 @@ export const RequirementsTable = ({ requirements = [], items = [] }: Requirement
             key: 'scanned',
             align: 'center' as const,
             render: (_: any, record: Requirement) => {
-                const scannedCount = items.filter((i) => i.productCode === record.productCode).length;
+                const scannedCount = items.filter((i) => i.deviceCode === record.deviceCode).length;
                 const color = scannedCount < record.quantity ? 'warning' : scannedCount > record.quantity ? 'error' : 'success';
                 return <Tag color={color}>{scannedCount}</Tag>;
             },
@@ -48,7 +48,7 @@ export const RequirementsTable = ({ requirements = [], items = [] }: Requirement
             key: 'progress',
             width: 200,
             render: (_: any, record: Requirement) => {
-                const scannedCount = items.filter((i) => i.productCode === record.productCode).length;
+                const scannedCount = items.filter((i) => i.deviceCode === record.deviceCode).length;
                 const percent = Math.min(100, Math.round((scannedCount / record.quantity) * 100));
                 return (
                     <Progress
@@ -62,11 +62,11 @@ export const RequirementsTable = ({ requirements = [], items = [] }: Requirement
     ];
 
     return (
-        <Card title="Danh sách sản phẩm yêu cầu" className="shadow-sm mb-6">
+        <Card title="Danh sách thiết bị yêu cầu" className="shadow-sm mb-6">
             <Table
                 columns={columns}
                 dataSource={requirements}
-                rowKey={(record) => record.productCode}
+                rowKey={(record) => record.deviceCode}
                 pagination={false}
                 size="small"
                 bordered

@@ -3,7 +3,7 @@ import { App } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { importService } from '../services/import.service';
 import { inventorySessionService } from '../services/inventory-session.service';
-import type { ImportProductUI } from '../pages/Import/components/ImportProductTable';
+import type { ImportDeviceUI } from '../pages/Import/components/ImportDeviceTable';
 import { exportImportPDF } from '../utils/export-import-pdf';
 
 export const useImportDetail = () => {
@@ -32,18 +32,18 @@ export const useImportDetail = () => {
         totalRequired: importData?.totalQuantity || 0
     }));
 
-    // 3. Prepare Products Data for UI
-    const productsUI: ImportProductUI[] = (importData?.products || []).map((product) => {
+    // 3. Prepare Devices Data for UI
+    const devicesUI: ImportDeviceUI[] = (importData?.devices || []).map((device) => {
         // [FIX] Fallback to expectedSerials.length if serialImported is 0 (for old tickets)
-        const importedCount = product.serialImported || product.expectedSerials?.length || 0;
+        const importedCount = device.serialImported || device.expectedSerials?.length || 0;
 
         return {
-            ...product,
+            ...device,
             serialImported: importedCount,
-            key: product.productCode,
-            packaging: `${product.boxCount || 0} hộp × ${product.itemsPerBox || 0} sp/hộp`,
-            serialStatus: importedCount === product.quantity ? 'complete' : importedCount > (product.quantity || 0) ? 'excess' : 'missing',
-            serialExpected: product.quantity,
+            key: device.deviceCode,
+            packaging: `${device.boxCount || 0} hộp × ${device.itemsPerBox || 0} sp/hộp`,
+            serialStatus: importedCount === device.quantity ? 'complete' : importedCount > (device.quantity || 0) ? 'excess' : 'missing',
+            serialExpected: device.quantity,
         };
     });
 
@@ -102,7 +102,7 @@ export const useImportDetail = () => {
     return {
         importData,
         loading: isLoadingImport || isLoadingSessions,
-        productsUI,
+        devicesUI,
         sessions,
         handlePrint,
         handleEdit,

@@ -24,10 +24,10 @@ export enum ExportReason {
 @Schema()
 export class ExportRequirement {
   @Prop({ required: true })
-  productCode: string;
+  deviceCode: string;
 
   @Prop()
-  productName: string;
+  deviceName: string;
 
   @Prop({ required: true, default: 1 })
   quantity: number;
@@ -43,7 +43,7 @@ export class ExportItem {
   deviceModel: string;
 
   @Prop()
-  productCode: string;
+  deviceCode: string;
 
   @Prop()
   exportPrice: number;

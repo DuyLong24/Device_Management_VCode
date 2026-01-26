@@ -70,7 +70,7 @@ export class InventorySessionService {
             const itemsToPush = updateDto.scannedItems.map(item => ({
                 serial: item.serial,
                 deviceModel: item.deviceModel,
-                productCode: item.productCode || 'Unknown',
+                deviceCode: item.deviceCode || 'Unknown',
                 scannedAt: new Date()
             }));
 
@@ -109,7 +109,7 @@ export class InventorySessionService {
             const importTicket = await this.deviceImportService.findById(importIdStr);
             if (!importTicket) throw new Error(ERROR_MESSAGES.INVENTORY.IMPORT_NOT_FOUND);
 
-            const category = await this.categoryRepo.findOne({ name: importTicket.productType });
+            const category = await this.categoryRepo.findOne({ name: importTicket.deviceType });
 
             const devicesToCreate = session.details.map(item => {
                 const modelName = item.deviceModel || item.model || 'Unknown Device';
@@ -119,10 +119,10 @@ export class InventorySessionService {
                 let detailedP2P = '';
                 let foundDetail: any = null;
 
-                // Search in all products of the ticket
-                if (importTicket && importTicket.products) {
-                    for (const prod of importTicket.products) {
-                        const found = prod.expectedDetails?.find(d => d.mac === item.serial);
+                // Search in all devices of the ticket
+                if (importTicket && importTicket.devices) {
+                    for (const dev of importTicket.devices) {
+                        const found = dev.expectedDetails?.find(d => d.mac === item.serial);
                         if (found) {
                             foundDetail = found;
                             detailedName = found.name || modelName;
@@ -139,7 +139,7 @@ export class InventorySessionService {
                     serial: (foundDetail && foundDetail.serial) ? foundDetail.serial : item.serial,
 
                     name: detailedName, // Use name from Excel if available
-                    deviceModel: item.productCode || modelName,
+                    deviceModel: item.deviceCode || modelName,
                     unit: 'Cái',
                     qcStatus: 'PENDING',
                     warehouseId: String(warehouse._id),
@@ -164,18 +164,18 @@ export class InventorySessionService {
 
 
 
-            // Calculate per-product counts from this session
-            const productCounts: Record<string, number> = {};
+            // Calculate per-device counts from this session
+            const deviceCounts: Record<string, number> = {};
             session.details.forEach(item => {
-                const pCode = item.productCode || item.deviceModel; // fallback if productCode missing
-                if (pCode) {
-                    productCounts[pCode] = (productCounts[pCode] || 0) + 1;
+                const dCode = item.deviceCode || item.deviceModel; // fallback if deviceCode missing
+                if (dCode) {
+                    deviceCounts[dCode] = (deviceCounts[dCode] || 0) + 1;
                 }
             });
 
             await this.deviceImportService.updateProgress(String(importTicket._id), {
                 serialImported: newTotal,
-                productCounts
+                deviceCounts: deviceCounts
             });
 
             await this.sessionRepo.sessionModel.findByIdAndUpdate(

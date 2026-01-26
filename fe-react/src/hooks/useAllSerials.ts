@@ -16,8 +16,8 @@ export interface SerialUI {
     key: string;
     mac: string;
     serial: string;
-    productCode: string;
-    productName: string;
+    deviceCode: string;
+    deviceName: string;
     warehouseId: string;
     warehouseName: string;
     warehouseColor: string;
@@ -116,8 +116,8 @@ export const useAllSerials = () => {
             key: d.id,
             mac: d.mac || 'N/A',
             serial: d.serial,
-            productCode: d.deviceModel || 'N/A',
-            productName: d.name,
+            deviceCode: d.deviceModel || 'N/A',
+            deviceName: d.name,
             warehouseId: rawWhIdString,
             warehouseName: wh ? wh.name : safeStatus,
             warehouseColor: wh ? wh.color : getWarehouseColor(safeStatus),

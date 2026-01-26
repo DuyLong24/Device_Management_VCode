@@ -4,21 +4,21 @@ import type { DeviceExport } from '../../types/export.type';
 
 const { Text } = Typography;
 
-interface ProductListTableProps {
+interface DeviceListTableProps {
     exportInfo: DeviceExport;
 }
 
-export const ProductListTable = ({ exportInfo }: ProductListTableProps) => {
+export const DeviceListTable = ({ exportInfo }: DeviceListTableProps) => {
     const data = (exportInfo.requirements || []).map((req, index) => {
         // Đếm số lượng đã scan
         const exportedCount = (exportInfo.items || []).filter(
-            (item) => item.productCode === req.productCode
+            (item) => item.deviceCode === req.deviceCode
         ).length;
 
         return {
-            key: req.productCode || index,
-            productCode: req.productCode,
-            productName: req.productName || 'Không xác định',
+            key: req.deviceCode || index,
+            deviceCode: req.deviceCode,
+            deviceName: req.deviceName || 'Không xác định',
             quantity: req.quantity,
             serialExported: exportedCount,
             serialExpected: req.quantity,
@@ -35,15 +35,15 @@ export const ProductListTable = ({ exportInfo }: ProductListTableProps) => {
             render: (_: any, __: any, index: number) => index + 1,
         },
         {
-            title: 'Mã sản phẩm',
-            dataIndex: 'productCode',
-            key: 'productCode',
+            title: 'Mã thiết bị',
+            dataIndex: 'deviceCode',
+            key: 'deviceCode',
             width: 150,
         },
         {
-            title: 'Tên sản phẩm',
-            dataIndex: 'productName',
-            key: 'productName',
+            title: 'Tên thiết bị',
+            dataIndex: 'deviceName',
+            key: 'deviceName',
         },
         {
             title: 'Số lượng',
@@ -115,7 +115,7 @@ export const ProductListTable = ({ exportInfo }: ProductListTableProps) => {
 
     return (
         <Card
-            title="Danh sách sản phẩm"
+            title="Danh sách thiết bị"
             className="shadow-sm mb-6"
         >
             <Table
@@ -124,7 +124,7 @@ export const ProductListTable = ({ exportInfo }: ProductListTableProps) => {
                 pagination={false}
                 size="small"
                 bordered
-                rowKey="productCode"
+                rowKey="deviceCode"
             />
         </Card>
     );

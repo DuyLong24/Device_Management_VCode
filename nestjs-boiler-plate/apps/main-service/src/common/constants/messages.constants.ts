@@ -21,8 +21,8 @@ export const ERROR_MESSAGES = {
         DELETE_FAILED: 'Xóa phiếu nhập thất bại',
         DRAFT_ONLY_EDIT: 'Chỉ được sửa các phiếu ở trạng thái DRAFT (nháp)',
         DRAFT_ONLY_DELETE: 'Chỉ được xóa các phiếu ở trạng thái DRAFT (nháp)',
-        SERIAL_QUANTITY_MISMATCH: 'Sản phẩm {product}: Trang thái Serial khai báo ({serials}) không khớp với số lượng nhập ({quantity})',
-        SERIAL_DUPLICATE: 'Sản phẩm {product}: Danh sách Serial có chứa mã trùng lặp'
+        SERIAL_QUANTITY_MISMATCH: 'Thiết bị {device}: Trạng thái Serial khai báo ({serials}) không khớp với số lượng nhập ({quantity})',
+        SERIAL_DUPLICATE: 'Thiết bị {device}: Danh sách Serial có chứa mã trùng lặp'
     },
     DEVICE_EXPORT: {
         NOT_FOUND: 'Không tìm thấy phiếu xuất',

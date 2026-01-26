@@ -170,4 +170,34 @@ export class DeviceService implements OnModuleInit {
 
     return result;
   }
+
+  async moveToSoldWarehouse(macs: string[], exportCode: string): Promise<void> {
+    const soldWarehouse = await this.warehouseService.findByCode('SOLD');
+    if (!soldWarehouse) {
+      throw new BadRequestException(ERROR_MESSAGES.WAREHOUSE.NOT_FOUND);
+    }
+
+    await this.deviceModel.updateMany(
+      { mac: { $in: macs } },
+      {
+        $set: {
+          warehouseId: soldWarehouse._id,
+          warehouseUpdatedAt: new Date(),
+          warehouseUpdatedBy: 'SYSTEM_EXPORT',
+          // Optionally add export info to history or notes?
+        }
+      }
+    ).exec();
+  }
+
+  async countReadyToExport(model: string): Promise<number> {
+    const readyWarehouse = await this.warehouseService.findByCode('READY_TO_EXPORT');
+    if (!readyWarehouse) return 0;
+
+    return this.deviceModel.countDocuments({
+      deviceModel: model,
+      warehouseId: readyWarehouse._id,
+      qcStatus: 'PASS' // Ensure only QC Passed items are counted
+    }).exec();
+  }
 }

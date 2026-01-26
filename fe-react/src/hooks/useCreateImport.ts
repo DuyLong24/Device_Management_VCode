@@ -84,9 +84,9 @@ export const useCreateImport = () => {
                     });
 
                     // Map backend data (devices) to Frontend DeviceEntry
-                    const mappedDevices: DeviceEntry[] = (data.devices || (data as any).products || []).map((p: any, index: number) => ({
+                    const mappedDevices: DeviceEntry[] = (data.devices || []).map((p: any, index: number) => ({
                         key: p._id || `dev-${index}`,
-                        deviceCode: p.deviceCode || p.productCode,
+                        deviceCode: p.deviceCode,
                         quantity: p.quantity,
                         boxCount: p.boxCount,
                         itemsPerBox: p.itemsPerBox,
@@ -212,7 +212,7 @@ export const useCreateImport = () => {
 
             const payload = {
                 code: values.code,
-                deviceType: values.productType,
+                deviceType: values.deviceType || values.deviceType,
                 origin: values.origin,
                 importDate: values.importDate.toISOString(),
                 importedBy: values.importedBy || '6969ff74c376ce4d439185ac',
@@ -302,7 +302,7 @@ export const useCreateImport = () => {
         }>();
 
         details.forEach((row: any) => {
-            const pCode = row.deviceCode || row.productCode;
+            const pCode = row.deviceCode || row.deviceCode;
             if (!pCode) return;
 
             const current = deviceMap.get(pCode) || {

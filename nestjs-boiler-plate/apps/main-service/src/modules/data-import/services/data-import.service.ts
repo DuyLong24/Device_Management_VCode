@@ -9,7 +9,6 @@ import { DeviceService } from '../../devices/services/device.service'; // Exampl
 @Injectable()
 export class DataImportService {
     private strategies: Map<string, ImportStrategy> = new Map();
-    // In-memory session storage (In production, use Redis/DB)
     private sessions: Map<string, {
         fileBuffer: Buffer;
         workbook?: XLSX.WorkBook;
@@ -88,8 +87,8 @@ export class DataImportService {
         const dataRows = rawData.slice(headerRowIndex + 1);
 
         // Map data from Excel columns to DB fields
-        // mapping: { "productCode": "Mã sản phẩm", "quantity": "Số lượng" } -> Key is DB field, Value is Excel Header Name
-        // OR mapping: { "productCode": "A", "quantity": "B" } if mapped by index?
+        // mapping: { "deviceCode": "Mã thiết bị", "quantity": "Số lượng" } -> Key is DB field, Value is Excel Header Name
+        // OR mapping: { "deviceCode": "A", "quantity": "B" } if mapped by index?
         // Usually mapping is { "dbField": "ExcelHeaderName" }
 
         const mappedData = dataRows.map(row => {

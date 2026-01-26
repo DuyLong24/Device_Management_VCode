@@ -13,7 +13,7 @@ export interface Device {
     id: string;
     name: string;
     deviceModel: string;
-    productCode?: string;
+    deviceCode?: string;
     serial: string;
     status?: string;
     qcStatus?: string;

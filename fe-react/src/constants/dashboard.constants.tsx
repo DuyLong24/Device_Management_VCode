@@ -106,7 +106,7 @@ export const MENU_LABELS = {
         ROOT: 'Quản lý nhập kho',
         LIST: 'Danh sách phiếu nhập kho',
         CREATE: 'Thêm mới phiếu nhập kho',
-        INVENTORY: 'Kiểm kê sản phẩm nhập kho'
+        INVENTORY: 'Kiểm kê thiết bị nhập kho'
     },
     ALL_DEVICES: 'Danh sách thiết bị',
     INTERNAL_GROUP: 'Kho nội bộ',

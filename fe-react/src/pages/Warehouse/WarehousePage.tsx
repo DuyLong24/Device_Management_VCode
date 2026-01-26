@@ -38,7 +38,7 @@ export default function WarehousePage() {
     // Filter States
     const [searchText, setSearchText] = useState('');
     const debouncedSearch = useDebounce(searchText, 500);
-    const [selectedProduct, setSelectedProduct] = useState<string | undefined>(undefined);
+    const [selectedDeviceModel, setSelectedDeviceModel] = useState<string | undefined>(undefined);
 
     // Selection State
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -62,7 +62,7 @@ export default function WarehousePage() {
     const DEVICE_IMPORT_FIELDS: FieldDefinition[] = [
         { key: 'mac', label: 'MAC Address', required: true, description: 'Địa chỉ MAC (Duy nhất)' },
         { key: 'serial', label: 'Serial (Optional)', required: false, description: 'Serial Number' },
-        { key: 'deviceModel', label: 'Mã Model', required: true, description: 'Mã sản phẩm (SKU)' },
+        { key: 'deviceModel', label: 'Mã Model', required: true, description: 'Mã thiết bị (SKU)' },
         { key: 'name', label: 'Tên thiết bị', description: 'Tên hiển thị (nếu trống sẽ dùng Model)' },
     ];
 
@@ -77,7 +77,7 @@ export default function WarehousePage() {
 
     // 2. Get Devices in Warehouse
     const { data: deviceData, isLoading, refetch } = useQuery({
-        queryKey: ['devices', code, page, pageSize, debouncedSearch, selectedProduct],
+        queryKey: ['devices', code, page, pageSize, debouncedSearch, selectedDeviceModel],
         queryFn: () => {
             const params: any = {
                 page,
@@ -86,7 +86,7 @@ export default function WarehousePage() {
                 sortBy: 'updatedAt:desc',
             };
             if (debouncedSearch) params.search = debouncedSearch;
-            if (selectedProduct) params.model = selectedProduct;
+            if (selectedDeviceModel) params.model = selectedDeviceModel;
 
             return deviceService.getAll(params);
         },
@@ -326,8 +326,8 @@ export default function WarehousePage() {
                     <Select
                         placeholder="Lọc theo mã model"
                         className="w-[200px]"
-                        value={selectedProduct}
-                        onChange={setSelectedProduct}
+                        value={selectedDeviceModel}
+                        onChange={setSelectedDeviceModel}
                         allowClear
                         showSearch
                         options={modelOptions}

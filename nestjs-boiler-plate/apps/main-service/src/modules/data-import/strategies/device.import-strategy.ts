@@ -29,7 +29,8 @@ export class DeviceImportStrategy implements ImportStrategy {
 
             // Required fields
             if (!row.mac) errors.push('Thiếu địa chỉ MAC');
-            if (!row.deviceModel) errors.push('Thiếu mã Model (deviceModel)');
+            const model = row.deviceCode || row.deviceModel;
+            if (!model) errors.push('Thiếu mã Model (deviceCode)');
 
             // Strategy Validation
             const exists = row.mac && existingMacs.has(row.mac);
@@ -66,8 +67,8 @@ export class DeviceImportStrategy implements ImportStrategy {
             const commonFields = {
                 mac: row.mac,
                 serial: row.serial,
-                deviceModel: row.deviceModel,
-                name: row.name || row.deviceModel, // Fallback name
+                deviceModel: row.deviceCode || row.deviceModel,
+                name: row.name || row.deviceCode || row.deviceModel, // Fallback name
                 warehouseId: row.warehouseId || context?.['warehouseId'], // Context might have general warehouse
                 status: 'ACTIVE',
                 condition: 'NEW'

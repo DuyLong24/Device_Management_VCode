@@ -6,7 +6,7 @@ export const INVENTORY_LABELS = {
     BTN_BACK: 'Quay lại',
     SCAN_PLACEHOLDER: 'Quét mã Serial...',
     SCAN_AUTO_SUBMIT: 'Tự động gửi khi quét xong',
-    SEARCH_PLACEHOLDER: 'Tìm mã phiên, Serial...',
+    SEARCH_PLACEHOLDER: 'Tìm kiếm',
     SESSION_INFO: 'Thông tin phiên',
     SESSION_CODE: 'Mã phiên',
     IMPORT_TICKET: 'Phiếu nhập',

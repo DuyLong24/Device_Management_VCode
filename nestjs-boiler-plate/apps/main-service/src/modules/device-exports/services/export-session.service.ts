@@ -85,7 +85,7 @@ export class ExportSessionService {
         const device = await this.deviceService.findByMac(serial); // Re-fetch to be safe/simple or optimize if needed
         const newItem = {
             serial: device.serial,
-            productCode: device.deviceModel,
+            deviceCode: device.deviceModel,
             deviceModel: device.deviceModel,
             scannedAt: new Date()
         };
@@ -130,11 +130,11 @@ export class ExportSessionService {
 
         const exportRecord = await this.deviceExportRepository.findById(session.exportId as any);
         const requirementMap = new Map<string, number>();
-        exportRecord.requirements.forEach(req => requirementMap.set(req.productCode, req.quantity));
+        exportRecord.requirements.forEach(req => requirementMap.set(req.deviceCode, req.quantity));
 
         const scannedMap = new Map<string, number>();
         session.items.forEach(i => {
-            const code = i.productCode || i.deviceModel;
+            const code = i.deviceCode || i.deviceModel;
             scannedMap.set(code, (scannedMap.get(code) || 0) + 1);
         });
 
@@ -181,7 +181,7 @@ export class ExportSessionService {
 
                 // 5. Model Check
                 if (!requirementMap.has(device.deviceModel)) {
-                    throw new Error(`Sai loại sản phẩm (${device.deviceModel})`);
+                    throw new Error(`Sai loại thiết bị (${device.deviceModel})`);
                 }
 
                 // QUANTITY WARNING
@@ -205,7 +205,7 @@ export class ExportSessionService {
                 const device = deviceMap.get(serial);
                 return {
                     serial: device.serial,
-                    productCode: device.deviceModel,
+                    deviceCode: device.deviceModel,
                     deviceModel: device.deviceModel,
                     scannedAt: new Date()
                 };
@@ -248,9 +248,9 @@ export class ExportSessionService {
         }
 
         // 5. Check Model Requirement
-        const requirements = new Set(exportRecord.requirements.map(r => r.productCode));
+        const requirements = new Set(exportRecord.requirements.map(r => r.deviceCode));
         if (!requirements.has(device.deviceModel)) {
-            throw new BadRequestException(`Loại sản phẩm ${device.deviceModel} không nằm trong phiếu xuất này`);
+            throw new BadRequestException(`Loại thiết bị ${device.deviceModel} không nằm trong phiếu xuất này`);
         }
     }
 
@@ -260,7 +260,7 @@ export class ExportSessionService {
         if (session.status !== ExportSessionStatus.IN_PROGRESS) throw new BadRequestException('Session creation is not in progress');
 
         if (session.items.length === 0) {
-            throw new BadRequestException('Chưa quét được sản phẩm nào');
+            throw new BadRequestException('Chưa quét được thiết bị nào');
         }
 
         const serials = session.items.map(i => i.serial);
@@ -269,7 +269,7 @@ export class ExportSessionService {
         const exportItems = session.items.map(i => ({
             serial: i.serial,
             deviceModel: i.deviceModel,
-            productCode: i.productCode,
+            deviceCode: i.deviceCode,
             exportPrice: 0
         }));
 

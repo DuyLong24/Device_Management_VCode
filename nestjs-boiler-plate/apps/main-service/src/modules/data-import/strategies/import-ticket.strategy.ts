@@ -23,19 +23,19 @@ export class ImportTicketStrategy implements ImportStrategy {
 
         for (const [index, row] of data.entries()) {
             const errors: string[] = [];
-            const productCode = row['productCode'];
+            const deviceCode = row['deviceCode'] || row['productCode']; // Fallback for backward compatibility
             const mac = row['mac'];
             const serial = row['serial'];
             const p2p = row['p2p'];
             const name = row['name'];
 
-            if (!productCode) {
-                errors.push('Thiếu Mã sản phẩm (productCode)');
+            if (!deviceCode) {
+                errors.push('Thiếu Mã thiết bị (deviceCode)');
             } else {
-                // Kiểm tra mã sản phẩm có tồn tại trong hệ thống không
-                if (!validModelCodes.has(productCode)) {
+                // Kiểm tra mã thiết bị có tồn tại trong hệ thống không
+                if (!validModelCodes.has(deviceCode)) {
                     if (!autoCreateModel) {
-                        errors.push(`Mã sản phẩm "${productCode}" chưa tồn tại trong hệ thống.`);
+                        errors.push(`Mã thiết bị "${deviceCode}" chưa tồn tại trong hệ thống.`);
                     } else {
                         //Logic tạo mới model
                     }
@@ -70,7 +70,7 @@ export class ImportTicketStrategy implements ImportStrategy {
                     serial,
                     p2p,
                     name,
-                    productCode
+                    deviceCode
                 },
                 valid: errors.length === 0,
                 errors

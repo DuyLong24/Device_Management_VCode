@@ -102,7 +102,7 @@ export default function ExportProcessPage() {
             // Refresh items
             setSessionItems(prev => [...prev, {
                 serial: code,
-                productCode: res.data?.items?.find((i: any) => i.serial === code)?.productCode || 'N/A',
+                deviceCode: res.data?.items?.find((i: any) => i.serial === code)?.deviceCode || 'N/A',
                 scannedAt: new Date().toISOString()
             }]);
 
@@ -211,7 +211,7 @@ export default function ExportProcessPage() {
 
     // Cột MAC List
     const macColumns = [
-        { title: 'Sản phẩm', dataIndex: 'productCode', key: 'productCode', width: 150 },
+        { title: 'Thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 150 },
         { title: 'MAC Address', dataIndex: 'serial', key: 'serial', width: 200, render: (t: string) => <b>{t}</b> },
         { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t: string) => t ? dayjs(t).format('HH:mm:ss DD/MM') : '' },
         { title: 'Trạng thái', key: 'status', render: () => <Tag color="blue">Mới quét</Tag> },

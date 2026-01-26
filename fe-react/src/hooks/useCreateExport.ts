@@ -197,8 +197,8 @@ export const useCreateExport = () => {
             if (data.requirements) {
                 const mappedDevices: DeviceItem[] = data.requirements.map((req: any, index: number) => ({
                     key: `prod-${index}-${Date.now()}`,
-                    deviceModel: req.productCode,
-                    name: req.productName || '',
+                    deviceModel: req.deviceCode,
+                    name: req.deviceName || '',
                     quantity: req.quantity,
                     inStock: 0,
                     expectedSerials: req.expectedSerials || []
@@ -385,8 +385,8 @@ export const useCreateExport = () => {
                 ...values,
                 status,
                 requirements: deviceList.map(d => ({
-                    productCode: d.deviceModel,
-                    productName: d.name,
+                    deviceCode: d.deviceModel,
+                    deviceName: d.name,
                     quantity: d.quantity,
                     // expectedSerials?
                 }))

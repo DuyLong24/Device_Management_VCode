@@ -9,8 +9,8 @@ const { Text } = Typography;
 export interface DeviceUI {
     key: string;
     mac: string;
-    productCode: string;
-    productName: string;
+    deviceCode: string;
+    deviceName: string;
     warehouseName: string;
     warehouseColor: string;
     importDate?: string;
@@ -53,15 +53,15 @@ export const DeviceListTable: React.FC<DeviceListTableProps> = ({
         },
         {
             title: 'Mã Model',
-            dataIndex: 'productCode',
-            key: 'productCode',
+            dataIndex: 'deviceModel',
+            key: 'deviceModel',
             width: 150,
             render: (text) => <Text strong>{text}</Text>
         },
         {
             title: 'Tên thiết bị',
-            dataIndex: 'productName',
-            key: 'productName',
+            dataIndex: 'deviceName',
+            key: 'deviceName',
             width: 250,
             ellipsis: true,
         },

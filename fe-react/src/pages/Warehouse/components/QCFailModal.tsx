@@ -77,7 +77,7 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
 
     const scannedColumns: TableColumnsType<ScannedSerial> = [
         { title: 'Serial', dataIndex: 'serial', key: 'serial', width: 200 },
-        { title: 'Mã SP', dataIndex: 'productCode', key: 'productCode', width: 130 },
+        { title: 'Mã thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 130 },
         {
             title: 'Trạng thái',
             dataIndex: 'validationStatus',
@@ -127,7 +127,7 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
 
     return (
         <Modal
-            title={<Space><CloseCircleOutlined style={{ color: '#ff4d4f' }} /><span>Tiếp nhận sản phẩm Không đạt</span></Space>}
+            title={<Space><CloseCircleOutlined style={{ color: '#ff4d4f' }} /><span>Tiếp nhận thiết bị Không đạt</span></Space>}
             open={open}
             onCancel={onCancel}
             width={1000}
@@ -146,7 +146,7 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
             ]}
         >
             <Space direction="vertical" size={16} className="w-full">
-                <Alert type="warning" message="Sản phẩm sẽ chuyển sang Kho Lỗi (Defect)." showIcon />
+                <Alert type="warning" message="thiết bị sẽ chuyển sang Kho Lỗi (Defect)." showIcon />
 
                 <Card size="small" title="Nhập/Quét Serial">
                     <Space.Compact className="w-full">

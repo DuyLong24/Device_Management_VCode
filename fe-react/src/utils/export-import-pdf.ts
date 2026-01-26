@@ -70,7 +70,7 @@ export const exportImportPDF = async (data: DeviceImport) => {
     doc.text(dayjs(data.importDate).format('DD/MM/YYYY'), valueX, y);
 
     doc.text('Loại hàng:', col2X, y);
-    doc.text(data.productType, col2ValueX, y);
+    doc.text(data.deviceType, col2ValueX, y);
 
     y += 8;
     // Row 2
@@ -91,13 +91,13 @@ export const exportImportPDF = async (data: DeviceImport) => {
 
     y += 15;
 
-    // 5. Product Table
+    // 5. Device Table
     autoTable(doc, {
         startY: y,
-        head: [['STT', 'Mã sản phẩm (Model)', 'Số lượng', 'Quy cách', 'Serial đã nhập']],
-        body: data.products.map((p, index) => [
+        head: [['STT', 'Mã thiết bị (Model)', 'Số lượng', 'Quy cách', 'Serial đã nhập']],
+        body: data.devices.map((p, index) => [
             index + 1,
-            p.productCode,
+            p.deviceCode,
             p.quantity,
             p.boxCount ? `${p.boxCount} thùng x ${p.itemsPerBox} cái` : '---',
             `${p.serialImported || 0} / ${p.quantity}`

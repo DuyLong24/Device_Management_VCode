@@ -80,7 +80,7 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
 
     const scannedColumns: TableColumnsType<ScannedSerial> = [
         { title: 'Serial', dataIndex: 'serial', key: 'serial', width: 200 },
-        { title: 'Mã SP', dataIndex: 'productCode', key: 'productCode', width: 130 },
+        { title: 'Mã thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 130 },
         {
             title: 'Trạng thái',
             dataIndex: 'validationStatus',
@@ -124,7 +124,7 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
 
     return (
         <Modal
-            title={<Space><CheckCircleOutlined style={{ color: '#52c41a' }} /><span>Tiếp nhận sản phẩm đạt QC</span></Space>}
+            title={<Space><CheckCircleOutlined style={{ color: '#52c41a' }} /><span>Tiếp nhận thiết bị đạt QC</span></Space>}
             open={open}
             onCancel={onCancel}
             width={1000}

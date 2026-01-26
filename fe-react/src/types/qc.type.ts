@@ -1,5 +1,5 @@
 
-export type ProductType = 'Camera' | 'Màn hình' | 'Barrier' | 'Khác';
+export type DeviceType = 'Camera' | 'Màn hình' | 'Barrier' | 'Khác';
 export type QCResult = 'pass' | 'fail';
 export type ValidationStatus = 'valid' | 'invalid';
 export type QCSource = 'INVENTORY' | 'WARRANTY_RECHECK'; // Nguồn QC
@@ -9,9 +9,9 @@ export interface QCPendingItem {
     key: string;
     id: string;
     serial: string;
-    productCode: string;
-    productName: string;
-    productType: ProductType;
+    deviceCode: string;
+    deviceName: string;
+    deviceType: DeviceType;
     importCode: string;
     importDate: string;
     inventoryCompletedAt: string;

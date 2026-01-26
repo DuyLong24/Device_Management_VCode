@@ -11,7 +11,7 @@ import type { InventorySession, ScannedItem } from '../services/inventory-sessio
 import type { DeviceImport } from '../types/import.type';
 import { useScanSound } from '../hooks/useScanSound';
 
-export type LocalScannedItem = ScannedItem & { productCode?: string };
+export type LocalScannedItem = ScannedItem & { deviceCode?: string };
 
 export const useInventoryCheck = () => {
 
@@ -36,8 +36,8 @@ export const useInventoryCheck = () => {
     const [manualSerials, setManualSerials] = useState('');
     const [otherCompletedCount, setOtherCompletedCount] = useState(0);
 
-    const [selectedProductCode, setSelectedProductCode] = useState<string | null>(null);
-    const [productModels, setProductModels] = useState<any[]>([]); // [NEW]
+    const [selectedDeviceCode, setSelectedDeviceCode] = useState<string | null>(null);
+    const [deviceModels, setDeviceModels] = useState<any[]>([]); // [NEW]
 
     const inputRef = useRef<any>(null);
     const { playError, playSuccess } = useScanSound();
@@ -76,10 +76,10 @@ export const useInventoryCheck = () => {
                 sharedDataService.getDataByGroupCode('MODEL').catch(() => [])
             ]);
             setImportInfo(importRes.data);
-            setProductModels(models);
+            setDeviceModels(models);
 
-            if (importRes.data.products?.length === 1) {
-                setSelectedProductCode(importRes.data.products[0].productCode);
+            if (importRes.data.devices?.length === 1) {
+                setSelectedDeviceCode(importRes.data.devices[0].deviceCode);
             }
 
             const sessions = await inventorySessionService.getByImportId(id);
@@ -150,9 +150,9 @@ export const useInventoryCheck = () => {
         const code = scannedInput.trim();
         if (!code) return;
 
-        if (!selectedProductCode) {
+        if (!selectedDeviceCode) {
             playError();
-            message.warning('Vui lòng CHỌN SẢN PHẨM trước khi quét!');
+            message.warning('Vui lòng CHỌN THIẾT BỊ trước khi quét!');
             return;
         }
 
@@ -171,8 +171,8 @@ export const useInventoryCheck = () => {
             const payload = {
                 scannedItems: [{
                     serial: code,
-                    deviceModel: selectedProductCode,
-                    productCode: selectedProductCode
+                    deviceModel: selectedDeviceCode,
+                    deviceCode: selectedDeviceCode
                 }]
             };
 
@@ -193,8 +193,8 @@ export const useInventoryCheck = () => {
     };
 
     const handleManualImport = async () => {
-        if (!manualSerials.trim() || !selectedProductCode) {
-            message.warning('Vui lòng chọn sản phẩm và nhập danh sách mac');
+        if (!manualSerials.trim() || !selectedDeviceCode) {
+            message.warning('Vui lòng chọn thiết bị và nhập danh sách mac');
             return;
         }
 
@@ -209,8 +209,8 @@ export const useInventoryCheck = () => {
             if (isDup) dups.push(code);
             else validItems.push({
                 serial: code,
-                deviceModel: selectedProductCode,
-                productCode: selectedProductCode
+                deviceModel: selectedDeviceCode,
+                deviceCode: selectedDeviceCode
             });
         });
 
@@ -279,7 +279,7 @@ export const useInventoryCheck = () => {
     return {
         loading, isSaving, session, importInfo, serverItems, localItems, sessionStatus,
         scannedInput, setScannedInput, manualSerials, setManualSerials,
-        selectedProductCode, setSelectedProductCode, inputRef,
+        selectedDeviceCode, setSelectedDeviceCode, inputRef,
         completeModalVisible, setCompleteModalVisible,
         handleStartSession, handleScanSerial, handleManualImport,
         handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
@@ -288,6 +288,6 @@ export const useInventoryCheck = () => {
         setLocalItems,
         duplicateSerials,
         otherCompletedCount,
-        productModels // [NEW]
+        deviceModels // [NEW]
     };
 };

@@ -84,7 +84,7 @@ export class ExportSessionService {
         // Add
         const device = await this.deviceService.findByMac(serial); // Re-fetch to be safe/simple or optimize if needed
         const newItem = {
-            serial: device.serial,
+            serial: device.mac, // Store MAC here for warehouse transfer (field naming is legacy)
             deviceCode: device.deviceModel,
             deviceModel: device.deviceModel,
             scannedAt: new Date()
@@ -204,7 +204,7 @@ export class ExportSessionService {
             const newItems = success.map(serial => {
                 const device = deviceMap.get(serial);
                 return {
-                    serial: device.serial,
+                    serial: device.mac, // Store MAC for warehouse transfer
                     deviceCode: device.deviceModel,
                     deviceModel: device.deviceModel,
                     scannedAt: new Date()
@@ -266,6 +266,16 @@ export class ExportSessionService {
         const serials = session.items.map(i => i.serial);
         const exportRecord = await this.deviceExportRepository.findById(session.exportId as any); // Populate might be needed if exportId is object
 
+        // Determine target warehouse based on export type
+        let targetWarehouseCode = 'SOLD'; // Default
+        if (exportRecord?.type === 'WARRANTY') {
+            targetWarehouseCode = 'IN_WARRANTY'; // Trong bảo hành
+        } else if (exportRecord?.type === 'SALE') {
+            targetWarehouseCode = 'SOLD'; // Đã bán
+        } else if (exportRecord?.type === 'TRANSFER') {
+            targetWarehouseCode = 'TRANSFERRED'; // Chuyển kho
+        }
+
         const exportItems = session.items.map(i => ({
             serial: i.serial,
             deviceModel: i.deviceModel,
@@ -278,7 +288,7 @@ export class ExportSessionService {
             $inc: { totalItems: exportItems.length }
         } as any);
 
-        await this.deviceService.moveToSoldWarehouse(serials, exportRecord?.code || 'EXPORT-SESSION');
+        await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord?.code || 'EXPORT-SESSION');
 
         const sessionUpdateResult = await this.exportSessionRepository.update(sessionId, {
             status: ExportSessionStatus.COMPLETED,

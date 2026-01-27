@@ -171,23 +171,37 @@ export class DeviceService implements OnModuleInit {
     return result;
   }
 
-  async moveToSoldWarehouse(macs: string[], exportCode: string): Promise<void> {
-    const soldWarehouse = await this.warehouseService.findByCode('SOLD');
-    if (!soldWarehouse) {
-      throw new BadRequestException(ERROR_MESSAGES.WAREHOUSE.NOT_FOUND);
+  async moveDevicesToWarehouse(macs: string[], targetWarehouseCode: string, exportCode: string): Promise<void> {
+    console.log(`[DEBUG] moveDevicesToWarehouse called with:`, {
+      macsCount: macs.length,
+      targetWarehouseCode,
+      exportCode,
+      macs: macs.slice(0, 3) // Show first 3 MACs
+    });
+
+    const targetWarehouse = await this.warehouseService.findByCode(targetWarehouseCode);
+    console.log(`[DEBUG] Target warehouse found:`, targetWarehouse ? { id: targetWarehouse._id, name: targetWarehouse.name, code: targetWarehouse.code } : 'NOT FOUND');
+
+    if (!targetWarehouse) {
+      throw new BadRequestException(`Kho đích "${targetWarehouseCode}" không tồn tại`);
     }
 
-    await this.deviceModel.updateMany(
-      { mac: { $in: macs } },
+    const result = await this.deviceModel.updateMany(
+      { $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }] },
       {
         $set: {
-          warehouseId: soldWarehouse._id,
+          warehouseId: targetWarehouse._id,
           warehouseUpdatedAt: new Date(),
           warehouseUpdatedBy: 'SYSTEM_EXPORT',
-          // Optionally add export info to history or notes?
         }
       }
     ).exec();
+
+    console.log(`[DEBUG] UpdateMany result:`, {
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+      acknowledged: result.acknowledged
+    });
   }
 
   async countReadyToExport(model: string): Promise<number> {

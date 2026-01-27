@@ -232,8 +232,18 @@ export class DeviceExportService {
       throw new BadRequestException('Chưa có thiết bị nào được quét');
     }
 
+    // Determine target warehouse based on export type
+    let targetWarehouseCode = 'SOLD'; // Default
+    if (exportRecord.type === 'WARRANTY') {
+      targetWarehouseCode = 'IN_WARRANTY'; // Trong bảo hành
+    } else if (exportRecord.type === 'SALE') {
+      targetWarehouseCode = 'SOLD'; // Đã bán
+    } else if (exportRecord.type === 'TRANSFER') {
+      targetWarehouseCode = 'TRANSFERRED'; // Chuyển kho (if exists, else use SOLD)
+    }
+
     const serials = exportRecord.items.map(i => i.serial);
-    await this.deviceService.moveToSoldWarehouse(serials, exportRecord.code);
+    await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord.code);
 
     return this.update(id, {
       status: ExportStatus.COMPLETED,

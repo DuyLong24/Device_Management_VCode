@@ -207,7 +207,7 @@ export default function WarehousePage() {
                 ...base,
                 render: (text: string, record: any) => {
                     const value = text || record.deviceModel || record.model;
-                    console.log('Rendering DeviceModel:', { text, recordValue: value, record });
+                    // console.log('Rendering DeviceModel:', { text, recordValue: value, record });
                     return <Text>{value || '--'}</Text>;
                 }
             };

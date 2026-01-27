@@ -15,15 +15,23 @@ import { CreateCategoryDto } from '../dto/create-categories.dto';
 import { UpdateCategoryDto } from '../dto/update-categories.dto';
 import { CategoryPaginationDto } from '../dto/categories-pagination.dto';
 import { createFilterAndOptions } from '../../../utils/pick.util';
+import { Roles } from 'nest-keycloak-connect';
 
 @Controller('categories')
 export class CategoryController {
   constructor(private readonly categoryService: CategoriesService) { }
 
   @Post()
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoryService.create(createCategoryDto);
+  }
+
+  @Put(':id')
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
+  async update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
+    return this.categoryService.update(id, updateCategoryDto);
   }
 
   @Get()
@@ -60,12 +68,8 @@ export class CategoryController {
     return this.categoryService.findById(id);
   }
 
-  @Put(':id')
-  async update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-    return this.categoryService.update(id, updateCategoryDto);
-  }
-
   @Delete(':id')
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   async delete(@Param('id') id: string) {
     return this.categoryService.delete(id);
   }

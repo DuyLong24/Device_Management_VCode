@@ -15,15 +15,23 @@ import { CreateDeviceHistoryDto } from '../dto/create-device-history.dto';
 import { UpdateDeviceHistoryDto } from '../dto/update-device-history.dto';
 import { DeviceHistoryPaginationDto } from '../dto/device-history-pagination.dto';
 import { createFilterAndOptions } from '../../../utils/pick.util';
+import { Roles } from 'nest-keycloak-connect';
 
 @Controller('device-historys')
 export class DeviceHistoryController {
   constructor(private readonly deviceHistoryService: DeviceHistoryService) { }
 
   @Post()
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createDeviceHistoryDto: CreateDeviceHistoryDto) {
     return this.deviceHistoryService.create(createDeviceHistoryDto);
+  }
+
+  @Put(':id')
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
+  async update(@Param('id') id: string, @Body() updateDeviceHistoryDto: UpdateDeviceHistoryDto) {
+    return this.deviceHistoryService.update(id, updateDeviceHistoryDto);
   }
 
   @Get()
@@ -60,12 +68,8 @@ export class DeviceHistoryController {
     return this.deviceHistoryService.findById(id);
   }
 
-  @Put(':id')
-  async update(@Param('id') id: string, @Body() updateDeviceHistoryDto: UpdateDeviceHistoryDto) {
-    return this.deviceHistoryService.update(id, updateDeviceHistoryDto);
-  }
-
   @Delete(':id')
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   async delete(@Param('id') id: string) {
     return this.deviceHistoryService.delete(id);
   }

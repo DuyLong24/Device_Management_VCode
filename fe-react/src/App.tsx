@@ -3,6 +3,7 @@ import { ConfigProvider, App as AntdApp } from 'antd';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import enUS from 'antd/locale/en_US';
 import DashboardLayout from './components/layout/DashboardLayout';
+import { PermissionRoute } from './components/routes/PermissionRoute';
 
 import ImportListPage from './pages/Import/ImportListPage';
 import CreateImportPage from './pages/Import/CreateImportPage';
@@ -84,6 +85,11 @@ function App() {
                 <Route path="serial/:serial" element={<SerialDetailPage />} />
                 <Route path="warehouse/:code" element={<WarehousePage />} />
 
+
+                {/* MODULE SYSTEM (Protected) */}
+                <Route path="system" element={<PermissionRoute requiredRole="Super admin" />}>
+                  <Route path="users" element={<div>User Management Code Here</div>} />
+                </Route>
                 <Route path="*" element={<div>404 Not Found</div>} />
               </Route>
             </Routes>

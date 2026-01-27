@@ -111,7 +111,7 @@ export class DeviceExportController {
   }
 
   @Post(':id/approve')
-  @Roles({ roles: ['admin', 'Admin'] })
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   async approve(@Param('id') id: string, @Request() req: any) {
     let userId = null;
     let username = 'KeycloakUser';
@@ -133,7 +133,7 @@ export class DeviceExportController {
   }
 
   @Post(':id/reject')
-  @Roles({ roles: ['admin', 'Admin'] })
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   async reject(@Param('id') id: string, @Body() body: { reason: string }) {
     return this.deviceExportService.reject(id, body.reason);
   }

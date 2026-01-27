@@ -15,12 +15,14 @@ import { CreateWarehouseDto } from '../dto/create-warehouse.dto';
 import { UpdateWarehouseDto } from '../dto/update-warehouse.dto';
 import { WarehousePaginationDto } from '../dto/warehouse-pagination.dto';
 import { createFilterAndOptions } from '../../../utils/pick.util';
+import { Roles } from 'nest-keycloak-connect';
 
 @Controller('warehouses')
 export class WarehouseController {
   constructor(private readonly warehouseService: WarehouseService) { }
 
   @Post()
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createWarehouseDto: CreateWarehouseDto) {
     return this.warehouseService.create(createWarehouseDto);
@@ -61,11 +63,13 @@ export class WarehouseController {
   }
 
   @Put(':id')
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   async update(@Param('id') id: string, @Body() updateWarehouseDto: UpdateWarehouseDto) {
     return this.warehouseService.update(id, updateWarehouseDto);
   }
 
   @Delete(':id')
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   async delete(@Param('id') id: string) {
     return this.warehouseService.delete(id);
   }

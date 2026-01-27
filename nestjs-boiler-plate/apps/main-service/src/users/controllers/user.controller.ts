@@ -1,17 +1,18 @@
-import { 
-  Controller, 
-  Post, 
-  Body, 
-  Get, 
-  Query, 
-  Put, 
-  Delete, 
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  Put,
+  Delete,
   Param,
   HttpStatus,
   HttpCode,
   Patch,
   UseGuards,
 } from '@nestjs/common';
+import { Roles } from 'nest-keycloak-connect';
 import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -22,9 +23,10 @@ import { ChangePasswordDto } from '../dto/change-password.dto';
 export class UserController {
   constructor(
     private readonly userService: UserService,
-  ) {}
+  ) { }
 
   @Post()
+  @Roles({ roles: ['super_admin', 'superadmin', 'Super admin'] })
   @HttpCode(HttpStatus.CREATED)
   // @Permissions('create_user', 'manage_users')
   async create(@Body() createUserDto: CreateUserDto) {
@@ -38,6 +40,7 @@ export class UserController {
   }
 
   @Get()
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   async findAll() {
     return this.userService.findAll();
   }
@@ -53,11 +56,13 @@ export class UserController {
   }
 
   @Put(':id')
+  @Roles({ roles: ['super_admin', 'superadmin', 'Super admin'] })
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
 
   @Delete(':id')
+  @Roles({ roles: ['super_admin', 'superadmin', 'Super admin'] })
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('id') id: string) {
     return this.userService.delete(id);

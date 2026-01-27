@@ -33,6 +33,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const [selectedKey, setSelectedKey] = useState<string>(MENU_KEYS.DASHBOARD);
     const [openKeys, setOpenKeys] = useState<string[]>([]);
 
+    const { user, logout, hasRole } = useAuth();
+
     // Logic lấy dữ liệu kho từ API
     const { data: warehouses, isLoading } = useQuery({
         queryKey: ['warehouses'],
@@ -152,11 +154,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 ],
             },
         ];
-    }, [warehouses, navigate]);
+    }, [warehouses, navigate, groups, hasRole, user]);
 
+    // Lọc menu items để ẩn System cho người dùng không có quyền super_admin
+    const filteredMenuItems = useMemo(() => {
+        const items = [...menuItems];
+        if (!hasRole('super admin') && !hasRole('Super admin')) {
+            const systemIndex = items.findIndex(item => item && (item as any).key === MENU_KEYS.SYSTEM.ROOT);
+            if (systemIndex !== -1) {
+                items.splice(systemIndex, 1);
+            }
+        }
+        return items;
+    }, [menuItems, hasRole]);
 
-
-    // Handle Navigation Active State
+    // Xử lý trạng thái active menu
     useEffect(() => {
         const { selectedKey: newKey, parentKey } = getActiveKeysFromPath(location.pathname);
         setSelectedKey(newKey);
@@ -179,7 +191,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     }, [location.pathname, warehouses, collapsed]);
 
-    const { user, logout } = useAuth();
+
 
     const userMenuItems: MenuProps['items'] = [
         { key: MENU_KEYS.USER.PROFILE, icon: SECTION_ICONS.USER_PROFILE, label: MENU_LABELS.USER.PROFILE },
@@ -226,7 +238,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 onCollapse={setCollapsed}
                 width={280}
                 style={{
-                    overflowY: 'scroll', // Force scrollbar to prevent layout shift
+                    overflowY: 'scroll',
                     overflowX: 'hidden',
                     height: '100vh',
                     position: 'fixed',
@@ -254,7 +266,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         selectedKeys={[selectedKey]}
                         openKeys={openKeys}
                         onOpenChange={setOpenKeys}
-                        items={menuItems}
+                        items={filteredMenuItems as any}
                         className="border-r-0"
                     />
                 )}

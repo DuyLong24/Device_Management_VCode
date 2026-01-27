@@ -13,7 +13,7 @@ keycloak.init({
 }).then((authenticated) => {
   if (authenticated) {
     console.log('Authenticated with Keycloak');
-    localStorage.setItem('accessToken', keycloak.token || '');
+    // localStorage.setItem('accessToken', keycloak.token || '');
   } else {
     console.warn('Authentication failed');
   }

@@ -11,6 +11,7 @@ import {
   HttpCode,
   Request
 } from '@nestjs/common';
+import { Roles } from 'nest-keycloak-connect';
 import { DeviceExportService } from '../services/device-export.service';
 import { ExportSessionService } from '../services/export-session.service';
 import { CreateDeviceExportDto } from '../dto/create-device-export.dto';
@@ -32,8 +33,19 @@ export class DeviceExportController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createDeviceExportDto: CreateDeviceExportDto) {
-    return this.deviceExportService.create(createDeviceExportDto);
+  async create(@Body() createDeviceExportDto: CreateDeviceExportDto, @Request() req: any) {
+    let userId = null;
+    if (req.user) {
+      const user = await this.userService.syncFromKeycloak(req.user);
+      userId = user._id; // ObjectId
+    } else {
+      userId = req.headers['x-auth-user'];
+    }
+
+    // Attach createdBy (ensure DTO or Service handles it - DTO validation might strip it if not in DTO, but we can cast or update DTO)
+    const dtoWithUser = { ...createDeviceExportDto, createdBy: userId };
+
+    return this.deviceExportService.create(dtoWithUser as any);
   }
 
   @Get()
@@ -99,6 +111,7 @@ export class DeviceExportController {
   }
 
   @Post(':id/approve')
+  @Roles({ roles: ['admin', 'Admin'] })
   async approve(@Param('id') id: string, @Request() req: any) {
     let userId = null;
     let username = 'KeycloakUser';
@@ -114,12 +127,13 @@ export class DeviceExportController {
     const userObj = {
       _id: userId,
       username: username,
-      role: req.user?.realm_access?.roles?.includes('admin') ? 'ADMIN' : 'USER'
+      role: req.user?.realm_access?.roles?.some((r: string) => r.toLowerCase() === 'admin') ? 'ADMIN' : 'USER'
     };
     return this.deviceExportService.approve(id, userObj);
   }
 
   @Post(':id/reject')
+  @Roles({ roles: ['admin', 'Admin'] })
   async reject(@Param('id') id: string, @Body() body: { reason: string }) {
     return this.deviceExportService.reject(id, body.reason);
   }

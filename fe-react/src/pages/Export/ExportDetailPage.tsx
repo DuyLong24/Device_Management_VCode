@@ -7,6 +7,7 @@ import { ExportSessionList } from '../../components/Export/ExportSessionList';
 import { useExportSession } from '../../hooks/useExportSession';
 import { ActualItemsTable } from '../../components/Export/ActualItemsTable';
 import { ApprovalActions } from '../../components/Export/ApprovalActions';
+import { useAuth } from '../../hooks/useAuth';
 
 import dayjs from 'dayjs';
 
@@ -27,6 +28,7 @@ export default function ExportDetailPage() {
         handleDelete,
     } = useExportDetail();
 
+    const { hasRole } = useAuth();
     const { sessions, createSession } = useExportSession(id);
 
     const handleCreateSession = () => {
@@ -74,6 +76,7 @@ export default function ExportDetailPage() {
                         onReject={handleReject}
                         // onNavigateToScan={handleNavigateToScan}
                         onConfirm={handleConfirm}
+                        canApprove={hasRole('admin')}
                     />
                 </Space>
             </div>
@@ -109,7 +112,7 @@ export default function ExportDetailPage() {
                     message="Phiếu xuất đã được duyệt"
                     description={
                         <div>
-                            Phiếu đã được duyệt bởi <Text strong>{exportInfo.approvedBy}</Text> vào lúc{' '}
+                            Phiếu đã được duyệt bởi <Text strong>{exportInfo.approvedBy?.username || exportInfo.approvedBy?.name || exportInfo.approvedBy?.fullName || (typeof exportInfo.approvedBy === 'string' ? exportInfo.approvedBy : '')}</Text> vào lúc{' '}
                             <Text strong>{exportInfo.approvedDate ? dayjs(exportInfo.approvedDate).format('DD/MM/YYYY HH:mm') : ''}</Text>. Có thể tiến hành chọn
                             serial và xuất kho.
                         </div>

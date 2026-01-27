@@ -16,9 +16,9 @@ axiosInstance.interceptors.request.use(
     async (config) => {
         // Update token if it's about to expire (within 5 seconds)
         try {
-            if (keycloak.isTokenExpired(5)) {
-                await keycloak.updateToken(5);
-                localStorage.setItem('accessToken', keycloak.token || '');
+            if (keycloak.isTokenExpired(30)) {
+                await keycloak.updateToken(30);
+                // localStorage.setItem('accessToken', keycloak.token || '');
             }
         } catch (error) {
             console.error('Failed to update token', error);

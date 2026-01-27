@@ -15,6 +15,7 @@ interface ApprovalActionsProps {
     onReject: () => Promise<void>;
     // onNavigateToScan: () => void;
     onConfirm?: () => Promise<void>;
+    canApprove?: boolean;
 }
 
 export const ApprovalActions = ({
@@ -23,7 +24,8 @@ export const ApprovalActions = ({
     onApprove,
     onReject,
     // onNavigateToScan,
-    onConfirm
+    onConfirm,
+    canApprove = false
 }: ApprovalActionsProps) => {
     const handleRejectClick = () => {
         onReject();
@@ -37,7 +39,7 @@ export const ApprovalActions = ({
                 </Button>
             )}
 
-            {status === EXPORT_STATUS.PENDING_APPROVAL && (
+            {status === EXPORT_STATUS.PENDING_APPROVAL && canApprove && (
                 <>
                     <Button danger icon={<CloseCircleOutlined />} onClick={handleRejectClick}>
                         Từ chối

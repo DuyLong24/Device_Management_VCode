@@ -106,7 +106,6 @@ export default function CreateExportPage() {
                             value={value}
                             className="w-full"
                             onChange={(val) => handleDeviceChange(record.key, 'quantity', val || 1)}
-                            placeholder="SL"
                             status={isExceed ? 'error' : undefined}
                         />
                         {isExceed && (
@@ -174,7 +173,7 @@ export default function CreateExportPage() {
                                 }
                                 rules={[{ required: true, message: 'Vui lòng nhập mã phiếu' }]}
                             >
-                                <Input placeholder="Nhập mã phiếu xuất" className="font-semibold text-blue-600" />
+                                <Input className="font-semibold text-blue-600" />
                             </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
@@ -184,7 +183,6 @@ export default function CreateExportPage() {
                                 rules={[{ required: true, message: 'Vui lòng chọn loại hàng hóa' }]}
                             >
                                 <Select
-                                    placeholder="Chọn loại hàng hóa"
                                     loading={loadingCategories}
                                     showSearch
                                     options={categoryOptions.length > 0 ? categoryOptions : [
@@ -207,7 +205,7 @@ export default function CreateExportPage() {
                                 rules={[{ required: true, message: 'Vui lòng chọn lý do' }]}
                                 initialValue="SALE"
                             >
-                                <Select placeholder="Chọn lý do xuất kho">
+                                <Select>
                                     <Select.Option value="SALE">Bán hàng</Select.Option>
                                     <Select.Option value="WARRANTY">Bảo hành</Select.Option>
                                     <Select.Option value="TRANSFER">Điều chuyển</Select.Option>
@@ -245,6 +243,7 @@ export default function CreateExportPage() {
                                 <Input />
                             </Form.Item>
                         </Col>
+
                     </Row>
 
                     <Row gutter={16}>
@@ -270,7 +269,7 @@ export default function CreateExportPage() {
                                 name="customer"
                                 label="Khách hàng"
                             >
-                                <Input placeholder="Nhập tên khách hàng (nếu có)" />
+                                <Input />
                             </Form.Item>
                         </Col>
                     </Row>
@@ -281,7 +280,7 @@ export default function CreateExportPage() {
                                 name="deliveryAddress"
                                 label="Địa chỉ giao hàng"
                             >
-                                <Input placeholder="Nhập địa chỉ giao hàng" />
+                                <Input />
                             </Form.Item>
                         </Col>
                     </Row>
@@ -289,7 +288,7 @@ export default function CreateExportPage() {
                     <Row>
                         <Col span={24}>
                             <Form.Item name="notes" label="Ghi chú">
-                                <TextArea rows={3} placeholder="Nhập ghi chú (nếu có)" maxLength={500} showCount />
+                                <TextArea rows={3} maxLength={500} showCount />
                             </Form.Item>
                         </Col>
                     </Row>

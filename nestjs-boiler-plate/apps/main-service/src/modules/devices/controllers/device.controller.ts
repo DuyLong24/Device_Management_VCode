@@ -152,11 +152,8 @@ export class DeviceController {
       userId = user ? user._id.toString() : userId;
     }
 
-    if (!userId) {
-      // Fallback or throw error? For now assume header or token exists
-      // If no user found, maybe use system admin or throw?
-      // Let's rely on what DeviceImportController does (fallback to header)
-    }
+    // if (!userId) {
+    // }
 
     return this.deviceTransferService.transfer(id, body.toWarehouseId, userId, body.note, body.errorReason);
   }

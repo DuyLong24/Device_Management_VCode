@@ -23,6 +23,7 @@ import {
   PolicyEnforcementMode,
   TokenValidation,
 } from 'nest-keycloak-connect';
+import { CustomRoleGuard } from './common/guards/custom-role.guard';
 
 import { WarehouseGroupsModule } from './modules/warehouse-groups/warehouse-groups.module';
 import { WarehousesModule } from './modules/warehouses/warehouses.module';
@@ -159,7 +160,7 @@ import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schem
     },
     {
       provide: APP_GUARD,
-      useClass: RoleGuard,
+      useClass: CustomRoleGuard, // Replaced RoleGuard with CustomRoleGuard for better debugging and case-insensitivity
     },
     // {
 

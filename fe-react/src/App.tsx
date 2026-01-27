@@ -17,7 +17,7 @@ import ExportDetailPage from './pages/Export/ExportDetailPage';
 import SerialDetailPage from './pages/Warehouse/SerialDetailPage';
 import ExportProcessPage from './pages/Export/ExportProcessPage';
 import ExportCheckListPage from './pages/Export/ExportCheckListPage';
-import LoginPage from './pages/Auth/LoginPage';
+// import LoginPage from './pages/Auth/LoginPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,7 +45,7 @@ function App() {
         <AntdApp>
           <BrowserRouter>
             <Routes>
-              <Route path="/login" element={<LoginPage />} />
+              {/* <Route path="/login" element={<LoginPage />} /> */}
 
               <Route path="/" element={<DashboardLayout />}>
                 <Route index element={<Navigate to="/dashboard" replace />} />

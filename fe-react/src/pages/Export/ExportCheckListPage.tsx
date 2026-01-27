@@ -3,7 +3,7 @@ import {
     Card, Button, Table, Tag, Typography, Alert, message, Modal, Space, Form, Input, Select, Divider, Spin, Progress
 } from 'antd';
 import {
-    ReloadOutlined, PlusOutlined, SearchOutlined, CheckCircleOutlined
+    ReloadOutlined, PlusOutlined, SearchOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
@@ -151,23 +151,23 @@ export default function ExportCheckListPage() {
         setFilteredData(result);
     };
 
-    const handleConfirmExport = (record: DeviceExport) => {
-        modal.confirm({
-            title: 'Xác nhận hoàn tất phiếu xuất kho?',
-            content: `Bạn có chắc chắn muốn hoàn tất phiếu "${record.code}"? Hành động này sẽ khóa phiếu và cập nhật tồn kho.`,
-            okText: 'Hoàn tất',
-            cancelText: 'Hủy',
-            onOk: async () => {
-                try {
-                    await exportService.confirm(record.id || record._id!);
-                    messageApi.success('Đã hoàn tất phiếu xuất kho');
-                    fetchData();
-                } catch (error) {
-                    messageApi.error('Lỗi khi hoàn tất phiếu');
-                }
-            }
-        });
-    };
+    // const handleConfirmExport = (record: DeviceExport) => {
+    //     modal.confirm({
+    //         title: 'Xác nhận hoàn tất phiếu xuất kho?',
+    //         content: `Bạn có chắc chắn muốn hoàn tất phiếu "${record.code}"? Hành động này sẽ khóa phiếu và cập nhật tồn kho.`,
+    //         okText: 'Hoàn tất',
+    //         cancelText: 'Hủy',
+    //         onOk: async () => {
+    //             try {
+    //                 await exportService.confirm(record.id || record._id!);
+    //                 messageApi.success('Đã hoàn tất phiếu xuất kho');
+    //                 fetchData();
+    //             } catch (error) {
+    //                 messageApi.error('Lỗi khi hoàn tất phiếu');
+    //             }
+    //         }
+    //     });
+    // };
 
     const columns: TableColumnsType<DeviceExport> = [
         {
@@ -218,7 +218,7 @@ export default function ExportCheckListPage() {
             title: 'Thao tác',
             key: 'action',
             render: (_: any, record: DeviceExport) => {
-                const isCompleteEnabled = (record.totalItems || 0) >= record.totalQuantity && record.status !== 'COMPLETED';
+                // const isCompleteEnabled = (record.totalItems || 0) >= record.totalQuantity && record.status !== 'COMPLETED';
 
                 return (
                     <Space>
@@ -231,7 +231,7 @@ export default function ExportCheckListPage() {
                             Quét xuất kho
                         </Button>
 
-                        {record.status !== 'COMPLETED' && (
+                        {/* {record.status !== 'COMPLETED' && (
                             <Button
                                 type="primary"
                                 size="small"
@@ -242,7 +242,7 @@ export default function ExportCheckListPage() {
                             >
                                 Xuất kho
                             </Button>
-                        )}
+                        )} */}
                     </Space>
                 );
             },

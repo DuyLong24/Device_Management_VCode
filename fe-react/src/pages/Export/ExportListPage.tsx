@@ -119,7 +119,7 @@ const ExportListPage = () => {
             dataIndex: 'createdBy',
             key: 'createdBy',
             width: 130,
-            render: (text: string) => text || '-',
+            render: (createdBy: any) => createdBy?.username || createdBy?.name || (typeof createdBy === 'string' ? createdBy : '') || '-',
         },
         {
             title: 'Đơn vị nhận',
@@ -194,7 +194,7 @@ const ExportListPage = () => {
             dataIndex: 'approvedBy',
             key: 'approvedBy',
             width: 130,
-            render: (approvedBy: any) => approvedBy?.fullName || <Text type="secondary">-</Text>,
+            render: (approvedBy: any) => approvedBy?.username || approvedBy?.name || approvedBy?.fullName || (typeof approvedBy === 'string' ? approvedBy : '') || <Text type="secondary">-</Text>,
         },
         {
             title: 'Thao tác',

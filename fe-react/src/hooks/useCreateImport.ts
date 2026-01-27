@@ -7,7 +7,7 @@ import { importService } from '../services/import.service';
 import { sharedDataService } from '../services/shared-data.service';
 import { categoryService } from '../services/category.service';
 import { deviceService } from '../services/device.service';
-import { getCurrentUser } from '../utils/auth.utils';
+import { useAuth } from './useAuth';
 import type { DeviceEntry } from '../types/import.type';
 
 export const useCreateImport = () => {
@@ -16,6 +16,7 @@ export const useCreateImport = () => {
     const isEditMode = !!id;
     const [form] = Form.useForm();
     const { modal } = App.useApp();
+    const { user } = useAuth();
 
     const [loading, setLoading] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -98,9 +99,8 @@ export const useCreateImport = () => {
 
                 } else {
                     form.setFieldValue('code', generateImportCode());
-                    const currentUser = getCurrentUser();
-                    if (currentUser && currentUser.username) {
-                        form.setFieldValue('importedBy', currentUser.username);
+                    if (user && user.username) {
+                        form.setFieldValue('importedBy', user.username);
                     }
                 }
 

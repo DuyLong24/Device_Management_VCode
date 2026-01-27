@@ -12,7 +12,7 @@ import {
   Request,
   UseGuards
 } from '@nestjs/common';
-import { Unprotected } from 'nest-keycloak-connect';
+import { Unprotected, Roles } from 'nest-keycloak-connect';
 import { DeviceImportService } from '../services/device-import.service';
 import { UserService } from '../../../users/services/user.service';
 import { CreateDeviceImportDto } from '../dto/create-device-import.dto';
@@ -93,6 +93,7 @@ export class DeviceImportController {
   }
 
   @Post(':id/complete')
+  @Roles({ roles: ['admin', 'Admin'] })
   async complete(@Param('id') id: string, @Request() req: any) {
     let userId = null;
     if (req.user) {

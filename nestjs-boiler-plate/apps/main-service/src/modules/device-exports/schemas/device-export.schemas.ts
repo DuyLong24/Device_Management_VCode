@@ -121,6 +121,8 @@ export class DeviceExport extends Document {
 export const DeviceExportSchema = SchemaFactory.createForClass(DeviceExport);
 
 // Apply plugins
+ExportRequirementSchema.plugin(toJSONPlugin);
+ExportItemSchema.plugin(toJSONPlugin);
 DeviceExportSchema.plugin(paginate);
 DeviceExportSchema.plugin(toJSONPlugin);
 

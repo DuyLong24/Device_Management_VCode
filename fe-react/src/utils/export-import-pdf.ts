@@ -26,7 +26,6 @@ export const exportImportPDF = async (data: DeviceImport) => {
 
                 doc.addFileToVFS('Roboto-Regular.ttf', base64Clean);
                 doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-                // IMPORTANT: Map 'bold' style to the same font file to prevent fallback to standard fonts (which break VN chars)
                 doc.addFont('Roboto-Regular.ttf', 'Roboto', 'bold');
                 doc.setFont('Roboto');
                 resolve(true);
@@ -105,7 +104,7 @@ export const exportImportPDF = async (data: DeviceImport) => {
         headStyles: {
             fillColor: [22, 119, 255],
             font: 'Roboto',
-            fontStyle: 'bold' // Force usage of the mapped 'bold' font
+            fontStyle: 'bold'
         },
         styles: {
             font: 'Roboto',

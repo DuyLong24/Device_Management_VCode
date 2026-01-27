@@ -16,7 +16,10 @@ export class DeviceExportRepository {
   }
 
   async findAll(filter: any = {}): Promise<DeviceExport[]> {
-    return this.deviceexportModel.find(filter).exec();
+    return this.deviceexportModel.find(filter)
+      .populate('createdBy', 'username name email')
+      .populate('approvedBy', 'username name email')
+      .exec();
   }
 
   async findAllWithPagination(filter: any = {}, options: any = {}): Promise<PaginateResult<DeviceExport>> {
@@ -27,7 +30,10 @@ export class DeviceExportRepository {
       page: Number(page),
       limit: Number(limit),
       sortBy: sortBy || 'createdAt:desc',
-      populate: populate || { path: 'approvedBy', select: 'fullName' }
+      populate: populate || [
+        { path: 'approvedBy', select: 'username name' },
+        { path: 'createdBy', select: 'username name' }
+      ]
     };
 
     // Use the paginate plugin
@@ -35,7 +41,11 @@ export class DeviceExportRepository {
   }
 
   async findById(id: string): Promise<DeviceExport | null> {
-    return this.deviceexportModel.findById(id).exec();
+    return this.deviceexportModel.findById(id)
+      .populate('createdBy', 'username name email')
+      .populate('approvedBy', 'username name email')
+      .populate('confirmedBy', 'username name email')
+      .exec();
   }
 
   async update(id: string, updateDeviceExportDto: UpdateDeviceExportDto): Promise<DeviceExport | null> {

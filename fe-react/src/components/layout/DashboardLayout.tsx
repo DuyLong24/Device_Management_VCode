@@ -16,7 +16,7 @@ import {
     MENU_KEYS, MENU_LABELS, SECTION_ICONS
 } from '../../constants/dashboard.constants';
 import { findMenuItemLabel, getActiveKeysFromPath } from '../../utils/navigation.utils';
-import { getCurrentUser } from '../../utils/auth.utils';
+import { useAuth } from '../../hooks/useAuth';
 
 const { Header, Sider, Content, Footer } = Layout;
 const { Text } = Typography;
@@ -179,11 +179,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     }, [location.pathname, warehouses, collapsed]);
 
+    const { user, logout } = useAuth();
+
     const userMenuItems: MenuProps['items'] = [
         { key: MENU_KEYS.USER.PROFILE, icon: SECTION_ICONS.USER_PROFILE, label: MENU_LABELS.USER.PROFILE },
         { key: MENU_KEYS.USER.CHANGE_PASS, icon: SECTION_ICONS.USER_LOCK, label: MENU_LABELS.USER.CHANGE_PASS },
         { type: 'divider' },
-        { key: MENU_KEYS.USER.LOGOUT, icon: SECTION_ICONS.USER_LOGOUT, label: MENU_LABELS.USER.LOGOUT, danger: true, onClick: () => navigate('/login') },
+        { key: MENU_KEYS.USER.LOGOUT, icon: SECTION_ICONS.USER_LOGOUT, label: MENU_LABELS.USER.LOGOUT, danger: true, onClick: logout },
     ];
 
     const notificationItems: MenuProps['items'] = [
@@ -276,7 +278,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         <Dropdown menu={{ items: userMenuItems }} trigger={['click']}>
                             <Space className="cursor-pointer">
                                 <Avatar icon={<UserOutlined />} className="bg-blue-500" />
-                                <Text strong>{getCurrentUser()?.name || 'User'}</Text>
+                                <Text strong>{user?.name || 'User'}</Text>
                             </Space>
                         </Dropdown>
                     </Space>

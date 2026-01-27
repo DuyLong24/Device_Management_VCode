@@ -3,21 +3,37 @@ import { InventorySessionService } from '../services/inventory-session.service';
 import { CreateInventorySessionDto } from '../dto/create-inventory-session.dto';
 import { UpdateInventorySessionDto } from '../dto/update-inventory-session.dto';
 import { InventorySessionPaginationDto } from '../dto/inventory-session-pagination.dto';
+import { UserService } from '../../../users/services/user.service';
 
 @Controller('inventory-sessions')
 export class InventorySessionController {
-    constructor(private readonly sessionService: InventorySessionService) { }
+    constructor(
+        private readonly sessionService: InventorySessionService,
+        private readonly userService: UserService
+    ) { }
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
     async create(@Body() createDto: CreateInventorySessionDto, @Request() req: any) {
-        const userId = req.user?.id || req.headers['x-auth-user'] || '69646d7dcb65b13931171e55';
+        let userId = null;
+        if (req.user) {
+            const user = await this.userService.syncFromKeycloak(req.user);
+            userId = user._id.toString();
+        } else {
+            userId = req.headers['x-auth-user'];
+        }
         return this.sessionService.create(createDto, userId);
     }
 
     @Put(':id')
     async update(@Param('id') id: string, @Body() updateDto: UpdateInventorySessionDto, @Request() req: any) {
-        const userId = req.user?.id || req.headers['x-auth-user'] || '69646d7dcb65b13931171e55';
+        let userId = null;
+        if (req.user) {
+            const user = await this.userService.syncFromKeycloak(req.user);
+            userId = user._id.toString();
+        } else {
+            userId = req.headers['x-auth-user'];
+        }
         return this.sessionService.update(id, updateDto, userId);
     }
 

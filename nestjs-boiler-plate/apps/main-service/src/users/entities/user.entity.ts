@@ -11,6 +11,9 @@ export class User extends Document {
   @Prop({ required: true, unique: true })
   email!: string;
 
+  @Prop({ unique: true })
+  keycloakId?: string; // Link to Keycloak User ID
+
   @Prop({ required: true, private: true }) // Mark as private to exclude from JSON
   password!: string;
 
@@ -61,7 +64,7 @@ UserSchema.plugin(toJSONPlugin);
 export type UserModel = PaginateModel<User>;
 
 // Pre-save middleware để tự động sinh code
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function (next) {
   if (!this.code && this.isNew) {
     try {
       const UserModel = this.constructor as any;
@@ -71,14 +74,14 @@ UserSchema.pre('save', async function(next) {
         {},
         { sort: { code: -1 } }
       );
-      
+
       let nextNumber = 1;
       if (lastUser && lastUser.code) {
         // Lấy số từ code cuối cùng và tăng lên 1
         const lastNumber = parseInt(lastUser.code.substring(1));
         nextNumber = lastNumber + 1;
       }
-      
+
       // Format thành U + 9 chữ số (pad với 0)
       this.code = `U${nextNumber.toString().padStart(9, '0')}`;
     } catch (error) {

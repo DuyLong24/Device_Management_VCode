@@ -42,6 +42,11 @@ export interface DeviceImport {
     totalItem: number;
     totalQuantity: number;
     serialImported: number;
+    createdBy?: {
+        _id: string;
+        name: string;
+        username: string;
+    };
 }
 
 export interface CreateImportDto {

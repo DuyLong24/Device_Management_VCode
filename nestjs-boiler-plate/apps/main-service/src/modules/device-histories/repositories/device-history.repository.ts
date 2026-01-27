@@ -15,6 +15,10 @@ export class DeviceHistoryRepository {
     return this.devicehistoryModel.create(devicehistoryData);
   }
 
+  async insertMany(data: any[], options: any = {}): Promise<any> {
+    return this.devicehistoryModel.insertMany(data, options);
+  }
+
   async findAll(filter: any = {}): Promise<DeviceHistory[]> {
     return this.devicehistoryModel.find(filter).exec();
   }

@@ -8,21 +8,24 @@ import {
   Request,
   Get,
 } from '@nestjs/common';
+import { Unprotected } from 'nest-keycloak-connect';
 import { AuthService } from '../services/auth.service';
 import { LoginDto, RegisterDto, RefreshTokenDto, ChangePasswordDto } from '../dto/auth.dto';
 
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('login')
+  @Unprotected()
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
 
   @Post('register')
+  @Unprotected()
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);

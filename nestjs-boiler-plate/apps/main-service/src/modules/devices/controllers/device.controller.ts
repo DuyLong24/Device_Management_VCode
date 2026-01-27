@@ -11,9 +11,11 @@ import {
   HttpCode,
   Res,
   Patch,
+  Request
 } from '@nestjs/common';
 import { Response } from 'express';
 import { DeviceService } from '../services/device.service';
+import { UserService } from '../../../users/services/user.service';
 import { DeviceStatsService } from '../services/device-stats.service';
 import { DeviceTransferService } from '../services/device-transfer.service';
 import { DeviceValidationService } from '../services/device-validation.service';
@@ -29,6 +31,7 @@ export class DeviceController {
     private readonly deviceStatsService: DeviceStatsService,
     private readonly deviceTransferService: DeviceTransferService,
     private readonly deviceValidationService: DeviceValidationService,
+    private readonly userService: UserService
   ) { }
 
   @Post()
@@ -141,10 +144,19 @@ export class DeviceController {
   async transfer(
     @Param('id') id: string,
     @Body() body: { toWarehouseId: string; note?: string; errorReason?: string },
-    // @User() user: any // Sau này sẽ lấy từ Token
+    @Request() req: any
   ) {
-    // Tạm thời hardcode userId
-    const userId = '69685cb83e015da83ef00a85';
+    let userId = req.headers['x-auth-user'];
+    if (req.user) {
+      const user = await this.userService.syncFromKeycloak(req.user);
+      userId = user ? user._id.toString() : userId;
+    }
+
+    if (!userId) {
+      // Fallback or throw error? For now assume header or token exists
+      // If no user found, maybe use system admin or throw?
+      // Let's rely on what DeviceImportController does (fallback to header)
+    }
 
     return this.deviceTransferService.transfer(id, body.toWarehouseId, userId, body.note, body.errorReason);
   }
@@ -152,8 +164,14 @@ export class DeviceController {
   @Post('bulk-transfer')
   async bulkTransfer(
     @Body() body: { deviceIds: string[]; toWarehouseId: string; note?: string; errorReason?: string },
+    @Request() req: any
   ) {
-    const userId = '69685cb83e015da83ef00a85'; // Hardcoded
+    let userId = req.headers['x-auth-user'];
+    if (req.user) {
+      const user = await this.userService.syncFromKeycloak(req.user);
+      userId = user ? user._id.toString() : userId;
+    }
+
     return this.deviceTransferService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note, body.errorReason);
   }
 

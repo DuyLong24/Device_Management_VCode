@@ -112,7 +112,7 @@ export default function InventoryCheckPage() {
     importCode: importInfo?.code || '---',
     deviceType: importInfo?.deviceType || '---',
     importDate: importInfo?.importDate ? dayjs(importInfo.importDate).format('DD/MM/YYYY') : '---',
-    importedBy: importInfo?.importedBy || '---',
+    importedBy: importInfo?.importedBy || importInfo?.createdBy?.name || '---',
     supplier: importInfo?.supplier || '---',
     createdBy: (session as any)?.createdBy || '---',
     createdAt: session?.createdAt ? dayjs(session.createdAt).format('DD/MM/YYYY HH:mm') : '---',

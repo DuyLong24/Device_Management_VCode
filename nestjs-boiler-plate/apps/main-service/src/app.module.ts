@@ -15,6 +15,14 @@ import { HealthController } from './health/health.controller';
 import { FileModule } from './file/file.module';
 import { SERVICES, KAFKA_CLIENT_CONFIG } from '@app/shared';
 import { OpaAuthorizationGuard } from './common/guards/opa.guard';
+import {
+  KeycloakConnectModule,
+  ResourceGuard,
+  RoleGuard,
+  AuthGuard,
+  PolicyEnforcementMode,
+  TokenValidation,
+} from 'nest-keycloak-connect';
 
 import { WarehouseGroupsModule } from './modules/warehouse-groups/warehouse-groups.module';
 import { WarehousesModule } from './modules/warehouses/warehouses.module';
@@ -38,6 +46,7 @@ import { DeviceHistory, DeviceHistorySchema } from './modules/device-histories/s
 import { Device, DeviceSchema } from './modules/devices/schemas/device.schemas';
 import { Category, CategorySchema } from './modules/categories/schemas/categories.schemas';
 import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schemas/device-import.schemas';
+// import { SeedService } from './common/services/seed.service';
 
 @Module({
   imports: [
@@ -71,6 +80,23 @@ import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schem
           limit: configService.get<number>('RATE_LIMIT_LIMIT') || 10,
         },
       ],
+      inject: [ConfigService],
+    }),
+
+    KeycloakConnectModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        authServerUrl: configService.get<string>('KEYCLOAK_AUTH_SERVER_URL'),
+        realm: configService.get<string>('KEYCLOAK_REALM'),
+        clientId: configService.get<string>('KEYCLOAK_CLIENT_ID'),
+        secret: configService.get<string>('KEYCLOAK_SECRET') || '', // Optional for public client
+        // Optional Keycloak configuration
+        cookieKey: 'KEYCLOAK_JWT',
+        logLevels: ['verbose'],
+        useNestLogger: true,
+        policyEnforcement: PolicyEnforcementMode.PERMISSIVE, // or ENFORCEMENT
+        tokenValidation: TokenValidation.OFFLINE, // or OFFLINE
+      }),
       inject: [ConfigService],
     }),
 
@@ -123,6 +149,18 @@ import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schem
   controllers: [HealthController],
   providers: [
     // SeedService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ResourceGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RoleGuard,
+    },
     // {
 
     //   provide: APP_GUARD,

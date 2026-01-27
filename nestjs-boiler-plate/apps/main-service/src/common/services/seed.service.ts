@@ -35,7 +35,7 @@
 //         await this.seedRoles();
 //         await this.seedUsers();
 //         await this.seedWarehousesAndTransitions();
-//         await this.seedDevices();
+//         // await this.seedDevices();
 //         await this.seedSharedData();
 //         this.logger.warn('=== SEED SERVICE COMPLETED ===');
 //     }
@@ -44,9 +44,8 @@
 //     private async seedRoles() {
 //         const roles = [
 //             { name: 'Super Admin', code: 'super_admin', description: 'Full access' },
-//             { name: 'Warehouse Staff', code: 'warehouse_staff', description: 'Manage inventory' },
-//             { name: 'QC Staff', code: 'qc_staff', description: 'Quality control' },
-//             { name: 'Accountant', code: 'accountant', description: 'View reports' },
+//             { name: 'Admin', code: 'admin', description: 'Full access' },
+//             { name: 'Users', code: 'users', description: 'Full access' },
 //         ];
 
 //         for (const role of roles) {
@@ -134,7 +133,7 @@
 //                 name: 'Sẵn sàng xuất',
 //                 groupId: internalGroup._id,
 //                 color: 'green',
-//                 orderIndex: 2,
+//                 orderIndex: 3,
 //                 icon: 'check-circle',
 //                 config: {
 //                     columns: [
@@ -169,7 +168,7 @@
 //                 name: 'Lỗi - Chờ BH NCC',
 //                 groupId: internalGroup._id,
 //                 color: 'red',
-//                 orderIndex: 3,
+//                 orderIndex: 4,
 //                 icon: 'close-circle',
 //                 config: {
 //                     columns: [
@@ -237,7 +236,7 @@
 //                 name: 'Đang bảo hành NCC',
 //                 groupId: internalGroup._id,
 //                 color: 'yellow',
-//                 orderIndex: 1,
+//                 orderIndex: 5,
 //                 icon: 'tool',
 //                 config: {
 //                     columns: [
@@ -271,7 +270,7 @@
 //                 name: 'Trong BH',
 //                 groupId: exportedGroup._id,
 //                 color: 'gray',
-//                 orderIndex: 1,
+//                 orderIndex: 6,
 //                 icon: 'export',
 //                 config: {
 //                     columns: [
@@ -293,7 +292,7 @@
 //                 name: 'Hết hạn BH',
 //                 groupId: exportedGroup._id,
 //                 color: 'purple',
-//                 orderIndex: 2,
+//                 orderIndex: 7,
 //                 icon: 'field-time',
 //                 config: {
 //                     columns: [
@@ -314,7 +313,7 @@
 //                 name: 'Lỗi - Loại bỏ',
 //                 groupId: exportedGroup._id,
 //                 color: 'volcano',
-//                 orderIndex: 3,
+//                 orderIndex: 8,
 //                 icon: 'delete',
 //                 config: {
 //                     columns: [
@@ -348,31 +347,31 @@
 //             // QC Fail -> Defect
 //             { from: WarehouseCode.PENDING_QC, to: WarehouseCode.DEFECT, type: TransitionType.QC_FAIL },
 
-//             // QC Fail -> Under Repair [NEW]
+//             // QC Fail -> Under Repair
 //             { from: WarehouseCode.PENDING_QC, to: WarehouseCode.UNDER_REPAIR, type: TransitionType.PENDING_QC_TO_UNDER_REPAIR },
 
 //             // Defect -> In Warranty
 //             { from: WarehouseCode.DEFECT, to: WarehouseCode.IN_WARRANTY, type: TransitionType.SEND_WARRANTY },
 
-//             // Repair -> In Warranty [NEW]
+//             // Repair -> In Warranty
 //             { from: WarehouseCode.UNDER_REPAIR, to: WarehouseCode.IN_WARRANTY, type: TransitionType.SEND_WARRANTY },
 
-//             // Repair -> Ready [NEW]
+//             // Repair -> Ready
 //             { from: WarehouseCode.UNDER_REPAIR, to: WarehouseCode.READY_TO_EXPORT, type: TransitionType.QC_PASS },
 
 //             // In Warranty -> Ready (Nhận lại dùng được)
 //             { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.READY_TO_EXPORT, type: TransitionType.RECEIVE_WARRANTY },
 
-//             // [NEW] In Warranty -> Removed (Đổi mới - Serial cũ hủy)
+//             //  In Warranty -> Removed (Đổi mới - Serial cũ hủy)
 //             { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.REMOVED, type: TransitionType.WARRANTY_REPLACE },
 
-//             // [NEW] In Warranty -> Pending QC (Sửa xong - Cần QC lại)
+//             //  In Warranty -> Pending QC (Sửa xong - Cần QC lại)
 //             { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.PENDING_QC, type: TransitionType.WARRANTY_REPAIR },
 
-//             // [NEW] Defect -> Removed (Thanh lý hàng lỗi)
+//             //  Defect -> Removed (Thanh lý hàng lỗi)
 //             { from: WarehouseCode.DEFECT, to: WarehouseCode.REMOVED, type: TransitionType.SCRAP },
 
-//             // [NEW] Sold -> Pending QC (Khách trả hàng)
+//             //  Sold -> Pending QC (Khách trả hàng)
 //             { from: WarehouseCode.SOLD, to: WarehouseCode.PENDING_QC, type: TransitionType.CUSTOMER_RETURN },
 
 //             // Ready -> Sold (Xuất bán)
@@ -387,82 +386,6 @@
 //                 continue;
 //             }
 //             await this.ensureTransition(fromId, toId, t.type);
-//         }
-//     }
-
-//     // --- 4. SEED DEVICES (Mock Data) ---
-//     private async seedDevices() {
-//         // A. Ensure Category
-//         let category = await this.categoryModel.findOne({ name: 'Thiết bị an ninh' });
-//         if (!category) {
-//             category = await this.categoryModel.create({
-//                 name: 'Thiết bị an ninh',
-//                 description: 'Camera, Barrier, Máy chấm công'
-//             });
-//             this.logger.log('Created Default Category');
-//         }
-
-//         // B. Ensure Import Record
-//         let importRecord = await this.deviceImportModel.findOne({ code: 'IMP-INIT-001' });
-//         if (!importRecord) {
-//             importRecord = await this.deviceImportModel.create({
-//                 code: 'IMP-INIT-001',
-//                 origin: 'Vietnam',
-//                 supplier: 'Hikvision Vietnam',
-//                 totalQuantity: 100,
-//                 status: 'COMPLETED',
-//                 importDate: new Date(),
-//                 importedBy: 'Admin'
-//             });
-//             this.logger.log('Created Default Import Record');
-//         }
-
-//         // C. Create Devices in PENDING_QC
-//         const pendingQcWh = await this.warehouseModel.findOne({ code: WarehouseCode.PENDING_QC });
-//         if (pendingQcWh) {
-//             const count = await this.deviceModel.countDocuments({ warehouseId: pendingQcWh._id });
-//             if (count < 10) {
-//                 const devices = [];
-//                 for (let i = 0; i < 10; i++) {
-//                     devices.push({
-//                         serial: `SN-PENDING-${Date.now()}-${i}`,
-//                         name: `Camera AI Series ${i}`,
-//                         deviceModel: `AI-CAM-0${i}`,
-//                         unit: 'Pcs',
-//                         categoryId: category._id,
-//                         warehouseId: pendingQcWh._id,
-//                         importId: importRecord._id,
-//                         qcStatus: 'PENDING',
-//                         importDate: new Date(),
-//                     });
-//                 }
-//                 await this.deviceModel.insertMany(devices);
-//                 this.logger.log(`Seeded 10 devices to ${WarehouseCode.PENDING_QC}`);
-//             }
-//         }
-
-//         // D. Create Devices in READY_TO_EXPORT
-//         const readyWh = await this.warehouseModel.findOne({ code: WarehouseCode.READY_TO_EXPORT });
-//         if (readyWh) {
-//             const count = await this.deviceModel.countDocuments({ warehouseId: readyWh._id });
-//             if (count < 5) {
-//                 const devices = [];
-//                 for (let i = 0; i < 5; i++) {
-//                     devices.push({
-//                         serial: `SN-READY-${Date.now()}-${i}`,
-//                         name: `Barrier Gate B${i}`,
-//                         deviceModel: `BARRIER-0${i}`,
-//                         unit: 'Set',
-//                         categoryId: category._id,
-//                         warehouseId: readyWh._id,
-//                         importId: importRecord._id,
-//                         qcStatus: 'PASS',
-//                         importDate: new Date(),
-//                     });
-//                 }
-//                 await this.deviceModel.insertMany(devices);
-//                 this.logger.log(`Seeded 5 devices to ${WarehouseCode.READY_TO_EXPORT}`);
-//             }
 //         }
 //     }
 
@@ -516,10 +439,10 @@
 //             const modelId = groupMap.get('MODEL');
 //             if (modelId) {
 //                 dataToSeed.push(
-//                     { code: 'AV-C251137L6BT', name: 'Camera Indoor 2 MP', description: 'Camera có AI, sử dụng ngoài trời', groupId: modelId, order: 1 },
-//                     { code: 'AV-C251141L5UA-1A-SCREEN', name: 'Màn hình 32 inch', description: 'Màn hình cỡ lớn 32 inch', groupId: modelId, order: 2 },
-//                     { code: 'AV-C251141L5UA-1A-BARRIER', name: 'Barrier tự động', description: 'Barrie dùng cho dự án chấm công', groupId: modelId, order: 3 },
-//                     { code: 'DS-K3G501-R/M-L', name: 'Barrier DS-K3G501', description: 'Tripod Turnstile', groupId: modelId, order: 4 },
+//                     { code: 'AV-C251241L5LBA-1A', name: 'Camera Indoor 2 MP', description: 'Camera có AI, sử dụng trong nhà', groupId: modelId, order: 1 },
+//                     { code: 'AV-C251141L5UA-1A', name: 'Camera Outdoor 5 MP', description: 'Camera cỡ lớn, tich hợp AI', groupId: modelId, order: 2 },
+//                     { code: 'AV-C251147L2BJ', name: 'Barrier tự động', description: 'Barrie dùng cho dự án chấm công', groupId: modelId, order: 3 },
+//                     { code: 'AV-C251137L6BT', name: 'Màn hình', description: 'Màn hình quan sát chấm công', groupId: modelId, order: 4 },
 //                 );
 //             }
 

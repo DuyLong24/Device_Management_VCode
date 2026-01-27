@@ -16,6 +16,7 @@ import {
     MENU_KEYS, MENU_LABELS, SECTION_ICONS
 } from '../../constants/dashboard.constants';
 import { findMenuItemLabel, getActiveKeysFromPath } from '../../utils/navigation.utils';
+import { getCurrentUser } from '../../utils/auth.utils';
 
 const { Header, Sider, Content, Footer } = Layout;
 const { Text } = Typography;
@@ -274,8 +275,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
                         <Dropdown menu={{ items: userMenuItems }} trigger={['click']}>
                             <Space className="cursor-pointer">
-                                <Avatar icon={<UserOutlined />} />
-                                <Text strong>nhanvien</Text>
+                                <Avatar icon={<UserOutlined />} className="bg-blue-500" />
+                                <Text strong>{getCurrentUser()?.name || 'User'}</Text>
                             </Space>
                         </Dropdown>
                     </Space>

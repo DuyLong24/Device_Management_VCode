@@ -143,7 +143,12 @@ export default function InventoryListPage() {
         },
         { title: 'Loại hàng hóa', dataIndex: 'deviceType', width: 120, render: t => <Tag color="blue">{t}</Tag> },
         { title: 'Ngày nhập', dataIndex: 'importDate', width: 120, render: d => d ? dayjs(d).format('DD/MM/YYYY') : '---' },
-        { title: 'Người nhập', dataIndex: 'importedBy', width: 150 },
+        {
+            title: 'Người nhập',
+            dataIndex: 'importedBy',
+            width: 150,
+            render: (text, record) => text || record.createdBy?.name || '---'
+        },
         { title: 'Nhà cung cấp', dataIndex: 'supplier', width: 200 },
         { title: 'Tổng SP', dataIndex: 'totalQuantity', width: 100, align: 'center' },
         {

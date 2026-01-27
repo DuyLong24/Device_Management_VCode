@@ -23,7 +23,7 @@ const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
             date: device.importDate || device.createdAt,
             type: 'IMPORT',
             description: 'Nhập kho',
-            actor: device.importId?.createdBy?.fullName || 'N/A',
+            actor: device.importId?.createdBy?.name || 'N/A',
             note: device.importId?.note,
         });
     }
@@ -34,7 +34,7 @@ const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
             date: device.currentExportId.exportDate || device.currentExportId.createdAt,
             type: 'EXPORT',
             description: 'Xuất kho',
-            actor: device.currentExportId.createdBy?.fullName || 'N/A',
+            actor: device.currentExportId.createdBy?.name || 'N/A',
             exportSheetCode: device.currentExportId.code,
             note: device.currentExportId.note
         });
@@ -44,7 +44,7 @@ const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
     rawHistory.forEach(h => {
         const item: any = {
             date: h.createdAt,
-            actor: h.actorId?.fullName || 'Unknown',
+            actor: h.actorId?.name || 'Unknown',
             note: h.note,
             rawAction: h.action,
             fromWarehouse: h.fromWarehouseId,
@@ -118,12 +118,16 @@ export function useMacDetail(mac?: string) {
         device ? mapHistoryToTimeline(device, history) : [],
         [device, history]);
 
-    // Current Warehouse Config
-    const currentWarehouse = useMemo(() =>
-        warehouses?.find(w => w.id === device?.warehouseId?._id || w.id === device?.warehouseId),
-        [warehouses, device]);
+    const currentWarehouse = useMemo(() => {
+        const found = warehouses?.find(w => w.id === device?.warehouseId?._id || w.id === device?.warehouseId);
+        if (found) return found;
 
-    // Available Transitions
+        if (device?.warehouseId && typeof device.warehouseId === 'object') {
+            return device.warehouseId;
+        }
+        return null;
+    }, [warehouses, device]);
+
     const availableTransitions = useMemo(() => {
         if (!currentWarehouse?.config?.quickTransfers) return [];
         return currentWarehouse.config.quickTransfers.map((qt: any) => {
@@ -136,7 +140,6 @@ export function useMacDetail(mac?: string) {
         });
     }, [currentWarehouse, warehouses]);
 
-    // Transfer Mutation
     const { mutate: transferDevice, isPending: isTransferring } = useMutation({
         mutationFn: deviceService.bulkTransfer,
         onSuccess: () => {

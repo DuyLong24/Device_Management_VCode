@@ -15,8 +15,19 @@ export class DeviceImportRepository {
     return this.deviceimportModel.create(deviceimportData);
   }
 
-  async findAll(filter: any = {}): Promise<DeviceImport[]> {
-    return this.deviceimportModel.find(filter).exec();
+  async findAll(filter: any = {}, options: any = {}): Promise<DeviceImport[]> {
+    const { populate, sortBy } = options;
+    const query = this.deviceimportModel.find(filter);
+
+    if (populate) {
+      query.populate(populate);
+    }
+
+    if (sortBy) {
+      query.sort(sortBy);
+    }
+
+    return query.exec();
   }
 
   async findAllWithPagination(filter: any = {}, options: any = {}): Promise<PaginateResult<DeviceImport>> {
@@ -37,8 +48,15 @@ export class DeviceImportRepository {
     return this.deviceimportModel.paginate(filter, paginateOptions);
   }
 
-  async findById(id: string): Promise<DeviceImport | null> {
-    return this.deviceimportModel.findById(id).exec();
+  async findById(id: string, options: any = {}): Promise<DeviceImport | null> {
+    const { populate } = options;
+    const query = this.deviceimportModel.findById(id);
+
+    if (populate) {
+      query.populate(populate);
+    }
+
+    return query.exec();
   }
 
   async update(id: string, updateDeviceImportDto: UpdateDeviceImportDto): Promise<DeviceImport | null> {

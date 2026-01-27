@@ -7,12 +7,14 @@ import { DeviceImport, DeviceImportSchema } from './schemas/device-import.schema
 import { DevicesModule } from '../devices/devices.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { InventorySessionModule } from '../inventory-sessions/inventory-sessions.module';
+import { UsersModule } from '../../users/users.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: DeviceImport.name, schema: DeviceImportSchema }]),
     DevicesModule,
     CategoriesModule,
+    UsersModule,
     forwardRef(() => InventorySessionModule)
   ],
   controllers: [DeviceImportController],

@@ -8,6 +8,8 @@ import { DeviceImportModule } from '../device-imports/device-imports.module';
 import { DevicesModule } from '../devices/devices.module';
 import { WarehousesModule } from '../warehouses/warehouses.module';
 import { CategoriesModule } from '../categories/categories.module';
+import { UsersModule } from '../../users/users.module';
+import { DeviceHistoryModule } from '../device-histories/device-historys.module';
 
 @Module({
     imports: [
@@ -15,10 +17,12 @@ import { CategoriesModule } from '../categories/categories.module';
         forwardRef(() => DeviceImportModule),
         DevicesModule,
         WarehousesModule,
-        CategoriesModule
+        CategoriesModule,
+        UsersModule,
+        DeviceHistoryModule
     ],
     controllers: [InventorySessionController],
     providers: [InventorySessionService, InventorySessionRepository],
-    exports: [InventorySessionService]
+    exports: [InventorySessionService, InventorySessionRepository]
 })
 export class InventorySessionModule { }

@@ -428,4 +428,35 @@ export class UserService {
     }
   }
 
+  async syncFromKeycloak(token: any): Promise<User> {
+    const keycloakId = token.sub;
+    const email = token.email;
+    const username = token.preferred_username || token.email;
+    const name = token.name || username;
+
+    // 1. Try find by Keycloak ID
+    let user = await this.userRepository.findByKeycloakId(keycloakId);
+    if (user) return user;
+
+    // 2. Try find by Email (migration/linking)
+    if (email) {
+      user = await this.userRepository.findByEmail(email);
+      if (user) {
+        user.keycloakId = keycloakId;
+        return user.save();
+      }
+    }
+
+    // 3. Create new user
+    const randomPassword = Math.random().toString(36).slice(-8);
+
+    return this.userRepository.create({
+      username,
+      email,
+      name,
+      password: randomPassword,
+      keycloakId,
+      status: 'active'
+    });
+  }
 }

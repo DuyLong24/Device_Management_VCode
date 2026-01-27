@@ -13,6 +13,7 @@ import { DeviceHistory, DeviceHistorySchema } from '../device-histories/schemas/
 
 import { ExcelModule } from '../../common/excel/excel.module';
 import { WarehousesModule } from '../warehouses/warehouses.module';
+import { UsersModule } from '../../users/users.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { WarehousesModule } from '../warehouses/warehouses.module';
     ]),
     ExcelModule,
     WarehousesModule,
+    UsersModule,
   ],
   controllers: [DeviceController],
   providers: [DeviceService, DeviceStatsService, DeviceTransferService, DeviceValidationService, DeviceRepository],

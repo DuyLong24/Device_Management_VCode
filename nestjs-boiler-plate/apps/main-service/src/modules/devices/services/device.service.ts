@@ -102,10 +102,10 @@ export class DeviceService implements OnModuleInit {
       //.populate('importId') 
       .populate({
         path: 'importId',
-        populate: { path: 'createdBy', select: 'fullName' }
+        populate: { path: 'createdBy', select: 'name' }
       })
       .populate('currentExportId')
-      .populate('qcBy', 'fullName')
+      .populate('qcBy', 'name')
       .exec();
 
     if (!device) {

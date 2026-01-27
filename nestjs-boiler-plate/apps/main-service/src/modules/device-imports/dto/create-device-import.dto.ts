@@ -70,7 +70,8 @@ export class CreateDeviceImportDto {
   importDate: Date;
 
   @IsString()
-  @IsNotEmpty()
+  @IsString()
+  @IsOptional()
   importedBy: string;
 
   @IsString()

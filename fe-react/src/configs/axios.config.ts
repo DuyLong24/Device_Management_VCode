@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import keycloak from './auth.config';
+
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export const axiosInstance = axios.create({
@@ -11,8 +13,18 @@ export const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('accessToken');
+    async (config) => {
+        // Update token if it's about to expire (within 5 seconds)
+        try {
+            if (keycloak.isTokenExpired(5)) {
+                await keycloak.updateToken(5);
+                localStorage.setItem('accessToken', keycloak.token || '');
+            }
+        } catch (error) {
+            console.error('Failed to update token', error);
+        }
+
+        const token = keycloak.token;
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -30,11 +42,10 @@ axiosInstance.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                localStorage.removeItem('accessToken');
-                window.location.href = '/login';
-            } catch (refreshError) {
-                localStorage.removeItem('accessToken');
-                window.location.href = '/login';
+                // Try to login again
+                await keycloak.login();
+            } catch (loginError) {
+                console.error('Re-login failed', loginError);
             }
         }
         return Promise.reject(error);

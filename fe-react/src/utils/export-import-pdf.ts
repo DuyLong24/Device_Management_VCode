@@ -83,7 +83,7 @@ export const exportImportPDF = async (data: DeviceImport) => {
     y += 8;
     // Row 3 (Full width)
     doc.text('Người nhập:', infoX, y);
-    doc.text(data.importedBy, valueX, y);
+    doc.text(data.importedBy || data.createdBy?.name || '---', valueX, y);
 
     y += 8;
     doc.text('Ghi chú:', infoX, y);

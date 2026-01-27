@@ -8,6 +8,7 @@ import { DeviceService } from '../../devices/services/device.service';
 import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
 import { FilterQuery } from 'mongoose';
 import { InventorySessionService } from '../../inventory-sessions/services/inventory-session.service';
+import { UserService } from '../../../users/services/user.service';
 
 @Injectable()
 export class DeviceImportService {
@@ -16,6 +17,7 @@ export class DeviceImportService {
     private readonly deviceService: DeviceService,
     @Inject(forwardRef(() => InventorySessionService))
     private readonly inventorySessionService: InventorySessionService,
+    private readonly userService: UserService
   ) { }
 
   async create(createDto: CreateDeviceImportDto, userId: string): Promise<DeviceImport> {
@@ -74,16 +76,16 @@ export class DeviceImportService {
     return newImport;
   }
 
-  async findAll(filter: FilterQuery<DeviceImport> = {}): Promise<DeviceImport[]> {
-    return this.deviceImportRepository.findAll(filter);
+  async findAll(filter: FilterQuery<DeviceImport> = {}, options: any = {}): Promise<DeviceImport[]> {
+    return this.deviceImportRepository.findAll(filter, options);
   }
 
   async findAllWithPagination(filter: FilterQuery<DeviceImport> = {}, options: any = {}): Promise<PaginateResult<DeviceImport>> {
     return this.deviceImportRepository.findAllWithPagination(filter, options);
   }
 
-  async findById(id: string): Promise<DeviceImport> {
-    const deviceimport = await this.deviceImportRepository.findById(id);
+  async findById(id: string, options: any = {}): Promise<DeviceImport> {
+    const deviceimport = await this.deviceImportRepository.findById(id, options);
     if (!deviceimport) {
       throw new NotFoundException(ERROR_MESSAGES.DEVICE_IMPORT.NOT_FOUND);
     }

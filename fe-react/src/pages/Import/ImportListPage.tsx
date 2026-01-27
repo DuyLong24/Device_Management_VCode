@@ -94,7 +94,7 @@ export default function ImportListPage() {
                 importCode: item.code,
                 deviceType: item.deviceType || 'Khác',
                 importDate: item.importDate,
-                importedBy: item.importedBy,
+                importedBy: item.createdBy?.name || item.createdBy?.username || item.importedBy || '---',
                 supplier: item.supplier,
                 handoverPerson: item.handoverPerson || '---',
                 totalDeviceCodes: item.totalItem,

@@ -6,6 +6,7 @@ export const importService = {
         const response = await axiosInstance.get<DeviceImport[]>('/device-imports', {
             params: {
                 sortBy: 'createdAt:desc',
+                populate: 'createdBy',
                 ..._params
             }
         });
@@ -21,7 +22,7 @@ export const importService = {
     },
 
     getImportDetail: async (id: string) => {
-        return axiosInstance.get<DeviceImport>(`/device-imports/${id}`);
+        return axiosInstance.get<DeviceImport>(`/device-imports/${id}?populate=createdBy`);
     },
 
     completeImport: async (id: string) => {

@@ -12,6 +12,47 @@ services:
       - microservices-network
     command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
 
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: keycloak
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_PROXY: edge
+      KC_HOSTNAME_STRICT: false
+      KC_HTTP_ENABLED: true
+    command: ["start-dev"]
+    volumes:
+      - ./keycloak-theme:/opt/keycloak/themes/custom:ro
+    ports:
+      - "8081:8080" # Keycloak UI (8081 to avoid conflict with Envoy/App)
+    networks:
+      - microservices-network
+
   envoy:
     image: envoyproxy/envoy:v1.24.3
     hostname: envoy
@@ -56,3 +97,4 @@ networks:
 
 volumes:
   mongo_data:
+  postgres_data:

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, Logger, ConflictExc
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { InventorySessionRepository } from '../repositories/inventory-session.repository';
+import { DeviceHistoryRepository } from '../../device-histories/repositories/device-history.repository';
 import { CreateInventorySessionDto } from '../dto/create-inventory-session.dto';
 import { UpdateInventorySessionDto } from '../dto/update-inventory-session.dto';
 import { InventorySession } from '../schemas/inventory-session.schema';
@@ -23,6 +24,7 @@ export class InventorySessionService {
         private readonly deviceService: DeviceService,
         private readonly warehouseRepo: WarehouseRepository,
         private readonly categoryRepo: CategoryRepository,
+        private readonly historyRepo: DeviceHistoryRepository,
         @InjectConnection() private readonly connection: Connection,
     ) { }
 
@@ -82,7 +84,7 @@ export class InventorySessionService {
     }
 
     private async completeSession(session: InventorySession, userId: string): Promise<InventorySession> {
-        // [CHECK DUPLICATE] Trước khi xử lý
+        // check trùng lặp
         const macsToCheck = session.details.map(d => d.serial);
         if (macsToCheck.length > 0) {
             const existingDevices = await this.deviceService.findByMacs(macsToCheck);
@@ -114,12 +116,10 @@ export class InventorySessionService {
             const devicesToCreate = session.details.map(item => {
                 const modelName = item.deviceModel || item.model || 'Unknown Device';
 
-                // [NEW] Find detailed info from Import Ticket
                 let detailedName = modelName;
                 let detailedP2P = '';
                 let foundDetail: any = null;
 
-                // Search in all devices of the ticket
                 if (importTicket && importTicket.devices) {
                     for (const dev of importTicket.devices) {
                         const found = dev.expectedDetails?.find(d => d.mac === item.serial);
@@ -127,18 +127,15 @@ export class InventorySessionService {
                             foundDetail = found;
                             detailedName = found.name || modelName;
                             detailedP2P = found.p2p || '';
-                            break; // Stop searching once found
+                            break;
                         }
                     }
                 }
 
                 return {
                     code: item.serial,
-
-                    // FIX: Use Real Serial from Excel if found, else use MAC
                     serial: (foundDetail && foundDetail.serial) ? foundDetail.serial : item.serial,
-
-                    name: detailedName, // Use name from Excel if available
+                    name: detailedName,
                     deviceModel: item.deviceCode || modelName,
                     unit: 'Cái',
                     qcStatus: 'PENDING',
@@ -148,26 +145,34 @@ export class InventorySessionService {
                     supplierId: importTicket.supplier || 'Unknown',
                     importDate: importTicket.importDate,
                     history: [],
-
-                    mac: item.serial, // The scanned item IS the MAC
-                    p2p: detailedP2P, // Use P2P from Excel
+                    mac: item.serial,
+                    p2p: detailedP2P,
                     currentExportId: null
                 };
             });
 
             if (devicesToCreate.length > 0) {
-                await this.deviceService.insertMany(devicesToCreate, { session: mongoSession });
+                const insertedDevices = await this.deviceService.insertMany(devicesToCreate, { session: mongoSession });
+
+                const historiesToCreate = insertedDevices.map(device => ({
+                    deviceId: device._id,
+                    action: 'IMPORT',
+                    fromWarehouseId: warehouse._id,
+                    toWarehouseId: warehouse._id,
+                    actorId: userId,
+                    note: 'Nhập kho từ kiểm kê',
+                    createdAt: device.createdAt
+                }));
+
+                await this.historyRepo.insertMany(historiesToCreate, { session: mongoSession });
             }
 
             const currentImported = importTicket.serialImported || 0;
             const newTotal = currentImported + session.totalScanned;
 
-
-
-            // Calculate per-device counts from this session
             const deviceCounts: Record<string, number> = {};
             session.details.forEach(item => {
-                const dCode = item.deviceCode || item.deviceModel; // fallback if deviceCode missing
+                const dCode = item.deviceCode || item.deviceModel;
                 if (dCode) {
                     deviceCounts[dCode] = (deviceCounts[dCode] || 0) + 1;
                 }
@@ -211,7 +216,6 @@ export class InventorySessionService {
         if (!session) throw new NotFoundException(ERROR_MESSAGES.INVENTORY.SESSION_NOT_FOUND);
         if (session.status === 'completed') throw new BadRequestException(ERROR_MESSAGES.INVENTORY.ALREADY_COMPLETED);
 
-        // Filter out the item
         const initialCount = session.details.length;
         session.details = session.details.filter(item => item.serial !== serial);
 

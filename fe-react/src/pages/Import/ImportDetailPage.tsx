@@ -40,6 +40,7 @@ const ImportDetailPage = () => {
         supplier,
         importDate,
         importedBy,
+        createdBy,
         handoverPerson,
         notes,
         totalQuantity,
@@ -52,7 +53,7 @@ const ImportDetailPage = () => {
         { label: 'Mã phiếu', value: <span className="font-semibold">{code}</span> },
         { label: 'Nhà cung cấp', value: supplier },
         { label: 'Ngày nhập', value: dayjs(importDate).format('DD/MM/YYYY') },
-        { label: 'Người nhập', value: importedBy },
+        { label: 'Người nhập', value: createdBy?.name || createdBy?.username || importedBy || '---' },
         { label: 'Người bàn giao', value: handoverPerson },
         {
             label: 'Trạng thái kiểm kê',

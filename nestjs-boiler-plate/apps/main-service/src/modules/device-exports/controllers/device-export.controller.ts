@@ -8,7 +8,8 @@ import {
   Delete,
   Param,
   HttpStatus,
-  HttpCode
+  HttpCode,
+  Request
 } from '@nestjs/common';
 import { DeviceExportService } from '../services/device-export.service';
 import { ExportSessionService } from '../services/export-session.service';
@@ -18,12 +19,14 @@ import { CreateExportSessionDto } from '../dto/create-export-session.dto';
 import { UpdateDeviceExportDto } from '../dto/update-device-export.dto';
 import { DeviceExportPaginationDto } from '../dto/device-export-pagination.dto';
 import { createFilterAndOptions } from '../../../utils/pick.util';
+import { UserService } from '../../../users/services/user.service';
 
 @Controller('device-exports')
 export class DeviceExportController {
   constructor(
     private readonly deviceExportService: DeviceExportService,
-    private readonly exportSessionService: ExportSessionService
+    private readonly exportSessionService: ExportSessionService,
+    private readonly userService: UserService
   ) { }
 
 
@@ -96,9 +99,24 @@ export class DeviceExportController {
   }
 
   @Post(':id/approve')
-  async approve(@Param('id') id: string) {
-    const mockUser = { _id: '64b0f0f0f0f0f0f0f0f0f0f0', username: 'Manager', role: 'MANAGER' };
-    return this.deviceExportService.approve(id, mockUser);
+  async approve(@Param('id') id: string, @Request() req: any) {
+    let userId = null;
+    let username = 'KeycloakUser';
+
+    if (req.user) {
+      const user = await this.userService.syncFromKeycloak(req.user);
+      userId = user._id.toString();
+      username = user.username || user.name;
+    } else {
+      userId = req.headers['x-auth-user'];
+    }
+
+    const userObj = {
+      _id: userId,
+      username: username,
+      role: req.user?.realm_access?.roles?.includes('admin') ? 'ADMIN' : 'USER'
+    };
+    return this.deviceExportService.approve(id, userObj);
   }
 
   @Post(':id/reject')
@@ -119,9 +137,15 @@ export class DeviceExportController {
   }
 
   @Post('sessions')
-  async createSession(@Body() dto: CreateExportSessionDto) {
-    const mockUser = '64b0f0f0f0f0f0f0f0f0f0f0';
-    return this.exportSessionService.create(dto, mockUser);
+  async createSession(@Body() dto: CreateExportSessionDto, @Request() req: any) {
+    let userId = null;
+    if (req.user) {
+      const user = await this.userService.syncFromKeycloak(req.user);
+      userId = user._id.toString();
+    } else {
+      userId = req.headers['x-auth-user'];
+    }
+    return this.exportSessionService.create(dto, userId);
   }
 
   @Get('sessions/:id')
@@ -145,9 +169,15 @@ export class DeviceExportController {
   }
 
   @Post('sessions/:id/complete')
-  async completeSession(@Param('id') id: string) {
-    const mockUser = '64b0f0f0f0f0f0f0f0f0f0f0';
-    return this.exportSessionService.completeSession(id, mockUser);
+  async completeSession(@Param('id') id: string, @Request() req: any) {
+    let userId = null;
+    if (req.user) {
+      const user = await this.userService.syncFromKeycloak(req.user);
+      userId = user._id.toString();
+    } else {
+      userId = req.headers['x-auth-user'];
+    }
+    return this.exportSessionService.completeSession(id, userId);
   }
 }
 

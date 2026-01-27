@@ -215,7 +215,7 @@ export const useCreateImport = () => {
                 deviceType: values.deviceType || values.deviceType,
                 origin: values.origin,
                 importDate: values.importDate.toISOString(),
-                importedBy: values.importedBy || '6969ff74c376ce4d439185ac',
+                importedBy: values.importedBy, // Controller will override with req.user if needed, but let's keep form value if set
                 supplier: values.supplier,
                 handoverPerson: values.handoverPerson,
                 notes: values.notes,

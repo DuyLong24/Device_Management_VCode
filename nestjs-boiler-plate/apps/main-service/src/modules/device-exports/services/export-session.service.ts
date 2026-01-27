@@ -288,7 +288,7 @@ export class ExportSessionService {
             $inc: { totalItems: exportItems.length }
         } as any);
 
-        await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord?.code || 'EXPORT-SESSION');
+        await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord?.code || 'EXPORT-SESSION', userId);
 
         const sessionUpdateResult = await this.exportSessionRepository.update(sessionId, {
             status: ExportSessionStatus.COMPLETED,

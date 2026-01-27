@@ -85,6 +85,9 @@ export class Device extends Document {
   importDate?: Date;
 
   @Prop()
+  exportDate?: Date;
+
+  @Prop()
   warehouseUpdatedBy?: string;
 
   @Prop()

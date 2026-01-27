@@ -207,9 +207,9 @@ export default function CreateExportPage() {
                             >
                                 <Select>
                                     <Select.Option value="SALE">Bán hàng</Select.Option>
-                                    <Select.Option value="WARRANTY">Bảo hành</Select.Option>
+                                    {/* <Select.Option value="WARRANTY">Bảo hành</Select.Option>
                                     <Select.Option value="TRANSFER">Điều chuyển</Select.Option>
-                                    <Select.Option value="OTHER">Khác</Select.Option>
+                                    <Select.Option value="OTHER">Khác</Select.Option> */}
                                 </Select>
                             </Form.Item>
                         </Col>

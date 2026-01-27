@@ -139,8 +139,13 @@ export class DeviceExportController {
   }
 
   @Post(':id/confirm')
-  async confirm(@Param('id') id: string) {
-    return this.deviceExportService.confirm(id);
+  async confirm(@Param('id') id: string, @Request() req: any) {
+    let userId = null;
+    if (req.user) {
+      const user = await this.userService.syncFromKeycloak(req.user);
+      userId = user._id.toString();
+    }
+    return this.deviceExportService.confirm(id, userId);
   }
 
   // === EXPORT SESSIONS ===

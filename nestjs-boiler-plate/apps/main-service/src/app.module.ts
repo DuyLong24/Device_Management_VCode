@@ -160,7 +160,7 @@ import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schem
     // },
     // {
     //   provide: APP_GUARD,
-    //   useClass: CustomRoleGuard, // Replaced RoleGuard with CustomRoleGuard for better debugging and case-insensitivity
+    //   useClass: CustomRoleGuard,
     // },
     // {
 

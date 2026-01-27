@@ -171,7 +171,7 @@ export class DeviceService implements OnModuleInit {
     return result;
   }
 
-  async moveDevicesToWarehouse(macs: string[], targetWarehouseCode: string, exportCode: string): Promise<void> {
+  async moveDevicesToWarehouse(macs: string[], targetWarehouseCode: string, exportCode: string, userId?: string): Promise<void> {
     console.log(`[DEBUG] moveDevicesToWarehouse called with:`, {
       macsCount: macs.length,
       targetWarehouseCode,
@@ -186,6 +186,13 @@ export class DeviceService implements OnModuleInit {
       throw new BadRequestException(`Kho đích "${targetWarehouseCode}" không tồn tại`);
     }
 
+    // Lấy danh sách thiết bị cần di chuyển để tạo lịch sử sau khi cập nhật
+    const devicesToMove = await this.deviceModel.find({
+      $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }]
+    }).exec();
+
+    console.log(`[DEBUG] Found ${devicesToMove.length} devices to move`);
+
     const result = await this.deviceModel.updateMany(
       { $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }] },
       {
@@ -193,6 +200,7 @@ export class DeviceService implements OnModuleInit {
           warehouseId: targetWarehouse._id,
           warehouseUpdatedAt: new Date(),
           warehouseUpdatedBy: 'SYSTEM_EXPORT',
+          exportDate: new Date()
         }
       }
     ).exec();
@@ -202,6 +210,23 @@ export class DeviceService implements OnModuleInit {
       modifiedCount: result.modifiedCount,
       acknowledged: result.acknowledged
     });
+
+    // Tạo lịch sử
+    if (devicesToMove.length > 0) {
+      const actorId = userId || '000000000000000000000000';
+
+      const historyRecords = devicesToMove.map(device => ({
+        deviceId: device._id,
+        fromWarehouseId: device.warehouseId,
+        toWarehouseId: targetWarehouse._id,
+        actorId: actorId,
+        action: 'EXPORT',
+        note: `Xuất kho: ${exportCode}`
+      }));
+
+      await this.historyModel.insertMany(historyRecords);
+      console.log(`[DEBUG] Created ${historyRecords.length} device history records with actorId: ${actorId}`);
+    }
   }
 
   async countReadyToExport(model: string): Promise<number> {

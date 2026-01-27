@@ -221,7 +221,7 @@ export class DeviceExportService {
     } as any);
   }
 
-  async confirm(id: string): Promise<DeviceExport> {
+  async confirm(id: string, userId?: string): Promise<DeviceExport> {
     const exportRecord = await this.findById(id);
 
     if (exportRecord.status === ExportStatusEnum.COMPLETED) {
@@ -243,7 +243,7 @@ export class DeviceExportService {
     }
 
     const serials = exportRecord.items.map(i => i.serial);
-    await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord.code);
+    await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord.code, userId);
 
     return this.update(id, {
       status: ExportStatus.COMPLETED,

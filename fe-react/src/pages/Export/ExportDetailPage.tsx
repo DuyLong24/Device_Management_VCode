@@ -1,4 +1,4 @@
-import { Button, Typography, Space, Spin, Alert } from 'antd';
+import { Button, Typography, Space, Spin, Alert, Tooltip, Card, Table } from 'antd';
 import { ArrowLeftOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import { useExportDetail } from '../../hooks/useExportDetail';
@@ -32,7 +32,6 @@ export default function ExportDetailPage() {
     const { sessions, createSession } = useExportSession(id);
 
     const handleCreateSession = () => {
-        // Explicitly pass undefined to avoid passing Event object if passed by child
         createSession(undefined);
     };
 
@@ -62,12 +61,23 @@ export default function ExportDetailPage() {
                 </Space>
 
                 <Space>
-                    {exportInfo.status === 'DRAFT' && (
-                        <>
-                            <Button icon={<EditOutlined />} onClick={handleEdit}>Sửa</Button>
-                            <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>Xóa</Button>
-                        </>
-                    )}
+                    <Button icon={<EditOutlined />} onClick={handleEdit}>Sửa</Button>
+                    <Tooltip
+                        title={
+                            exportInfo.items && exportInfo.items.length > 0
+                                ? "Không thể xóa phiếu xuất đã có thiết bị được quét"
+                                : ""
+                        }
+                    >
+                        <Button
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={handleDelete}
+                            disabled={exportInfo.items && exportInfo.items.length > 0}
+                        >
+                            Xóa
+                        </Button>
+                    </Tooltip>
                     <ApprovalActions
                         status={exportInfo.status}
                         exportId={id || ''}
@@ -127,9 +137,38 @@ export default function ExportDetailPage() {
             <ExportInfoCard exportInfo={exportInfo} />
 
             {/* Bảng yêu cầu */}
-            {/* {exportInfo.requirements && exportInfo.requirements.length > 0 && (
-                <RequirementsTable requirements={exportInfo.requirements} items={exportInfo.items || []} />
-            )} */}
+            <Card title="Yêu cầu thiết bị" className="mb-4">
+                <Table
+                    dataSource={exportInfo.requirements?.map((req: any) => ({
+                        key: req.deviceCode || req._id,
+                        deviceCode: req.deviceCode,
+                        deviceName: req.deviceName,
+                        quantity: req.quantity
+                    })) || []}
+                    columns={[
+                        {
+                            title: 'Mã Model',
+                            dataIndex: 'deviceCode',
+                            key: 'deviceCode',
+                            render: (t: string) => <Text strong className="font-mono">{t}</Text>
+                        },
+                        {
+                            title: 'Tên thiết bị',
+                            dataIndex: 'deviceName',
+                            key: 'deviceName'
+                        },
+                        {
+                            title: 'Số lượng yêu cầu',
+                            dataIndex: 'quantity',
+                            key: 'quantity',
+                            align: 'center' as const
+                        }
+                    ]}
+                    pagination={false}
+                    size="small"
+                    locale={{ emptyText: 'Chưa có yêu cầu thiết bị' }}
+                />
+            </Card>
 
             {/* Bảng thiết bị */}
             <ActualItemsTable items={exportInfo.items || []} />

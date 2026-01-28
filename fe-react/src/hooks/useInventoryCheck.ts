@@ -35,6 +35,7 @@ export const useInventoryCheck = () => {
     const [scannedInput, setScannedInput] = useState('');
     const [manualSerials, setManualSerials] = useState('');
     const [otherCompletedCount, setOtherCompletedCount] = useState(0);
+    const [otherCompletedItemsByModel, setOtherCompletedItemsByModel] = useState<Record<string, number>>({});
 
     const [selectedDeviceCode, setSelectedDeviceCode] = useState<string | null>(null);
     const [deviceModels, setDeviceModels] = useState<any[]>([]); // [NEW]
@@ -91,10 +92,22 @@ export const useInventoryCheck = () => {
                 activeSession = sessions.find(s => s.status === 'processing');
             }
 
-            // Calculate other completed count
+            // Tính tổng số lượng đã kiểm kê
             const completedSessions = sessions.filter(s => s.status === 'completed' && s.id !== activeSession?.id);
             const othersCount = completedSessions.reduce((acc, s) => acc + (s.totalScanned || 0), 0);
             setOtherCompletedCount(othersCount);
+
+            // Tính tổng số lượng đã kiểm kê theo model
+            const itemsByModel: Record<string, number> = {};
+            completedSessions.forEach(session => {
+                (session.details || []).forEach((item: any) => {
+                    const deviceCode = item.deviceCode || item.deviceModel;
+                    if (deviceCode) {
+                        itemsByModel[deviceCode] = (itemsByModel[deviceCode] || 0) + 1;
+                    }
+                });
+            });
+            setOtherCompletedItemsByModel(itemsByModel);
 
             if (activeSession) {
                 setSession(activeSession);
@@ -122,7 +135,7 @@ export const useInventoryCheck = () => {
         try {
             await inventorySessionService.removeItem(session.id, serial);
             setServerItems(prev => prev.filter(i => i.serial !== serial));
-            setDuplicateSerials(prev => prev.filter(s => s !== serial)); // Clear from duplicate list
+            setDuplicateSerials(prev => prev.filter(s => s !== serial)); // Xóa khỏi danh sách trùng nếu có
             message.success(`Đã xóa mac ${serial}`);
         } catch (e) {
             message.error('Không thể xóa thiết bị đã lưu');
@@ -156,7 +169,7 @@ export const useInventoryCheck = () => {
             return;
         }
 
-        // Check trùng (Server Only now)
+        // Check trùng
         const isDup = serverItems.some(i => i.serial === code);
         if (isDup) {
             playError();
@@ -166,7 +179,7 @@ export const useInventoryCheck = () => {
         }
 
         try {
-            // Save Immediately
+            // Lưu lên server
             setIsSaving(true);
             const payload = {
                 scannedItems: [{
@@ -235,8 +248,6 @@ export const useInventoryCheck = () => {
         setManualSerials('');
     };
 
-    // Removed handleSaveItems
-
     const [duplicateSerials, setDuplicateSerials] = useState<string[]>([]);
 
     const handleCompleteInventory = () => {
@@ -244,7 +255,7 @@ export const useInventoryCheck = () => {
             message.warning('Vui lòng bấm LƯU các mac mới trước khi hoàn tất!');
             return;
         }
-        setDuplicateSerials([]); // Clear old errors
+        setDuplicateSerials([]);
         setCompleteModalVisible(true);
     };
 
@@ -288,6 +299,7 @@ export const useInventoryCheck = () => {
         setLocalItems,
         duplicateSerials,
         otherCompletedCount,
-        deviceModels // [NEW]
+        otherCompletedItemsByModel,
+        deviceModels
     };
 };

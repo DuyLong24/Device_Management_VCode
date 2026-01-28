@@ -150,18 +150,18 @@ import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schem
   controllers: [HealthController],
   providers: [
     // SeedService,
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: AuthGuard,
-    // },
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: ResourceGuard,
-    // },
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: CustomRoleGuard,
-    // },
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ResourceGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: CustomRoleGuard,
+    },
     // {
 
     //   provide: APP_GUARD,

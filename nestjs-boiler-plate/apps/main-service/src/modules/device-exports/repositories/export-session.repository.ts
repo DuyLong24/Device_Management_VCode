@@ -12,7 +12,9 @@ export class ExportSessionRepository {
     }
 
     async findById(id: string): Promise<ExportSession | null> {
-        return this.exportSessionModel.findById(id).exec();
+        return this.exportSessionModel.findById(id)
+            .populate('createdBy', 'username name email')
+            .exec();
     }
 
     async findOne(filter: FilterQuery<ExportSession>): Promise<ExportSession | null> {
@@ -20,7 +22,10 @@ export class ExportSessionRepository {
     }
 
     async findAll(filter: FilterQuery<ExportSession>): Promise<ExportSession[]> {
-        return this.exportSessionModel.find(filter).sort({ createdAt: -1 }).exec();
+        return this.exportSessionModel.find(filter)
+            .populate('createdBy', 'username name email')
+            .sort({ createdAt: -1 })
+            .exec();
     }
 
     async update(id: string, data: any): Promise<ExportSession | null> {

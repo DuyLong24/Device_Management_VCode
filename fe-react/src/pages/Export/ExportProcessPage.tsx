@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import {
-    Button, Typography, message, Tag, Space, Modal, Card, Descriptions, Row, Col, Statistic, Divider, Progress, Alert, Input, Upload, Table, Popconfirm
+    Button, Typography, message, Tag, Space, Modal, Card, Descriptions, Row, Col, Statistic, Divider, Progress, Alert, Input, Table, Popconfirm
 } from 'antd';
 import {
-    ArrowLeftOutlined,
+    // ArrowLeftOutlined,
     CheckCircleOutlined,
-    ExclamationCircleOutlined,
+    // ExclamationCircleOutlined,
     FileExcelOutlined,
     DeleteOutlined
 } from '@ant-design/icons';
-import type { UploadFile } from 'antd/es/upload/interface';
+// import type { UploadFile } from 'antd/es/upload/interface';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 
@@ -17,9 +17,9 @@ import { exportService } from '../../services/export.service';
 import { exportSessionService } from '../../services/export-session.service';
 import { getExportStatusTag } from '../../utils/export-status.util';
 import type { DeviceExport } from '../../types/export.type';
-import { useScanSound } from '../../hooks/useScanSound';
+// import { useScanSound } from '../../hooks/useScanSound';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 // const { Dragger } = Upload;
 
 export default function ExportProcessPage() {
@@ -27,7 +27,7 @@ export default function ExportProcessPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const sessionId = searchParams.get('sessionId');
-    const { playSuccess, playError } = useScanSound();
+    // const { playSuccess, playError } = useScanSound();
     const [messageApi, contextHolder] = message.useMessage();
     const [modal, modalContextHolder] = Modal.useModal();
 
@@ -38,9 +38,9 @@ export default function ExportProcessPage() {
     const [loading, setLoading] = useState(false);
 
     // Form/Input State
-    const [scannedInput, setScannedInput] = useState('');
+    // const [scannedInput, setScannedInput] = useState('');
     const [manualMacs, setManualMacs] = useState('');
-    const [fileList, setFileList] = useState<UploadFile[]>([]);
+    // const [fileList, setFileList] = useState<UploadFile[]>([]);
 
     // Logic: Fetch Data
     const fetchDetail = async () => {
@@ -80,42 +80,42 @@ export default function ExportProcessPage() {
     }, [id, sessionId]);
 
     // Handle Scan
-    const handleScanMac = async () => {
-        if (!scannedInput.trim() || !sessionId) return;
-        const code = scannedInput.trim();
+    // const handleScanMac = async () => {
+    //     if (!scannedInput.trim() || !sessionId) return;
+    //     const code = scannedInput.trim();
 
-        // Local Duplicate Check
-        if (sessionItems.some((i: any) => i.serial === code)) {
-            playError();
-            messageApi.warning(`MAC ${code} đã được quét trong phiên này`);
-            setScannedInput('');
-            return;
-        }
+    //     // Local Duplicate Check
+    //     if (sessionItems.some((i: any) => i.serial === code)) {
+    //         playError();
+    //         messageApi.warning(`MAC ${code} đã được quét trong phiên này`);
+    //         setScannedInput('');
+    //         return;
+    //     }
 
-        setLoading(true);
-        try {
-            const res = await exportSessionService.scanSerial(sessionId, code);
-            playSuccess();
-            messageApi.success(`Đã quét: ${code}`);
-            setScannedInput('');
+    //     setLoading(true);
+    //     try {
+    //         const res = await exportSessionService.scanSerial(sessionId, code);
+    //         playSuccess();
+    //         messageApi.success(`Đã quét: ${code}`);
+    //         setScannedInput('');
 
-            // Refresh items
-            setSessionItems(prev => [...prev, {
-                serial: code,
-                deviceCode: res.data?.items?.find((i: any) => i.serial === code)?.deviceCode || 'N/A',
-                scannedAt: new Date().toISOString()
-            }]);
+    //         // Refresh items
+    //         setSessionItems(prev => [...prev, {
+    //             serial: code,
+    //             deviceCode: res.data?.items?.find((i: any) => i.serial === code)?.deviceCode || 'N/A',
+    //             scannedAt: new Date().toISOString()
+    //         }]);
 
-            const newCount = (sessionData?.serialChecked || 0) + 1;
-            setSessionData({ ...sessionData, serialChecked: newCount });
+    //         const newCount = (sessionData?.serialChecked || 0) + 1;
+    //         setSessionData({ ...sessionData, serialChecked: newCount });
 
-        } catch (error: any) {
-            playError();
-            messageApi.error(error.response?.data?.message || 'Lỗi khi quét');
-        } finally {
-            setLoading(false);
-        }
-    };
+    //     } catch (error: any) {
+    //         playError();
+    //         messageApi.error(error.response?.data?.message || 'Lỗi khi quét');
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
     const handleRemoveSerial = async (serial: string) => {
         if (!sessionId) return;
@@ -256,9 +256,31 @@ export default function ExportProcessPage() {
 
     if (!exportInfo) return <div>Loading...</div>;
 
-    // TÍnh dữ liệu
-    const totalRequired = exportInfo.totalQuantity || 0;
-    const matchCount = sessionItems.length;
+    // Tính dữ liệu
+    // Lấy tất cả items đã quét từ MỌI phiên (exportInfo.items)
+    const allScannedItems = exportInfo.items || [];
+
+    // Lọc ra items của phiên hiện tại
+    const currentSessionItems = sessionItems;
+
+    // Items đã quét ở CÁC PHIÊN KHÁC (không bao gồm phiên hiện tại)
+    const otherSessionsItems = allScannedItems.filter(
+        item => !currentSessionItems.some(currentItem => currentItem.serial === item.serial)
+    );
+
+    // Tổng yêu cầu ban đầu
+    const originalTotalRequired = exportInfo.totalQuantity || 0;
+
+    // Tổng đã quét ở các phiên khác
+    const scannedInOtherSessions = otherSessionsItems.length;
+
+    // Tổng CÒN LẠI cần quét (đã trừ các phiên khác)
+    const totalRequired = Math.max(0, originalTotalRequired - scannedInOtherSessions);
+
+    // Số đã quét trong phiên hiện tại
+    const matchCount = currentSessionItems.length;
+
+    // Số còn thiếu
     const missingCount = Math.max(0, totalRequired - matchCount);
 
     // Cột MAC List
@@ -285,55 +307,132 @@ export default function ExportProcessPage() {
     ];
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-2 pt-0 max-w-7xl mx-auto">
             {contextHolder}
             {modalContextHolder}
             {/* Header */}
             <div className="mb-6">
-                <Space className="mb-4">
+                {/* <Space className="mb-4">
                     <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/export/check')}>
                         Quay lại
                     </Button>
-                </Space>
+                </Space> */}
 
-                <div className="mb-4">
+                {/* <div className="mb-4">
                     <Title level={3} className="!mb-2">
                         {sessionData?.sessionName || 'Phiên xuất kho'}
                     </Title>
                     <Space>
-                        <Tag color="blue">{sessionData?.code || 'SESSION-ID'}</Tag>
-                        <Tag>{exportInfo.code}</Tag>
+                        <Tag color="blue">Mã phiên: {sessionData?.code || 'SESSION-ID'}</Tag>
+                        <Tag>Mã phiếu xuất: {exportInfo.code}</Tag>
                         {getExportStatusTag(exportInfo.status)}
                     </Space>
-                </div>
+                </div> */}
             </div>
 
-            {/* Session Info */}
-            <Card title="Thông tin phiên xuất kho" className="mb-4">
-                <Descriptions column={2} size="small" bordered>
-                    <Descriptions.Item label="Mã phiên">{sessionData?.code}</Descriptions.Item>
-                    <Descriptions.Item label="Mã phiếu xuất">{exportInfo.code}</Descriptions.Item>
-                    <Descriptions.Item label="Ngày xuất">{dayjs(exportInfo.exportDate).format('DD/MM/YYYY')}</Descriptions.Item>
-                    <Descriptions.Item label="Người tạo">{sessionData?.createdBy || 'N/A'}</Descriptions.Item>
-                </Descriptions>
-            </Card>
+            {/* Session Info & Requirements in same row */}
+            <Row gutter={16} className="mb-2">
+                <Col span={8}>
+                    <Card title="Thông tin phiên xuất kho" className="h-full">
+                        <Descriptions column={1} size="small" bordered>
+                            <Descriptions.Item label="Mã phiên">{sessionData?.code}</Descriptions.Item>
+                            <Descriptions.Item label="Mã phiếu xuất">{exportInfo.code}</Descriptions.Item>
+                            <Descriptions.Item label="Ngày xuất">{dayjs(exportInfo.exportDate).format('DD/MM/YYYY')}</Descriptions.Item>
+                            <Descriptions.Item label="Người tạo">{sessionData?.createdBy?.username || sessionData?.createdBy?.name || 'N/A'}</Descriptions.Item>
+                            <Descriptions.Item label="Trạng thái">{getExportStatusTag(exportInfo.status)}</Descriptions.Item>
+                        </Descriptions>
+                    </Card>
+                </Col>
+                <Col span={16}>
+                    <Card title="Yêu cầu thiết bị" className="h-full">
+                        <Table
+                            dataSource={exportInfo.requirements?.map((req: any) => {
+                                // Tổng đã quét cho model này (TẤT CẢ các phiên)
+                                const totalScanned = allScannedItems.filter(item => item.deviceCode === req.deviceCode).length;
+
+                                return {
+                                    key: req.deviceCode,
+                                    deviceCode: req.deviceCode,
+                                    deviceName: req.deviceName,
+                                    totalScanned: totalScanned,
+                                    totalRequired: req.quantity
+                                };
+                            }) || []}
+                            columns={[
+                                {
+                                    title: 'Mã Model',
+                                    dataIndex: 'deviceCode',
+                                    key: 'deviceCode',
+                                    render: (t: string) => <Text strong className="font-mono">{t}</Text>
+                                },
+                                {
+                                    title: 'Tên thiết bị',
+                                    dataIndex: 'deviceName',
+                                    key: 'deviceName'
+                                },
+                                {
+                                    title: 'Tiến độ',
+                                    key: 'progress',
+                                    align: 'center' as const,
+                                    render: (_: any, record: any) => {
+                                        const isComplete = record.totalScanned >= record.totalRequired;
+                                        const isInProgress = record.totalScanned > 0 && record.totalScanned < record.totalRequired;
+                                        return (
+                                            <Text
+                                                strong
+                                                type={isComplete ? "success" : isInProgress ? "warning" : undefined}
+                                            >
+                                                ({record.totalScanned}/{record.totalRequired})
+                                            </Text>
+                                        );
+                                    }
+                                }
+                            ]}
+                            pagination={false}
+                            size="small"
+                            locale={{ emptyText: 'Chưa có yêu cầu thiết bị' }}
+                        />
+                    </Card>
+                </Col>
+            </Row>
 
             {/* Statistics */}
-            <Card className="mb-4">
+            <Card className="mb-2">
                 <Row gutter={16}>
-                    <Col span={6}><Statistic title="Tổng cần xuất" value={totalRequired} /></Col>
-                    <Col span={6}><Statistic title="Đã quét" value={matchCount} suffix={`/ ${totalRequired}`} valueStyle={{ color: '#1890ff' }} /></Col>
-                    <Col span={6}><Statistic title="Còn thiếu" value={missingCount} valueStyle={{ color: '#ff4d4f' }} /></Col>
+                    <Col span={8}>
+                        <Statistic
+                            title="Tổng tiến độ"
+                            value={`${allScannedItems.length}/${originalTotalRequired}`}
+                            valueStyle={{ color: allScannedItems.length >= originalTotalRequired ? '#52c41a' : '#1890ff' }}
+                        />
+                    </Col>
+                    <Col span={8}>
+                        <Statistic
+                            title="Phiên này"
+                            value={`${matchCount}/${totalRequired}`}
+                            valueStyle={{ color: matchCount >= totalRequired ? '#52c41a' : '#faad14' }}
+                        />
+                    </Col>
+                    <Col span={8}>
+                        <Statistic
+                            title="Còn thiếu"
+                            value={missingCount}
+                            valueStyle={{ color: missingCount === 0 ? '#52c41a' : '#ff4d4f' }}
+                        />
+                    </Col>
                 </Row>
                 <Divider />
-                <Progress percent={Math.round((matchCount / totalRequired) * 100)} status="active" />
+                <Progress
+                    percent={totalRequired > 0 ? Math.round((matchCount / totalRequired) * 100) : 0}
+                    status={matchCount >= totalRequired ? 'success' : 'active'}
+                />
             </Card>
 
             {/* Scan Section */}
             {sessionData?.status !== 'COMPLETED' ? (
-                <Card title="Quét MAC xuất kho" className="mb-4">
+                <Card title="Quét MAC xuất kho" className="mb-2">
                     <Space direction="vertical" className="w-full" size="middle">
-                        <Alert
+                        {/* <Alert
                             message="Hướng dẫn quét mã MAC"
                             description={
                                 <ul className="mb-0 list-disc pl-5 space-y-1">
@@ -367,11 +466,11 @@ export default function ExportProcessPage() {
                             }
                             type="info"
                             showIcon
-                        />
+                        /> */}
 
                         <Row gutter={16}>
                             <Space direction="vertical" className="w-full">
-                                <Text strong>Nhập thủ công (Nhiều dòng)</Text>
+                                {/* <Text strong>Nhập thủ công (Nhiều dòng)</Text> */}
                                 <Input.TextArea
                                     rows={5}
                                     placeholder="MAC-001&#10;MAC-002..."
@@ -398,7 +497,7 @@ export default function ExportProcessPage() {
             <Card
                 title="Danh sách MAC"
                 extra={<Button icon={<FileExcelOutlined />}>Xuất Excel</Button>}
-                className="mb-4"
+                className="mb-2"
             >
                 <Table
                     columns={macColumns.filter(col => {

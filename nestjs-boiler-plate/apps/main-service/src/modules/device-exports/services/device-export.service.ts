@@ -90,6 +90,12 @@ export class DeviceExportService {
     if (!deviceexport) {
       throw new NotFoundException(ERROR_MESSAGES.DEVICE_EXPORT.NOT_FOUND);
     }
+
+    // Không cho phép xóa phiếu xuất đã có thiết bị được quét
+    if (deviceexport.items && deviceexport.items.length > 0) {
+      throw new BadRequestException('Không thể xóa phiếu xuất đã có thiết bị được quét. Vui lòng xóa tất cả thiết bị trước.');
+    }
+
     const deletedDeviceExport = await this.deviceExportRepository.delete(id);
     if (!deletedDeviceExport) {
       throw new BadRequestException(ERROR_MESSAGES.DEVICE_EXPORT.DELETE_FAILED);

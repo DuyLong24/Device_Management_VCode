@@ -97,7 +97,7 @@ export class UserManagementService {
             phoneNumber: dto.phoneNumber,
             password: hashedPassword,
             funcRoleId: role[0]._id,
-            status: 'active',
+            status: 'ACTIVE',
             isPasswordChange: !dto.mustChangePassword,
             dayPasswordChange: new Date(),
         });
@@ -182,7 +182,7 @@ export class UserManagementService {
             throw new NotFoundException('User not found');
         }
 
-        user.status = 'inactive';
+        user.status = 'LOCKED';
         await user.save();
 
         // ✅ KEYCLOAK SYNC - Disable user
@@ -203,7 +203,7 @@ export class UserManagementService {
             throw new NotFoundException('User not found');
         }
 
-        user.status = 'active';
+        user.status = 'ACTIVE';
         await user.save();
 
         // ✅ KEYCLOAK SYNC - Enable user
@@ -250,10 +250,10 @@ export class UserManagementService {
         return {
             id: user._id.toString(),
             email: user.email,
-            fullName: user.name,
-            phone: user.phoneNumber || '',
+            name: user.name,
+            phoneNumber: user.phoneNumber || '',
             role: this.mapRoleCodeToUI(funcRole?.code),
-            status: this.mapStatusToUI(user.status),
+            status: user.status as any,
             createdAt: user.createdAt,
             lastLoginAt: user.lastLoginAt || undefined,
             mustChangePassword: !user.isPasswordChange,
@@ -269,12 +269,6 @@ export class UserManagementService {
         return mapping[code] || code;
     }
 
-    private mapStatusToUI(status: string): 'ACTIVE' | 'LOCKED' | 'PENDING' {
-        const mapping = {
-            'active': 'ACTIVE',
-            'inactive': 'LOCKED',
-            'pending': 'PENDING',
-        };
-        return mapping[status] as any || 'ACTIVE';
-    }
+    // mapStatusToUI removed as we store uppercase status now
+
 }

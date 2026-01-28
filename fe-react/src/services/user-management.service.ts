@@ -3,8 +3,8 @@ import { axiosInstance } from '../configs/axios.config';
 export interface UserDTO {
     id: string;
     email: string;
-    fullName: string;     // Đã transform từ backend
-    phone: string;        // Đã transform từ backend
+    name: string;         // Standardized with backend
+    phoneNumber: string;  // Standardized with backend
     role: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
     status: 'ACTIVE' | 'LOCKED' | 'PENDING';
     createdAt: string;

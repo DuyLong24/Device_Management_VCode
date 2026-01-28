@@ -81,16 +81,16 @@ export default function UserManagementPage() {
         },
         {
             title: 'Họ tên',
-            dataIndex: 'fullName',
-            key: 'fullName',
+            dataIndex: 'name',
+            key: 'name',
             width: 180,
         },
         {
             title: 'Số điện thoại',
-            dataIndex: 'phone',
-            key: 'phone',
+            dataIndex: 'phoneNumber',
+            key: 'phoneNumber',
             width: 130,
-            render: (phone) => phone || <Text type="secondary">-</Text>,
+            render: (phoneNumber) => phoneNumber || <Text type="secondary">-</Text>,
         },
         {
             title: 'Vai trò',
@@ -228,9 +228,9 @@ export default function UserManagementPage() {
                             setFilters({ ...filters, status: value, page: 1 })
                         }
                     >
-                        <Select.Option value="active">Hoạt động</Select.Option>
-                        <Select.Option value="inactive">Đã khóa</Select.Option>
-                        <Select.Option value="pending">Chờ xử lý</Select.Option>
+                        <Select.Option value="ACTIVE">Hoạt động</Select.Option>
+                        <Select.Option value="LOCKED">Đã khóa</Select.Option>
+                        <Select.Option value="PENDING">Chờ xử lý</Select.Option>
                     </Select>
 
                     <RangePicker

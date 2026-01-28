@@ -18,8 +18,8 @@ export default function EditUserModal({ visible, user, onSuccess, onCancel, onUp
         if (user) {
             form.setFieldsValue({
                 email: user.email,
-                fullName: user.fullName,
-                phone: user.phone,
+                name: user.name,
+                phoneNumber: user.phoneNumber,
                 roleCode: user.role?.toLowerCase() || '', // SUPER_ADMIN → super_admin
             });
         }
@@ -34,8 +34,8 @@ export default function EditUserModal({ visible, user, onSuccess, onCancel, onUp
 
             // Transform fullName → name, phone → phoneNumber
             await onUpdate(user.id, {
-                name: values.fullName,
-                phoneNumber: values.phone || '',
+                name: values.name,
+                phoneNumber: values.phoneNumber || '',
                 roleCode: values.roleCode,
             });
 
@@ -67,13 +67,13 @@ export default function EditUserModal({ visible, user, onSuccess, onCancel, onUp
 
                 <Form.Item
                     label="Họ tên"
-                    name="fullName"
+                    name="name"
                     rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
                 >
                     <Input placeholder="Nguyễn Văn A" />
                 </Form.Item>
 
-                <Form.Item label="Số điện thoại" name="phone">
+                <Form.Item label="Số điện thoại" name="phoneNumber">
                     <Input placeholder="0912345678" />
                 </Form.Item>
 

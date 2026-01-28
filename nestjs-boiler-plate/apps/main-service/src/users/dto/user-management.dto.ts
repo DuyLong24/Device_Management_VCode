@@ -12,7 +12,7 @@ export class UserManagementFilterDto {
     roleCode?: string; // Mã role: 'super_admin', 'admin', 'user'
 
     @IsOptional()
-    @IsEnum(['active', 'inactive', 'pending'])
+    @IsEnum(['ACTIVE', 'LOCKED', 'PENDING'])
     status?: string;
 
     @IsOptional()
@@ -25,12 +25,12 @@ export class UserManagementFilterDto {
 
     @IsOptional()
     @IsInt()
-  @Type(() => Number)
+    @Type(() => Number)
     page?: number = 1;
 
     @IsOptional()
     @IsInt()
-  @Type(() => Number)
+    @Type(() => Number)
     limit?: number = 20;
 }
 
@@ -89,8 +89,8 @@ export class ResetPasswordDto {
 export class UserManagementResponseDto {
     id: string;
     email: string;
-    fullName: string; // Transform từ 'name'
-    phone: string; // Transform từ 'phoneNumber'
+    name: string; // Renamed from fullName
+    phoneNumber: string; // Renamed from phone
     role: string; // Transform từ funcRole.code
     status: 'ACTIVE' | 'LOCKED' | 'PENDING'; // Transform từ backend status
     createdAt: Date;

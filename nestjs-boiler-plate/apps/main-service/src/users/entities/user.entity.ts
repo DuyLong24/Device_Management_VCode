@@ -41,7 +41,7 @@ export class User extends Document {
   @Prop()
   address?: string;
 
-  @Prop({ enum: ['active', 'inactive', 'pending'], default: 'active' })
+  @Prop({ enum: ['ACTIVE', 'LOCKED', 'PENDING'], default: 'ACTIVE' })
   status?: string;
 
   @Prop({ default: false })

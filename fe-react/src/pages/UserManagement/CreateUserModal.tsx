@@ -21,8 +21,8 @@ export default function CreateUserModal({ visible, onSuccess, onCancel, onCreate
             // Transform fullName → name, phone → phoneNumber
             await onCreate({
                 email: values.email,
-                name: values.fullName,
-                phoneNumber: values.phone || '',
+                name: values.name,
+                phoneNumber: values.phoneNumber || '',
                 roleCode: values.roleCode,
                 temporaryPassword: values.password,
                 mustChangePassword: values.mustChangePassword ?? true,
@@ -68,7 +68,7 @@ export default function CreateUserModal({ visible, onSuccess, onCancel, onCreate
 
                 <Form.Item
                     label="Họ tên"
-                    name="fullName"
+                    name="name"
                     rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
                 >
                     <Input placeholder="Nguyễn Văn A" />
@@ -76,7 +76,7 @@ export default function CreateUserModal({ visible, onSuccess, onCancel, onCreate
 
                 <Form.Item
                     label="Số điện thoại"
-                    name="phone"
+                    name="phoneNumber"
                 >
                     <Input placeholder="0912345678" />
                 </Form.Item>

@@ -18,6 +18,8 @@ import ExportDetailPage from './pages/Export/ExportDetailPage';
 import SerialDetailPage from './pages/Warehouse/SerialDetailPage';
 import ExportProcessPage from './pages/Export/ExportProcessPage';
 import ExportCheckListPage from './pages/Export/ExportCheckListPage';
+import RoleManagementPage from './pages/RoleManagement/RoleManagementPage';
+import UserManagementPage from './pages/UserManagement/UserManagementPage';
 // import LoginPage from './pages/Auth/LoginPage';
 
 const queryClient = new QueryClient({
@@ -88,7 +90,8 @@ function App() {
 
                 {/* MODULE SYSTEM (Protected) */}
                 <Route path="system" element={<PermissionRoute requiredRole="Super admin" />}>
-                  <Route path="users" element={<div>User Management Code Here</div>} />
+                  <Route path="users" element={<UserManagementPage />} />
+                  <Route path="roles" element={<RoleManagementPage />} />
                 </Route>
                 <Route path="*" element={<div>404 Not Found</div>} />
               </Route>

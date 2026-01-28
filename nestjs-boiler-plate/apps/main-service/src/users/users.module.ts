@@ -6,24 +6,29 @@ import { User, UserSchema } from './entities/user.entity';
 import { UserRepository } from './repositories/user.repository';
 import { UserService } from './services/user.service';
 import { UserController } from './controllers/user.controller';
-import { UserKeycloakIntegrationService } from '../common/services/user-keycloak-integration.service';
+import { UserManagementController } from './controllers/user-management.controller';
+import { UserKeycloakIntegrationService } from './services/user-keycloak-integration.service';
+import { UserManagementService } from './services/user-management.service';
+import { FncRoleModule } from '../fnc-roles/fnc-roles.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     ConfigModule,
     HttpModule,
+    FncRoleModule,
   ],
-  controllers: [UserController],
+  controllers: [UserController, UserManagementController],
   providers: [
-    UserService, 
-    UserRepository, 
-    UserKeycloakIntegrationService
+    UserService,
+    UserRepository,
+    UserKeycloakIntegrationService,
+    UserManagementService,
   ],
   exports: [
-    UserService, 
-    UserRepository, 
+    UserService,
+    UserRepository,
     UserKeycloakIntegrationService
   ],
 })
-export class UsersModule {}
+export class UsersModule { }

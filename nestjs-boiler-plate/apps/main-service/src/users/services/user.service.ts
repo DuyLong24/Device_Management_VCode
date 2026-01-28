@@ -5,7 +5,7 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { SetPasswordDto } from '../dto/set-password.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
-import { UserKeycloakIntegrationService } from '../../common/services/user-keycloak-integration.service';
+import { UserKeycloakIntegrationService } from './user-keycloak-integration.service';
 import { Connection } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
 

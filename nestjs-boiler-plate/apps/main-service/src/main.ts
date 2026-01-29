@@ -10,7 +10,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Thiết lập prefix global cho tất cả routes
-  app.setGlobalPrefix('api');
+  // app.setGlobalPrefix('api');
 
   // Cấu hình CORS
   app.enableCors({

@@ -1,0 +1,54 @@
+# Environment
+NODE_ENV=development
+
+# Host name and Port number
+HOST=0.0.0.0
+PORT=3000
+URL=api.wms.alvar.quytb.com
+
+# URL of the Mongo DB
+DATABASE_URL=mongodb://alvar:aidZwwypUIVRB0g7@db.bfd.vn:2700/alvarwarehouse
+MONGODB_AUTH_USER=alvar
+MONGODB_AUTH_PASS=aidZwwypUIVRB0g7
+
+# Authentication Strategy
+AUTH_STRATEGY=both
+
+# JWT Configuration
+JWT_SECRET=39d0988e-792c-4d50-8b66-19bf2a7473e1
+JWT_EXPIRATION=15m
+JWT_REFRESH_SECRET=004fe973-1d06-4f38-942f-735e88691033
+JWT_REFRESH_EXPIRATION=7d
+
+# Keycloak Configuration
+# KEYCLOAK_BASE_URL=
+# KEYCLOAK_REALM=DeviceRealm
+# KEYCLOAK_CLIENT_ID=device-management-frontend
+# KEYCLOAK_SECRET=
+# KEYCLOAK_PUBLIC_KEY_URL=${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
+# KEYCLOAK_INTROSPECTION_URL=${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token/introspect
+# KEYCLOAK_AUTH_SERVER_URL=${KEYCLOAK_BASE_URL}
+
+KEYCLOAK_BASE_URL=https://keycloak.glorin.vn
+KEYCLOAK_REALM=WMS
+KEYCLOAK_CLIENT_ID=device-management
+KEYCLOAK_CLIENT_SECRET=pZupzBblP6tidZp2QadFApNCCUAPXTgd
+KEYCLOAK_ADMIN_USERNAME=admin
+KEYCLOAK_ADMIN_PASSWORD=ddJf6ANY26PQswX2
+KEYCLOAK_PUBLIC_KEY_URL=https://keycloak.glorin.vn/realms/WMS/protocol/openid-connect/certs
+
+KEYCLOAK_ADMIN=admin
+# KEYCLOAK_ADMIN_PASSWORD=a792ae5d-bf9e-44fb-b7f4-62d8183d6ba0
+# KEYCLOAK_ADMIN_USERNAME=admin
+
+# Postgres Configuration (for Keycloak)
+POSTGRES_DB=keycloak_prod
+POSTGRES_USER=keycloak_user
+POSTGRES_PASSWORD=change_me_in_ci
+
+# CORS Configuration
+CORS_ORIGIN=*
+
+# Rate Limiting
+RATE_LIMIT_TTL=60
+RATE_LIMIT_LIMIT=100

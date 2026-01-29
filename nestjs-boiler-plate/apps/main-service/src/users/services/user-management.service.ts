@@ -104,7 +104,7 @@ export class UserManagementService {
 
         await user.save();
 
-        // ✅ KEYCLOAK SYNC
+        // KEYCLOAK SYNC
         try {
             const keycloakId = await this.keycloakService.syncUserToKeycloak({
                 username: user.email,
@@ -152,7 +152,7 @@ export class UserManagementService {
 
         await user.save();
 
-        // ✅ KEYCLOAK SYNC
+        // KEYCLOAK SYNC
         if (user.keycloakId) {
             try {
                 await this.keycloakService.syncUserToKeycloak({
@@ -185,7 +185,7 @@ export class UserManagementService {
         user.status = 'LOCKED';
         await user.save();
 
-        // ✅ KEYCLOAK SYNC - Disable user
+        // KEYCLOAK SYNC - Disable user
         if (user.keycloakId) {
             try {
                 await this.keycloakService.disableUserInKeycloak(user.keycloakId);
@@ -230,7 +230,7 @@ export class UserManagementService {
         user.dayPasswordChange = new Date();
         await user.save();
 
-        // ✅ KEYCLOAK SYNC - Reset password
+        // KEYCLOAK SYNC - Reset password
         if (user.keycloakId) {
             try {
                 await this.keycloakService.resetPasswordInKeycloak(
@@ -268,7 +268,4 @@ export class UserManagementService {
         };
         return mapping[code] || code;
     }
-
-    // mapStatusToUI removed as we store uppercase status now
-
 }

@@ -176,7 +176,7 @@ export class DeviceService implements OnModuleInit {
       macsCount: macs.length,
       targetWarehouseCode,
       exportCode,
-      macs: macs.slice(0, 3) // Show first 3 MACs
+      macs: macs.slice(0, 3)
     });
 
     const targetWarehouse = await this.warehouseService.findByCode(targetWarehouseCode);
@@ -201,6 +201,7 @@ export class DeviceService implements OnModuleInit {
           warehouseUpdatedAt: new Date(),
           warehouseUpdatedBy: 'SYSTEM_EXPORT',
           exportDate: new Date()
+
         }
       }
     ).exec();
@@ -236,7 +237,7 @@ export class DeviceService implements OnModuleInit {
     return this.deviceModel.countDocuments({
       deviceModel: model,
       warehouseId: readyWarehouse._id,
-      qcStatus: 'PASS' // Ensure only QC Passed items are counted
+      qcStatus: 'PASS'
     }).exec();
   }
 }

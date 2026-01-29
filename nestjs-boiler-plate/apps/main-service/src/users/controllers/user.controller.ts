@@ -26,7 +26,7 @@ export class UserController {
   ) { }
 
   @Post()
-  @Roles({ roles: ['super_admin', 'superadmin', 'Super admin'] })
+  // @Roles({ roles: ['super_admin', 'superadmin', 'Super admin'] })
   @HttpCode(HttpStatus.CREATED)
   // @Permissions('create_user', 'manage_users')
   async create(@Body() createUserDto: CreateUserDto) {
@@ -40,7 +40,7 @@ export class UserController {
   }
 
   @Get()
-  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
+  // @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   async findAll() {
     return this.userService.findAll();
   }
@@ -56,13 +56,13 @@ export class UserController {
   }
 
   @Put(':id')
-  @Roles({ roles: ['super_admin', 'superadmin', 'Super admin'] })
+  // @Roles({ roles: ['super_admin', 'superadmin', 'Super admin'] })
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  @Roles({ roles: ['super_admin', 'superadmin', 'Super admin'] })
+  // @Roles({ roles: ['super_admin', 'superadmin', 'Super admin'] })
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('id') id: string) {
     return this.userService.delete(id);

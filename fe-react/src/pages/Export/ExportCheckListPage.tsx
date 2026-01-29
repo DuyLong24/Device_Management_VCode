@@ -35,7 +35,7 @@ export default function ExportCheckListPage() {
     const [sessions, setSessions] = useState<any[]>([]);
     const [sessionLoading, setSessionLoading] = useState(false);
 
-    const [modal, modalContextHolder] = Modal.useModal();
+    const [_, modalContextHolder] = Modal.useModal();
     const [messageApi, contextHolder] = message.useMessage();
 
     // 1. Fetch Data

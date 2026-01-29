@@ -3,8 +3,8 @@ import { axiosInstance } from '../configs/axios.config';
 export interface UserDTO {
     id: string;
     email: string;
-    name: string;         // Standardized with backend
-    phoneNumber: string;  // Standardized with backend
+    name: string;
+    phoneNumber: string;
     role: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
     status: 'ACTIVE' | 'LOCKED' | 'PENDING';
     createdAt: string;
@@ -24,16 +24,15 @@ export interface UserFilters {
 
 export interface CreateUserData {
     email: string;
-    name: string;          // Backend field name
-    phoneNumber?: string;  // Backend field name
-    roleCode: string;
+    name: string;
+    phoneNumber?: string;
     temporaryPassword: string;
     mustChangePassword?: boolean;
 }
 
 export interface UpdateUserData {
-    name?: string;         // Backend field name
-    phoneNumber?: string;  // Backend field name
+    name?: string;
+    phoneNumber?: string;
     roleCode?: string;
 }
 

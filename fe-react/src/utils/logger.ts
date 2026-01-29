@@ -15,12 +15,12 @@ class Logger {
      */
     private log(level: LogLevel, message: string, context?: LogContext) {
         const timestamp = new Date().toISOString();
-        const logData = {
-            timestamp,
-            level,
-            message,
-            ...context
-        };
+        // const logData = {
+        //     timestamp,
+        //     level,
+        //     message,
+        //     ...context
+        // };
 
         // Console output với format đẹp hơn
         const prefix = `[${timestamp}] [${level.toUpperCase()}]`;

@@ -56,6 +56,7 @@ export class User extends Document {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
+// Apply plugins
 UserSchema.plugin(paginate);
 UserSchema.plugin(toJSONPlugin);
 

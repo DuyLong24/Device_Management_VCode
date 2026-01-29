@@ -20,7 +20,6 @@ import {
 } from 'antd';
 import {
   ArrowLeftOutlined,
-  ScanOutlined,
   CheckCircleOutlined,
   PlayCircleOutlined,
   DeleteOutlined,
@@ -35,7 +34,7 @@ import { INVENTORY_LABELS } from '../../constants/inventory.constants';
 
 // const { Dragger } = Upload;
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 
 const getSerialStatus = (serial: string, deviceCode: string | undefined, importDevices: any[]) => {
@@ -53,10 +52,9 @@ export default function InventoryCheckPage() {
   // const { playSuccess, playError } = useScanSound();
   const {
     loading, isSaving, session, importInfo, serverItems, localItems, sessionStatus,
-    scannedInput, setScannedInput,
-    selectedDeviceCode, setSelectedDeviceCode, inputRef,
+    selectedDeviceCode, setSelectedDeviceCode,
     completeModalVisible, setCompleteModalVisible,
-    handleStartSession, handleScanSerial, handleManualImport,
+    handleStartSession, handleManualImport,
     handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
     navigate,
     removeServerItem,

@@ -32,7 +32,6 @@ export default function EditUserModal({ visible, user, onSuccess, onCancel, onUp
             const values = await form.validateFields();
             setLoading(true);
 
-            // Transform fullName → name, phone → phoneNumber
             await onUpdate(user.id, {
                 name: values.name,
                 phoneNumber: values.phoneNumber || '',

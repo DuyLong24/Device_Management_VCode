@@ -41,11 +41,11 @@ export class CreateUserManagementDto {
 
     @IsString()
     @MinLength(1)
-    name: string; // Tên người dùng (backend field)
+    name: string;
 
     @IsOptional()
     @IsString()
-    phoneNumber?: string; // Số điện thoại (backend field)
+    phoneNumber?: string;
 
     @IsString()
     roleCode: 'super_admin' | 'admin' | 'user';
@@ -89,10 +89,10 @@ export class ResetPasswordDto {
 export class UserManagementResponseDto {
     id: string;
     email: string;
-    name: string; // Renamed from fullName
-    phoneNumber: string; // Renamed from phone
-    role: string; // Transform từ funcRole.code
-    status: 'ACTIVE' | 'LOCKED' | 'PENDING'; // Transform từ backend status
+    name: string;
+    phoneNumber: string;
+    role: string;
+    status: 'ACTIVE' | 'LOCKED' | 'PENDING';
     createdAt: Date;
     lastLoginAt?: Date;
     mustChangePassword?: boolean;

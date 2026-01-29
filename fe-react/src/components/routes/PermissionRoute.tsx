@@ -10,8 +10,6 @@ interface PermissionRouteProps {
 export const PermissionRoute = ({ requiredRole, children }: PermissionRouteProps) => {
     const { hasRole } = useAuth();
 
-    // Hierarchy: 'super_admin' (or 'Super admin') implies access to everything
-    // OR if the user explicitly has the required role
     const canAccess =
         hasRole('super admin') ||
         hasRole('Super admin') ||

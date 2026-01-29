@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { message, Modal } from 'antd';
 import { userManagementService } from '../services/user-management.service';
-import type { UserDTO, UserFilters } from '../services/user-management.service';
+import type { UserDTO, UserFilters } from "../services/user-management.service";
 
 export const useUserManagement = () => {
     const [users, setUsers] = useState<UserDTO[]>([]);

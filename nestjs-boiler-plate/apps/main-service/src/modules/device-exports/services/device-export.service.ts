@@ -124,20 +124,20 @@ export class DeviceExportService {
     const missingSerials = serials.filter(s => !foundMacs.includes(s));
 
     if (missingSerials.length > 0) {
-      throw new BadRequestException(`Các serial sau không tồn tại: ${missingSerials.join(', ')}`);
+      throw new BadRequestException(`Các mac sau không tồn tại: ${missingSerials.join(', ')}`);
     }
 
     const existingSerials = exportRecord.items.map(i => i.serial);
     const duplicatesInExport = serials.filter(s => existingSerials.includes(s));
     if (duplicatesInExport.length > 0) {
-      throw new BadRequestException(`Các serial sau đã có trong phiếu này: ${duplicatesInExport.join(', ')}`);
+      throw new BadRequestException(`Các mã mac sau đã có trong phiếu này: ${duplicatesInExport.join(', ')}`);
     }
 
     if (exportRecord.requirements && exportRecord.requirements.length > 0) {
       for (const device of devices) {
         const req = exportRecord.requirements.find(r => r.deviceCode === device.deviceModel);
         if (!req) {
-          throw new BadRequestException(`Thiết bị ${device.deviceModel} (Serial: ${device.serial}) không có trong yêu cầu xuất kho.`);
+          throw new BadRequestException(`Thiết bị ${device.deviceModel} (Mac: ${device.serial}) không có trong yêu cầu xuất kho.`);
         }
       }
 
@@ -169,7 +169,7 @@ export class DeviceExportService {
       totalItems: exportRecord.items.length + newItems.length
     };
 
-    // Auto switch APPROVED -> IN_PROGRESS 
+    // Tự động APPROVED -> IN_PROGRESS 
     if (exportRecord.status === ExportStatusEnum.APPROVED) {
       updateDto.status = ExportStatusEnum.IN_PROGRESS as any;
     }
@@ -200,7 +200,6 @@ export class DeviceExportService {
     if (exportRecord.requirements && exportRecord.requirements.length > 0) {
       for (const req of exportRecord.requirements) {
         const stockStatus = await this.getInventoryStatus(req.deviceCode);
-        // Note: getInventoryStatus already excludes PENDING_APPROVAL, so current export is not in 'reserved'
         if (stockStatus.available < req.quantity) {
           throw new BadRequestException(
             `Không đủ tồn kho khả dụng cho ${req.deviceCode}. Cần: ${req.quantity}, Khả dụng: ${stockStatus.available}`
@@ -238,14 +237,13 @@ export class DeviceExportService {
       throw new BadRequestException('Chưa có thiết bị nào được quét');
     }
 
-    // Determine target warehouse based on export type
     let targetWarehouseCode = 'SOLD'; // Default
     if (exportRecord.type === 'WARRANTY') {
       targetWarehouseCode = 'IN_WARRANTY'; // Trong bảo hành
     } else if (exportRecord.type === 'SALE') {
       targetWarehouseCode = 'SOLD'; // Đã bán
     } else if (exportRecord.type === 'TRANSFER') {
-      targetWarehouseCode = 'TRANSFERRED'; // Chuyển kho (if exists, else use SOLD)
+      targetWarehouseCode = 'TRANSFERRED'; // Chuyển kho
     }
 
     const serials = exportRecord.items.map(i => i.serial);

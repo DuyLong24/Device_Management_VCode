@@ -1,0 +1,33 @@
+version: '3'
+services:
+  # The Application
+  wms_alvar_quytb_com:
+    container_name: wms_alvar_quytb_com
+    build:
+      context: ./
+    restart: always
+    networks:
+      - traefik_traefik
+    working_dir: /var/www
+    # working_dir: /usr/src/app/build
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.wms_alvar_quytb_com.entrypoints=http'
+      - 'traefik.http.routers.wms_alvar_quytb_com.rule=Host(`wms.alvar.quytb.com`)'
+      # - "traefik.http.routers.wms_alvar_quytb_com.rule=Host(`localhost:3000`)"
+      - 'traefik.docker.network=traefik_traefik'
+      - 'traefik.http.services.wms_alvar_quytb_com.loadbalancer.server.port=80'
+
+      - 'traefik.http.middlewares.wms_alvar_quytb_com-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.middlewares.wms_alvar_quytb_com-https-redirect.redirectscheme.permanent=true'
+      - 'traefik.http.routers.wms_alvar_quytb_com.middlewares=wms_alvar_quytb_com-https-redirect'
+      - 'traefik.http.routers.wms_alvar_quytb_com-secure.rule=Host(`wms.alvar.quytb.com`)'
+      # - "traefik.http.routers.wms_alvar_quytb_com-secure.rule=Host(`localhost:3000`)"
+      - 'traefik.http.routers.wms_alvar_quytb_com-secure.tls=true'
+      - 'traefik.http.routers.wms_alvar_quytb_com-secure.tls.certresolver=http'
+      - 'traefik.http.routers.wms_alvar_quytb_com-secure.entrypoints=https'
+      - 'traefik.http.routers.wms_alvar_quytb_com-secure.service=wms_alvar_quytb_com'
+
+networks:
+  traefik_traefik:
+    external: true

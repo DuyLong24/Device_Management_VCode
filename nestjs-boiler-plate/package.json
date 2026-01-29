@@ -13,6 +13,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "start:main": "nest start main-service",
     "start:main:dev": "nest start main-service --watch",
+    "start:main:prod": "node dist/apps/main-service/main",
     "start:main:debug": "nest start main-service --debug --watch",
     "start:upload": "nest start upload-service",
     "start:upload:dev": "nest start upload-service --watch",

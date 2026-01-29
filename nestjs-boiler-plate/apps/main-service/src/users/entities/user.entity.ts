@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
 import paginate, { PaginateModel } from '../../plugins/paginate.plugin';
 import { toJSONPlugin } from '../../plugins/toJSON.plugin';
+import { FncRole } from '../../fnc-roles/entities/fnc-role.entity';
 
 @Schema({ timestamps: true })
 export class User extends Document {
@@ -26,7 +27,7 @@ export class User extends Document {
   @Prop({ unique: true })
   code?: string;
 
-  @Prop()
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: FncRole.name })
   funcRoleId?: string;
 
   @Prop()

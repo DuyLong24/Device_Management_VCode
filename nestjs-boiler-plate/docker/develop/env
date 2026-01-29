@@ -47,7 +47,7 @@ POSTGRES_USER=keycloak_user
 POSTGRES_PASSWORD=change_me_in_ci
 
 # CORS Configuration
-CORS_ORIGIN=*
+CORS_ORIGIN=http://localhost:5173,https://wms.alvar.quytb.com,https://api.wms.alvar.quytb.com
 
 # Rate Limiting
 RATE_LIMIT_TTL=60

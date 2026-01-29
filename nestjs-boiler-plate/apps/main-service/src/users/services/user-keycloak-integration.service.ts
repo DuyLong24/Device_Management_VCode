@@ -44,8 +44,8 @@ export class UserKeycloakIntegrationService {
 
       if (existingUser) {
         this.logger.log(`[KeycloakSync] User found (ID: ${existingUser.id}). Updating...`);
-        // Không cập nhật mật khẩu trong quá trình đồng bộ nếu không được cung cấp
-        if (!user.password) {
+        // Không cập nhật mật khẩu trong quá trình đồng bộ nếu không được cung cấp hoặc là placeholder
+        if (!user.password || user.password === '***') {
           delete keycloakUser.credentials;
         }
         delete (keycloakUser as any).username;

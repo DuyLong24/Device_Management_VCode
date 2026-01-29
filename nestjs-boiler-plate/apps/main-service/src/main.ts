@@ -13,11 +13,12 @@ async function bootstrap() {
   // app.setGlobalPrefix('api');
 
   // Cấu hình CORS
+  const corsOrigin = process.env.CORS_ORIGIN;
   app.enableCors({
-    origin: true,
+    origin: corsOrigin === '*' ? true : (corsOrigin ? corsOrigin.split(',') : true),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   });
 
   // // Kết nối Kafka microservice để giao tiếp với upload service
@@ -45,8 +46,9 @@ async function bootstrap() {
   }));
 
   // Khởi động HTTP server
-  await app.listen(3000);
-  console.log('Main Service is running on: http://localhost:3000');
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  console.log(`Main Service is running on: http://localhost:${port}`);
   console.log('Kafka microservice is connected and listening...');
 }
 

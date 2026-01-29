@@ -1,30 +1,30 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-// import { ClientsModule, Transport } from '@nestjs/microservices';
-// import { APP_GUARD } from '@nestjs/core';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { JwtModule } from '@nestjs/jwt';
 
-// import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './auth/auth.module';
 import { PolicyAdminModule } from './policy-admin/policy-admin.module';
 import { UsersModule } from './users/users.module';
 import { FncRoleModule } from './fnc-roles/fnc-roles.module';
 import { TokenModule } from './tokens/tokens.module';
 import { HealthController } from './health/health.controller';
-// import { FileModule } from './file/file.module';
-// import { SERVICES, KAFKA_CLIENT_CONFIG } from '@app/shared';
-// import { OpaAuthorizationGuard } from './common/guards/opa.guard';
+import { FileModule } from './file/file.module';
+import { SERVICES, KAFKA_CLIENT_CONFIG } from '@app/shared';
+import { OpaAuthorizationGuard } from './common/guards/opa.guard';
 import {
   KeycloakConnectModule,
-  // ResourceGuard,
-  // RoleGuard,
-  // AuthGuard,
+  ResourceGuard,
+  RoleGuard,
+  AuthGuard,
   PolicyEnforcementMode,
   TokenValidation,
 } from 'nest-keycloak-connect';
 import { AppController } from './app.controller';
-// import { CustomRoleGuard } from './common/guards/custom-role.guard';
+import { CustomRoleGuard } from './common/guards/custom-role.guard';
 
 import { WarehouseGroupsModule } from './modules/warehouse-groups/warehouse-groups.module';
 import { WarehousesModule } from './modules/warehouses/warehouses.module';
@@ -48,7 +48,7 @@ import { DeviceHistory, DeviceHistorySchema } from './modules/device-histories/s
 import { Device, DeviceSchema } from './modules/devices/schemas/device.schemas';
 import { Category, CategorySchema } from './modules/categories/schemas/categories.schemas';
 import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schemas/device-import.schemas';
-// import { SeedService } from './common/services/seed.service';
+import { SeedService } from './common/services/seed.service';
 
 @Module({
   imports: [
@@ -87,22 +87,21 @@ import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schem
       inject: [ConfigService],
     }),
 
-    // KeycloakConnectModule.registerAsync({
-    //   imports: [ConfigModule],
-    //   useFactory: async (configService: ConfigService) => ({
-    //     authServerUrl: configService.get<string>('KEYCLOAK_AUTH_SERVER_URL'),
-    //     realm: configService.get<string>('KEYCLOAK_REALM'),
-    //     clientId: configService.get<string>('KEYCLOAK_CLIENT_ID'),
-    //     secret: configService.get<string>('KEYCLOAK_SECRET') || '', // Optional for public client
-    //     // Optional Keycloak configuration
-    //     cookieKey: 'KEYCLOAK_JWT',
-    //     logLevels: ['verbose'],
-    //     useNestLogger: true,
-    //     policyEnforcement: PolicyEnforcementMode.PERMISSIVE, // or ENFORCEMENT
-    //     tokenValidation: TokenValidation.OFFLINE, // or OFFLINE
-    //   }),
-    //   inject: [ConfigService],
-    // }),
+    KeycloakConnectModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        authServerUrl: configService.get<string>('KEYCLOAK_BASE_URL'),
+        realm: configService.get<string>('KEYCLOAK_REALM'),
+        clientId: configService.get<string>('KEYCLOAK_CLIENT_ID'),
+        secret: configService.get<string>('KEYCLOAK_CLIENT_SECRET') || '',
+        cookieKey: 'KEYCLOAK_JWT',
+        logLevels: ['verbose'],
+        useNestLogger: true,
+        policyEnforcement: PolicyEnforcementMode.PERMISSIVE,
+        tokenValidation: TokenValidation.OFFLINE,
+      }),
+      inject: [ConfigService],
+    }),
 
     MongooseModule.forFeature([
       { name: FncRole.name, schema: FncRoleSchema },
@@ -152,7 +151,7 @@ import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schem
   ],
   controllers: [HealthController, AppController],
   providers: [
-    // SeedService,
+    SeedService,
     // {
     //   provide: APP_GUARD,
     //   useClass: AuthGuard,

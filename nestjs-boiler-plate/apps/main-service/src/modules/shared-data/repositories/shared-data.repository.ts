@@ -44,10 +44,14 @@ export class SharedDataRepository {
     }
 
     async insertManyGroups(groups: any[]) {
-        return this.groupModel.insertMany(groups, { ordered: false }).catch(e => console.log('Insert Groups Error (Duplicate likely)', e.code));
+        return this.groupModel.insertMany(groups, { ordered: false }).catch(e => {
+            if (e.code !== 11000) console.error('Insert Groups Error', e);
+        });
     }
 
     async insertManyData(data: any[]) {
-        return this.dataModel.insertMany(data, { ordered: false }).catch(e => console.log('Insert Data Error (Duplicate likely)', e.code));
+        return this.dataModel.insertMany(data, { ordered: false }).catch(e => {
+            if (e.code !== 11000) console.error('Insert Data Error', e);
+        });
     }
 }

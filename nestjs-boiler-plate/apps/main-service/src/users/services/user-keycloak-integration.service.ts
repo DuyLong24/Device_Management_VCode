@@ -82,23 +82,49 @@ export class UserKeycloakIntegrationService {
     }
   }
 
+  async checkEmailExists(email: string): Promise<boolean> {
+    const authStrategy = this.configService.get<string>('AUTH_STRATEGY');
+    if (authStrategy !== 'keycloak' && authStrategy !== 'both') {
+      return false;
+    }
+
+    try {
+      const adminToken = await this.getAdminToken();
+      if (!adminToken) {
+        this.logger.warn('[KeycloakSync] Unable to get admin token for email check');
+        return false;
+      }
+
+      const existingUser = await this.getUserByEmail(email, adminToken);
+      return !!existingUser;
+    } catch (error) {
+      this.logger.error(`[KeycloakSync] Error checking email existence: ${error.message}`);
+      return false; // Fail open
+    }
+  }
+
+
   async assignRoleInKeycloak(userEmail: string, roleCode: string): Promise<void> {
     const authStrategy = this.configService.get<string>('AUTH_STRATEGY');
     if (authStrategy !== 'keycloak' && authStrategy !== 'both') return;
 
     try {
       const adminToken = await this.getAdminToken();
-      if (!adminToken) return;
+      if (!adminToken) {
+        throw new Error('Không thể lấy token admin từ Keycloak');
+      }
 
       const keycloakUser = await this.getUserByEmail(userEmail, adminToken);
-      if (keycloakUser?.id) {
-        this.logger.log(`[KeycloakSync] Assigning role '${roleCode}' to user ${keycloakUser.id}`);
-        await this.assignRole(keycloakUser.id, roleCode, adminToken);
-      } else {
-        this.logger.warn(`[KeycloakSync] Cannot assign role: User ${userEmail} not found in Keycloak`);
+      if (!keycloakUser?.id) {
+        throw new Error(`User ${userEmail} không tồn tại trong Keycloak`);
       }
+
+      this.logger.log(`[KeycloakSync] Gán quyền '${roleCode}' cho user ${keycloakUser.id}`);
+      await this.assignRole(keycloakUser.id, roleCode, adminToken);
     } catch (error) {
-      this.logger.error('Failed to assign role in Keycloak:', error);
+      this.logger.error(`[KeycloakSync] Không thể gán quyền '${roleCode}' cho user ${userEmail}:`, error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Không thể gán quyền '${roleCode}' cho user ${userEmail}: ${message}`);
     }
   }
 
@@ -332,8 +358,13 @@ export class UserKeycloakIntegrationService {
       const baseUrl = this.configService.get<string>('KEYCLOAK_BASE_URL');
       const realm = this.configService.get<string>('KEYCLOAK_REALM');
 
-      let kcRoleName = roleName;
-      if (roleName === 'super_admin') kcRoleName = 'Super admin';
+      // map role trong app với role trong keycloak
+      const roleMapping: Record<string, string> = {
+        'super_admin': 'Super admin',
+        'admin': 'Admin',
+        'user': 'User',
+      };
+      const kcRoleName = roleMapping[roleName] || roleName;
 
       const roleResponse = await this.httpService.axiosRef.get(
         `${baseUrl}/admin/realms/${realm}/roles/${kcRoleName}`,
@@ -357,7 +388,15 @@ export class UserKeycloakIntegrationService {
         },
       );
     } catch (error: any) {
-      this.logger.error(`[KeycloakSync] Failed to assign role '${roleName}' in Keycloak:`, error.response?.data || error.message);
+      const errorDetail = error.response?.data || error.message;
+      this.logger.error(`[KeycloakSync] Failed to assign role '${roleName}':`, errorDetail);
+
+      // error message
+      if (error.response?.status === 404) {
+        throw new Error(`Quyền '${roleName}' không tồn tại trong Keycloak`);
+      }
+      throw new Error(`Failed to assign role: ${JSON.stringify(errorDetail)}`);
     }
   }
 }
+

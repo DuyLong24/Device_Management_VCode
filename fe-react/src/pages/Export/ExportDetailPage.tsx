@@ -86,7 +86,7 @@ export default function ExportDetailPage() {
                         onReject={handleReject}
                         // onNavigateToScan={handleNavigateToScan}
                         onConfirm={handleConfirm}
-                        canApprove={hasRole('admin')}
+                        canApprove={hasRole('admin') || hasRole('super admin') || hasRole('super_admin')}
                     />
                 </Space>
             </div>

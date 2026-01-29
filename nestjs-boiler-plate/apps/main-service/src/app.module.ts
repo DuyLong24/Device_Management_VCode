@@ -48,7 +48,7 @@ import { DeviceHistory, DeviceHistorySchema } from './modules/device-histories/s
 import { Device, DeviceSchema } from './modules/devices/schemas/device.schemas';
 import { Category, CategorySchema } from './modules/categories/schemas/categories.schemas';
 import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schemas/device-import.schemas';
-import { SeedService } from './common/services/seed.service';
+// import { SeedService } from './common/services/seed.service';
 
 @Module({
   imports: [
@@ -151,7 +151,7 @@ import { SeedService } from './common/services/seed.service';
   ],
   controllers: [HealthController, AppController],
   providers: [
-    SeedService,
+    // SeedService,
     // {
     //   provide: APP_GUARD,
     //   useClass: AuthGuard,

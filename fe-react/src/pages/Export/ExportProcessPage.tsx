@@ -330,12 +330,12 @@ export default function ExportProcessPage() {
                 </div> */}
             </div>
 
-            {/* Session Info & Requirements in same row */}
+            {/* Session Info & Requirements */}
             <Row gutter={16} className="mb-2">
                 <Col span={8}>
                     <Card title="Thông tin phiên xuất kho" className="h-full">
                         <Descriptions column={1} size="small" bordered>
-                            <Descriptions.Item label="Mã phiên">{sessionData?.code}</Descriptions.Item>
+                            <Descriptions.Item label="Mã phiên">{sessionData?.sessionCode}</Descriptions.Item>
                             <Descriptions.Item label="Mã phiếu xuất">{exportInfo.code}</Descriptions.Item>
                             <Descriptions.Item label="Ngày xuất">{dayjs(exportInfo.exportDate).format('DD/MM/YYYY')}</Descriptions.Item>
                             <Descriptions.Item label="Người tạo">{sessionData?.createdBy?.username || sessionData?.createdBy?.name || 'N/A'}</Descriptions.Item>

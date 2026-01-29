@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { ConfigService } from '@nestjs/config';
 import { User } from '../entities/user.entity';
 import { FncRoleService } from '../../fnc-roles/services/fnc-role.service';
 import { UserKeycloakIntegrationService } from './user-keycloak-integration.service';
@@ -19,6 +20,7 @@ export class UserManagementService {
         @InjectModel(User.name) private userModel: Model<User>,
         private fncRoleService: FncRoleService,
         private keycloakService: UserKeycloakIntegrationService,
+        private configService: ConfigService,
     ) { }
 
     async findAllForManagement(filters: UserManagementFilterDto) {
@@ -77,12 +79,29 @@ export class UserManagementService {
     }
 
     async createUserForManagement(dto: CreateUserManagementDto) {
-        // Check email unique
-        const existing = await this.userModel.findOne({ email: dto.email });
-        if (existing) {
-            throw new ConflictException('Email already exists');
+        // Kiểm tra email tồn tại trong MongoDB
+        const existingInMongo = await this.userModel.findOne({ email: dto.email });
+        if (existingInMongo) {
+            throw new ConflictException(`Email ${dto.email} already exists in the system`);
         }
 
+        // Kiểm tra email tồn tại trong Keycloak
+        const authStrategy = this.configService.get<string>('AUTH_STRATEGY');
+        if (authStrategy === 'keycloak' || authStrategy === 'both') {
+            try {
+                const existingInKeycloak = await this.keycloakService.checkEmailExists(dto.email);
+                if (existingInKeycloak) {
+                    throw new ConflictException(`Email ${dto.email} already exists in authentication system`);
+                }
+            } catch (error) {
+                if (error instanceof ConflictException) {
+                    throw error;
+                }
+                this.logger.warn(`Unable to check Keycloak for email existence: ${error.message}`);
+            }
+        }
+
+        // Kiểm tra tồn tại
         const role = await this.fncRoleService.findAll({ code: dto.roleCode });
         if (!role || role.length === 0) {
             throw new NotFoundException(`Role ${dto.roleCode} not found`);
@@ -90,6 +109,7 @@ export class UserManagementService {
 
         const hashedPassword = await bcrypt.hash(dto.temporaryPassword, 10);
 
+        // Tạo user trong MongoDB
         const user = new this.userModel({
             email: dto.email,
             username: dto.email,
@@ -102,9 +122,10 @@ export class UserManagementService {
             dayPasswordChange: new Date(),
         });
 
+
         await user.save();
 
-        // KEYCLOAK SYNC
+        // Sync to Keycloak
         try {
             const keycloakId = await this.keycloakService.syncUserToKeycloak({
                 username: user.email,
@@ -114,17 +135,22 @@ export class UserManagementService {
                 status: user.status,
             });
 
-            if (keycloakId) {
-                user.keycloakId = keycloakId;
-                await user.save();
-
-                // Assign role in Keycloak
-                await this.keycloakService.assignRoleInKeycloak(user.email, dto.roleCode);
-            } else {
-                this.logger.warn(`User created in MongoDB but Keycloak sync failed: ${user.email}`);
+            if (!keycloakId) {
+                // Rollback MongoDB user if Keycloak sync fails
+                await this.userModel.deleteOne({ _id: user._id });
+                throw new Error('Failed to create user in Keycloak authentication system');
             }
+
+            user.keycloakId = keycloakId;
+            await user.save();
+
+            // Assign role in Keycloak
+            await this.keycloakService.assignRoleInKeycloak(user.email, dto.roleCode);
+            this.logger.log(`User ${user.email} created successfully with Keycloak sync`);
         } catch (error) {
-            this.logger.error('Keycloak sync error', error instanceof Error ? error.stack : error);
+            this.logger.error('Keycloak sync error after user creation', error instanceof Error ? error.stack : error);
+            const message = error instanceof Error ? error.message : 'Unknown Keycloak error';
+            throw new ConflictException(`User creation failed: ${message}`);
         }
 
         await user.populate('funcRoleId');

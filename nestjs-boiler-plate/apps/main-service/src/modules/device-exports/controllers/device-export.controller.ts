@@ -127,7 +127,7 @@ export class DeviceExportController {
     const userObj = {
       _id: userId,
       username: username,
-      role: req.user?.realm_access?.roles?.some((r: string) => r.toLowerCase() === 'admin') ? 'ADMIN' : 'USER'
+      role: req.user?.realm_access?.roles?.some((r: string) => ['admin', 'super_admin'].includes(r.toLowerCase())) ? 'ADMIN' : 'USER'
     };
     return this.deviceExportService.approve(id, userObj);
   }

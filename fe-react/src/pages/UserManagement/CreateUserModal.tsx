@@ -98,10 +98,10 @@ export default function CreateUserModal({ visible, onSuccess, onCancel, onCreate
                     name="password"
                     rules={[
                         { required: true, message: 'Vui lòng nhập mật khẩu' },
-                        { min: 6, message: 'Mật khẩu tối thiểu 6 ký tự' },
+                        { min: 8, message: 'Mật khẩu tối thiểu 8 ký tự' },
                     ]}
                 >
-                    <Input.Password placeholder="Nhập mật khẩu tạm" />
+                    <Input.Password placeholder="Nhập mật khẩu tạm (tối thiểu 8 ký tự)" />
                 </Form.Item>
 
                 <Form.Item name="mustChangePassword" valuePropName="checked">

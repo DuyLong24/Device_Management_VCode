@@ -93,7 +93,7 @@ export class DeviceImportController {
   }
 
   @Post(':id/complete')
-  @Roles({ roles: ['admin', 'Admin'] })
+  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   async complete(@Param('id') id: string, @Request() req: any) {
     let userId = null;
     if (req.user) {

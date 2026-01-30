@@ -9,7 +9,8 @@ import {
   Param,
   HttpStatus,
   HttpCode,
-  Request
+  Request,
+  UnauthorizedException
 } from '@nestjs/common';
 import { Roles } from 'nest-keycloak-connect';
 import { DeviceExportService } from '../services/device-export.service';
@@ -34,13 +35,11 @@ export class DeviceExportController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createDeviceExportDto: CreateDeviceExportDto, @Request() req: any) {
-    let userId = null;
-    if (req.user) {
-      const user = await this.userService.syncFromKeycloak(req.user);
-      userId = user._id; // ObjectId
-    } else {
-      userId = req.headers['x-auth-user'];
+    if (!req.user) {
+      throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
     }
+    const user = await this.userService.syncFromKeycloak(req.user);
+    const userId = user._id; // ObjectId
 
     // Attach createdBy (ensure DTO or Service handles it - DTO validation might strip it if not in DTO, but we can cast or update DTO)
     const dtoWithUser = { ...createDeviceExportDto, createdBy: userId };
@@ -113,16 +112,12 @@ export class DeviceExportController {
   @Post(':id/approve')
   @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   async approve(@Param('id') id: string, @Request() req: any) {
-    let userId = null;
-    let username = 'KeycloakUser';
-
-    if (req.user) {
-      const user = await this.userService.syncFromKeycloak(req.user);
-      userId = user._id.toString();
-      username = user.username || user.name;
-    } else {
-      userId = req.headers['x-auth-user'];
+    if (!req.user) {
+      throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
     }
+    const user = await this.userService.syncFromKeycloak(req.user);
+    const userId = user._id.toString();
+    const username = user.username || user.name;
 
     const userObj = {
       _id: userId,
@@ -140,11 +135,12 @@ export class DeviceExportController {
 
   @Post(':id/confirm')
   async confirm(@Param('id') id: string, @Request() req: any) {
-    let userId = null;
-    if (req.user) {
-      const user = await this.userService.syncFromKeycloak(req.user);
-      userId = user._id.toString();
+    if (!req.user) {
+      throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
     }
+    const user = await this.userService.syncFromKeycloak(req.user);
+    const userId = user._id.toString();
+
     return this.deviceExportService.confirm(id, userId);
   }
 
@@ -157,13 +153,12 @@ export class DeviceExportController {
 
   @Post('sessions')
   async createSession(@Body() dto: CreateExportSessionDto, @Request() req: any) {
-    let userId = null;
-    if (req.user) {
-      const user = await this.userService.syncFromKeycloak(req.user);
-      userId = user._id.toString();
-    } else {
-      userId = req.headers['x-auth-user'];
+    if (!req.user) {
+      throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
     }
+    const user = await this.userService.syncFromKeycloak(req.user);
+    const userId = user._id.toString();
+
     return this.exportSessionService.create(dto, userId);
   }
 
@@ -189,13 +184,12 @@ export class DeviceExportController {
 
   @Post('sessions/:id/complete')
   async completeSession(@Param('id') id: string, @Request() req: any) {
-    let userId = null;
-    if (req.user) {
-      const user = await this.userService.syncFromKeycloak(req.user);
-      userId = user._id.toString();
-    } else {
-      userId = req.headers['x-auth-user'];
+    if (!req.user) {
+      throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
     }
+    const user = await this.userService.syncFromKeycloak(req.user);
+    const userId = user._id.toString();
+
     return this.exportSessionService.completeSession(id, userId);
   }
 }

@@ -11,7 +11,8 @@ import {
   HttpCode,
   Res,
   Patch,
-  Request
+  Request,
+  UnauthorizedException
 } from '@nestjs/common';
 import { Response } from 'express';
 import { DeviceService } from '../services/device.service';
@@ -146,14 +147,11 @@ export class DeviceController {
     @Body() body: { toWarehouseId: string; note?: string; errorReason?: string },
     @Request() req: any
   ) {
-    let userId = req.headers['x-auth-user'];
-    if (req.user) {
-      const user = await this.userService.syncFromKeycloak(req.user);
-      userId = user ? user._id.toString() : userId;
+    if (!req.user) {
+      throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
     }
-
-    // if (!userId) {
-    // }
+    const user = await this.userService.syncFromKeycloak(req.user);
+    const userId = user._id.toString();
 
     return this.deviceTransferService.transfer(id, body.toWarehouseId, userId, body.note, body.errorReason);
   }
@@ -163,11 +161,11 @@ export class DeviceController {
     @Body() body: { deviceIds: string[]; toWarehouseId: string; note?: string; errorReason?: string },
     @Request() req: any
   ) {
-    let userId = req.headers['x-auth-user'];
-    if (req.user) {
-      const user = await this.userService.syncFromKeycloak(req.user);
-      userId = user ? user._id.toString() : userId;
+    if (!req.user) {
+      throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
     }
+    const user = await this.userService.syncFromKeycloak(req.user);
+    const userId = user._id.toString();
 
     return this.deviceTransferService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note, body.errorReason);
   }

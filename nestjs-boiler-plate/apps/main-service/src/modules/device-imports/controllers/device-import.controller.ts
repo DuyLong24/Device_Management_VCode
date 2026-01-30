@@ -10,7 +10,8 @@ import {
   HttpStatus,
   HttpCode,
   Request,
-  UseGuards
+  UseGuards,
+  UnauthorizedException
 } from '@nestjs/common';
 import { Unprotected, Roles } from 'nest-keycloak-connect';
 import { DeviceImportService } from '../services/device-import.service';
@@ -30,13 +31,11 @@ export class DeviceImportController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createDeviceImportDto: CreateDeviceImportDto, @Request() req: any) {
-    let userId = null;
-    if (req.user) {
-      const user = await this.userService.syncFromKeycloak(req.user);
-      userId = user._id.toString();
-    } else {
-      userId = req.headers['x-auth-user'];
+    if (!req.user) {
+      throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
     }
+    const user = await this.userService.syncFromKeycloak(req.user);
+    const userId = user._id.toString();
     return this.deviceImportService.create(createDeviceImportDto, userId);
   }
 
@@ -77,13 +76,11 @@ export class DeviceImportController {
     @Body() updateDeviceImportDto: UpdateDeviceImportDto,
     @Request() req: any
   ) {
-    let userId = null;
-    if (req.user) {
-      const user = await this.userService.syncFromKeycloak(req.user);
-      userId = user._id.toString();
-    } else {
-      userId = req.headers['x-auth-user'];
+    if (!req.user) {
+      throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
     }
+    const user = await this.userService.syncFromKeycloak(req.user);
+    const userId = user._id.toString();
     return this.deviceImportService.update(id, updateDeviceImportDto, userId);
   }
 
@@ -95,13 +92,11 @@ export class DeviceImportController {
   @Post(':id/complete')
   @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   async complete(@Param('id') id: string, @Request() req: any) {
-    let userId = null;
-    if (req.user) {
-      const user = await this.userService.syncFromKeycloak(req.user);
-      userId = user._id.toString();
-    } else {
-      userId = req.headers['x-auth-user'];
+    if (!req.user) {
+      throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
     }
+    const user = await this.userService.syncFromKeycloak(req.user);
+    const userId = user._id.toString();
     return this.deviceImportService.complete(id, userId);
   }
 

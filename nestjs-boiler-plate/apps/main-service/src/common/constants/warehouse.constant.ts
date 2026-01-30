@@ -10,6 +10,7 @@ export enum WarehouseCode {
 
     // Kho đã xuất
     SOLD = 'SOLD',
+    NOT_ACTIVATED = 'NOT_ACTIVATED',
     SOLD_WARRANTY = 'SOLD_WARRANTY',
     REMOVED = 'REMOVED',
 }
@@ -20,6 +21,8 @@ export enum TransitionType {
     QC_FAIL = 'QC_FAIL',       // QC Lỗi
     TRANSFER = 'TRANSFER',     // Chuyển kho thường
     EXPORT = 'EXPORT',         // Xuất bán
+    EXPORT_NO_WARRANTY = 'EXPORT_NO_WARRANTY', // Xuất chưa kích hoạt
+    ACTIVATE_WARRANTY = 'ACTIVATE_WARRANTY',   // Kích hoạt bảo hành (-> SOLD/IN_WARRANTY)
     SEND_WARRANTY = 'SEND_WARRANTY', // Gửi bảo hành
     RECEIVE_WARRANTY = 'RECEIVE_WARRANTY', // Nhận bảo hành
     WARRANTY_REPLACE = 'WARRANTY_REPLACE', // Bảo hành: Đổi mới (-> REMOVED)

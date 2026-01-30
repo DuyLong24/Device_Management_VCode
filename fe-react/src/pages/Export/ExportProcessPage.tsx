@@ -7,7 +7,8 @@ import {
     CheckCircleOutlined,
     // ExclamationCircleOutlined,
     FileExcelOutlined,
-    DeleteOutlined
+    DeleteOutlined,
+    ArrowLeftOutlined
 } from '@ant-design/icons';
 // import type { UploadFile } from 'antd/es/upload/interface';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
@@ -310,26 +311,11 @@ export default function ExportProcessPage() {
         <div className="p-2 pt-0 max-w-7xl mx-auto">
             {contextHolder}
             {modalContextHolder}
-            {/* Header */}
-            <div className="mb-6">
-                {/* <Space className="mb-4">
-                    <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/export/check')}>
-                        Quay lại
-                    </Button>
-                </Space> */}
-
-                {/* <div className="mb-4">
-                    <Title level={3} className="!mb-2">
-                        {sessionData?.sessionName || 'Phiên xuất kho'}
-                    </Title>
-                    <Space>
-                        <Tag color="blue">Mã phiên: {sessionData?.code || 'SESSION-ID'}</Tag>
-                        <Tag>Mã phiếu xuất: {exportInfo.code}</Tag>
-                        {getExportStatusTag(exportInfo.status)}
-                    </Space>
-                </div> */}
-            </div>
-
+            <Space className="mb-4">
+                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/export/check')}>
+                    Quay lại
+                </Button>
+            </Space>
             {/* Session Info & Requirements */}
             <Row gutter={16} className="mb-2">
                 <Col span={8}>

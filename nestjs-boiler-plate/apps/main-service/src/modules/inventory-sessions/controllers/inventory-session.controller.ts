@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Query, Put, Param, Request, HttpStatus, HttpCode, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, Put, Param, Request, HttpStatus, HttpCode, Delete, UnauthorizedException } from '@nestjs/common';
 import { InventorySessionService } from '../services/inventory-session.service';
 import { CreateInventorySessionDto } from '../dto/create-inventory-session.dto';
 import { UpdateInventorySessionDto } from '../dto/update-inventory-session.dto';
@@ -15,25 +15,21 @@ export class InventorySessionController {
     @Post()
     @HttpCode(HttpStatus.CREATED)
     async create(@Body() createDto: CreateInventorySessionDto, @Request() req: any) {
-        let userId = null;
-        if (req.user) {
-            const user = await this.userService.syncFromKeycloak(req.user);
-            userId = user._id.toString();
-        } else {
-            userId = req.headers['x-auth-user'];
+        if (!req.user) {
+            throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
         }
+        const user = await this.userService.syncFromKeycloak(req.user);
+        const userId = user._id.toString();
         return this.sessionService.create(createDto, userId);
     }
 
     @Put(':id')
     async update(@Param('id') id: string, @Body() updateDto: UpdateInventorySessionDto, @Request() req: any) {
-        let userId = null;
-        if (req.user) {
-            const user = await this.userService.syncFromKeycloak(req.user);
-            userId = user._id.toString();
-        } else {
-            userId = req.headers['x-auth-user'];
+        if (!req.user) {
+            throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
         }
+        const user = await this.userService.syncFromKeycloak(req.user);
+        const userId = user._id.toString();
         return this.sessionService.update(id, updateDto, userId);
     }
 

@@ -76,7 +76,7 @@ export class Device extends Document {
   removeDate?: Date;
 
   @Prop()
-  warrantyExpiredDate?: Date; // Cache for easy query/sort
+  warrantyExpiredDate?: Date; // Cache for easy query/sort 
 
   @Prop()
   warehouseUpdatedAt?: Date;

@@ -233,7 +233,9 @@ export default function CreateExportPage() {
                                 />
                             </Form.Item>
                         </Col>
+                    </Row>
 
+                    <Row gutter={16}>
                         <Col xs={24} md={12}>
                             <Form.Item
                                 name="exportName"
@@ -243,10 +245,6 @@ export default function CreateExportPage() {
                                 <Input />
                             </Form.Item>
                         </Col>
-
-                    </Row>
-
-                    <Row gutter={16}>
                         <Col xs={24} md={12}>
                             <Form.Item
                                 name="receiver"
@@ -256,15 +254,32 @@ export default function CreateExportPage() {
                                 <Input />
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={12}>
+
+                    </Row>
+
+                    <Row gutter={16}>
+                        <Col xs={24} md={6}>
+                            <Form.Item
+                                name="activationDays"
+                                label={
+                                    <span>
+                                        Kích hoạt bảo hành sau (ngày)
+                                        <Tooltip title="0: Kích hoạt ngay khi xuất. >0: Chờ X ngày sau khi xuất mới kích hoạt.">
+                                            <InfoCircleOutlined className="ml-1 text-gray-400" />
+                                        </Tooltip>
+                                    </span>
+                                }
+                                initialValue={0}
+                            >
+                                <InputNumber min={0} className="w-full" addonAfter="Ngày" />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={9}>
                             <Form.Item name="receiverPerson" label="Người nhận">
                                 <Input />
                             </Form.Item>
                         </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                        <Col xs={24} md={12}>
+                        <Col xs={24} md={9}>
                             <Form.Item
                                 name="customer"
                                 label="Khách hàng"
@@ -274,7 +289,7 @@ export default function CreateExportPage() {
                         </Col>
                     </Row>
 
-                    <Row>
+                    <Row gutter={16}>
                         <Col span={24}>
                             <Form.Item
                                 name="deliveryAddress"

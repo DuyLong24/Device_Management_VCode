@@ -7,11 +7,11 @@ import keycloak from './configs/auth.config.ts'
 const root = createRoot(document.getElementById('root')!);
 
 // Add detailed logging
-console.log('Keycloak Config:', {
-  url: import.meta.env.VITE_KEYCLOAK_URL,
-  realm: import.meta.env.VITE_KEYCLOAK_REALM,
-  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
-});
+// console.log('Keycloak Config:', {
+//   url: import.meta.env.VITE_KEYCLOAK_URL,
+//   realm: import.meta.env.VITE_KEYCLOAK_REALM,
+//   clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
+// });
 
 let initAttempts = 0;
 const MAX_INIT_ATTEMPTS = 3;
@@ -46,7 +46,7 @@ function initKeycloak() {
   }).then((authenticated) => {
     if (authenticated) {
       console.log('✅ Authenticated with Keycloak');
-      console.log('Token:', keycloak.token?.substring(0, 20) + '...');
+      // console.log('Token:', keycloak.token?.substring(0, 20) + '...');
       root.render(
         <StrictMode>
           <App />

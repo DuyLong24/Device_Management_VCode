@@ -15,8 +15,11 @@ import { DEVICE_EXCEL_COLUMNS } from '../../../common/constants/device.constants
 import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
 import { WarehouseService } from '../../warehouses/services/warehouse.service';
 
+import { AppLogger } from '../../../common/utils/logger.util';
+
 @Injectable()
 export class DeviceService implements OnModuleInit {
+  private readonly logger = new AppLogger(DeviceService.name);
   constructor(
     private readonly deviceRepository: DeviceRepository,
     @InjectModel(Device.name) private deviceModel: DeviceModel,
@@ -171,7 +174,7 @@ export class DeviceService implements OnModuleInit {
     return result;
   }
 
-  async moveDevicesToWarehouse(macs: string[], targetWarehouseCode: string, exportCode: string, userId?: string): Promise<void> {
+  async moveDevicesToWarehouse(macs: string[], targetWarehouseCode: string, exportCode: string, userId?: string, activationDate?: Date): Promise<void> {
     console.log(`[DEBUG] moveDevicesToWarehouse called with:`, {
       macsCount: macs.length,
       targetWarehouseCode,
@@ -193,16 +196,21 @@ export class DeviceService implements OnModuleInit {
 
     console.log(`[DEBUG] Found ${devicesToMove.length} devices to move`);
 
+    const updatePayload: any = {
+      warehouseId: targetWarehouse._id,
+      warehouseUpdatedAt: new Date(),
+      warehouseUpdatedBy: 'SYSTEM_EXPORT',
+      exportDate: new Date()
+    };
+
+    if (activationDate) {
+      updatePayload.activationDate = activationDate;
+    }
+
     const result = await this.deviceModel.updateMany(
       { $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }] },
       {
-        $set: {
-          warehouseId: targetWarehouse._id,
-          warehouseUpdatedAt: new Date(),
-          warehouseUpdatedBy: 'SYSTEM_EXPORT',
-          exportDate: new Date()
-
-        }
+        $set: updatePayload
       }
     ).exec();
 
@@ -239,5 +247,50 @@ export class DeviceService implements OnModuleInit {
       warehouseId: readyWarehouse._id,
       qcStatus: 'PASS'
     }).exec();
+  }
+
+
+
+  async processWarrantyActivation(): Promise<{ processedCount: number }> {
+    const today = new Date();
+
+    // Tìm các thiết bị trong kho NOT_ACTIVATED với activationDate <= today
+    const notActivatedCode = 'NOT_ACTIVATED';
+    const devicesToActivate = await this.deviceModel.aggregate([
+      {
+        $lookup: {
+          from: 'warehouses',
+          localField: 'warehouseId',
+          foreignField: '_id',
+          as: 'warehouse'
+        }
+      },
+      {
+        $unwind: '$warehouse'
+      },
+      {
+        $match: {
+          'warehouse.code': notActivatedCode,
+          activationDate: { $lte: today }
+        }
+      },
+      {
+        $project: {
+          mac: 1
+        }
+      }
+    ]);
+
+    if (devicesToActivate.length === 0) {
+      return { processedCount: 0 };
+    }
+
+    const serials = devicesToActivate.map(d => d.mac);
+    this.logger.warn(`Found ${serials.length} devices to activate warranty: ${serials.join(', ')}`);
+
+    // Chuyển tới kho Trong BH
+    await this.moveDevicesToWarehouse(serials, 'SOLD', 'AUTO-WARRANTY-ACTIVATION', 'SYSTEM');
+
+    return { processedCount: serials.length };
   }
 }

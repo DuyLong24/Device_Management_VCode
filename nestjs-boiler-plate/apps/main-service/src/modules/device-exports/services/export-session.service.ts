@@ -266,13 +266,24 @@ export class ExportSessionService {
         const serials = session.items.map(i => i.serial);
         const exportRecord = await this.deviceExportRepository.findById(session.exportId as any); // Populate might be needed if exportId is object
 
-        // Determine target warehouse based on export type
+        // Xác định kho đích dựa trên loại xuất
         let targetWarehouseCode = 'SOLD'; // Default
-        if (exportRecord?.type === 'WARRANTY') {
+        let activationDate: Date | null = null;
+
+        const reason = (exportRecord?.exportReason || exportRecord?.type) as string;
+        if (reason === 'WARRANTY') {
             targetWarehouseCode = 'IN_WARRANTY'; // Trong bảo hành
-        } else if (exportRecord?.type === 'SALE') {
+        } else if (reason === 'SALE') {
             targetWarehouseCode = 'SOLD'; // Đã bán
-        } else if (exportRecord?.type === 'TRANSFER') {
+            // Kiểm tra ngày kích hoạt
+            if (exportRecord.activationDays > 0) {
+                targetWarehouseCode = 'NOT_ACTIVATED';
+                const today = new Date();
+                activationDate = new Date(today.setDate(today.getDate() + exportRecord.activationDays));
+            } else {
+                activationDate = new Date();
+            }
+        } else if (reason === 'TRANSFER') {
             targetWarehouseCode = 'TRANSFERRED'; // Chuyển kho
         }
 
@@ -288,7 +299,7 @@ export class ExportSessionService {
             $inc: { totalItems: exportItems.length }
         } as any);
 
-        await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord?.code || 'EXPORT-SESSION', userId);
+        await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord?.code || 'EXPORT-SESSION', userId, activationDate);
 
         const sessionUpdateResult = await this.exportSessionRepository.update(sessionId, {
             status: ExportSessionStatus.COMPLETED,

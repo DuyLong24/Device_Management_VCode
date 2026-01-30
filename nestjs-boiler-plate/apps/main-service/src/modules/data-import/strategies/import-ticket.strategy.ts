@@ -23,11 +23,11 @@ export class ImportTicketStrategy implements ImportStrategy {
 
         for (const [index, row] of data.entries()) {
             const errors: string[] = [];
-            const deviceCode = row['deviceCode'] || row['productCode']; // Fallback for backward compatibility
-            const mac = row['mac'];
-            const serial = row['serial'];
-            const p2p = row['p2p'];
-            const name = row['name'];
+            const deviceCode = row['deviceCode'] ? String(row['deviceCode']).trim() : (row['productCode'] ? String(row['productCode']).trim() : '');
+            const mac = row['mac'] ? String(row['mac']).trim() : '';
+            const serial = row['serial'] ? String(row['serial']).trim() : '';
+            const p2p = row['p2p'] ? String(row['p2p']).trim() : '';
+            const name = row['name'] ? String(row['name']).trim() : '';
 
             if (!deviceCode) {
                 errors.push('Thiếu Mã thiết bị (deviceCode)');

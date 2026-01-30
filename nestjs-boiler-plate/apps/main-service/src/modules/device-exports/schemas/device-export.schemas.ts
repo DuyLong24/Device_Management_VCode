@@ -101,6 +101,10 @@ export class DeviceExport extends Document {
   @Prop({ default: 0 })
   totalItems: number; // Total scanned
 
+  @Prop({ default: 0 })
+  activationDays: number; // 0 = Kích hoạt ngay, > 0 = Kích hoạt sau
+
+
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   createdBy: User;
 

@@ -49,6 +49,8 @@ import { Device, DeviceSchema } from './modules/devices/schemas/device.schemas';
 import { Category, CategorySchema } from './modules/categories/schemas/categories.schemas';
 import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schemas/device-import.schemas';
 import { SeedService } from './common/services/seed.service';
+import { ScheduleModule } from '@nestjs/schedule';
+import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activation.task';
 
 @Module({
   imports: [
@@ -58,6 +60,7 @@ import { SeedService } from './common/services/seed.service';
       expandVariables: true,
 
     }),
+    ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -152,6 +155,7 @@ import { SeedService } from './common/services/seed.service';
   controllers: [HealthController, AppController],
   providers: [
     SeedService,
+    WarrantyActivationTask,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,

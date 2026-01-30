@@ -66,6 +66,10 @@ export class Device extends Document {
   warrantyActivatedDate?: Date;
 
   @Prop()
+  activationDate?: Date; // Ngày kích hoạt
+
+
+  @Prop()
   warrantyNote?: string;
 
   // --- KHO LOẠI BỎ & HẾT BH ---

@@ -237,17 +237,29 @@ export class DeviceExportService {
       throw new BadRequestException('Chưa có thiết bị nào được quét');
     }
 
+    let activationDate: Date | null = null;
     let targetWarehouseCode = 'SOLD'; // Default
-    if (exportRecord.type === 'WARRANTY') {
+
+    const reason = exportRecord.exportReason || exportRecord.type;
+    if (reason === 'WARRANTY') {
       targetWarehouseCode = 'IN_WARRANTY'; // Trong bảo hành
-    } else if (exportRecord.type === 'SALE') {
+    } else if (reason === 'SALE') {
       targetWarehouseCode = 'SOLD'; // Đã bán
-    } else if (exportRecord.type === 'TRANSFER') {
+      // Kiểm tra ngày kích hoạt
+      if (exportRecord.activationDays > 0) {
+        targetWarehouseCode = 'NOT_ACTIVATED';
+        const today = new Date();
+        activationDate = new Date(today.setDate(today.getDate() + exportRecord.activationDays));
+      } else {
+        targetWarehouseCode = 'SOLD';
+        activationDate = new Date();
+      }
+    } else if (reason === 'TRANSFER') {
       targetWarehouseCode = 'TRANSFERRED'; // Chuyển kho
     }
 
     const serials = exportRecord.items.map(i => i.serial);
-    await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord.code, userId);
+    await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord.code, userId, activationDate);
 
     return this.update(id, {
       status: ExportStatus.COMPLETED,

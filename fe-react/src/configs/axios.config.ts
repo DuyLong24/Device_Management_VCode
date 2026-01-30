@@ -17,12 +17,12 @@ axiosInstance.interceptors.request.use(
         // Update token if it's about to expire (within 30 seconds)
         try {
             if (keycloak.isTokenExpired(30)) {
-                console.log('🔄 Token expiring soon, refreshing...');
+                // console.log('🔄 Token expiring soon, refreshing...');
                 await keycloak.updateToken(30);
-                console.log('✅ Token refreshed');
+                // console.log('✅ Token refreshed');
             }
         } catch (error) {
-            console.error('❌ Failed to update token', error);
+            // console.error('❌ Failed to update token', error);
             // If token refresh fails, try to login again
             keycloak.login();
         }
@@ -30,10 +30,10 @@ axiosInstance.interceptors.request.use(
         const token = keycloak.token;
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
-            console.log('🔑 Request with token:', config.url, token.substring(0, 20) + '...');
+            // console.log('🔑 Request with token:', config.url, token.substring(0, 20) + '...');
         } else {
-            console.warn('⚠️ No token available for request:', config.url);
-            console.warn('Keycloak authenticated:', keycloak.authenticated);
+            // console.warn('⚠️ No token available for request:', config.url);
+            // console.warn('Keycloak authenticated:', keycloak.authenticated);
         }
         return config;
     },
@@ -55,15 +55,15 @@ axiosInstance.interceptors.response.use(
                 const newToken = keycloak.token;
 
                 if (newToken) {
-                    console.log('✅ Token refreshed after 401, retrying request...');
+                    // console.log('✅ Token refreshed after 401, retrying request...');
                     originalRequest.headers.Authorization = `Bearer ${newToken}`;
                     return axiosInstance(originalRequest);
                 } else {
-                    console.error('❌ No token after refresh, redirecting to login...');
+                    // console.error('❌ No token after refresh, redirecting to login...');
                     await keycloak.login();
                 }
             } catch (refreshError) {
-                console.error('❌ Token refresh failed, redirecting to login...', refreshError);
+                // console.error('❌ Token refresh failed, redirecting to login...', refreshError);
                 await keycloak.login();
             }
         }

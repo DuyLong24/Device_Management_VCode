@@ -61,4 +61,9 @@ export class CreateDeviceExportDto {
 
   @IsOptional()
   totalQuantity?: number;
+
+  @IsOptional()
+  @IsNumber()
+  activationDays?: number;
+
 }

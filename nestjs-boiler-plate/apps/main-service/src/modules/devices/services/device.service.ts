@@ -222,7 +222,11 @@ export class DeviceService implements OnModuleInit {
 
     // Tạo lịch sử
     if (devicesToMove.length > 0) {
-      const actorId = userId || '000000000000000000000000';
+      let actorId = userId;
+      // Check if actorId is valid ObjectId (24 hex characters)
+      if (!actorId || !/^[0-9a-fA-F]{24}$/.test(actorId)) {
+        actorId = '000000000000000000000000'; // System/Unknown ID
+      }
 
       const historyRecords = devicesToMove.map(device => ({
         deviceId: device._id,
@@ -253,6 +257,7 @@ export class DeviceService implements OnModuleInit {
 
   async processWarrantyActivation(): Promise<{ processedCount: number }> {
     const today = new Date();
+    today.setHours(23, 59, 59, 999);
 
     // Tìm các thiết bị trong kho NOT_ACTIVATED với activationDate <= today
     const notActivatedCode = 'NOT_ACTIVATED';

@@ -2,6 +2,7 @@ import { Card, Button, Space, Form, Input, Select, InputNumber, Table, Typograph
 import { SaveOutlined, CloseOutlined, PlusOutlined, DeleteOutlined, InfoCircleOutlined, WarningOutlined, SendOutlined } from '@ant-design/icons';
 
 import { useCreateExport } from '../../hooks/useCreateExport';
+import { generateProjectCode } from '../../utils/string.helper';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
@@ -392,11 +393,12 @@ export default function CreateExportPage() {
                         Dự án <strong>"{pendingProjectName}"</strong> chưa tồn tại. Bạn có muốn tạo mới không?
                     </p>
                     <Form
+                        key={pendingProjectName}
                         layout="vertical"
                         onFinish={(values) => handleCreateProject(values.code, values.name)}
                         initialValues={{
                             name: pendingProjectName,
-                            code: 'DA_' + pendingProjectName.toUpperCase().replace(/\s+/g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                            code: generateProjectCode(pendingProjectName)
                         }}
                     >
                         <Form.Item

@@ -42,13 +42,11 @@ export const DeviceFilterBar: React.FC<DeviceFilterBarProps> = ({
                 </Col>
                 <Col xs={24} md={6}>
                     <Select
-                        mode="multiple"
-                        placeholder="Lọc theo trạng thái"
+                        placeholder="Lọc theo kho"
                         className="w-full"
-                        value={selectedWarehouses}
-                        onChange={setSelectedWarehouses}
+                        value={selectedWarehouses[0] || undefined} // Take first item or undefined
+                        onChange={(val) => setSelectedWarehouses(val ? [val] : [])} // Wrap in array to keep parent state compatible
                         options={warehouseOptions}
-                        maxTagCount="responsive"
                         allowClear
                     />
                 </Col>

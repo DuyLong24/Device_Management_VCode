@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Typography, Card, Segmented } from 'antd';
-import { useAllSerials } from '../../hooks/useAllSerials'; // We'll keep using this hook for now
+import { useAllSerials } from '../../hooks/useAllSerials';
 import { DeviceStatsOverview, type DeviceStatistics } from './components/DeviceStatsOverview';
 import { DeviceFilterBar } from './components/DeviceFilterBar';
 import { DeviceListTable, type DeviceUI } from './components/DeviceListTable';
@@ -20,7 +20,7 @@ export default function DeviceListPage() {
         categoryOptions,
         selectedCategory, setSelectedCategory,
         searchText, setSearchText,
-        selectedWarehouses, setSelectedWarehouses,
+        selectedWarehouseId, setSelectedWarehouseId,
         dateRange, setDateRange,
         handleReset,
         handleExport
@@ -55,8 +55,8 @@ export default function DeviceListPage() {
             <DeviceFilterBar
                 searchText={searchText}
                 setSearchText={setSearchText}
-                selectedWarehouses={selectedWarehouses}
-                setSelectedWarehouses={setSelectedWarehouses}
+                selectedWarehouseId={selectedWarehouseId}
+                setSelectedWarehouseId={setSelectedWarehouseId}
                 warehouseOptions={warehouseOptions}
                 dateRange={dateRange}
                 setDateRange={setDateRange}

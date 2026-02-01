@@ -38,7 +38,7 @@ export const useAllSerials = () => {
     // --- STATE QUẢN LÝ PARAMS ---
     const [pagination, setPagination] = useState({ page: 1, limit: 10 });
     const [searchText, setSearchText] = useState('');
-    const [selectedWarehouses, setSelectedWarehouses] = useState<string[]>([]);
+    const [selectedWarehouseId, setSelectedWarehouseId] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
 
@@ -48,7 +48,7 @@ export const useAllSerials = () => {
         isLoading: loadingDevices,
         isFetching,
     } = useQuery<PaginatedResponse<Device>>({
-        queryKey: ['devices', pagination, searchText, selectedWarehouses, selectedCategory, dateRange],
+        queryKey: ['devices', pagination, searchText, selectedWarehouseId, selectedCategory, dateRange],
         queryFn: () => {
             const params: any = {
                 page: pagination.page,
@@ -57,8 +57,8 @@ export const useAllSerials = () => {
                 categoryId: selectedCategory || undefined,
             };
 
-            if (selectedWarehouses.length === 1) {
-                params.warehouseId = selectedWarehouses[0];
+            if (selectedWarehouseId) {
+                params.warehouseId = selectedWarehouseId;
             }
 
             if (dateRange && dateRange[0] && dateRange[1]) {
@@ -142,8 +142,8 @@ export const useAllSerials = () => {
         setPagination(prev => ({ ...prev, page: 1 }));
     };
 
-    const handleFilterWarehouse = (vals: string[]) => {
-        setSelectedWarehouses(vals);
+    const handleFilterWarehouse = (val: string | null) => {
+        setSelectedWarehouseId(val);
         setPagination(prev => ({ ...prev, page: 1 }));
     };
 
@@ -154,7 +154,7 @@ export const useAllSerials = () => {
 
     const handleReset = () => {
         setSearchText('');
-        setSelectedWarehouses([]);
+        setSelectedWarehouseId(null);
         setSelectedCategory(null);
         setDateRange(null);
         setPagination({ page: 1, limit: 10 });
@@ -168,7 +168,7 @@ export const useAllSerials = () => {
             const params: any = {
                 search: searchText || undefined,
             };
-            if (selectedWarehouses.length === 1) params.warehouseId = selectedWarehouses[0];
+            if (selectedWarehouseId) params.warehouseId = selectedWarehouseId;
             if (dateRange && dateRange[0] && dateRange[1]) {
                 params.createdFrom = dateRange[0].startOf('day').toISOString();
                 params.createdTo = dateRange[1].endOf('day').toISOString();
@@ -195,15 +195,15 @@ export const useAllSerials = () => {
 
     // --- 4. Thống kê ---
     const { data: statsData } = useQuery({
-        queryKey: ['device-stats', searchText, selectedWarehouses, selectedCategory, dateRange],
+        queryKey: ['device-stats', searchText, selectedWarehouseId, selectedCategory, dateRange],
         queryFn: () => {
             const params: any = {
                 search: searchText || undefined,
                 categoryId: selectedCategory || undefined,
             };
 
-            if (selectedWarehouses.length === 1) {
-                params.warehouseId = selectedWarehouses[0];
+            if (selectedWarehouseId) {
+                params.warehouseId = selectedWarehouseId;
             }
 
             if (dateRange && dateRange[0] && dateRange[1]) {
@@ -229,6 +229,7 @@ export const useAllSerials = () => {
             pageSize: pagination.limit,
             total: totalResults,
             showSizeChanger: true,
+            showTotal: (total: number) => `Tổng ${total} thiết bị`,
             pageSizeOptions: ['10', '20', '50', '100'],
         },
 
@@ -248,7 +249,7 @@ export const useAllSerials = () => {
         setSelectedCategory: handleFilterCategory,
 
         searchText, setSearchText: handleSearch,
-        selectedWarehouses, setSelectedWarehouses: handleFilterWarehouse,
+        selectedWarehouseId, setSelectedWarehouseId: handleFilterWarehouse,
         dateRange, setDateRange,
 
         handleTableChange,

@@ -296,7 +296,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </Space>
                 </Header>
 
-                <Content className="m-6 overflow-initial min-h-[calc(100vh-112px)]">
+                <Content className="mx-6 mt-1 mb-6 overflow-initial min-h-[calc(100vh-112px)]">
                     {children ? children : <Outlet />}
                 </Content>
 

@@ -5,15 +5,19 @@ export const importService = {
     getImports: async (_params: any) => {
         const response = await axiosInstance.get<DeviceImport[]>('/device-imports', {
             params: {
-                sortBy: 'createdAt:desc',
+                sortBy: 'updatedAt:desc',
                 populate: 'createdBy',
                 ..._params
             }
         });
+        const rawData: any = response.data;
+        const items = Array.isArray(rawData) ? rawData : (rawData.results || []);
+        const total = Array.isArray(rawData) ? rawData.length : (rawData.totalResults || items.length);
+
         return {
-            data: response.data,
+            data: items,
             success: true,
-            total: response.data.length,
+            total,
         };
     },
 

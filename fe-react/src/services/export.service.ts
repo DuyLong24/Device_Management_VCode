@@ -5,7 +5,7 @@ export const exportService = {
     getAll: async (_params: any) => {
         const response = await axiosInstance.get<PaginatedResponse<DeviceExport>>('/device-exports', {
             params: {
-                sortBy: 'createdAt:desc',
+                sortBy: 'updatedAt:desc',
                 ..._params
             }
         });

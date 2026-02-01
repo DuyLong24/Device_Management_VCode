@@ -11,7 +11,7 @@ interface PageHeaderProps {
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, extra }) => {
     return (
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-1 flex justify-between items-center">
             <div>
                 <Title level={3} className="!m-0">
                     {title}

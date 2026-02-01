@@ -8,8 +8,8 @@ const { RangePicker } = DatePicker;
 interface DeviceFilterBarProps {
     searchText: string;
     setSearchText: (val: string) => void;
-    selectedWarehouses: string[];
-    setSelectedWarehouses: (vals: string[]) => void;
+    selectedWarehouseId: string | null;
+    setSelectedWarehouseId: (val: string | null) => void;
     warehouseOptions: { label: string; value: string }[];
     dateRange: [Dayjs | null, Dayjs | null] | null;
     setDateRange: (range: [Dayjs | null, Dayjs | null] | null) => void;
@@ -20,8 +20,8 @@ interface DeviceFilterBarProps {
 export const DeviceFilterBar: React.FC<DeviceFilterBarProps> = ({
     searchText,
     setSearchText,
-    selectedWarehouses,
-    setSelectedWarehouses,
+    selectedWarehouseId,
+    setSelectedWarehouseId,
     warehouseOptions,
     dateRange,
     setDateRange,
@@ -44,8 +44,8 @@ export const DeviceFilterBar: React.FC<DeviceFilterBarProps> = ({
                     <Select
                         placeholder="Lọc theo kho"
                         className="w-full"
-                        value={selectedWarehouses[0] || undefined} // Take first item or undefined
-                        onChange={(val) => setSelectedWarehouses(val ? [val] : [])} // Wrap in array to keep parent state compatible
+                        value={selectedWarehouseId || undefined}
+                        onChange={(val) => setSelectedWarehouseId(val)}
                         options={warehouseOptions}
                         allowClear
                     />

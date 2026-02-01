@@ -31,7 +31,6 @@ export class CreateDeviceExportDto {
   @IsString()
   deliveryAddress?: string;
 
-  @IsEnum(['SALE', 'WARRANTY', 'TRANSFER', 'OTHER'])
   @IsOptional()
   exportReason?: string;
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Modal, Alert, Tabs, Typography, Input, Button, Upload, message } from 'antd';
-import { FileTextOutlined, FileExcelOutlined, UploadOutlined } from '@ant-design/icons';
+import { Modal, Tabs, Typography, Input, Button, Upload, message, Tooltip } from 'antd';
+import { FileTextOutlined, FileExcelOutlined, UploadOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import * as XLSX from 'xlsx';
 
@@ -71,7 +71,14 @@ export const DeviceSelectionModal: React.FC<DeviceSelectionModalProps> = ({
 
     return (
         <Modal
-            title="Nhập danh sách MAC"
+            title={
+                <div className="flex items-center gap-2">
+                    <span>Nhập danh sách MAC</span>
+                    <Tooltip title="Bạn có thể nhập thủ công (mỗi MAC 1 dòng) hoặc tải lên file Excel (cột A chứa MAC).">
+                        <QuestionCircleOutlined className="text-gray-400 cursor-pointer text-sm font-normal" />
+                    </Tooltip>
+                </div>
+            }
             open={open}
             onOk={handleSave}
             onCancel={onCancel}
@@ -79,13 +86,6 @@ export const DeviceSelectionModal: React.FC<DeviceSelectionModalProps> = ({
             okText="Cập nhật"
             cancelText="Hủy"
         >
-            <Alert
-                message="Hướng dẫn"
-                description="Bạn có thể nhập thủ công (mỗi MAC 1 dòng) hoặc tải lên file Excel (cột A chứa MAC)."
-                type="info"
-                showIcon
-                className="mb-4"
-            />
 
             <Tabs activeKey={activeTab} onChange={setActiveTab}>
                 <TabPane tab={<span><FileTextOutlined /> Nhập thủ công</span>} key="manual">

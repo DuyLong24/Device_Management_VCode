@@ -33,13 +33,11 @@ export const ImportCreationTable: React.FC<ImportCreationTableProps> = ({
             render: (value, record) => (
                 <Select
                     showSearch
-                    mode="tags"
-                    maxCount={1}
-                    value={value ? [value] : []}
+                    value={value}
                     placeholder="Chọn hoặc nhập mã Thiết bị"
                     className="w-full"
                     options={modelOptions}
-                    onChange={(val) => onDeviceChange(record.key, 'deviceCode', val ? val[0] : '')}
+                    onChange={(val) => onDeviceChange(record.key, 'deviceCode', val)}
                     optionRender={(option) => (
                         <Space>
                             <span className="font-semibold">{option.data.value}</span>

@@ -286,8 +286,8 @@ export default function ExportProcessPage() {
 
     // Cột MAC List
     const macColumns = [
-        { title: 'Thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 150 },
-        { title: 'MAC Address', dataIndex: 'serial', key: 'serial', width: 200, render: (t: string) => <b>{t}</b> },
+        { title: 'Thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 'auto' },
+        { title: 'MAC Address', dataIndex: 'serial', key: 'serial', width: 'auto', render: (t: string) => <b>{t}</b> },
         { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t: string) => t ? dayjs(t).format('HH:mm:ss DD/MM') : '' },
         { title: 'Trạng thái', key: 'status', render: () => <Tag color="blue">Mới quét</Tag> },
         {

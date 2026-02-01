@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Input, message, Typography, Space, Alert } from 'antd';
+import { Modal, Input, message, Typography, Space, Alert, Button } from 'antd';
 import { deviceService } from '../../../services/device.service';
 
 const { Text } = Typography;
@@ -20,7 +20,7 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
 }) => {
     const [payload, setPayload] = useState('');
     const [loading, setLoading] = useState(false);
-    const [results, setResults] = useState<{ success: number; failed: string[] } | null>(null);
+    const [results, setResults] = useState<{ success: number; failed: string[]; failedRaw: string[] } | null>(null);
 
     // Load lại khi mở modal
     useEffect(() => {
@@ -42,6 +42,7 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
         const validIds: string[] = [];
         const validDevices: any[] = [];
         const failedMacs: string[] = [];
+        const failedRaw: string[] = [];
 
         try {
             // Tìm kiếm song song
@@ -77,6 +78,7 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
                     validDevices.push(r.device);
                 } else {
                     failedMacs.push(`${r.mac} (${r.error})`);
+                    failedRaw.push(r.mac);
                 }
             });
 
@@ -86,7 +88,7 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
             }
 
             if (failedMacs.length > 0) {
-                setResults({ success: validIds.length, failed: failedMacs });
+                setResults({ success: validIds.length, failed: failedMacs, failedRaw });
             } else {
                 onCancel();
             }
@@ -98,16 +100,45 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
         }
     };
 
+    const handleRemoveInvalid = () => {
+        if (!results || !results.failedRaw || results.failedRaw.length === 0) return;
+
+        const currentMacs = payload.split('\n');
+        const invalidSet = new Set(results.failedRaw);
+
+        // Lọc bỏ các mã lỗi
+        const validMacs = currentMacs.filter(line => {
+            const trimmed = line.trim()
+            if (!trimmed) return false;
+            return !invalidSet.has(trimmed);
+        });
+
+        setPayload(validMacs.join('\n'));
+        setResults(null);
+        message.success('Đã xóa các mã lỗi khỏi danh sách.');
+    };
+
     return (
         <Modal
             title="Quét/Nhập nhiều mã MAC"
             open={visible}
             onCancel={onCancel}
             onOk={handleProcess}
-            okText="Xử lý & Chọn"
-            cancelText="Đóng"
             confirmLoading={loading}
             destroyOnClose
+            footer={[
+                <Button key="close" onClick={onCancel}>
+                    Đóng
+                </Button>,
+                results && results.failed.length > 0 && (
+                    <Button key="remove-invalid" danger onClick={handleRemoveInvalid}>
+                        Xóa mã lỗi ({results.failed.length})
+                    </Button>
+                ),
+                <Button key="submit" type="primary" loading={loading} onClick={handleProcess}>
+                    Xử lý & Chọn
+                </Button>
+            ]}
         >
             <Space direction="vertical" className="w-full">
                 <Text type="secondary">Nhập danh sách mã MAC, mỗi mã một dòng.</Text>

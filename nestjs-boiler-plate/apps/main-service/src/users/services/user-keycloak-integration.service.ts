@@ -35,11 +35,16 @@ export class UserKeycloakIntegrationService {
       const keycloakUser = {
         username: user.username,
         email: user.email,
-        credentials: user.password ? [{ type: 'password', value: user.password, temporary: false }] : undefined,
+        credentials: user.password ? [{
+          type: 'password',
+          value: user.password,
+          temporary: user.temporary ?? false
+        }] : undefined,
         firstName: user.name?.split(' ')[0] || '',
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         enabled: user.status === 'ACTIVE',
         emailVerified: true,
+        requiredActions: user.requiredActions || [],
       };
 
       if (existingUser) {

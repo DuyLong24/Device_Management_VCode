@@ -53,7 +53,7 @@ export const deviceService = {
         const finalParams = {
             page: 1,
             limit: 10,
-            sortBy: 'createdAt:desc', // Mới nhất lên đầu
+            sortBy: 'updatedAt:desc', // Mới nhất lên đầu
             ...rest
         };
 

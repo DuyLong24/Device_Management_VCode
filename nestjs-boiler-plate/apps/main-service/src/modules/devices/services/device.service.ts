@@ -293,7 +293,7 @@ export class DeviceService implements OnModuleInit {
     const serials = devicesToActivate.map(d => d.mac);
     this.logger.warn(`Found ${serials.length} devices to activate warranty: ${serials.join(', ')}`);
 
-    // Chuyển tới kho Trong BH
+    // Chuyển tới kho Đang bảo hành
     await this.moveDevicesToWarehouse(serials, 'SOLD', 'AUTO-WARRANTY-ACTIVATION', 'SYSTEM');
 
     return { processedCount: serials.length };

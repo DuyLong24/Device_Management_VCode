@@ -60,6 +60,7 @@ export const useExportDetail = () => {
             await exportService.approve(id);
             message.success('Đã duyệt phiếu!');
             fetchDetail();
+            navigate(`/export/list`);
         } catch (error: any) {
             logger.error('Lỗi khi duyệt', {
                 error,

@@ -133,6 +133,8 @@ export class UserManagementService {
                 name: user.name,
                 password: dto.temporaryPassword, // Raw password
                 status: user.status,
+                temporary: dto.mustChangePassword,
+                requiredActions: dto.mustChangePassword ? ['UPDATE_PASSWORD'] : [],
             });
 
             if (!keycloakId) {

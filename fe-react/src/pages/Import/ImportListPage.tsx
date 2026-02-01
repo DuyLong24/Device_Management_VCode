@@ -113,7 +113,7 @@ export default function ImportListPage() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const res = await importService.getImports({});
+            const res = await importService.getImports({ limit: 1000 });
             if (res && res.data) {
                 const uiData = mapApiToUi(res.data);
                 setData(uiData);
@@ -249,7 +249,10 @@ export default function ImportListPage() {
             width: 150,
             fixed: 'left',
             render: (text, record) => (
-                <Button type="link" onClick={() => handleViewDetail(record.key)} style={{ padding: 0 }}>
+                <Button
+                    type="link"
+                    onClick={() => handleViewDetail(record.key)} style={{ padding: 0 }}
+                    className="whitespace-nowrap">
                     {text}
                 </Button>
             ),
@@ -259,7 +262,7 @@ export default function ImportListPage() {
             dataIndex: 'deviceType',
             key: 'deviceType',
             width: 130,
-            render: (text) => <Tag color="blue">{text}</Tag>,
+            render: (text) => <Tag color="blue" className="whitespace-nowrap">{text}</Tag>,
         },
         {
             title: IMPORT_TABLE_COLUMNS.ORIGIN,
@@ -268,7 +271,7 @@ export default function ImportListPage() {
             width: 130,
             render: (origin) => {
                 const config = IMPORT_ORIGIN_CONFIG[origin || ''] || IMPORT_ORIGIN_CONFIG.DEFAULT;
-                return <Tag color={config.color}>{config.text}</Tag>;
+                return <Tag color={config.color} className="whitespace-nowrap">{config.text}</Tag>;
             },
         },
         {
@@ -277,19 +280,21 @@ export default function ImportListPage() {
             key: 'importDate',
             width: 120,
             sorter: (a, b) => dayjs(a.importDate).unix() - dayjs(b.importDate).unix(),
-            render: (text) => dayjs(text).format('DD/MM/YYYY'),
+            render: (text) => <span className="whitespace-nowrap">{dayjs(text).format('DD/MM/YYYY')}</span>,
         },
         {
             title: IMPORT_TABLE_COLUMNS.IMPORTER,
             dataIndex: 'importedBy',
             key: 'importedBy',
             width: 150,
+            render: (text) => <div className="whitespace-nowrap truncate" title={text}>{text}</div>
         },
         {
             title: IMPORT_TABLE_COLUMNS.SUPPLIER,
             dataIndex: 'supplier',
             key: 'supplier',
             width: 200,
+            render: (text) => <div className="whitespace-nowrap truncate" title={text}>{text}</div>
         },
         {
             title: IMPORT_TABLE_COLUMNS.TOTAL_QTY,

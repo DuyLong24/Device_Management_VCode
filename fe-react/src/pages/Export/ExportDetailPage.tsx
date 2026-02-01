@@ -61,7 +61,21 @@ export default function ExportDetailPage() {
                 </Space>
 
                 <Space>
-                    <Button icon={<EditOutlined />} onClick={handleEdit}>Sửa</Button>
+                    <Tooltip
+                        title={
+                            exportInfo.status !== 'PENDING_APPROVAL' && exportInfo.status !== 'DRAFT'
+                                ? "Không thể chỉnh sửa phiếu đã duyệt"
+                                : ""
+                        }
+                    >
+                        <Button
+                            icon={<EditOutlined />}
+                            onClick={handleEdit}
+                            disabled={exportInfo.status !== 'PENDING_APPROVAL' && exportInfo.status !== 'DRAFT'}
+                        >
+                            Sửa
+                        </Button>
+                    </Tooltip>
                     <Tooltip
                         title={
                             exportInfo.items && exportInfo.items.length > 0

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
-    Card, Button, Table, Tag, Typography, Alert, message, Modal, Space, List, Form, Input, Select,
-    Divider
+    Card, Button, Table, Tag, Typography, message, Modal, Space, List, Form, Input, Select,
+    Divider, Popover
 } from 'antd';
 import {
-    ReloadOutlined, PlusOutlined, SearchOutlined
+    ReloadOutlined, PlusOutlined, SearchOutlined, QuestionCircleOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
@@ -136,7 +136,7 @@ export default function InventoryListPage() {
             dataIndex: 'code',
             width: 150,
             render: (text, record) => (
-                <a onClick={() => handleOpenSelectModal(record)} style={{ fontWeight: 500 }}>
+                <a onClick={() => handleOpenSelectModal(record)} style={{ fontWeight: 500 }} className="whitespace-nowrap block truncate">
                     {text}
                 </a>
             ),
@@ -147,9 +147,14 @@ export default function InventoryListPage() {
             title: 'Người nhập',
             dataIndex: 'importedBy',
             width: 150,
-            render: (text, record) => text || record.createdBy?.name || '---'
+            render: (text, record) => <div className="whitespace-nowrap truncate">{text || record.createdBy?.name || '---'}</div>
         },
-        { title: 'Nhà cung cấp', dataIndex: 'supplier', width: 200 },
+        {
+            title: 'Nhà cung cấp',
+            dataIndex: 'supplier',
+            width: 200,
+            render: (text) => <div className="whitespace-nowrap truncate" title={text}>{text}</div>
+        },
         { title: 'Tổng SP', dataIndex: 'totalQuantity', width: 100, align: 'center' },
         {
             title: INVENTORY_LABELS.TOTAL_SCANNED,
@@ -159,7 +164,7 @@ export default function InventoryListPage() {
                 const current = record.serialImported || 0;
                 const total = record.totalQuantity || 0;
                 const color = current < total ? '#ff4d4f' : '#52c41a';
-                return <span style={{ color }}>{current}/{total}</span>;
+                return <span style={{ color, whiteSpace: 'nowrap' }}>{current}/{total}</span>;
             },
         },
         {
@@ -218,13 +223,12 @@ export default function InventoryListPage() {
 
     return (
         <div className="p-6">
-            <Title level={3} className="!mb-2 !mt-0">{INVENTORY_LABELS.PAGE_TITLE_LIST}</Title>
-
-            <Card className="mb-4">
-                <Alert
-                    message="Điều kiện kiểm kê"
-                    description={
-                        <div>
+            <Space align="center" className="mb-4">
+                <Title level={3} className="!mb-0 !mt-0">{INVENTORY_LABELS.PAGE_TITLE_LIST}</Title>
+                <Popover
+                    title="Điều kiện kiểm kê"
+                    content={
+                        <div style={{ maxWidth: 450 }}>
                             <Text>Chỉ hiển thị các phiếu nhập đáp ứng điều kiện sau:</Text>
                             <ul className="mt-2 mb-0 pl-5">
                                 <li>
@@ -243,10 +247,10 @@ export default function InventoryListPage() {
                             </ul>
                         </div>
                     }
-                    type="info"
-                    showIcon
-                />
-            </Card>
+                >
+                    <QuestionCircleOutlined className="text-gray-400 cursor-pointer text-lg hover:text-blue-500 transition-colors" />
+                </Popover>
+            </Space>
 
             <Card size="small" className="mb-4">
                 <Form form={form} layout="inline" onValuesChange={handleFilter}>
@@ -267,7 +271,11 @@ export default function InventoryListPage() {
                     dataSource={filteredData}
                     rowKey="id"
                     loading={loading}
-                    pagination={{ pageSize: 10 }}
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: true,
+                        showTotal: (total) => `Tổng ${total} phiếu nhập`,
+                    }}
                 />
             </Card>
 

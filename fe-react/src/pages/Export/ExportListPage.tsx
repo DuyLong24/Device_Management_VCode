@@ -81,7 +81,12 @@ const ExportListPage = () => {
             width: 130,
             fixed: 'left' as const,
             render: (text: string, record: DeviceExport) => (
-                <Button type="link" onClick={() => handleViewDetail(record.id || record._id || '', record.status === 'DRAFT')}>
+                <Button
+                    type="link"
+                    className="whitespace-nowrap"
+                    style={{ padding: 0 }}
+                    onClick={() => handleViewDetail(record.id || record._id || '', record.status === 'DRAFT')}
+                >
                     {text}
                 </Button>
             ),
@@ -91,6 +96,7 @@ const ExportListPage = () => {
             dataIndex: 'type',
             key: 'type',
             width: 120,
+            render: (text: string) => <div className="whitespace-nowrap">{text}</div>
         },
         {
             title: 'Lý do xuất',
@@ -104,7 +110,7 @@ const ExportListPage = () => {
                     TRANSFER: 'Điều chuyển',
                     OTHER: 'Khác',
                 };
-                return <Tag color="blue">{reasonLabels[reason] || reason}</Tag>;
+                return <Tag color="blue" className="whitespace-nowrap">{reasonLabels[reason] || reason}</Tag>;
             },
         },
         {
@@ -112,41 +118,42 @@ const ExportListPage = () => {
             dataIndex: 'createdAt',
             key: 'createdAt',
             width: 110,
-            render: (date: string) => (date ? dayjs(date).format('DD/MM/YYYY') : '-'),
+            render: (date: string) => <span className="whitespace-nowrap">{date ? dayjs(date).format('DD/MM/YYYY') : '-'}</span>,
         },
         {
             title: 'Người tạo',
             dataIndex: 'createdBy',
             key: 'createdBy',
             width: 130,
-            render: (createdBy: any) => createdBy?.username || createdBy?.name || (typeof createdBy === 'string' ? createdBy : '') || '-',
+            render: (createdBy: any) => <div className="whitespace-nowrap truncate">{createdBy?.username || createdBy?.name || (typeof createdBy === 'string' ? createdBy : '') || '-'}</div>,
         },
         {
             title: 'Đơn vị nhận',
             dataIndex: 'receiver',
             key: 'receiver',
             width: 180,
+            render: (text: string) => <div className="whitespace-nowrap truncate" title={text}>{text}</div>
         },
         {
             title: 'Người nhận',
             dataIndex: 'receiverPerson',
             key: 'receiverPerson',
             width: 130,
-            render: (text: string) => text || '-',
+            render: (text: string) => <div className="whitespace-nowrap truncate" title={text}>{text || '-'}</div>,
         },
         {
             title: 'Dự án',
             dataIndex: 'project',
             key: 'project',
             width: 180,
-            render: (text: string) => text || <Text type="secondary">-</Text>,
+            render: (text: string) => <div className="whitespace-nowrap truncate" title={text}>{text || <Text type="secondary">-</Text>}</div>,
         },
         {
             title: 'Khách hàng',
             dataIndex: 'customer',
             key: 'customer',
             width: 150,
-            render: (text: string) => text || <Text type="secondary">-</Text>,
+            render: (text: string) => <div className="whitespace-nowrap truncate" title={text}>{text || <Text type="secondary">-</Text>}</div>,
         },
         {
             title: 'Tổng mã SP',
@@ -187,6 +194,7 @@ const ExportListPage = () => {
             key: 'status',
             width: 130,
             align: 'center' as const,
+            fixed: 'right' as const,
             render: (status: ExportStatusType) => getExportStatusTag(status),
         },
         {
@@ -194,7 +202,8 @@ const ExportListPage = () => {
             dataIndex: 'approvedBy',
             key: 'approvedBy',
             width: 130,
-            render: (approvedBy: any) => approvedBy?.username || approvedBy?.name || approvedBy?.fullName || (typeof approvedBy === 'string' ? approvedBy : '') || <Text type="secondary">-</Text>,
+            fixed: 'right' as const,
+            render: (approvedBy: any) => approvedBy?.name || (typeof approvedBy === 'string' ? approvedBy : '') || <Text type="secondary">-</Text>,
         },
         {
             title: 'Thao tác',

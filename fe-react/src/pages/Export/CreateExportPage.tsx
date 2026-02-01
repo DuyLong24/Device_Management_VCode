@@ -179,6 +179,18 @@ export default function CreateExportPage() {
                         </Col>
                         <Col xs={24} md={12}>
                             <Form.Item
+                                name="exportName"
+                                label="Tên phiếu xuất"
+                                rules={[{ required: true, message: 'Vui lòng nhập tên phiếu' }]}
+                            >
+                                <Input />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                            <Form.Item
                                 name="type"
                                 label="Loại hàng hóa xuất kho"
                                 rules={[{ required: true, message: 'Vui lòng chọn loại hàng hóa' }]}
@@ -196,30 +208,11 @@ export default function CreateExportPage() {
                                 />
                             </Form.Item>
                         </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                        <Col xs={24} md={12}>
-                            <Form.Item
-                                name="exportReason"
-                                label="Lý do xuất kho"
-                                rules={[{ required: true, message: 'Vui lòng chọn lý do' }]}
-                                initialValue="SALE"
-                            >
-                                <Select>
-                                    <Select.Option value="SALE">Bán hàng</Select.Option>
-                                    {/* <Select.Option value="WARRANTY">Bảo hành</Select.Option>
-                                    <Select.Option value="TRANSFER">Điều chuyển</Select.Option>
-                                    <Select.Option value="OTHER">Khác</Select.Option> */}
-                                </Select>
-                            </Form.Item>
-                        </Col>
-
                         <Col xs={24} md={12}>
                             <Form.Item
                                 name="project"
                                 label="Dự án nhận"
-                                rules={[{ required: true, message: 'Vui lòng chọn hoặc nhập dự án' }]}
+                            // rules={[{ required: true, message: 'Vui lòng chọn hoặc nhập dự án' }]}
                             >
                                 <Select
                                     placeholder="Chọn hoặc nhập tên dự án mới"
@@ -239,9 +232,10 @@ export default function CreateExportPage() {
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
                             <Form.Item
-                                name="exportName"
-                                label="Tên phiếu xuất"
-                                rules={[{ required: true, message: 'Vui lòng nhập tên phiếu' }]}
+                                name="exportReason"
+                                label="Lý do xuất kho"
+                            // rules={[{ required: true, message: 'Vui lòng chọn lý do' }]}
+                            // initialValue="SALE"
                             >
                                 <Input />
                             </Form.Item>
@@ -250,7 +244,7 @@ export default function CreateExportPage() {
                             <Form.Item
                                 name="receiver"
                                 label="Đơn vị nhận"
-                                rules={[{ required: true, message: 'Vui lòng nhập đơn vị nhận' }]}
+                            // rules={[{ required: true, message: 'Vui lòng nhập đơn vị nhận' }]}
                             >
                                 <Input />
                             </Form.Item>

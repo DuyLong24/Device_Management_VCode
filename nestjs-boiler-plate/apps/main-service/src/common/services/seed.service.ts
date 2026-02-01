@@ -147,7 +147,7 @@ export class SeedService implements OnModuleInit {
                     quickTransfers: [
                         {
                             to: WarehouseCode.SOLD,
-                            label: 'Trong BH',
+                            label: 'Đang bảo hành',
                             description: 'Xuất kho cho khách/dự án',
                             style: 'primary'
                         },
@@ -292,7 +292,7 @@ export class SeedService implements OnModuleInit {
             // 6. Đã xuất - Trong BH
             {
                 code: WarehouseCode.SOLD,
-                name: 'Trong BH',
+                name: 'Đang bảo hành',
                 groupId: exportedGroup._id,
                 color: 'gray',
                 orderIndex: 7,

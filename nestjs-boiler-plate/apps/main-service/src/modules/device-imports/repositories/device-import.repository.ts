@@ -24,7 +24,14 @@ export class DeviceImportRepository {
     }
 
     if (sortBy) {
-      query.sort(sortBy);
+      let sortStr = '';
+      const sortingCriteria: string[] = [];
+      (sortBy as string).split(',').forEach((sortOption) => {
+        const [key, order] = sortOption.split(':');
+        sortingCriteria.push((order === 'desc' ? '-' : '') + key);
+      });
+      sortStr = sortingCriteria.join(' ');
+      query.sort(sortStr);
     }
 
     return query.exec();

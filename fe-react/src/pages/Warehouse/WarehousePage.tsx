@@ -132,6 +132,7 @@ export default function WarehousePage() {
             refetch();
             setTransferModalVisible(false);
             setSelectedRowKeys([]);
+            setPriorityItems([]);
         },
         onError: () => message.error('Có lỗi xảy ra khi xử lý')
     });
@@ -279,7 +280,7 @@ export default function WarehousePage() {
     return (
         <div className="p-6">
             {/* Header */}
-            <div className="mb-4">
+            <div className="mb-1">
                 <Button
                     type="link"
                     icon={<ArrowLeftOutlined />}
@@ -293,7 +294,7 @@ export default function WarehousePage() {
                         <Title level={3} className="!m-0">
                             📦 {currentWarehouse ? currentWarehouse.name : code}
                             <span className="text-base text-gray-400 ml-3 font-normal">
-                                {deviceData?.totalResults || 0} serial
+                                {deviceData?.totalResults || 0} thiết bị
                             </span>
                         </Title>
                         {currentWarehouse?.description && <Text type="secondary">{currentWarehouse.description}</Text>}
@@ -330,7 +331,7 @@ export default function WarehousePage() {
             <Card size="small" className="mb-4">
                 <Space wrap>
                     <Input
-                        placeholder="Tìm serial, mã SP..."
+                        placeholder="Tìm mac, mã thiết bị, mã model, tên thiết bị."
                         prefix={<SearchOutlined />}
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
@@ -368,7 +369,7 @@ export default function WarehousePage() {
                                 checked={true}
                                 disabled
                             />
-                            <Text>Đã chọn <Text strong>{selectedRowKeys.length}</Text> serial</Text>
+                            <Text>Đã chọn <Text strong>{selectedRowKeys.length}</Text> thiết bị</Text>
                             <Button type="link" size="small" onClick={() => { setSelectedRowKeys([]); setPriorityItems([]); }}>Bỏ chọn</Button>
                         </Space>
                     </div>
@@ -394,7 +395,7 @@ export default function WarehousePage() {
                                 setPageSize(ps);
                             },
                             showSizeChanger: true,
-                            showTotal: (total) => `Tổng ${total} serial`
+                            showTotal: (total) => `Tổng ${total} thiết bị`
                         }}
                         rowClassName={(record: any) => record._isPriority ? 'bg-yellow-50' : ''}
                     />

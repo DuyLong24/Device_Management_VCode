@@ -155,7 +155,7 @@ export const useCreateExport = () => {
             const newData = await sharedDataService.createData({
                 code: code,
                 name: name,
-                description: 'Auto-created via Export Form',
+                description: 'Tạo tự động từ Phiếu xuất kho',
                 groupId: projectGroup._id,
                 order: 99
             });

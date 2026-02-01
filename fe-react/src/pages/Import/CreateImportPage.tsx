@@ -49,7 +49,7 @@ export default function CreateImportPage() {
     return (
         <main className="p-6 pb-24 max-w-none mx-auto">
             {/* Header */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-1 gap-4">
                 <div>
                     <Title level={2} className="mb-1! text-2xl! font-bold text-gray-800">
                         {isEditMode ? 'Cập nhật phiếu nhập kho' : 'Thêm mới phiếu nhập kho'}

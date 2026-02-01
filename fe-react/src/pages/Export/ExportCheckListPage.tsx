@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
-    Card, Button, Table, Tag, Typography, Alert, message, Modal, Space, Form, Input, Select, Divider, Spin, Progress
+    Card, Button, Table, Tag, Typography, Alert, message, Modal, Space, Form, Input, Select, Divider, Spin, Progress, Popover
 } from 'antd';
 import {
-    ReloadOutlined, PlusOutlined, SearchOutlined
+    ReloadOutlined, PlusOutlined, SearchOutlined, QuestionCircleOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
@@ -175,7 +175,7 @@ export default function ExportCheckListPage() {
             dataIndex: 'code',
             width: 150,
             render: (text, record) => (
-                <a onClick={() => handleOpenSelectModal(record)} className="font-medium text-blue-600">
+                <a onClick={() => handleOpenSelectModal(record)} className="font-medium text-blue-600 whitespace-nowrap block truncate">
                     {text}
                 </a>
             ),
@@ -184,6 +184,7 @@ export default function ExportCheckListPage() {
             title: 'Tên phiếu',
             dataIndex: 'exportName',
             key: 'exportName',
+            render: (text: string) => <div className="truncate whitespace-nowrap max-w-[200px]" title={text}>{text}</div>
         },
         {
             title: 'Tiến độ',
@@ -206,13 +207,13 @@ export default function ExportCheckListPage() {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            render: (status: string) => getExportStatusTag(status as any),
+            render: (status: string) => <div className="whitespace-nowrap">{getExportStatusTag(status as any)}</div>,
         },
         {
             title: 'Ngày tạo',
             dataIndex: 'createdAt',
             key: 'createdAt',
-            render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+            render: (date: string) => <span className="whitespace-nowrap">{dayjs(date).format('DD/MM/YYYY')}</span>,
         },
         {
             title: 'Thao tác',
@@ -253,13 +254,12 @@ export default function ExportCheckListPage() {
         <div className="p-6">
             {contextHolder}
             {modalContextHolder}
-            <Title level={3} className="!mb-2 !mt-0">Xuất kho - Quét MAC</Title>
-
-            <Card className="mb-4">
-                <Alert
-                    message="Hướng dẫn"
-                    description={
-                        <div>
+            <Space align="center" className="mb-4">
+                <Title level={3} className="!mb-0 !mt-0">Xuất kho - Quét MAC</Title>
+                <Popover
+                    title="Hướng dẫn"
+                    content={
+                        <div style={{ maxWidth: 400 }}>
                             <Text>Chọn phiếu xuất để tiến hành quét serial (Xuất kho thực tế):</Text>
                             <ul className="mt-2 mb-0 pl-5">
                                 <li>
@@ -271,10 +271,10 @@ export default function ExportCheckListPage() {
                             </ul>
                         </div>
                     }
-                    type="info"
-                    showIcon
-                />
-            </Card>
+                >
+                    <QuestionCircleOutlined className="text-gray-400 cursor-pointer text-lg hover:text-blue-500 transition-colors" />
+                </Popover>
+            </Space>
 
             <Card size="small" className="mb-4">
                 <Form form={filterForm} layout="inline" onValuesChange={handleFilter}>
@@ -299,7 +299,11 @@ export default function ExportCheckListPage() {
                     dataSource={filteredData}
                     rowKey={r => r.id || r._id || 'unknown'}
                     loading={loading}
-                    pagination={{ pageSize: 12 }}
+                    pagination={{
+                        pageSize: 12,
+                        showSizeChanger: true,
+                        showTotal: (total) => `Tổng ${total} phiếu`,
+                    }}
                     className="border-0"
                 />
             </Card>

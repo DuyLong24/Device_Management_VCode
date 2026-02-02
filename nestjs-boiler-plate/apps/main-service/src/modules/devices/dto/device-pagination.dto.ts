@@ -57,6 +57,14 @@ export class DevicePaginationDto {
   @IsString()
   model?: string; // Map to deviceModel
 
+  @IsOptional()
+  @IsString()
+  importCode?: string;
+
+  @IsOptional()
+  @IsString()
+  exportCode?: string;
+
   // --- Date Range ---
   @IsOptional()
   @IsDateString()

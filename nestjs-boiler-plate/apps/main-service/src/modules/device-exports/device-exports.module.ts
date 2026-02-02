@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DeviceExportController } from './controllers/device-export.controller';
 import { DeviceExportService } from './services/device-export.service';
@@ -17,7 +17,7 @@ import { UsersModule } from '../../users/users.module';
       { name: DeviceExport.name, schema: DeviceExportSchema },
       { name: ExportSession.name, schema: ExportSessionSchema }
     ]),
-    DevicesModule,
+    forwardRef(() => DevicesModule),
     WarehousesModule,
     UsersModule
   ],

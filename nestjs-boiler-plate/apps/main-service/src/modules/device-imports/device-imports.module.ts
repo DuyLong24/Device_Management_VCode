@@ -12,7 +12,7 @@ import { UsersModule } from '../../users/users.module';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: DeviceImport.name, schema: DeviceImportSchema }]),
-    DevicesModule,
+    forwardRef(() => DevicesModule),
     CategoriesModule,
     UsersModule,
     forwardRef(() => InventorySessionModule)

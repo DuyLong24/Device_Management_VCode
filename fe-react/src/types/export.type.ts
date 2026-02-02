@@ -55,6 +55,7 @@ export interface DeviceExport {
     createdAt?: string;
     createdBy?: any;
     approvedBy?: any;
+    assignedApprover?: any;
 }
 
 export interface CreateExportDto {

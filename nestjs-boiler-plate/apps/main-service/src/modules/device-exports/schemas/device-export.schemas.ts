@@ -77,8 +77,8 @@ export class DeviceExport extends Document {
   @Prop()
   deliveryAddress: string;
 
-  @Prop({ type: String, enum: ExportReason, default: ExportReason.SALE })
-  exportReason: ExportReason;
+  @Prop()
+  exportReason: string;
 
   @Prop({ type: String, enum: ExportStatus, default: ExportStatus.DRAFT })
   status: ExportStatus;
@@ -110,6 +110,9 @@ export class DeviceExport extends Document {
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   approvedBy: User;
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
+  assignedApprover: User;
 
   @Prop()
   approvedDate: Date;

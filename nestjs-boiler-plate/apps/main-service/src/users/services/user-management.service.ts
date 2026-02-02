@@ -101,10 +101,18 @@ export class UserManagementService {
             }
         }
 
-        // Kiểm tra tồn tại
-        const role = await this.fncRoleService.findAll({ code: dto.roleCode });
+        // Kiểm tra tồn tại với case-insensitive logic
+        this.logger.debug(`Searching for role: ${dto.roleCode}`);
+        let role = await this.fncRoleService.findAll({ code: dto.roleCode });
+
         if (!role || role.length === 0) {
-            throw new NotFoundException(`Role ${dto.roleCode} not found`);
+            // Try case-insensitive search
+            role = await this.fncRoleService.findAll({ code: { $regex: new RegExp(`^${dto.roleCode}$`, 'i') } });
+        }
+
+        if (!role || role.length === 0) {
+            this.logger.error(`Role ${dto.roleCode} not found in DB`);
+            throw new NotFoundException(`Role ${dto.roleCode} not found in database`);
         }
 
         const hashedPassword = await bcrypt.hash(dto.temporaryPassword, 10);

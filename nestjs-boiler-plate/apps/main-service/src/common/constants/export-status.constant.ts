@@ -8,13 +8,6 @@ export enum ExportStatus {
     CANCELLED = 'CANCELLED'  // Hủy
 }
 
-export enum ExportReason {
-    SALE = 'SALE',  // Xuất bán hàng
-    WARRANTY = 'WARRANTY',  // Xuất bảo hành
-    TRANSFER = 'TRANSFER',  // Điều chuyển
-    OTHER = 'OTHER'  // Khác
-}
-
 // Định nghĩa các chuyển đổi trạng thái hợp lệ (state machine)
 
 export const ALLOWED_STATUS_TRANSITIONS: Record<ExportStatus, ExportStatus[]> = {

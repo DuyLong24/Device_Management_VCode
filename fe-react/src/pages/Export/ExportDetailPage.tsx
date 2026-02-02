@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Button, Typography, Space, Spin, Alert, Tooltip, Card, Table } from 'antd';
 import { ArrowLeftOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
@@ -8,6 +9,7 @@ import { useExportSession } from '../../hooks/useExportSession';
 import { ActualItemsTable } from '../../components/Export/ActualItemsTable';
 import { ApprovalActions } from '../../components/Export/ApprovalActions';
 import { useAuth } from '../../hooks/useAuth';
+import { sharedDataService } from '../../services/shared-data.service';
 
 import dayjs from 'dayjs';
 
@@ -28,8 +30,69 @@ export default function ExportDetailPage() {
         handleDelete,
     } = useExportDetail();
 
-    const { hasRole } = useAuth();
+    const { hasRole, user } = useAuth();
     const { sessions, createSession } = useExportSession(id);
+    const [projects, setProjects] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+                const data = await sharedDataService.getDataByGroupCode('PROJECT');
+                setProjects(data);
+            } catch (error) {
+                console.error('Failed to fetch projects', error);
+            }
+        };
+        fetchProjects();
+    }, []);
+
+    if (loading || !exportInfo) {
+        return (
+            <div className="text-center py-24">
+                <Spin size="large" fullscreen={false} />
+            </div>
+        );
+    }
+
+    const projectName = projects.find(p => p.code === exportInfo?.project)?.name || exportInfo?.project;
+
+    // Access Control Logic
+    console.log('--- DEBUG PERMISSIONS ---');
+    console.log('CurrentUser:', user);
+    console.log('AssignedTo:', exportInfo.assignedApprover);
+
+    const isAssigned = (() => {
+        if (!exportInfo?.assignedApprover || !user) return false;
+
+        const approver = exportInfo.assignedApprover as any;
+
+        // 1. Nếu approver là object (đã populate)
+        if (typeof approver === 'object' && approver !== null) {
+            // Check 1: Keycloak ID 
+            if (user.id && approver.keycloakId && approver.keycloakId === user.id) return true;
+
+            // Check 2: Username
+            if (user.username && approver.username &&
+                user.username.toLowerCase() === approver.username.toLowerCase()) return true;
+
+            // Check 3: Email
+            if (user.email && approver.email &&
+                user.email.toLowerCase() === approver.email.toLowerCase()) return true;
+
+            // Check 4: Mongo ID
+            if (user.id && (approver._id === user.id || approver.id === user.id)) return true;
+        }
+
+        if (typeof approver === 'string') {
+            return !!user.id && approver === user.id;
+        }
+
+        return false;
+    })();
+
+    // Allow if Admin AND Assigned
+    const isAdmin = hasRole('admin') || hasRole('super admin') || hasRole('super_admin');
+    const canApprove = isAdmin && isAssigned;
 
     const handleCreateSession = () => {
         createSession(undefined);
@@ -65,7 +128,7 @@ export default function ExportDetailPage() {
                         title={
                             exportInfo.status !== 'PENDING_APPROVAL' && exportInfo.status !== 'DRAFT'
                                 ? "Không thể chỉnh sửa phiếu đã duyệt"
-                                : ""
+                                : undefined
                         }
                     >
                         <Button
@@ -80,7 +143,7 @@ export default function ExportDetailPage() {
                         title={
                             exportInfo.items && exportInfo.items.length > 0
                                 ? "Không thể xóa phiếu xuất đã có thiết bị được quét"
-                                : ""
+                                : undefined
                         }
                     >
                         <Button
@@ -100,7 +163,7 @@ export default function ExportDetailPage() {
                         onReject={handleReject}
                         // onNavigateToScan={handleNavigateToScan}
                         onConfirm={handleConfirm}
-                        canApprove={hasRole('admin') || hasRole('super admin') || hasRole('super_admin')}
+                        canApprove={canApprove}
                     />
                 </Space>
             </div>
@@ -148,7 +211,7 @@ export default function ExportDetailPage() {
             )}
 
             {/* Thông tin phiếu xuất */}
-            <ExportInfoCard exportInfo={exportInfo} />
+            <ExportInfoCard exportInfo={exportInfo} projectName={projectName} />
 
             {/* Bảng yêu cầu */}
             <Card title="Yêu cầu thiết bị" className="mb-4">

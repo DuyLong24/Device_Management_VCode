@@ -7,9 +7,10 @@ const { Text } = Typography;
 
 interface ExportInfoCardProps {
     exportInfo: DeviceExport;
+    projectName?: string;
 }
 
-export const ExportInfoCard = ({ exportInfo }: ExportInfoCardProps) => {
+export const ExportInfoCard = ({ exportInfo, projectName }: ExportInfoCardProps) => {
     const serialExported = exportInfo.items?.length || 0;
     const serialExpected = exportInfo.totalQuantity || 0;
     const progress = serialExpected > 0 ? Math.round((serialExported / serialExpected) * 100) : 0;
@@ -21,6 +22,9 @@ export const ExportInfoCard = ({ exportInfo }: ExportInfoCardProps) => {
                 <Descriptions column={2} bordered size="small">
                     <Descriptions.Item label="Mã phiếu xuất">
                         <Text strong>{exportInfo.code}</Text>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Tên phiếu xuất">
+                        <Text strong>{exportInfo.exportName}</Text>
                     </Descriptions.Item>
                     <Descriptions.Item label="Loại hàng hóa">
                         <Tag color="blue">{exportInfo.type}</Tag>
@@ -52,7 +56,7 @@ export const ExportInfoCard = ({ exportInfo }: ExportInfoCardProps) => {
                         </>
                     )}
                     <Descriptions.Item label="Dự án" span={2}>
-                        {exportInfo.project || <Text type="secondary">-</Text>}
+                        {projectName || exportInfo.project || <Text type="secondary">-</Text>}
                     </Descriptions.Item>
                     <Descriptions.Item label="Khách hàng" span={2}>
                         {exportInfo.customer || <Text type="secondary">-</Text>}

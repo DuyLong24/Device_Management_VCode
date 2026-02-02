@@ -122,6 +122,12 @@ export default function CreateImportPage() {
                 initialMacs={tempMacs ? tempMacs.split('\n') : []}
                 deviceKey={currentDeviceKey}
                 requiredQuantity={currentDeviceKey ? deviceList.find(p => p.key === currentDeviceKey)?.quantity : 0}
+                deviceName={(() => {
+                    const dev = deviceList.find(p => p.key === currentDeviceKey);
+                    if (!dev) return '';
+                    const model = modelOptions.find(m => m.value === dev.deviceCode);
+                    return model?.name || model?.stockName || '';
+                })()}
             />
 
             {/* IMPORT WIZARD */}

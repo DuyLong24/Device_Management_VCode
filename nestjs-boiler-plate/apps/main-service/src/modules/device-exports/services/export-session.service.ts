@@ -299,7 +299,11 @@ export class ExportSessionService {
             $inc: { totalItems: exportItems.length }
         } as any);
 
-        await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord?.code || 'EXPORT-SESSION', userId, activationDate);
+        const exportIdStr = (typeof session.exportId === 'object' && session.exportId !== null && '_id' in session.exportId)
+            ? (session.exportId as any)._id.toString()
+            : (session.exportId as any).toString();
+
+        await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord?.code || 'EXPORT-SESSION', userId, activationDate, exportIdStr);
 
         const sessionUpdateResult = await this.exportSessionRepository.update(sessionId, {
             status: ExportSessionStatus.COMPLETED,

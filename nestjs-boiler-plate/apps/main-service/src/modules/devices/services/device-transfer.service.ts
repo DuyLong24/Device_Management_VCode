@@ -139,6 +139,7 @@ export class DeviceTransferService {
 
                 device.warehouseId = soldWarehouse._id as any;
                 device.warehouseUpdatedAt = new Date();
+                device.warrantyActivatedDate = new Date();
 
                 if (device.qcStatus === 'SOLD') {
                     device.qcStatus = 'PASS';

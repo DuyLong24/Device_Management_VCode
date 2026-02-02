@@ -125,7 +125,7 @@ const ExportListPage = () => {
             dataIndex: 'createdBy',
             key: 'createdBy',
             width: 130,
-            render: (createdBy: any) => <div className="whitespace-nowrap truncate">{createdBy?.username || createdBy?.name || (typeof createdBy === 'string' ? createdBy : '') || '-'}</div>,
+            render: (createdBy: any) => <div className="whitespace-nowrap truncate">{createdBy?.name || (typeof createdBy === 'string' ? createdBy : '') || '-'}</div>,
         },
         {
             title: 'Đơn vị nhận',

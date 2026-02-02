@@ -38,6 +38,10 @@ export default function WarehousePage() {
     // Filter States
     const [searchText, setSearchText] = useState('');
     const debouncedSearch = useDebounce(searchText, 500);
+    const [importCode, setImportCode] = useState('');
+    const debouncedImportCode = useDebounce(importCode, 500);
+    const [exportCode, setExportCode] = useState('');
+    const debouncedExportCode = useDebounce(exportCode, 500);
     const [selectedDeviceModel, setSelectedDeviceModel] = useState<string | undefined>(undefined);
 
     // Selection State
@@ -77,7 +81,7 @@ export default function WarehousePage() {
 
     // 2. Get Devices in Warehouse
     const { data: deviceData, isLoading, refetch } = useQuery({
-        queryKey: ['devices', code, page, pageSize, debouncedSearch, selectedDeviceModel],
+        queryKey: ['devices', code, page, pageSize, debouncedSearch, selectedDeviceModel, debouncedImportCode, debouncedExportCode],
         queryFn: () => {
             const params: any = {
                 page,
@@ -87,6 +91,8 @@ export default function WarehousePage() {
             };
             if (debouncedSearch) params.search = debouncedSearch;
             if (selectedDeviceModel) params.model = selectedDeviceModel;
+            if (debouncedImportCode) params.importCode = debouncedImportCode;
+            if (debouncedExportCode) params.exportCode = debouncedExportCode;
 
             return deviceService.getAll(params);
         },
@@ -100,6 +106,8 @@ export default function WarehousePage() {
         setPage(1);
         setSelectedRowKeys([]);
         setSearchText('');
+        setImportCode('');
+        setExportCode('');
         setPriorityItems([]);
     }, [code]);
 
@@ -331,11 +339,25 @@ export default function WarehousePage() {
             <Card size="small" className="mb-4">
                 <Space wrap>
                     <Input
-                        placeholder="Tìm mac, mã thiết bị, mã model, tên thiết bị."
+                        placeholder="Tìm mac, tên, model..."
                         prefix={<SearchOutlined />}
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
-                        className="w-[300px]"
+                        className="w-[200px]"
+                        allowClear
+                    />
+                    <Input
+                        placeholder="Mã phiếu nhập"
+                        value={importCode}
+                        onChange={(e) => setImportCode(e.target.value)}
+                        className="w-[150px]"
+                        allowClear
+                    />
+                    <Input
+                        placeholder="Mã phiếu xuất"
+                        value={exportCode}
+                        onChange={(e) => setExportCode(e.target.value)}
+                        className="w-[150px]"
                         allowClear
                     />
                     <Select

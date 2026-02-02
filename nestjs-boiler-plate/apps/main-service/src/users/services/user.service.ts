@@ -38,14 +38,6 @@ export class UserService {
       // Tạo user trong MongoDB với session để có thể rollback nếu cần
       const user = await this.userRepository.create(createUserDto, session);
 
-      // Đồng bộ sang Keycloak
-      // const keycloakUserId = await this.keycloakIntegrationService.syncUserToKeycloak(user);
-
-      // Nếu đồng bộ Keycloak không thành công, throw error để rollback transaction
-      // if (!keycloakUserId) {
-      //   throw new InternalServerErrorException('Failed to synchronize user to Keycloak');
-      // }
-
       // Nếu tất cả đều thành công, commit transaction
       await session.commitTransaction();
 

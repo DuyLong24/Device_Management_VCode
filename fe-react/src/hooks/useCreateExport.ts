@@ -61,39 +61,40 @@ export const useCreateExport = () => {
     const [deviceList, setDeviceList] = useState<DeviceItem[]>([]);
     const [deviceOptions, setDeviceOptions] = useState<DeviceOption[]>([]);
     const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+    const [adminOptions, setAdminOptions] = useState<any[]>([]);
     const [projectOptions, setProjectOptions] = useState<any[]>([]);
-
-    // [NEW] Project Creation State
-    const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
-    const [pendingProjectName, setPendingProjectName] = useState('');
     const [projectSearchValue, setProjectSearchValue] = useState('');
-
+    const [pendingProjectName, setPendingProjectName] = useState('');
+    const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
     const [loadingDevices, setLoadingDevices] = useState(false);
     const [loadingCategories, setLoadingCategories] = useState(false);
+    const [stockMap, setStockMap] = useState<Record<string, any>>({});
 
-    const [stockMap, setStockMap] = useState<Record<string, { inStock: number; reserved: number; available: number }>>({});
 
-    // Initial Load
-    useEffect(() => {
-        const initData = async () => {
-            try {
-                await Promise.all([fetchDeviceCodes(), fetchCategories(), fetchProjects()]);
 
-                if (isEditMode && id) {
-                    await fetchExportDetail(id);
-                } else {
-                    // Generate auto code only for create mode
-                    const today = dayjs();
-                    const code = `PX-${today.format('YYYY-MM')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-                    form.setFieldValue('code', code);
-                }
-            } catch (error) {
-                console.error('Failed to initialize export page data', error);
-                // Avoid using logger with full error object if it has circular refs
+    const fetchAdmins = async () => {
+        try {
+            const admins = await import('../services/user-management.service').then(m => m.userManagementService.getAll({
+                limit: 100,
+                // roleCode: 'ADMIN' // Uncomment if supported
+            }));
+
+            if (admins.data) {
+                const adminUsers = admins.data.filter((u: any) =>
+                    u.role && (u.role.code === 'ADMIN' || u.role.code === 'SUPER_ADMIN' || u.role === 'ADMIN' || u.role === 'SUPER_ADMIN')
+                );
+
+
+
+                setAdminOptions(adminUsers.map((u: any) => ({
+                    label: `${u.name} (${u.username || u.email})`,
+                    value: u.id || u._id
+                })));
             }
-        };
-        initData();
-    }, [id, isEditMode]);
+        } catch (error) {
+            console.error('Failed to fetch admins', error);
+        }
+    };
 
     const fetchProjects = async () => {
         try {
@@ -237,10 +238,9 @@ export const useCreateExport = () => {
                 const response = await axiosInstance.get('/devices', {
                     params: {
                         warehouseId: readyWarehouse.id,
-                        limit: 2000, // Fetch large number to count stock
+                        limit: 2000,
                         sortBy: 'deviceModel:asc',
                         page: 1
-                        // Note: For large scale, use a breakdown API instead of fetching all devices
                     }
                 });
                 const devices = response.data?.results || response.data || [];
@@ -255,12 +255,11 @@ export const useCreateExport = () => {
                 }
             }
 
-            // 3. Merge Metadata with Stock
             if (models && models.length > 0) {
                 const options: DeviceOption[] = models.map((m: any) => ({
                     value: m.code,
-                    label: m.code, // Main Label
-                    stockName: m.name, // Sub Label
+                    label: m.code,
+                    stockName: m.name,
                     inStock: stockCounts[m.code] || 0
                 }));
                 // Sort by Code
@@ -268,7 +267,6 @@ export const useCreateExport = () => {
                 setDeviceOptions(options);
 
             } else {
-                // Fallback if SharedData empty?
                 setDeviceOptions([]);
             }
 
@@ -333,7 +331,6 @@ export const useCreateExport = () => {
                     const option = deviceOptions.find(o => o.value === value);
                     if (option) {
                         updated.name = option.stockName || '';
-                        // Temp set inStock from option until API returns
                         updated.inStock = option.inStock;
                     }
                 }
@@ -350,7 +347,7 @@ export const useCreateExport = () => {
                 const status = await exportService.getInventoryStatus(value);
                 setStockMap(prev => ({
                     ...prev,
-                    [value]: status.data || status // Handle response structure
+                    [value]: status.data || status
                 }));
 
                 //
@@ -409,9 +406,10 @@ export const useCreateExport = () => {
             setHasUnsavedChanges(false);
             navigate('/export/list');
 
-        } catch (error) {
+        } catch (error: any) {
             logger.error('Save export failed', { error });
-            message.error('Có lỗi xảy ra khi lưu phiếu');
+            const errorMsg = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi lưu phiếu';
+            message.error(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -431,6 +429,26 @@ export const useCreateExport = () => {
         }
     };
 
+    // Initial Load
+    useEffect(() => {
+        const initData = async () => {
+            try {
+                await Promise.all([fetchDeviceCodes(), fetchCategories(), fetchProjects(), fetchAdmins()]);
+
+                if (isEditMode && id) {
+                    await fetchExportDetail(id);
+                } else {
+                    const today = dayjs();
+                    const code = `PX-${today.format('YYYY-MM')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+                    form.setFieldValue('code', code);
+                }
+            } catch (error) {
+                console.error('Failed to initialize export page data', error);
+            }
+        };
+        initData();
+    }, [id, isEditMode]);
+
     return {
         form,
         loading,
@@ -438,6 +456,7 @@ export const useCreateExport = () => {
         deviceOptions,
         categoryOptions,
         projectOptions,
+        adminOptions, // Exported
         loadingDevices,
         loadingCategories,
         handleAddDevice,

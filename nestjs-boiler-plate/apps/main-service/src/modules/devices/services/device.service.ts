@@ -14,6 +14,7 @@ import { Model, Types } from 'mongoose';
 import { DEVICE_EXCEL_COLUMNS } from '../../../common/constants/device.constants';
 import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
 import { WarehouseService } from '../../warehouses/services/warehouse.service';
+import { SharedDataService } from '../../shared-data/services/shared-data.service';
 
 import { AppLogger } from '../../../common/utils/logger.util';
 
@@ -28,6 +29,7 @@ export class DeviceService implements OnModuleInit {
     @InjectModel(WarehouseTransition.name) private transitionModel: Model<WarehouseTransition>,
     @InjectModel(DeviceHistory.name) private historyModel: Model<DeviceHistory>,
     private readonly warehouseService: WarehouseService,
+    private readonly sharedDataService: SharedDataService,
   ) { }
 
   async onModuleInit() {
@@ -41,6 +43,56 @@ export class DeviceService implements OnModuleInit {
         console.warn('Cảnh báo: Không thể xóa index serial_1 (nó có thể không tồn tại hoặc cần kiểm tra thủ công)', error.message);
       }
     }
+  }
+
+  async getImportTemplate(): Promise<Buffer> {
+    // 1. Lấy danh sách Model từ SharedData
+    let modelsData: any[] = [];
+    try {
+      modelsData = await this.sharedDataService.getDataByGroupCode('MODEL');
+    } catch (error) {
+      this.logger.warn('Failed to fetch MODEL from SharedData, falling back to existing devices.', error);
+    }
+
+    let data: any[] = [];
+
+    if (modelsData && modelsData.length > 0) {
+      // Lấy từ SharedData
+      data = modelsData.map(m => ({
+        deviceCode: m.code,
+        mac: '',
+        name: m.name || '',
+        p2p: '',
+        serial: '',
+        quantity: '',
+        boxCount: '',
+        itemsPerBox: ''
+      }));
+    } else {
+
+      const uniqueModels = await this.deviceModel.distinct('deviceModel').exec();
+      data = uniqueModels.sort().map(m => ({
+        deviceCode: m,
+        mac: '',
+        name: '',
+        p2p: '',
+        serial: '',
+        quantity: '',
+        boxCount: '',
+        itemsPerBox: ''
+      }));
+    }
+
+    // Cấu hình cột cho Template
+    const columns = [
+      { header: 'deviceCode', key: 'deviceCode', width: 30 },
+      { header: 'mac', key: 'mac', width: 20 },
+      { header: 'name', key: 'name', width: 25 },
+      { header: 'p2p', key: 'p2p', width: 20 },
+      { header: 'serial', key: 'serial', width: 20 },
+    ];
+
+    return this.excelService.exportTableData(data, columns, 'Import Template');
   }
 
   async create(createDeviceDto: CreateDeviceDto): Promise<Device> {
@@ -105,9 +157,13 @@ export class DeviceService implements OnModuleInit {
       //.populate('importId') 
       .populate({
         path: 'importId',
+        select: 'code importDate supplier notes createdBy',
         populate: { path: 'createdBy', select: 'name' }
       })
-      .populate('currentExportId')
+      .populate({
+        path: 'currentExportId',
+        select: 'code type exportReason exportDate receiver receiverPerson project customer notes'
+      })
       .populate('qcBy', 'name')
       .exec();
 
@@ -174,7 +230,7 @@ export class DeviceService implements OnModuleInit {
     return result;
   }
 
-  async moveDevicesToWarehouse(macs: string[], targetWarehouseCode: string, exportCode: string, userId?: string, activationDate?: Date): Promise<void> {
+  async moveDevicesToWarehouse(macs: string[], targetWarehouseCode: string, exportCode: string, userId?: string, activationDate?: Date, exportId?: string): Promise<void> {
     console.log(`[DEBUG] moveDevicesToWarehouse called with:`, {
       macsCount: macs.length,
       targetWarehouseCode,
@@ -203,8 +259,16 @@ export class DeviceService implements OnModuleInit {
       exportDate: new Date()
     };
 
+    if (exportId) {
+      updatePayload.currentExportId = exportId;
+    }
+
     if (activationDate) {
       updatePayload.activationDate = activationDate;
+    }
+
+    if (targetWarehouse.code === 'SOLD') {
+      updatePayload.warrantyActivatedDate = activationDate || new Date();
     }
 
     const result = await this.deviceModel.updateMany(

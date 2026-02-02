@@ -368,6 +368,7 @@ export class UserKeycloakIntegrationService {
         'super_admin': 'Super admin',
         'admin': 'Admin',
         'user': 'User',
+        'users': 'User', // Alias for DB consistency
       };
       const kcRoleName = roleMapping[roleName] || roleName;
 

@@ -28,6 +28,31 @@ export interface Device {
     warrantyExpiredDate?: string;
     createdAt?: string;
     updatedAt?: string;
+    importId?: {
+        id: string;
+        _id?: string;
+        code: string;
+        importDate?: string;
+        supplier?: string;
+        notes?: string;
+        createdBy?: {
+            name: string;
+        };
+    };
+    currentExportId?: {
+        id: string;
+        _id?: string;
+        code: string;
+        type?: string;
+        exportReason?: string;
+        exportDate?: string;
+        receiver?: string;
+        receiverPerson?: string;
+        project?: string;
+        customer?: string;
+        notes?: string;
+    };
+    exportDate?: string;
 }
 
 // 3. Type cho Query Params
@@ -75,6 +100,13 @@ export const deviceService = {
             responseType: 'blob',
         });
         return response.data;
+    },
+
+    downloadImportTemplate: async () => {
+        const response = await axiosInstance.get('/devices/import-template', {
+            responseType: 'blob',
+        });
+        return response; //Trả về response để download file
     },
 
     bulkTransfer: async (data: { deviceIds: string[], toWarehouseId: string, note?: string, errorReason?: string }) => {

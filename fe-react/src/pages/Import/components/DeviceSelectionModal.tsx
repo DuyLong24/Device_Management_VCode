@@ -15,6 +15,7 @@ interface DeviceSelectionModalProps {
     initialMacs: string[];
     deviceKey: string | null;
     requiredQuantity?: number;
+    deviceName?: string;
 }
 
 export const DeviceSelectionModal: React.FC<DeviceSelectionModalProps> = ({
@@ -23,7 +24,8 @@ export const DeviceSelectionModal: React.FC<DeviceSelectionModalProps> = ({
     onSave,
     initialMacs,
     // deviceKey, // Not strictly used in render logic but passed for context
-    requiredQuantity
+    requiredQuantity,
+    deviceName,
 }) => {
     const [tempMacs, setTempMacs] = React.useState<string>('');
     const [activeTab, setActiveTab] = React.useState('manual');
@@ -116,6 +118,18 @@ export const DeviceSelectionModal: React.FC<DeviceSelectionModalProps> = ({
                         <Upload beforeUpload={handleExcelUpload} showUploadList={false} accept=".xlsx, .xls">
                             <Button icon={<UploadOutlined />} size="large">Chọn file Excel</Button>
                         </Upload>
+                        <div className="mt-4">
+                            <Button type="link" onClick={() => {
+                                const headers = ['mac', 'name', 'p2p', 'serial'];
+                                const exampleRow = ['', deviceName || '', '', ''];
+                                const ws = XLSX.utils.aoa_to_sheet([headers, exampleRow]);
+                                const wb = XLSX.utils.book_new();
+                                XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                                XLSX.writeFile(wb, "MAC_Import_Template.xlsx");
+                            }}>
+                                Tải file mẫu
+                            </Button>
+                        </div>
                     </div>
                 </TabPane>
             </Tabs>

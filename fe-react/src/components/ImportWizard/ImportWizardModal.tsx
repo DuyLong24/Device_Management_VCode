@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Steps, Button, App } from 'antd';
 import { UploadOutlined, SettingOutlined, SwapOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { type DataImportSession, dataImportService } from '../../services/data-import.service';
+import { deviceService } from '../../services/device.service';
 import type { ValidationSummary } from '../../services/data-import.service';
-import * as XLSX from 'xlsx';
+// import * as XLSX from 'xlsx';
 import { Step1_Upload } from './steps/Step1_Upload';
 import { Step3_Mapping } from './steps/Step3_Mapping';
 import type { FieldDefinition } from './steps/Step3_Mapping';
@@ -60,8 +61,6 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
         }
     }, [open]);
 
-    // --- Actions ---
-
     const handleUpload = async (file: File) => {
         setLoading(true);
         try {
@@ -81,7 +80,6 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
         setLoading(true);
         try {
             const res = await dataImportService.getPreview(session.sessionId, sheetName, headerRow);
-            // Patch session preview
             setSession({ ...session, preview: res });
             setUploadConfig({ sheetName, headerRow });
         } catch (error) {
@@ -95,13 +93,12 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
         if (!session) return;
         setLoading(true);
         try {
-            // Pass importConfig to validate API if needed, or just keep it for Execute step
             const res = await dataImportService.validate(session.sessionId, mapping, strategy, {
                 ...payload,
-                ...importConfig // Pass config to validation logic
+                ...importConfig
             });
             setValidationResult(res);
-            setCurrentStep(3); // Move to Preview
+            setCurrentStep(3);
         } catch (error) {
             message.error("Lỗi kiểm tra dữ liệu");
         } finally {
@@ -127,24 +124,35 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
         }
     };
 
-    const handleDownloadTemplate = () => {
-        // Create headers from fieldDefinitions
-        const headers = fieldDefinitions.map(f => f.key);
-        const ws = XLSX.utils.aoa_to_sheet([headers]);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Template");
-        XLSX.writeFile(wb, "Import_Template.xlsx");
-    };
+    const handleDownloadTemplate = async () => {
+        setLoading(true);
+        try {
+            const response = await deviceService.downloadImportTemplate();
+            // Tạo link download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Import_Template_${Date.now()}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url);
 
-    // --- Navigation ---
+            message.success('Tải template thành công');
+        } catch (error) {
+            console.error(error);
+            message.error('Lỗi tải template');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const next = () => {
         if (currentStep === 0 && !session) {
             message.warning("Vui lòng tải lên file Excel");
             return;
         }
-        if (currentStep === 2) { // Moving from Mapping to Preview
-            // Validate mapping
+        if (currentStep === 2) {
             const missingRequired = fieldDefinitions.filter(f => f.required && !mapping[f.key]);
             if (missingRequired.length > 0) {
                 message.error(`Vui lòng ghép cột cho: ${missingRequired.map(f => f.label).join(', ')}`);
@@ -168,7 +176,6 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
                 config={uploadConfig}
                 onConfigChange={handleConfigChange}
                 onDownloadTemplate={handleDownloadTemplate}
-            // Handler injected in main render
             />
         },
         {
@@ -198,12 +205,6 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
             content: <Step4_Preview validationResult={validationResult} />
         }
     ];
-
-    // Patching Step1 content render to handle file upload correctly
-    // I need to override contents of step 0 because I can't easily pass the handleUpload to Step1 as I defined it weirdly in previous file
-    // Actually I can pass a wrapper to Step1 that calls handleUpload.
-
-
 
     return (
         <Modal
@@ -237,7 +238,6 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
             <Steps items={steps.map(s => ({ title: s.title, icon: s.icon }))} current={currentStep} className="mb-6" />
 
             <div className="min-h-[300px]">
-                {/* Custom Render for Step 1 to inject upload handler */}
                 {currentStep === 0 ? (
                     <div className="space-y-4">
                         <Step1_Upload

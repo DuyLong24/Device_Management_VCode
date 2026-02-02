@@ -24,12 +24,13 @@ export default function CreateExportPage() {
         handleCancel,
         setHasUnsavedChanges,
         isEditMode,
-        projectOptions, // [NEW] From Hook
+        projectOptions,
+        adminOptions,
         isProjectModalOpen,
         pendingProjectName,
         onProjectSearch,
         handleProjectBlur,
-        handleProjectKeyDown, // [NEW]
+        handleProjectKeyDown,
         handleCreateProject,
         handleCancelProjectCreation
     } = useCreateExport();
@@ -210,6 +211,37 @@ export default function CreateExportPage() {
                         </Col>
                         <Col xs={24} md={12}>
                             <Form.Item
+                                name="exportReason"
+                                label="Lý do xuất kho"
+                            // rules={[{ required: true, message: 'Vui lòng chọn lý do' }]}
+                            // initialValue="SALE"
+                            >
+                                <Input />
+                            </Form.Item>
+                        </Col>
+
+                    </Row>
+
+                    <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                name="assignedApprover"
+                                label="Người duyệt (Chỉ định)"
+                                rules={[{ required: true, message: 'Vui lòng chọn người duyệt' }]}
+                            >
+                                <Select
+                                    allowClear
+                                    placeholder="Chọn người duyệt"
+                                    options={adminOptions}
+                                    showSearch
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Form.Item
                                 name="project"
                                 label="Dự án nhận"
                             // rules={[{ required: true, message: 'Vui lòng chọn hoặc nhập dự án' }]}
@@ -220,23 +252,19 @@ export default function CreateExportPage() {
                                     showSearch
                                     onSearch={onProjectSearch}
                                     onBlur={handleProjectBlur}
-                                    onInputKeyDown={handleProjectKeyDown}
+                                    onKeyDown={handleProjectKeyDown}
                                     filterOption={(input, option) =>
                                         (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                                     }
                                 />
                             </Form.Item>
                         </Col>
+
                     </Row>
 
                     <Row gutter={16}>
                         <Col xs={24} md={12}>
-                            <Form.Item
-                                name="exportReason"
-                                label="Lý do xuất kho"
-                            // rules={[{ required: true, message: 'Vui lòng chọn lý do' }]}
-                            // initialValue="SALE"
-                            >
+                            <Form.Item name="receiverPerson" label="Người nhận">
                                 <Input />
                             </Form.Item>
                         </Col>
@@ -249,11 +277,10 @@ export default function CreateExportPage() {
                                 <Input />
                             </Form.Item>
                         </Col>
-
                     </Row>
 
                     <Row gutter={16}>
-                        <Col xs={24} md={6}>
+                        <Col xs={24} md={12}>
                             <Form.Item
                                 name="activationDays"
                                 label={
@@ -269,12 +296,7 @@ export default function CreateExportPage() {
                                 <InputNumber min={0} className="w-full" addonAfter="Ngày" />
                             </Form.Item>
                         </Col>
-                        <Col xs={24} md={9}>
-                            <Form.Item name="receiverPerson" label="Người nhận">
-                                <Input />
-                            </Form.Item>
-                        </Col>
-                        <Col xs={24} md={9}>
+                        <Col xs={24} md={12}>
                             <Form.Item
                                 name="customer"
                                 label="Khách hàng"
@@ -282,9 +304,6 @@ export default function CreateExportPage() {
                                 <Input />
                             </Form.Item>
                         </Col>
-                    </Row>
-
-                    <Row gutter={16}>
                         <Col span={24}>
                             <Form.Item
                                 name="deliveryAddress"

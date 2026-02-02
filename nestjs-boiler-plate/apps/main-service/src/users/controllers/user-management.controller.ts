@@ -24,9 +24,17 @@ export class UserManagementController {
     /**
      * GET /users/management - Lấy danh sách users
      */
+    /**
+     * GET /users/management - Lấy danh sách users
+     */
     @Get()
     async getUsers(@Query() filters: UserManagementFilterDto) {
         return this.userManagementService.findAllForManagement(filters);
+    }
+
+    @Get('test')
+    async test() {
+        return { message: 'User Management Controller is working' };
     }
 
     /**

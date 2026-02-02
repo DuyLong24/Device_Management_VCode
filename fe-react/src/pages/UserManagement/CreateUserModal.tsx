@@ -89,7 +89,7 @@ export default function CreateUserModal({ visible, onSuccess, onCancel, onCreate
                     <Select placeholder="Chọn vai trò">
                         <Select.Option value="super_admin">Super Admin</Select.Option>
                         <Select.Option value="admin">Admin</Select.Option>
-                        <Select.Option value="user">User</Select.Option>
+                        <Select.Option value="users">User</Select.Option>
                     </Select>
                 </Form.Item>
 

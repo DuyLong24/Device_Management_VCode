@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { DeviceExportRepository } from '../repositories/device-export.repository';
 import { CreateDeviceExportDto } from '../dto/create-device-export.dto';
 import { UpdateDeviceExportDto } from '../dto/update-device-export.dto';
@@ -196,6 +196,15 @@ export class DeviceExportService {
       throw new BadRequestException('Chỉ có thể duyệt phiếu đang Chờ duyệt (PENDING_APPROVAL).');
     }
 
+    // Check Assigned Approver
+    if (exportRecord.assignedApprover) {
+      const assignedId = exportRecord.assignedApprover.toString();
+      const currentUserId = user._id.toString();
+      if (assignedId !== currentUserId) {
+        throw new ForbiddenException('Bạn không được chỉ định duyệt phiếu này.');
+      }
+    }
+
     // Validate Stock Availability
     if (exportRecord.requirements && exportRecord.requirements.length > 0) {
       for (const req of exportRecord.requirements) {
@@ -259,7 +268,7 @@ export class DeviceExportService {
     }
 
     const serials = exportRecord.items.map(i => i.serial);
-    await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord.code, userId, activationDate);
+    await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord.code, userId, activationDate, id);
 
     return this.update(id, {
       status: ExportStatus.COMPLETED,

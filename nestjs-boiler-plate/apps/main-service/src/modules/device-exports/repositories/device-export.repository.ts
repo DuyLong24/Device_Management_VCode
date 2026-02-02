@@ -19,6 +19,7 @@ export class DeviceExportRepository {
     return this.deviceexportModel.find(filter)
       .populate('createdBy', 'username name email')
       .populate('approvedBy', 'username name email')
+      .populate('assignedApprover', 'username name email')
       .exec();
   }
 
@@ -32,7 +33,8 @@ export class DeviceExportRepository {
       sortBy: sortBy || 'createdAt:desc',
       populate: populate || [
         { path: 'approvedBy', select: 'username name' },
-        { path: 'createdBy', select: 'username name' }
+        { path: 'createdBy', select: 'username name' },
+        { path: 'assignedApprover', select: 'username name email' }
       ]
     };
 
@@ -45,6 +47,7 @@ export class DeviceExportRepository {
       .populate('createdBy', 'username name email')
       .populate('approvedBy', 'username name email')
       .populate('confirmedBy', 'username name email')
+      .populate('assignedApprover', 'username name email')
       .exec();
   }
 

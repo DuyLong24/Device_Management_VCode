@@ -24,7 +24,7 @@ export const ApprovalActions = ({
     onApprove,
     onReject,
     // onNavigateToScan,
-    onConfirm,
+    // onConfirm,
     canApprove = false
 }: ApprovalActionsProps) => {
     const handleRejectClick = () => {
@@ -63,7 +63,7 @@ export const ApprovalActions = ({
                 </>
             )}
 
-            {(status === EXPORT_STATUS.APPROVED || status === EXPORT_STATUS.IN_PROGRESS) && (
+            {/* {(status === EXPORT_STATUS.APPROVED || status === EXPORT_STATUS.IN_PROGRESS) && (
                 <>
                     {onConfirm && status === EXPORT_STATUS.IN_PROGRESS && (
                         <Popconfirm
@@ -80,7 +80,7 @@ export const ApprovalActions = ({
                         </Popconfirm>
                     )}
                 </>
-            )}
+            )} */}
 
             {status === EXPORT_STATUS.COMPLETED && (
                 <Button icon={<PrinterOutlined />}>In phiếu</Button>

@@ -12,8 +12,10 @@ import {
   Res,
   Patch,
   Request,
-  UnauthorizedException
+  UnauthorizedException,
+  OnModuleInit
 } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { Response } from 'express';
 import { DeviceService } from '../services/device.service';
 import { UserService } from '../../../users/services/user.service';
@@ -24,16 +26,40 @@ import { CreateDeviceDto } from '../dto/create-device.dto';
 import { UpdateDeviceDto } from '../dto/update-device.dto';
 import { DevicePaginationDto } from '../dto/device-pagination.dto';
 import { ValidateMacsDto, ValidateMacsResponse } from '../dto/validate-serials.dto';
+import { DeviceImportRepository } from '../../device-imports/repositories/device-import.repository';
+import { DeviceExportRepository } from '../../device-exports/repositories/device-export.repository';
 
 @Controller('devices')
-export class DeviceController {
+export class DeviceController implements OnModuleInit {
+  private deviceImportRepository: DeviceImportRepository;
+  private deviceExportRepository: DeviceExportRepository;
+
   constructor(
     private readonly deviceService: DeviceService,
     private readonly deviceStatsService: DeviceStatsService,
     private readonly deviceTransferService: DeviceTransferService,
     private readonly deviceValidationService: DeviceValidationService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly moduleRef: ModuleRef
   ) { }
+
+  onModuleInit() {
+    this.deviceImportRepository = this.moduleRef.get(DeviceImportRepository, { strict: false });
+    this.deviceExportRepository = this.moduleRef.get(DeviceExportRepository, { strict: false });
+  }
+
+  @Get('import-template')
+  async getImportTemplate(@Res() res: Response) {
+    const buffer = await this.deviceService.getImportTemplate();
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename=Import_Template_${Date.now()}.xlsx`,
+      'Content-Length': buffer.length,
+    });
+
+    res.end(buffer);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -43,7 +69,7 @@ export class DeviceController {
 
   @Get('export')
   async exportExcel(@Query() query: DevicePaginationDto, @Res() res: Response) {
-    const filter = this.buildFilter(query);
+    const filter = await this.buildFilter(query);
 
     const buffer = await this.deviceService.exportExcel(filter);
 
@@ -58,7 +84,7 @@ export class DeviceController {
 
   @Get()
   async findAll(@Query() query: DevicePaginationDto) {
-    const filter = this.buildFilter(query);
+    const filter = await this.buildFilter(query);
 
     const options = {
       page: query.page || 1,
@@ -72,7 +98,7 @@ export class DeviceController {
 
   @Get('stats')
   async getStatistics(@Query() query: DevicePaginationDto) {
-    const filter = this.buildFilter(query);
+    const filter = await this.buildFilter(query);
     return this.deviceStatsService.getStatistics(filter);
   }
 
@@ -96,7 +122,7 @@ export class DeviceController {
     return this.deviceService.delete(id);
   }
 
-  private buildFilter(query: DevicePaginationDto): any {
+  private async buildFilter(query: DevicePaginationDto): Promise<any> {
     const filter: any = {};
 
     // 1. Lọc theo kho
@@ -106,19 +132,57 @@ export class DeviceController {
 
     // 2. Lọc theo mã serial, mã MAC, tên thiết bị, model
     if (query.serial) filter.serial = { $regex: query.serial, $options: 'i' };
-    if (query.mac) filter.mac = { $regex: query.mac, $options: 'i' };
+    if (query.mac) {
+      const macQuery = query.mac.trim();
+      // Nếu query không có dấu cách, cho phép tìm kiếm với các dấu cách
+      if (/^[a-fA-F0-9]+$/.test(macQuery)) {
+        const fuzzyRegex = macQuery.split('').join('[:\\.-]?');
+        filter.mac = { $regex: fuzzyRegex, $options: 'i' };
+      } else {
+        filter.mac = { $regex: macQuery, $options: 'i' };
+      }
+    }
     if (query.name) filter.name = { $regex: query.name, $options: 'i' };
     if (query.model) filter.deviceModel = { $regex: query.model, $options: 'i' };
 
-    // 3. Lọc theo từ khóa
+    // 3. Lọc theo mã phiếu nhập/xuất
+    if (query.importCode) {
+      // Tìm import theo code
+      const imports = await this.deviceImportRepository.findAll({ code: { $regex: query.importCode, $options: 'i' } });
+      if (imports.length > 0) {
+        filter.importId = { $in: imports.map(i => i._id) };
+      } else {
+        filter.importId = '000000000000000000000000'; // Force empty
+      }
+    }
+
+    if (query.exportCode) {
+      const exports = await this.deviceExportRepository.findAll({ code: { $regex: query.exportCode, $options: 'i' } });
+      if (exports.length > 0) {
+        filter.currentExportId = { $in: exports.map(e => e._id) };
+      } else {
+        filter.currentExportId = '000000000000000000000000'; // Force empty
+      }
+    }
+
+    // 4. Lọc theo từ khóa (Global Search)
     if (query.search) {
-      const searchRegex = { $regex: query.search, $options: 'i' };
-      const orConditions = [
+      const searchStr = query.search.trim();
+      const searchRegex = { $regex: searchStr, $options: 'i' };
+      const orConditions: any[] = [
         { serial: searchRegex },
-        { mac: searchRegex },
         { name: searchRegex },
         { deviceModel: searchRegex }
       ];
+
+      // Tìm kiếm MAC theo định dạng fuzzy
+      if (/^[a-fA-F0-9]+$/.test(searchStr)) {
+        const fuzzyMacRegex = { $regex: searchStr.split('').join('[:\\.-]?'), $options: 'i' };
+        orConditions.push({ mac: fuzzyMacRegex });
+      } else {
+        orConditions.push({ mac: searchRegex });
+      }
+
       if (Object.keys(filter).length > 0) {
         filter.$or = orConditions;
       } else {
@@ -126,7 +190,7 @@ export class DeviceController {
       }
     }
 
-    // 4. Lọc theo ngày tạo
+    // 5. Lọc theo ngày tạo
     if (query.createdFrom || query.createdTo) {
       filter.createdAt = {};
       if (query.createdFrom) filter.createdAt.$gte = new Date(query.createdFrom);

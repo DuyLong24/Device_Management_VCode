@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
     Card,
     Button,
@@ -176,11 +176,91 @@ export default function SerialDetailPage() {
 
                 {/* Right Column */}
                 <Col xs={24} lg={8}>
-                    {/* QC Info if exists */}
                     {device.qcStatus && device.qcStatus !== 'PENDING' && (
                         <Card title="Kết quả QC" size="small" className="mb-4">
                             <Tag color={device.qcStatus === 'PASS' ? 'success' : 'error'}>{device.qcStatus}</Tag>
                             {device.qcNote && <div className="mt-2">{device.qcNote}</div>}
+                        </Card>
+                    )}
+
+                    {/* Import/Export Info */}
+                    {(device.importId || device.currentExportId) && (
+                        <Card title="Thông tin phiếu" size="small" className="mb-4">
+                            <Descriptions column={1} size="small" bordered>
+                                {device.importId && (
+                                    <>
+                                        <Descriptions.Item label="Phiếu nhập">
+                                            <Space direction="vertical" size={0}>
+                                                <Link to={`/import/${device.importId.id}`} className="font-bold text-blue-600 hover:underline">
+                                                    {device.importId.code}
+                                                </Link>
+                                                <Text type="secondary" className="text-xs">
+                                                    {device.importDate ? dayjs(device.importDate).format('DD/MM/YYYY') : '-'}
+                                                </Text>
+                                            </Space>
+                                        </Descriptions.Item>
+                                        {device.importId.createdBy?.name && (
+                                            <Descriptions.Item label="Người nhập">
+                                                {device.importId.createdBy.name}
+                                            </Descriptions.Item>
+                                        )}
+                                        {device.importId.supplier && (
+                                            <Descriptions.Item label="Nhà cung cấp">
+                                                {device.importId.supplier}
+                                            </Descriptions.Item>
+                                        )}
+                                        {device.importId.notes && (
+                                            <Descriptions.Item label="Ghi chú nhập">
+                                                {device.importId.notes}
+                                            </Descriptions.Item>
+                                        )}
+                                    </>
+                                )}
+                                {device.currentExportId && (
+                                    <>
+                                        <Descriptions.Item label="Phiếu xuất">
+                                            <Space direction="vertical" size={0}>
+                                                <Link to={`/export/${device.currentExportId.id}`} className="font-bold text-blue-600 hover:underline">
+                                                    {device.currentExportId.code}
+                                                </Link>
+                                                <Text type="secondary" className="text-xs">
+                                                    {device.exportDate ? dayjs(device.exportDate).format('DD/MM/YYYY') : '-'}
+                                                </Text>
+                                            </Space>
+                                        </Descriptions.Item>
+                                        {device.currentExportId.exportReason && (
+                                            <Descriptions.Item label="Lý do">
+                                                {device.currentExportId.exportReason}
+                                            </Descriptions.Item>
+                                        )}
+                                        {device.currentExportId.receiver && (
+                                            <Descriptions.Item label="Đơn vị nhận">
+                                                {device.currentExportId.receiver}
+                                            </Descriptions.Item>
+                                        )}
+                                        {device.currentExportId.receiverPerson && (
+                                            <Descriptions.Item label="Người nhận">
+                                                {device.currentExportId.receiverPerson}
+                                            </Descriptions.Item>
+                                        )}
+                                        {device.currentExportId.project && (
+                                            <Descriptions.Item label="Dự án">
+                                                {device.currentExportId.project}
+                                            </Descriptions.Item>
+                                        )}
+                                        {device.currentExportId.customer && (
+                                            <Descriptions.Item label="Khách hàng">
+                                                {device.currentExportId.customer}
+                                            </Descriptions.Item>
+                                        )}
+                                        {device.currentExportId.notes && (
+                                            <Descriptions.Item label="Ghi chú xuất">
+                                                {device.currentExportId.notes}
+                                            </Descriptions.Item>
+                                        )}
+                                    </>
+                                )}
+                            </Descriptions>
                         </Card>
                     )}
 

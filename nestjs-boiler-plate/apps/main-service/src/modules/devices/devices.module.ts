@@ -14,6 +14,7 @@ import { DeviceHistory, DeviceHistorySchema } from '../device-histories/schemas/
 import { ExcelModule } from '../../common/excel/excel.module';
 import { WarehousesModule } from '../warehouses/warehouses.module';
 import { UsersModule } from '../../users/users.module';
+import { SharedDataModule } from '../shared-data/shared-data.module'; // Added
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UsersModule } from '../../users/users.module';
     ExcelModule,
     WarehousesModule,
     UsersModule,
+    SharedDataModule,
   ],
   controllers: [DeviceController],
   providers: [DeviceService, DeviceStatsService, DeviceTransferService, DeviceValidationService, DeviceRepository],

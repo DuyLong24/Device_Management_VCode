@@ -71,7 +71,7 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
                                         <div className="flex justify-between text-xs text-gray-500">
                                             <span>
                                                 {session.deviceCode ? `Mã Model: ${session.deviceCode} • ` : ''}
-                                                {session.totalScanned}/{session.totalRequired} serial
+                                                {session.totalScanned}/{session.totalRequired} MAC
                                             </span>
                                             <span>
                                                 {dayjs(session.createdAt).format('DD/MM/YYYY HH:mm')} • {session.createdBy}

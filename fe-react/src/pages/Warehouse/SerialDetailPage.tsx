@@ -113,7 +113,7 @@ export default function SerialDetailPage() {
             {/* Alerts */}
             {isRemoved && (
                 <Alert
-                    message="Serial đã loại khỏi tồn kho"
+                    message="MAC đã loại khỏi tồn kho"
                     type="error"
                     showIcon
                     className="mb-4"

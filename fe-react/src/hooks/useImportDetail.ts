@@ -32,9 +32,8 @@ export const useImportDetail = () => {
         totalRequired: importData?.totalQuantity || 0
     }));
 
-    // 3. Prepare Devices Data for UI
+    // 3. Chuẩn bị dữ liệu thiết bị
     const devicesUI: ImportDeviceUI[] = (importData?.devices || []).map((device) => {
-        // [FIX] Fallback to expectedSerials.length if serialImported is 0 (for old tickets)
         const importedCount = device.serialImported || device.expectedSerials?.length || 0;
 
         return {

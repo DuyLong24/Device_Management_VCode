@@ -72,7 +72,7 @@ export const BulkInputModal = ({
                 });
 
                 if (extractedSerials.length === 0) {
-                    message.warning('Không tìm thấy dữ liệu serial nào trong cột đầu tiên (từ dòng 2).');
+                    message.warning('Không tìm thấy dữ liệu mac nào trong cột đầu tiên (từ dòng 2).');
                     return;
                 }
 
@@ -80,7 +80,7 @@ export const BulkInputModal = ({
                 const merged = [...current, ...extractedSerials].filter(s => s.trim() !== '');
                 setTempSerials(merged.join('\n'));
 
-                message.success(`Đã đọc ${extractedSerials.length} serial từ file Excel.`);
+                message.success(`Đã đọc ${extractedSerials.length} mac từ file Excel.`);
                 setActiveTab('manual');
 
             } catch (err) {
@@ -108,8 +108,8 @@ export const BulkInputModal = ({
                 message="Hướng dẫn"
                 description={(
                     <ul className="list-disc pl-4 mt-1 text-xs text-gray-600">
-                        <li>Dán danh sách serial (mỗi mã 1 dòng) hoặc upload Excel.</li>
-                        <li>Với Excel: Serial phải ở cột A, bắt đầu từ dòng 2 (có tiêu đề).</li>
+                        <li>Dán danh sách mac (mỗi mã 1 dòng) hoặc upload Excel.</li>
+                        <li>Với Excel: Mac phải ở cột A, bắt đầu từ dòng 2 (có tiêu đề).</li>
                     </ul>
                 )}
                 type="info"

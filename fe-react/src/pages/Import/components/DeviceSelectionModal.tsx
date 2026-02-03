@@ -23,7 +23,7 @@ export const DeviceSelectionModal: React.FC<DeviceSelectionModalProps> = ({
     onCancel,
     onSave,
     initialMacs,
-    // deviceKey, // Not strictly used in render logic but passed for context
+    // deviceKey,
     requiredQuantity,
     deviceName,
 }) => {

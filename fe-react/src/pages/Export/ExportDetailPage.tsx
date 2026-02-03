@@ -166,7 +166,7 @@ export default function ExportDetailPage() {
             {exportInfo.status === 'PENDING_APPROVAL' && (
                 <Alert
                     message="Phiếu xuất đang chờ duyệt"
-                    description="Phiếu xuất kho này đang chờ lãnh đạo duyệt. Sau khi được duyệt, bạn có thể tiến hành chọn serial và xuất kho."
+                    description="Phiếu xuất kho này đang chờ lãnh đạo duyệt. Sau khi được duyệt, bạn có thể tiến hành chọn MAC và xuất kho."
                     type="warning"
                     showIcon
                     icon={<InfoCircleOutlined />}
@@ -195,7 +195,7 @@ export default function ExportDetailPage() {
                         <div>
                             Phiếu đã được duyệt bởi <Text strong>{exportInfo.approvedBy?.username || exportInfo.approvedBy?.name || exportInfo.approvedBy?.fullName || (typeof exportInfo.approvedBy === 'string' ? exportInfo.approvedBy : '')}</Text> vào lúc{' '}
                             <Text strong>{exportInfo.approvedDate ? dayjs(exportInfo.approvedDate).format('DD/MM/YYYY HH:mm') : ''}</Text>. Có thể tiến hành chọn
-                            serial và xuất kho.
+                            MAC và xuất kho.
                         </div>
                     }
                     type="success"

@@ -233,7 +233,7 @@ export default function ExportCheckListPage() {
                     title="Hướng dẫn"
                     content={
                         <div style={{ maxWidth: 400 }}>
-                            <Text>Chọn phiếu xuất để tiến hành quét serial (Xuất kho thực tế):</Text>
+                            <Text>Chọn phiếu xuất để tiến hành quét MAC (Xuất kho thực tế):</Text>
                             <ul className="mt-2 mb-0 pl-5">
                                 <li>
                                     <Text type="success">Đã duyệt (APPROVED):</Text> Phiếu đã được Ban Giám đốc duyệt, sẵn sàng xuất.
@@ -332,7 +332,7 @@ export default function ExportCheckListPage() {
                                         </div>
                                         {selectedExport.status === 'IN_PROGRESS' && (
                                             <div>
-                                                <Text type="secondary">Serial đã quét: </Text>
+                                                <Text type="secondary">Mac đã quét: </Text>
                                                 <Text strong>{sessions.reduce((acc, s) => acc + (s.items?.length || 0), 0)}</Text>
                                             </div>
                                         )}

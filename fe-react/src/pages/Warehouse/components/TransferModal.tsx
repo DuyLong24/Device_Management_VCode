@@ -58,7 +58,7 @@ export default function TransferModal({ open, onCancel, onConfirm, count, option
 
     return (
         <Modal
-            title={`Chuyển ${count} serial`}
+            title={`Chuyển ${count} MAC`}
             open={open}
             onCancel={onCancel}
             width={600}

@@ -13,7 +13,6 @@ export interface ImportRecord {
     totalSerials: number;
     inventoryStatus: InventoryStatus;
 }
-// ...
 export interface SerialItem {
     id: string;
     deviceCode: string;

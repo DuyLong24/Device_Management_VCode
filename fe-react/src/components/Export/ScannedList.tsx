@@ -34,7 +34,7 @@ export const ScannedList = ({ items, loading }: ScannedListProps) => {
             render: (_: any, __: any, index: number) => items.length - index
         },
         {
-            title: 'Serial',
+            title: 'Mac',
             dataIndex: 'serial',
             key: 'serial',
             render: (t: string, r: ScannedItem) => (
@@ -74,7 +74,7 @@ export const ScannedList = ({ items, loading }: ScannedListProps) => {
                 <div className="flex justify-between items-center">
                     <span>Đã quét ({items.length})</span>
                     <Input
-                        placeholder="Tìm serial..."
+                        placeholder="Tìm mac "
                         prefix={<ScanOutlined />}
                         className="w-48 lg:w-64"
                         size="small"

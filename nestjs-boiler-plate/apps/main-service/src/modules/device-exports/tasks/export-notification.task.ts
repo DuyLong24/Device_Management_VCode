@@ -1,10 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { DeviceExport, ExportStatus } from '../../device-exports/schemas/device-export.schemas';
 import { MailService } from '../../../common/mail/services/mail.service';
 import { ConfigService } from '@nestjs/config';
+import { User } from 'apps/main-service/src/users/entities/user.entity';
+
+// định nghĩa type để tránh error khi populate
+interface DeviceExportPopulated extends Omit<DeviceExport, 'assignedApprover' | 'createdBy' | 'approvedBy'> {
+    _id: Types.ObjectId;
+    assignedApprover?: User;
+    createdBy?: User;
+    approvedBy?: User;
+}
 
 @Injectable()
 export class ExportNotificationTask {
@@ -16,11 +25,11 @@ export class ExportNotificationTask {
         private readonly mailService: MailService,
         private readonly configService: ConfigService,
     ) {
-        // URL frontend để user click vào
+        // URL frontend
         this.baseUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:5173';
     }
 
-    // Chạy lúc 00:00 hàng ngày
+    // Chạy hàng ngày vào 00:00
     @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
     async handleDailyNotifications() {
         this.logger.log('Standard daily email notification check started...');
@@ -28,40 +37,35 @@ export class ExportNotificationTask {
         await this.processExportResults();
     }
 
-    // Phương thức thủ công để test
+    // Kích hoạt thủ công
     async processAllNotifications() {
         this.logger.log('Manual trigger email notification check started...');
         await this.processApprovalRequests();
         await this.processExportResults();
     }
 
-    // 1. Gửi mail yêu cầu duyệt (Pending Approvals)
+    // Gửi yêu cầu duyệt
     private async processApprovalRequests() {
         try {
-            // Tìm các phiếu đang chờ duyệt và chưa gửi thông báo
             const pendingExports = await this.deviceExportModel.find({
                 status: ExportStatus.PENDING_APPROVAL,
-                isSubmitNotified: false, // Chỉ lấy phiếu chưa gửi mail
-            }).populate('assignedApprover createdBy');
+                isSubmitNotified: false,
+            }).populate('assignedApprover createdBy') as unknown as DeviceExportPopulated[];
 
             this.logger.log(`Found ${pendingExports.length} pending exports to notify.`);
 
             for (const exportRecord of pendingExports) {
-                const items = (exportRecord.requirements || []).map((req: any) => ({
-                    deviceCode: req.deviceCode,
-                    deviceName: req.deviceName,
-                    quantity: req.quantity,
-                }));
-                if (exportRecord.assignedApprover && (exportRecord.assignedApprover as any).email) {
-                    const approverEmail = (exportRecord.assignedApprover as any).email;
-                    const approverName = (exportRecord.assignedApprover as any).name || (exportRecord.assignedApprover as any).username;
-                    const creatorName = exportRecord.createdBy ? ((exportRecord.createdBy as any).name || (exportRecord.createdBy as any).username) : 'Unknown';
+                if (exportRecord.assignedApprover?.email) {
+                    const approverEmail = exportRecord.assignedApprover.email;
+                    const approverName = exportRecord.assignedApprover.name || exportRecord.assignedApprover.username;
+                    const creatorName = exportRecord.createdBy ? (exportRecord.createdBy.name || exportRecord.createdBy.username) : 'Unknown';
+                    const items = this.mapRequirementsToItems(exportRecord.requirements);
 
-                    // Gửi mail
-                    const sent = await this.mailService.sendMail(
+                    await this.sendAndMarkNotified(
+                        exportRecord,
                         approverEmail,
                         `[Device Management] Yêu cầu duyệt phiếu xuất kho: ${exportRecord.code}`,
-                        'approval-request', // Template name
+                        'approval-request',
                         {
                             approverName,
                             code: exportRecord.code,
@@ -69,17 +73,11 @@ export class ExportNotificationTask {
                             projectName: exportRecord.project || 'N/A',
                             customer: exportRecord.customer || 'N/A',
                             exportReason: exportRecord.exportReason || 'Không có lý do',
-                            items, // Danh sách tóm tắt
-                            link: `${this.baseUrl}/export/${exportRecord._id}`, // Link đến trang chi tiết
-                        }
+                            items,
+                            link: `${this.baseUrl}/export/${exportRecord._id}`,
+                        },
+                        'isSubmitNotified'
                     );
-
-                    if (sent) {
-                        // Đánh dấu đã gửi
-                        exportRecord.isSubmitNotified = true;
-                        await exportRecord.save();
-                        this.logger.log(`Sent approval request email for ${exportRecord.code} to ${approverEmail}`);
-                    }
                 } else {
                     this.logger.warn(`Export ${exportRecord.code} has no assigned approver or email missing.`);
                 }
@@ -89,28 +87,26 @@ export class ExportNotificationTask {
         }
     }
 
-    // 2. Gửi mail kết quả duyệt (Approved/Rejected)
+    // Gửi kết quả (Approved/Rejected)
     private async processExportResults() {
         try {
-            // Tìm các phiếu đã có kết quả (Approved/Rejected) nhưng chưa gửi thông báo cho người tạo
             const resultedExports = await this.deviceExportModel.find({
                 status: { $in: [ExportStatus.APPROVED, ExportStatus.REJECTED] },
                 isResultNotified: false,
-            }).populate('approvedBy createdBy assignedApprover');
+            }).populate('approvedBy createdBy assignedApprover') as unknown as DeviceExportPopulated[];
 
             this.logger.log(`Found ${resultedExports.length} resulted exports to notify.`);
 
             for (const exportRecord of resultedExports) {
-                if (exportRecord.createdBy && (exportRecord.createdBy as any).email) {
-                    const creatorEmail = (exportRecord.createdBy as any).email;
-                    const creatorName = (exportRecord.createdBy as any).name || (exportRecord.createdBy as any).username;
+                if (exportRecord.createdBy?.email) {
+                    const creatorEmail = exportRecord.createdBy.email;
+                    const creatorName = exportRecord.createdBy.name || exportRecord.createdBy.username;
 
-                    // Xác định người duyệt/từ chối
                     let approverName = 'Admin';
                     if (exportRecord.status === ExportStatus.APPROVED && exportRecord.approvedBy) {
-                        approverName = (exportRecord.approvedBy as any).name;
+                        approverName = exportRecord.approvedBy.name || exportRecord.approvedBy.username;
                     } else if (exportRecord.status === ExportStatus.REJECTED && exportRecord.assignedApprover) {
-                        approverName = (exportRecord.assignedApprover as any).name;
+                        approverName = exportRecord.assignedApprover.name || exportRecord.assignedApprover.username;
                     }
 
                     const isApproved = exportRecord.status === ExportStatus.APPROVED;
@@ -118,7 +114,8 @@ export class ExportNotificationTask {
                         ? `[Device Management] Phiếu xuất kho ${exportRecord.code} ĐÃ ĐƯỢC DUYỆT`
                         : `[Device Management] Phiếu xuất kho ${exportRecord.code} BỊ TỪ CHỐI`;
 
-                    await this.mailService.sendMail(
+                    await this.sendAndMarkNotified(
+                        exportRecord,
                         creatorEmail,
                         subject,
                         'export-result',
@@ -131,17 +128,46 @@ export class ExportNotificationTask {
                             rejectedReason: exportRecord.rejectedReason || 'Không có lý do cụ thể',
                             approvedDate: exportRecord.approvedDate ? new Date(exportRecord.approvedDate).toLocaleDateString('vi-VN') : new Date().toLocaleDateString('vi-VN'),
                             link: `${this.baseUrl}/export/${exportRecord._id}`,
-                        }
+                        },
+                        'isResultNotified'
                     );
-
-                    // Đánh dấu đã gửi
-                    exportRecord.isResultNotified = true;
-                    await exportRecord.save();
-                    this.logger.log(`Sent result email (${exportRecord.status}) for ${exportRecord.code} to ${creatorEmail}`);
                 }
             }
         } catch (error) {
             this.logger.error('Error processing export result notifications', error.stack);
+        }
+    }
+
+    // map các yêu cầu thành các item đơn giản
+    private mapRequirementsToItems(requirements: any[]) {
+        return (requirements || []).map((req: any) => ({
+            deviceCode: req.deviceCode,
+            deviceName: req.deviceName,
+            quantity: req.quantity,
+        }));
+    }
+
+    // gửi mail và update DB flag
+    private async sendAndMarkNotified(
+        exportRecord: DeviceExportPopulated,
+        email: string,
+        subject: string,
+        template: string,
+        context: any,
+        flagField: 'isSubmitNotified' | 'isResultNotified'
+    ): Promise<void> {
+        try {
+            const sent = await this.mailService.sendMail(email, subject, template, context);
+            if (sent) {
+                // Dùng updateOne để tránh error khi populate
+                await this.deviceExportModel.updateOne(
+                    { _id: exportRecord._id },
+                    { $set: { [flagField]: true } }
+                );
+                this.logger.log(`Sent email (${template}) for ${exportRecord.code} to ${email}`);
+            }
+        } catch (error) {
+            this.logger.error(`Failed to send/mark email for ${exportRecord.code}`, error.stack);
         }
     }
 }

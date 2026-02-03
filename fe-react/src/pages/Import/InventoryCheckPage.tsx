@@ -190,17 +190,6 @@ export default function InventoryCheckPage() {
         </Button>
       </div>
 
-      {/* <div className="mb-6">
-        <Title level={3} className="mb-2!">{sessionInfo.sessionName}</Title>
-        <Space>
-          <Tag>Mã phiếu nhập: {sessionInfo.importCode}</Tag>
-          <Tag color="blue">Mã phiên: {sessionInfo.sessionCode}</Tag>
-          <Tag color={sessionStatus === 'in-progress' ? 'processing' : sessionStatus === 'init' ? 'default' : 'success'}>
-            Trạng thái: {sessionStatus === 'init' ? 'Chưa bắt đầu' : sessionStatus === 'in-progress' ? 'Đang kiểm kê' : 'Đã hoàn tất'}
-          </Tag>
-        </Space>
-      </div> */}
-
       {/* Session Info & Statistics */}
       <Row gutter={16} className="mb-6">
         <Col span={8}>
@@ -294,28 +283,6 @@ export default function InventoryCheckPage() {
                   />
                 </div>
 
-                {/* <Row gutter={16}>
-                  <Col span={24}>
-                    <Text strong className="block mb-2">2. Quét hoặc nhập Mac</Text>
-                    <Space.Compact className="w-full">
-                      <Input
-                        ref={inputRef}
-                        size="large"
-                        placeholder={selectedDeviceCode ? "Đặt trỏ chuột vào đây và quét..." : "Vui lòng chọn thiết bị trước"}
-                        value={scannedInput}
-                        onChange={(e) => setScannedInput(e.target.value)}
-                        onPressEnter={handleScanSerial}
-                        prefix={<ScanOutlined />}
-                        disabled={!selectedDeviceCode || isSaving}
-                        autoFocus
-                      />
-                      <Button type="primary" size="large" onClick={handleScanSerial} disabled={!selectedDeviceCode || isSaving} loading={isSaving} icon={<CheckCircleOutlined />}>
-                        Quét
-                      </Button>
-                    </Space.Compact>
-                  </Col>
-                </Row> */}
-
                 <Row gutter={16}>
                   {/* <Col xs={24} md={12}> */}
                   <Space direction="vertical" className="w-full" size="small">
@@ -334,24 +301,6 @@ export default function InventoryCheckPage() {
                       Nhập
                     </Button>
                   </Space>
-                  {/* </Col> */}
-
-                  {/* <Col xs={24} md={12}>
-                  <Space direction="vertical" className="w-full" size="small">
-                    <Text strong>Import từ file Excel</Text>
-                    <Dragger
-                      beforeUpload={() => false}
-                      showUploadList={false}
-                      onChange={() => message.info('Tính năng đang phát triển')}
-                    >
-                      <p className="ant-upload-drag-icon"><UploadOutlined /></p>
-                      <p className="ant-upload-text">Kéo thả file hoặc click để chọn</p>
-                    </Dragger>
-                    <Button block icon={<DownloadOutlined />} onClick={() => { }}>
-                      Tải template Excel
-                    </Button>
-                  </Space>
-                </Col> */}
                 </Row>
               </Space>
             </Card>

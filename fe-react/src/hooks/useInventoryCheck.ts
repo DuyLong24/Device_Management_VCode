@@ -38,7 +38,7 @@ export const useInventoryCheck = () => {
     const [otherCompletedItemsByModel, setOtherCompletedItemsByModel] = useState<Record<string, number>>({});
 
     const [selectedDeviceCode, setSelectedDeviceCode] = useState<string | null>(null);
-    const [deviceModels, setDeviceModels] = useState<any[]>([]); // [NEW]
+    const [deviceModels, setDeviceModels] = useState<any[]>([]);
 
     const inputRef = useRef<any>(null);
     const { playError, playSuccess } = useScanSound();

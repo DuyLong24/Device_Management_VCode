@@ -55,7 +55,7 @@ export default function CreateImportPage() {
                         {isEditMode ? 'Cập nhật phiếu nhập kho' : 'Thêm mới phiếu nhập kho'}
                     </Title>
                     <Text className="text-gray-500">
-                        {isEditMode ? 'Chỉnh sửa thông tin phiếu nhập' : 'Tạo phiếu nhập và khai báo Serial (nếu có)'}
+                        {isEditMode ? 'Chỉnh sửa thông tin phiếu nhập' : 'Tạo phiếu nhập và khai báo MAC (nếu có)'}
                     </Text>
                 </div>
                 <div className="flex flex-wrap gap-2">

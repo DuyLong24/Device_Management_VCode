@@ -53,14 +53,8 @@ export const DeviceListTable = ({ exportInfo }: DeviceListTableProps) => {
             align: 'center' as const,
             render: (value: number) => <Tag color="blue">{value}</Tag>,
         },
-        // {
-        //     title: 'Quy cách đóng gói',
-        //     dataIndex: 'packaging',
-        //     key: 'packaging',
-        //     width: 150,
-        // },
         {
-            title: 'Serial đã chọn',
+            title: 'Mac đã chọn',
             key: 'serialExport',
             width: 200,
             align: 'center' as const,
@@ -91,10 +85,10 @@ export const DeviceListTable = ({ exportInfo }: DeviceListTableProps) => {
             align: 'center' as const,
             render: (_: any, item: any) => {
                 if (item.serialExported === item.serialExpected) {
-                    return <Tag color="success" icon={<CheckCircleOutlined />}>Đủ serial</Tag>;
+                    return <Tag color="success" icon={<CheckCircleOutlined />}>Đủ mac</Tag>;
                 } else if (item.serialExported < item.serialExpected) {
                     return (
-                        <Tooltip title={`Thiếu ${item.serialExpected - item.serialExported} serial`}>
+                        <Tooltip title={`Thiếu ${item.serialExpected - item.serialExported} mac`}>
                             <Tag color="error" icon={<WarningOutlined />}>
                                 Thiếu mac
                             </Tag>
@@ -102,9 +96,9 @@ export const DeviceListTable = ({ exportInfo }: DeviceListTableProps) => {
                     );
                 } else {
                     return (
-                        <Tooltip title={`Thừa ${item.serialExported - item.serialExpected} serial`}>
+                        <Tooltip title={`Thừa ${item.serialExported - item.serialExpected} mac`}>
                             <Tag color="warning" icon={<WarningOutlined />}>
-                                Thừa serial
+                                Thừa mac
                             </Tag>
                         </Tooltip>
                     );

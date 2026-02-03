@@ -40,11 +40,11 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
 
     // Validate serial
     const validateSerial = (serial: string, currentList: ScannedSerial[]): { isValid: boolean; message?: string; item?: QCPendingItem } => {
-        if (!serial.trim()) return { isValid: false, message: 'Serial không được để trống' };
-        if (currentList.find(s => s.serial === serial)) return { isValid: false, message: 'Serial đã có trong danh sách' };
+        if (!serial.trim()) return { isValid: false, message: 'MAC không được để trống' };
+        if (currentList.find(s => s.serial === serial)) return { isValid: false, message: 'MAC đã có trong danh sách' };
 
         const item = dataSource.find(d => d.serial === serial);
-        if (!item) return { isValid: false, message: 'Serial không tồn tại trong danh sách chờ QC' };
+        if (!item) return { isValid: false, message: 'MAC không tồn tại trong danh sách chờ QC' };
 
         return { isValid: true, item };
     };
@@ -52,7 +52,7 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
     const handleAddPassSerial = () => {
         const serial = serialInput.trim();
         if (!serial) {
-            message.warning('Vui lòng nhập serial');
+            message.warning('Vui lòng nhập MAC');
             return;
         }
 
@@ -74,12 +74,12 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
         ]);
 
         setSerialInput('');
-        message.success(`Thêm serial ${serial} thành công`);
+        message.success(`Thêm MAC ${serial} thành công`);
         setTimeout(() => serialInputRef.current?.focus(), 100);
     };
 
     const scannedColumns: TableColumnsType<ScannedSerial> = [
-        { title: 'Serial', dataIndex: 'serial', key: 'serial', width: 200 },
+        { title: 'MAC', dataIndex: 'serial', key: 'serial', width: 200 },
         { title: 'Mã thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 130 },
         {
             title: 'Trạng thái',
@@ -142,13 +142,13 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
             ]}
         >
             <Space direction="vertical" size={16} className="w-full">
-                <Alert type="info" message="Quét serial để thêm vào danh sách QC Đạt." showIcon />
+                <Alert type="info" message="Quét MAC để thêm vào danh sách QC Đạt." showIcon />
 
-                <Card size="small" title="Nhập/Quét Serial">
+                <Card size="small" title="Nhập/Quét MAC">
                     <Space.Compact className="w-full">
                         <Input
                             ref={serialInputRef}
-                            placeholder="Nhập serial..."
+                            placeholder="Nhập MAC..."
                             value={serialInput}
                             onChange={(e) => setSerialInput(e.target.value)}
                             onPressEnter={handleAddPassSerial}

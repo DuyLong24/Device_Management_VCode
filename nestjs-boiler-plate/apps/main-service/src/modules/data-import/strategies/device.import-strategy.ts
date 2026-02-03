@@ -19,8 +19,6 @@ export class DeviceImportStrategy implements ImportStrategy {
         const mergeStrategy = context?.mergeStrategy || 'insert';
         const duplicateKey = context?.duplicateKey || 'mac';
 
-        // Pre-fetch existing devices
-        // TODO: If duplicateKey is serial, fetch by serial
         const existingDevices = await this.deviceService.findAll({ mac: { $in: macs } });
         const existingMacs = new Set(existingDevices.map(d => d.mac));
 
@@ -40,9 +38,6 @@ export class DeviceImportStrategy implements ImportStrategy {
             } else if (mergeStrategy === 'update') {
                 if (!exists) errors.push('MAC chưa tồn tại (Chế độ Cập nhật)');
             }
-            // 'upsert' accepts both, so no error here
-
-            // TODO: Validate Warehouse existence if provided
 
             results.push({
                 valid: errors.length === 0,
@@ -68,13 +63,12 @@ export class DeviceImportStrategy implements ImportStrategy {
                 mac: row.mac,
                 serial: row.serial,
                 deviceModel: row.deviceCode || row.deviceModel,
-                name: row.name || row.deviceCode || row.deviceModel, // Fallback name
-                warehouseId: row.warehouseId || context?.['warehouseId'], // Context might have general warehouse
+                name: row.name || row.deviceCode || row.deviceModel,
+                warehouseId: row.warehouseId || context?.['warehouseId'],
                 status: 'ACTIVE',
                 condition: 'NEW'
             };
 
-            // Filter out empty fields if skipEmpty is true (for Updates)
             if (skipEmpty) {
                 Object.keys(commonFields).forEach(key => {
                     if (commonFields[key] === undefined || commonFields[key] === '' || commonFields[key] === null) {
@@ -111,16 +105,9 @@ export class DeviceImportStrategy implements ImportStrategy {
         try {
             if (ops.length > 0) {
                 const result = await this.deviceService.bulkWrite(ops);
-                // MongoDB BulkWriteResult: nInserted, nUpserted, nModified
                 successCount = (result.insertedCount || 0) + (result.upsertedCount || 0) + (result.modifiedCount || 0);
 
-                // If using update only, nMatched might be useful too
                 if (mergeStrategy === 'update') {
-                    // modifiedCount only counts actual changes. matchedCount counts found docs.
-                    // But strictly speaking 'success' in update usually means 'applied'.
-                    // Let's stick to modified + inserted + upserted for now.
-                    // Or just use ops.length if no error thrown?
-                    // result.matchedCount includes those that matched but didn't change.
                     successCount = result.matchedCount || 0;
                 }
             }

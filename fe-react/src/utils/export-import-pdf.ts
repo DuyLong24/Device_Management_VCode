@@ -93,7 +93,7 @@ export const exportImportPDF = async (data: DeviceImport) => {
     // 5. Device Table
     autoTable(doc, {
         startY: y,
-        head: [['STT', 'Mã thiết bị (Model)', 'Số lượng', 'Quy cách', 'Serial đã nhập']],
+        head: [['STT', 'Mã thiết bị (Model)', 'Số lượng', 'Quy cách', 'MAC đã nhập']],
         body: data.devices.map((p, index) => [
             index + 1,
             p.deviceCode,

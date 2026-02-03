@@ -4,7 +4,7 @@ export const INVENTORY_LABELS = {
     BTN_CONTINUE: 'Tiếp tục kiểm kê',
     BTN_COMPLETE: 'Hoàn tất phiên',
     BTN_BACK: 'Quay lại',
-    SCAN_PLACEHOLDER: 'Quét mã Serial...',
+    SCAN_PLACEHOLDER: 'Quét mã MAC...',
     SCAN_AUTO_SUBMIT: 'Tự động gửi khi quét xong',
     SEARCH_PLACEHOLDER: 'Tìm kiếm',
     SESSION_INFO: 'Thông tin phiên',
@@ -18,6 +18,6 @@ export const INVENTORY_LABELS = {
     STATUS_COMPLETED: 'Đã hoàn thành',
 
     // Validation
-    DUPLICATE_SERIAL: 'Serial này đã được quét trong phiên!',
-    SCAN_SUCCESS: 'Đã quét thành công: {serial}'
+    DUPLICATE_SERIAL: 'Mac này đã được quét trong phiên!',
+    SCAN_SUCCESS: 'Đã quét thành công: {mac}'
 };

@@ -58,7 +58,7 @@ export const ScanInput = ({ onScan, onBulkScan, loading = false, disabled = fals
             <Space.Compact className="w-full mb-2">
                 <Input
                     ref={inputRef}
-                    placeholder="Quét serial..."
+                    placeholder="Quét mac "
                     value={inputValue}
                     onChange={e => setInputValue(e.target.value)}
                     onPressEnter={handleKeyScan}

@@ -49,9 +49,9 @@ export const ActualItemsTable = ({ items = [] }: ActualItemsTableProps) => {
     ];
 
     return (
-        <Card title={`Serial đã xuất (${items.length})`} className="shadow-sm mb-6">
+        <Card title={`Mac đã xuất (${items.length})`} className="shadow-sm mb-6">
             {items.length === 0 ? (
-                <Empty description="Chưa có serial nào được quét" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                <Empty description="Chưa có mac nào được quét" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             ) : (
                 <Table
                     columns={columns}

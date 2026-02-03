@@ -2,10 +2,10 @@ import * as XLSX from 'xlsx';
 import { message } from 'antd';
 
 /**
- * Parse file Excel và trích xuất serial từ cột được chỉ định
+ * Parse file Excel và trích xuất MAC từ cột được chỉ định
  * @param file File Excel cần parse
  * @param options Các tùy chọn cấu hình
- * @returns Mảng các chuỗi serial
+ * @returns Mảng các chuỗi MAC
  */
 export async function parseExcelSerials(
     file: File,
@@ -42,7 +42,7 @@ export async function parseExcelSerials(
                     }
                 }
 
-                message.success(`Đã đọc được ${serials.length} serial từ file Excel`);
+                message.success(`Đã đọc được ${serials.length} MAC từ file Excel`);
                 resolve(serials);
             } catch (err) {
                 console.error('Excel parsing error:', err);
@@ -61,18 +61,18 @@ export async function parseExcelSerials(
 }
 
 /**
- * Merge hai mảng serial và loại bỏ các phần tử trùng lặp (duplicate)
- * @param existing Các serial hiện có
- * @param newSerials Các serial mới cần merge
- * @returns Mảng các serial duy nhất (unique)
+ * Merge hai mảng MAC và loại bỏ các phần tử trùng lặp (duplicate)
+ * @param existing Các MAC hiện có
+ * @param newSerials Các MAC mới cần merge
+ * @returns Mảng các MAC duy nhất (unique)
  */
 export function mergeSerials(existing: string[], newSerials: string[]): string[] {
     return [...new Set([...existing, ...newSerials])];
 }
 
 /**
- * Validate định dạng serial (kiểm tra cơ bản)
- * @param serial Serial cần validate
+ * Validate định dạng MAC (kiểm tra cơ bản)
+ * @param serial MAC cần validate
  * @returns true nếu định dạng hợp lệ
  */
 export function isValidSerial(serial: string): boolean {

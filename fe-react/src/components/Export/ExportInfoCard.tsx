@@ -81,7 +81,7 @@ export const ExportInfoCard = ({ exportInfo, projectName }: ExportInfoCardProps)
                     </Col>
                     <Col xs={24} sm={8}>
                         <Statistic
-                            title="Serial đã chọn"
+                            title="Mac đã chọn"
                             value={serialExported}
                             suffix={`/ ${serialExpected}`}
                             valueStyle={{

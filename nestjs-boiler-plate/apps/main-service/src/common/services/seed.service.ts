@@ -387,7 +387,7 @@ export class SeedService implements OnModuleInit {
             // In Warranty -> Ready (Nhận lại dùng được)
             { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.READY_TO_EXPORT, type: TransitionType.RECEIVE_WARRANTY },
 
-            //  In Warranty -> Removed (Đổi mới - Serial cũ hủy)
+            //  In Warranty -> Removed (Đổi mới - MAC cũ hủy)
             { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.REMOVED, type: TransitionType.WARRANTY_REPLACE },
 
             //  In Warranty -> Pending QC (Sửa xong - Cần QC lại)

@@ -81,49 +81,11 @@ export default function ExportProcessPage() {
         fetchDetail();
     }, [id, sessionId]);
 
-    // Handle Scan
-    // const handleScanMac = async () => {
-    //     if (!scannedInput.trim() || !sessionId) return;
-    //     const code = scannedInput.trim();
-
-    //     // Local Duplicate Check
-    //     if (sessionItems.some((i: any) => i.serial === code)) {
-    //         playError();
-    //         messageApi.warning(`MAC ${code} đã được quét trong phiên này`);
-    //         setScannedInput('');
-    //         return;
-    //     }
-
-    //     setLoading(true);
-    //     try {
-    //         const res = await exportSessionService.scanSerial(sessionId, code);
-    //         playSuccess();
-    //         messageApi.success(`Đã quét: ${code}`);
-    //         setScannedInput('');
-
-    //         // Refresh items
-    //         setSessionItems(prev => [...prev, {
-    //             serial: code,
-    //             deviceCode: res.data?.items?.find((i: any) => i.serial === code)?.deviceCode || 'N/A',
-    //             scannedAt: new Date().toISOString()
-    //         }]);
-
-    //         const newCount = (sessionData?.serialChecked || 0) + 1;
-    //         setSessionData({ ...sessionData, serialChecked: newCount });
-
-    //     } catch (error: any) {
-    //         playError();
-    //         messageApi.error(error.response?.data?.message || 'Lỗi khi quét');
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
-
     const handleRemoveSerial = async (serial: string) => {
         if (!sessionId) return;
         try {
             await exportSessionService.removeSerial(sessionId, serial);
-            messageApi.success(`Đã xóa serial ${serial}`);
+            messageApi.success(`Đã xóa MAC ${serial}`);
 
             // Remove 
             setSessionItems(prev => prev.filter(item => item.serial !== serial));
@@ -133,7 +95,7 @@ export default function ExportProcessPage() {
             setSessionData({ ...sessionData, serialChecked: newCount });
 
         } catch (error: any) {
-            messageApi.error(error.response?.data?.message || 'Lỗi khi xóa serial');
+            messageApi.error(error.response?.data?.message || 'Lỗi khi xóa MAC');
         }
     };
 
@@ -146,12 +108,6 @@ export default function ExportProcessPage() {
         await processBulkScan(codes);
         setManualMacs('');
     };
-
-    // const handleFileImport = (file: File) => {
-    //     setFileList([file as unknown as UploadFile]);
-    //     messageApi.info('Tính năng import Excel đang được cập nhật');
-    //     return false;
-    // };
 
     const processBulkScan = async (codes: string[]) => {
         setLoading(true);
@@ -419,45 +375,8 @@ export default function ExportProcessPage() {
             {sessionData?.status !== 'COMPLETED' ? (
                 <Card title="Quét MAC xuất kho" className="mb-2">
                     <Space direction="vertical" className="w-full" size="middle">
-                        {/* <Alert
-                            message="Hướng dẫn quét mã MAC"
-                            description={
-                                <ul className="mb-0 list-disc pl-5 space-y-1">
-                                    <li>
-                                        <Text strong>MAC KHỚP:</Text>{' '}
-                                        MAC thuộc phiếu xuất và ở trạng thái &quot;Đã nhập kho&quot; (VD:
-                                        AA:BB:CC:DD:EE:FF)
-                                    </li>
-
-                                    <li>
-                                        <Text strong type="warning">
-                                            MAC THỪA:
-                                        </Text>{' '}
-                                        MAC KHÔNG thuộc phiếu xuất này
-                                    </li>
-
-                                    <li>
-                                        <Text strong type="danger">
-                                            MAC ĐÃ XUẤT:
-                                        </Text>{' '}
-                                        MAC đã được xuất kho trước đó, KHÔNG thể xuất lại
-                                    </li>
-
-                                    <li>
-                                        <Text strong type="danger">
-                                            Thiếu MAC:
-                                        </Text>{' '}
-                                        Cảnh báo nếu chưa đủ số lượng khi hoàn tất
-                                    </li>
-                                </ul>
-                            }
-                            type="info"
-                            showIcon
-                        /> */}
-
                         <Row gutter={16}>
                             <Space direction="vertical" className="w-full">
-                                {/* <Text strong>Nhập thủ công (Nhiều dòng)</Text> */}
                                 <Input.TextArea
                                     rows={5}
                                     placeholder="MAC-001&#10;MAC-002..."
@@ -476,7 +395,7 @@ export default function ExportProcessPage() {
             ) : (
                 <Alert
                     message="Phiên xuất kho này đã hoàn thành"
-                    description="Bạn không thể thêm hoặc xóa serial trong phiên đã hoàn thành."
+                    description="Bạn không thể thêm hoặc xóa MAC trong phiên đã hoàn thành."
                     type="success"
                     showIcon
                     className="mb-4"

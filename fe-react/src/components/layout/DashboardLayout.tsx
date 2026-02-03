@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu, Badge, Avatar, Dropdown, Breadcrumb, Space, Typography, Spin } from 'antd';
 import { useQuery } from '@tanstack/react-query';
-import { BellOutlined, UserOutlined, LoadingOutlined } from '@ant-design/icons';
+import { BellOutlined, UserOutlined, LoadingOutlined, AppstoreOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { warehouseService } from '../../services/warehouse.service';
 import type { Warehouse } from '../../types/warehouse.type';
@@ -152,6 +152,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 children: [
                     { key: MENU_KEYS.SYSTEM.USERS, icon: SECTION_ICONS.SYSTEM_USERS, label: MENU_LABELS.SYSTEM.USERS, onClick: () => navigate('/system/users') },
                     { key: MENU_KEYS.SYSTEM.ROLES, icon: SECTION_ICONS.SYSTEM_ROLES, label: MENU_LABELS.SYSTEM.ROLES, onClick: () => navigate('/system/roles') },
+                    { key: MENU_KEYS.SYSTEM.SHARED_DATA, icon: <AppstoreOutlined />, label: MENU_LABELS.SYSTEM.SHARED_DATA, onClick: () => navigate('/system/shared-data') },
                 ],
             },
         ];

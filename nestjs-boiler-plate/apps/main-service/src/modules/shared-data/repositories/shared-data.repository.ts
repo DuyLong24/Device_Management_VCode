@@ -54,4 +54,34 @@ export class SharedDataRepository {
             if (e.code !== 11000) console.error('Insert Data Error', e);
         });
     }
+
+    // Update/Delete Group
+    async updateGroup(id: string, data: any): Promise<SharedDataGroup | null> {
+        return this.groupModel.findByIdAndUpdate(id, data, { new: true }).exec();
+    }
+
+    async deleteGroup(id: string): Promise<SharedDataGroup | null> {
+        return this.groupModel.findByIdAndDelete(id).exec();
+    }
+
+    async findGroupById(id: string): Promise<SharedDataGroup | null> {
+        return this.groupModel.findById(id).exec();
+    }
+
+    // Update/Delete Data
+    async updateData(id: string, data: any): Promise<SharedData | null> {
+        return this.dataModel.findByIdAndUpdate(id, data, { new: true }).exec();
+    }
+
+    async deleteData(id: string): Promise<SharedData | null> {
+        return this.dataModel.findByIdAndDelete(id).exec();
+    }
+
+    async findDataById(id: string): Promise<SharedData | null> {
+        return this.dataModel.findById(id).exec();
+    }
+
+    async deleteDataByGroupId(groupId: string): Promise<any> {
+        return this.dataModel.deleteMany({ groupId }).exec();
+    }
 }

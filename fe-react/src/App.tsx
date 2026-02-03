@@ -20,6 +20,7 @@ import ExportProcessPage from './pages/Export/ExportProcessPage';
 import ExportCheckListPage from './pages/Export/ExportCheckListPage';
 import RoleManagementPage from './pages/RoleManagement/RoleManagementPage';
 import UserManagementPage from './pages/UserManagement/UserManagementPage';
+import SharedDataPage from './pages/SharedData/SharedDataPage';
 // import LoginPage from './pages/Auth/LoginPage';
 
 const queryClient = new QueryClient({
@@ -92,6 +93,7 @@ function App() {
                 <Route path="system" element={<PermissionRoute requiredRole="Super admin" />}>
                   <Route path="users" element={<UserManagementPage />} />
                   <Route path="roles" element={<RoleManagementPage />} />
+                  <Route path="shared-data" element={<SharedDataPage />} />
                 </Route>
                 <Route path="*" element={<div>404 Not Found</div>} />
               </Route>

@@ -1,7 +1,8 @@
 
-import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Query, Param } from '@nestjs/common';
 import { SharedDataService } from '../services/shared-data.service';
 import { CreateSharedDataDto, CreateSharedDataGroupDto } from '../dto/create-shared-data.dto';
+import { UpdateSharedDataDto, UpdateSharedDataGroupDto } from '../dto/update-shared-data.dto';
 
 @Controller('shared-data')
 export class SharedDataController {
@@ -27,5 +28,25 @@ export class SharedDataController {
         if (groupCode) return this.service.getDataByGroupCode(groupCode);
         if (groupId) return this.service.getDataByGroupId(groupId);
         return [];
+    }
+
+    @Put('groups/:id')
+    updateGroup(@Param('id') id: string, @Body() dto: UpdateSharedDataGroupDto) {
+        return this.service.updateGroup(id, dto);
+    }
+
+    @Delete('groups/:id')
+    deleteGroup(@Param('id') id: string) {
+        return this.service.deleteGroup(id);
+    }
+
+    @Put('data/:id')
+    updateData(@Param('id') id: string, @Body() dto: UpdateSharedDataDto) {
+        return this.service.updateData(id, dto);
+    }
+
+    @Delete('data/:id')
+    deleteData(@Param('id') id: string) {
+        return this.service.deleteData(id);
     }
 }

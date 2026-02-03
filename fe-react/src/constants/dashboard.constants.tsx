@@ -91,7 +91,8 @@ export const MENU_KEYS = {
     SYSTEM: {
         ROOT: 'system',
         USERS: 'user-management',
-        ROLES: 'role-permission'
+        ROLES: 'role-permission',
+        SHARED_DATA: 'shared-data'
     },
     USER: {
         PROFILE: 'profile',
@@ -120,7 +121,8 @@ export const MENU_LABELS = {
     SYSTEM: {
         ROOT: 'Quản trị hệ thống',
         USERS: 'Quản lý tài khoản',
-        ROLES: 'Quản lý vai trò & phân quyền'
+        ROLES: 'Quản lý vai trò & phân quyền',
+        SHARED_DATA: 'Dữ liệu dùng chung'
     },
     USER: {
         PROFILE: 'Thông tin tài khoản',

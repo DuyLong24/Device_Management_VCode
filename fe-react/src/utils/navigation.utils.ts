@@ -35,11 +35,9 @@ export const getActiveKeysFromPath = (path: string): { selectedKey: string, pare
     }
 
     // 2. Check Static Routes
-    // 2. Check Static Routes
     if (path.includes('/import/create')) return { selectedKey: MENU_KEYS.IMPORT.CREATE, parentKey: MENU_KEYS.IMPORT.ROOT };
     if (path.includes('/import/inventory-list') || path.includes('/import/inventory-check')) return { selectedKey: MENU_KEYS.IMPORT.INVENTORY, parentKey: MENU_KEYS.IMPORT.ROOT };
     if (path.includes('/import/list')) return { selectedKey: MENU_KEYS.IMPORT.LIST, parentKey: MENU_KEYS.IMPORT.ROOT };
-    // [FIX] Detail page check: If path contains /import/ but didn't match above, assume it's detail => highlight List
     if (path.includes('/import/')) return { selectedKey: MENU_KEYS.IMPORT.LIST, parentKey: MENU_KEYS.IMPORT.ROOT };
 
     if (path.includes('all-devices')) return { selectedKey: MENU_KEYS.ALL_DEVICES };
@@ -47,13 +45,13 @@ export const getActiveKeysFromPath = (path: string): { selectedKey: string, pare
     if (path.includes('/export/create')) return { selectedKey: MENU_KEYS.EXPORT.CREATE, parentKey: MENU_KEYS.EXPORT.ROOT };
     if (path.includes('/export/check')) return { selectedKey: MENU_KEYS.EXPORT.CHECK, parentKey: MENU_KEYS.EXPORT.ROOT };
     if (path.includes('/export/list')) return { selectedKey: MENU_KEYS.EXPORT.LIST, parentKey: MENU_KEYS.EXPORT.ROOT };
-    // [FIX] Detail page check for Export
     if (path.includes('/export/')) return { selectedKey: MENU_KEYS.EXPORT.LIST, parentKey: MENU_KEYS.EXPORT.ROOT };
 
     if (path.includes('warranty')) return { selectedKey: 'warranty-activation-list', parentKey: 'warranty' };
 
-    if (path.includes('/system/users')) return { selectedKey: 'user-management', parentKey: 'system' };
-    if (path.includes('/system/roles')) return { selectedKey: 'role-permission', parentKey: 'system' };
+    if (path.includes('/system/users')) return { selectedKey: MENU_KEYS.SYSTEM.USERS, parentKey: MENU_KEYS.SYSTEM.ROOT };
+    if (path.includes('/system/roles')) return { selectedKey: MENU_KEYS.SYSTEM.ROLES, parentKey: MENU_KEYS.SYSTEM.ROOT };
+    if (path.includes('/system/shared-data')) return { selectedKey: MENU_KEYS.SYSTEM.SHARED_DATA, parentKey: MENU_KEYS.SYSTEM.ROOT };
 
     return { selectedKey: MENU_KEYS.DASHBOARD };
 };

@@ -31,6 +31,7 @@ import { useMemo } from 'react';
 
 import { useInventoryCheck } from '../../hooks/useInventoryCheck';
 import { INVENTORY_LABELS } from '../../constants/inventory.constants';
+import { processScannerInput } from '../../utils/mac.util';
 
 // const { Dragger } = Upload;
 
@@ -324,7 +325,10 @@ export default function InventoryCheckPage() {
                       disabled={!selectedDeviceCode || isSaving}
                       rows={5}
                       value={manualSerials}
-                      onChange={(e) => setManualSerials(e.target.value)}
+                      onChange={(e) => {
+                        const cleanVal = processScannerInput(e.target.value);
+                        setManualSerials(cleanVal);
+                      }}
                     />
                     <Button block icon={<CheckCircleOutlined />} onClick={handleManualImport}>
                       Nhập

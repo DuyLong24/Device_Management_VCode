@@ -17,6 +17,7 @@ import dayjs from 'dayjs';
 import { exportService } from '../../services/export.service';
 import { exportSessionService } from '../../services/export-session.service';
 import { getExportStatusTag } from '../../utils/export-status.util';
+import { processScannerInput } from '../../utils/mac.util';
 import type { DeviceExport } from '../../types/export.type';
 // import { useScanSound } from '../../hooks/useScanSound';
 
@@ -461,7 +462,10 @@ export default function ExportProcessPage() {
                                     rows={5}
                                     placeholder="MAC-001&#10;MAC-002..."
                                     value={manualMacs}
-                                    onChange={e => setManualMacs(e.target.value)}
+                                    onChange={e => {
+                                        const cleanVal = processScannerInput(e.target.value);
+                                        setManualMacs(cleanVal);
+                                    }}
                                     disabled={loading}
                                 />
                                 <Button block onClick={handleManualImport} icon={<CheckCircleOutlined />} loading={loading}>Nhập danh sách</Button>

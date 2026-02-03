@@ -103,79 +103,7 @@ export class DeviceExportService {
     return deletedDeviceExport;
   }
 
-  async addItems(id: string, serials: string[]): Promise<DeviceExport> {
-    const exportRecord = await this.findById(id);
 
-    // 1. Validation: Chỉ đã duyệt và đang scan mới được scan
-    const allowedStatuses = [
-      ExportStatusEnum.APPROVED,
-      ExportStatusEnum.IN_PROGRESS
-    ];
-
-    if (!allowedStatuses.includes(exportRecord.status as any)) {
-      throw new BadRequestException(
-        `Không thể quét thiết bị khi phiếu chưa được Duyệt (Status: ${exportRecord.status}). Vui lòng gửi duyệt trước.`
-      );
-    }
-
-    // 2. Validate Devices
-    const devices = await this.deviceService.findByMacs(serials); // Serials here are actually MACs
-    const foundMacs = devices.map(d => d.mac);
-    const missingSerials = serials.filter(s => !foundMacs.includes(s));
-
-    if (missingSerials.length > 0) {
-      throw new BadRequestException(`Các mac sau không tồn tại: ${missingSerials.join(', ')}`);
-    }
-
-    const existingSerials = exportRecord.items.map(i => i.serial);
-    const duplicatesInExport = serials.filter(s => existingSerials.includes(s));
-    if (duplicatesInExport.length > 0) {
-      throw new BadRequestException(`Các mã mac sau đã có trong phiếu này: ${duplicatesInExport.join(', ')}`);
-    }
-
-    if (exportRecord.requirements && exportRecord.requirements.length > 0) {
-      for (const device of devices) {
-        const req = exportRecord.requirements.find(r => r.deviceCode === device.deviceModel);
-        if (!req) {
-          throw new BadRequestException(`Thiết bị ${device.deviceModel} (Mac: ${device.serial}) không có trong yêu cầu xuất kho.`);
-        }
-      }
-
-      const devicesByModel = devices.reduce((acc, d) => {
-        acc[d.deviceModel] = (acc[d.deviceModel] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      for (const [model, count] of Object.entries(devicesByModel)) {
-        const req = exportRecord.requirements.find(r => r.deviceCode === model);
-        if (!req) throw new BadRequestException(`Thiết bị ${model} không nằm trong kế hoạch xuất kho.`);
-
-        const currentScanned = exportRecord.items.filter(i => i.deviceCode === model).length;
-        if (Number(currentScanned) + Number(count) > Number(req.quantity)) {
-          throw new BadRequestException(`Thiết bị ${model} vượt quá số lượng yêu cầu (${Number(currentScanned) + Number(count)}/${req.quantity}).`);
-        }
-      }
-    }
-
-    const newItems = devices.map(d => ({
-      serial: d.serial,
-      deviceModel: d.deviceModel,
-      deviceCode: d.deviceModel,
-      exportPrice: 0
-    }));
-
-    const updateDto: any = {
-      items: [...exportRecord.items, ...newItems],
-      totalItems: exportRecord.items.length + newItems.length
-    };
-
-    // Tự động APPROVED -> IN_PROGRESS 
-    if (exportRecord.status === ExportStatusEnum.APPROVED) {
-      updateDto.status = ExportStatusEnum.IN_PROGRESS as any;
-    }
-
-    return this.update(id, updateDto);
-  }
 
   async submitForApproval(id: string): Promise<DeviceExport> {
     const exportRecord = await this.findById(id);
@@ -235,46 +163,7 @@ export class DeviceExportService {
     } as any);
   }
 
-  async confirm(id: string, userId?: string): Promise<DeviceExport> {
-    const exportRecord = await this.findById(id);
 
-    if (exportRecord.status === ExportStatusEnum.COMPLETED) {
-      throw new BadRequestException('Phiếu xuất đã hoàn thành');
-    }
-
-    if (exportRecord.items.length === 0) {
-      throw new BadRequestException('Chưa có thiết bị nào được quét');
-    }
-
-    let activationDate: Date | null = null;
-    let targetWarehouseCode = 'SOLD'; // Default
-
-    const reason = exportRecord.exportReason || exportRecord.type;
-    if (reason === 'WARRANTY') {
-      targetWarehouseCode = 'IN_WARRANTY'; // Trong bảo hành
-    } else if (reason === 'SALE') {
-      targetWarehouseCode = 'SOLD'; // Đã bán
-      // Kiểm tra ngày kích hoạt
-      if (exportRecord.activationDays > 0) {
-        targetWarehouseCode = 'NOT_ACTIVATED';
-        const today = new Date();
-        activationDate = new Date(today.setDate(today.getDate() + exportRecord.activationDays));
-      } else {
-        targetWarehouseCode = 'SOLD';
-        activationDate = new Date();
-      }
-    } else if (reason === 'TRANSFER') {
-      targetWarehouseCode = 'TRANSFERRED'; // Chuyển kho
-    }
-
-    const serials = exportRecord.items.map(i => i.serial);
-    await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord.code, userId, activationDate, id);
-
-    return this.update(id, {
-      status: ExportStatus.COMPLETED,
-      exportDate: new Date()
-    } as any);
-  }
   async getInventoryStatus(model: string): Promise<{ inStock: number; reserved: number; available: number }> {
     const inStock = await this.deviceService.countReadyToExport(model);
 

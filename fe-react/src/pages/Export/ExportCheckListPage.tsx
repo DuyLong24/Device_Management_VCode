@@ -151,23 +151,7 @@ export default function ExportCheckListPage() {
         setFilteredData(result);
     };
 
-    // const handleConfirmExport = (record: DeviceExport) => {
-    //     modal.confirm({
-    //         title: 'Xác nhận hoàn tất phiếu xuất kho?',
-    //         content: `Bạn có chắc chắn muốn hoàn tất phiếu "${record.code}"? Hành động này sẽ khóa phiếu và cập nhật tồn kho.`,
-    //         okText: 'Hoàn tất',
-    //         cancelText: 'Hủy',
-    //         onOk: async () => {
-    //             try {
-    //                 await exportService.confirm(record.id || record._id!);
-    //                 messageApi.success('Đã hoàn tất phiếu xuất kho');
-    //                 fetchData();
-    //             } catch (error) {
-    //                 messageApi.error('Lỗi khi hoàn tất phiếu');
-    //             }
-    //         }
-    //     });
-    // };
+
 
     const columns: TableColumnsType<DeviceExport> = [
         {
@@ -232,18 +216,7 @@ export default function ExportCheckListPage() {
                             Quét xuất kho
                         </Button>
 
-                        {/* {record.status !== 'COMPLETED' && (
-                            <Button
-                                type="primary"
-                                size="small"
-                                icon={<CheckCircleOutlined />}
-                                disabled={!isCompleteEnabled}
-                                onClick={() => handleConfirmExport(record)}
-                                title={!isCompleteEnabled ? 'Chưa đủ số lượng để hoàn tất' : 'Hoàn tất phiếu xuất kho'}
-                            >
-                                Xuất kho
-                            </Button>
-                        )} */}
+
                     </Space>
                 );
             },

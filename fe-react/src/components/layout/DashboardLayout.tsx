@@ -103,6 +103,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 label: MENU_LABELS.DASHBOARD,
                 onClick: () => navigate('/dashboard'),
             },
+            { type: 'divider' },
+            {
+                key: MENU_KEYS.ALL_DEVICES,
+                icon: SECTION_ICONS.ALL_DEVICES,
+                label: renderBadgeLabel(MENU_LABELS.ALL_DEVICES),
+                onClick: () => navigate('/all-devices'),
+            },
             {
                 key: MENU_KEYS.IMPORT.ROOT,
                 icon: SECTION_ICONS.IMPORT,
@@ -115,11 +122,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             },
             { type: 'divider' },
             {
-                key: MENU_KEYS.ALL_DEVICES,
-                icon: SECTION_ICONS.ALL_DEVICES,
-                label: renderBadgeLabel(MENU_LABELS.ALL_DEVICES),
-                onClick: () => navigate('/all-devices'),
+                key: MENU_KEYS.EXPORT.ROOT,
+                icon: SECTION_ICONS.EXPORT,
+                label: MENU_LABELS.EXPORT.ROOT,
+                children: [
+                    { key: MENU_KEYS.EXPORT.LIST, icon: SECTION_ICONS.EXPORT_LIST, label: MENU_LABELS.EXPORT.LIST, onClick: () => navigate('/export/list') },
+                    { key: MENU_KEYS.EXPORT.CREATE, icon: SECTION_ICONS.EXPORT_CREATE, label: MENU_LABELS.EXPORT.CREATE, onClick: () => navigate('/export/create') },
+                    { key: MENU_KEYS.EXPORT.CHECK, icon: SECTION_ICONS.EXPORT_CHECK, label: MENU_LABELS.EXPORT.CHECK, onClick: () => navigate('/export/check') },
+                ],
             },
+            { type: 'divider' },
             {
                 key: MENU_KEYS.INTERNAL_GROUP,
                 icon: SECTION_ICONS.INTERNAL,
@@ -131,17 +143,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 icon: SECTION_ICONS.EXPORTED,
                 label: MENU_LABELS.EXPORTED_GROUP,
                 children: exportedItems.length > 0 ? exportedItems : undefined,
-            },
-            { type: 'divider' },
-            {
-                key: MENU_KEYS.EXPORT.ROOT,
-                icon: SECTION_ICONS.EXPORT,
-                label: MENU_LABELS.EXPORT.ROOT,
-                children: [
-                    { key: MENU_KEYS.EXPORT.LIST, icon: SECTION_ICONS.EXPORT_LIST, label: MENU_LABELS.EXPORT.LIST, onClick: () => navigate('/export/list') },
-                    { key: MENU_KEYS.EXPORT.CREATE, icon: SECTION_ICONS.EXPORT_CREATE, label: MENU_LABELS.EXPORT.CREATE, onClick: () => navigate('/export/create') },
-                    { key: MENU_KEYS.EXPORT.CHECK, icon: SECTION_ICONS.EXPORT_CHECK, label: MENU_LABELS.EXPORT.CHECK, onClick: () => navigate('/export/check') },
-                ],
             },
             { type: 'divider' },
             {
@@ -214,17 +215,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         { title: currentBreadcrumbTitle }
     ];
 
-    // Detect Detail Page (Import)
     if (selectedKey === MENU_KEYS.IMPORT.LIST && !location.pathname.endsWith('/list') && location.pathname.includes('/import/')) {
         breadcrumbItems.push({ title: 'Chi tiết phiếu nhập' });
     }
-    // Detect Detail Page (Export)
     if (selectedKey === MENU_KEYS.EXPORT.LIST && !location.pathname.endsWith('/list') && location.pathname.includes('/export/')) {
         breadcrumbItems.push({ title: 'Chi tiết phiếu xuất' });
     }
-    // Detect Detail Page (Warehouse Devices -> Serial Detail)
     if (!selectedKey.startsWith('warehouse-') && location.pathname.includes('/serial/')) {
-        // Override for Serial Detail if needed, or if it falls into All Serials
         if (selectedKey === MENU_KEYS.ALL_DEVICES) {
             breadcrumbItems.push({ title: 'Chi tiết thiết bị' });
         }

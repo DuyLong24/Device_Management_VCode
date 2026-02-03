@@ -99,10 +99,7 @@ export class DeviceExportController {
     return this.deviceExportService.delete(id);
   }
 
-  @Post(':id/items')
-  async addItems(@Param('id') id: string, @Body() body: { serials: string[] }) {
-    return this.deviceExportService.addItems(id, body.serials);
-  }
+
 
   @Post(':id/submit')
   async submitForApproval(@Param('id') id: string) {
@@ -133,16 +130,7 @@ export class DeviceExportController {
     return this.deviceExportService.reject(id, body.reason);
   }
 
-  @Post(':id/confirm')
-  async confirm(@Param('id') id: string, @Request() req: any) {
-    if (!req.user) {
-      throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
-    }
-    const user = await this.userService.syncFromKeycloak(req.user);
-    const userId = user._id.toString();
 
-    return this.deviceExportService.confirm(id, userId);
-  }
 
   // === EXPORT SESSIONS ===
 

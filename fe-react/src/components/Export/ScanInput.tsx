@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Card, Input, Button, Space, Typography } from 'antd';
 import { ScanOutlined, ImportOutlined } from '@ant-design/icons';
 import { BulkInputModal } from '../../components/common/BulkInputModal';
+import { isValidMac } from '../../utils/mac.util';
 
 const { Text } = Typography;
 
@@ -20,6 +21,13 @@ export const ScanInput = ({ onScan, onBulkScan, loading = false, disabled = fals
     const handleKeyScan = () => {
         const val = inputValue.trim();
         if (val) {
+            // Validate MAC
+            if (!isValidMac(val)) {
+                setInputValue('');
+                setTimeout(() => inputRef.current?.focus(), 100);
+                return;
+            }
+
             onScan(val);
             setInputValue('');
             // Keep focus

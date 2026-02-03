@@ -3,6 +3,7 @@ import { Modal, Tabs, Input, Button, Upload, Alert, message, Typography } from '
 import { FileTextOutlined, FileExcelOutlined, UploadOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import * as XLSX from 'xlsx';
+import { processScannerInput } from '../../utils/mac.util';
 
 const { TextArea } = Input;
 const { Text, Title } = Typography;
@@ -126,7 +127,10 @@ export const BulkInputModal = ({
                                 rows={10}
                                 placeholder="SN-001&#10;SN-002&#10;SN-003..."
                                 value={tempSerials}
-                                onChange={(e) => setTempSerials(e.target.value)}
+                                onChange={(e) => {
+                                    const cleanVal = processScannerInput(e.target.value);
+                                    setTempSerials(cleanVal);
+                                }}
                                 className="font-mono text-sm"
                             />
                             <div className="flex justify-between mt-2 text-gray-500 text-xs">

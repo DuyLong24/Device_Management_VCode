@@ -31,13 +31,7 @@ export const exportService = {
         return axiosInstance.get<DeviceExport>(`/device-exports/${id}`);
     },
 
-    addItems: async (id: string, serials: string[]) => {
-        return axiosInstance.post<DeviceExport>(`/device-exports/${id}/items`, { serials });
-    },
 
-    confirm: async (id: string) => {
-        return axiosInstance.post<DeviceExport>(`/device-exports/${id}/confirm`);
-    },
 
     submitForApproval: async (id: string) => {
         return axiosInstance.post<DeviceExport>(`/device-exports/${id}/submit`);

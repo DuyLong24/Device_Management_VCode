@@ -10,6 +10,8 @@ import { ExportSessionRepository } from './repositories/export-session.repositor
 import { DevicesModule } from '../devices/devices.module';
 import { WarehousesModule } from '../warehouses/warehouses.module';
 import { UsersModule } from '../../users/users.module';
+import { MailModule } from '../../common/mail/mail.module';
+import { ExportNotificationTask } from './tasks/export-notification.task';
 
 @Module({
   imports: [
@@ -19,10 +21,11 @@ import { UsersModule } from '../../users/users.module';
     ]),
     forwardRef(() => DevicesModule),
     WarehousesModule,
-    UsersModule
+    UsersModule,
+    MailModule
   ],
   controllers: [DeviceExportController],
-  providers: [DeviceExportService, ExportSessionService, DeviceExportRepository, ExportSessionRepository],
+  providers: [DeviceExportService, ExportSessionService, DeviceExportRepository, ExportSessionRepository, ExportNotificationTask],
   exports: [DeviceExportService, ExportSessionService, DeviceExportRepository, ExportSessionRepository]
 })
 export class DeviceExportModule { }

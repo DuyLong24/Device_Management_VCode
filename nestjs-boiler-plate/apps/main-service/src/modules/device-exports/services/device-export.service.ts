@@ -125,7 +125,6 @@ export class DeviceExportService {
     }
 
     // Check Assigned Approver
-    // Check Assigned Approver
     if (exportRecord.assignedApprover) {
       const assignedId = (exportRecord.assignedApprover as any)._id
         ? (exportRecord.assignedApprover as any)._id.toString()

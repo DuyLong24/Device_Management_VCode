@@ -31,6 +31,7 @@ import { WarehousesModule } from './modules/warehouses/warehouses.module';
 import { WarehouseTransitionsModule } from './modules/warehouse-transitions/warehouse-transitions.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { DevicesModule } from './modules/devices/devices.module';
+import { MailModule } from './common/mail/mail.module';
 import { DeviceImportModule } from './modules/device-imports/device-imports.module';
 import { DeviceExportModule } from './modules/device-exports/device-exports.module';
 import { DeviceHistoryModule } from './modules/device-histories/device-historys.module';
@@ -117,33 +118,16 @@ import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activat
       { name: Category.name, schema: CategorySchema },
       { name: DeviceImport.name, schema: DeviceImportSchema },
     ]),
-    // Cấu hình Kafka client để giao tiếp với Upload Service
-    // ClientsModule.register([
-    //   {
-    //     name: SERVICES.UPLOAD_SERVICE,
-    //     transport: Transport.KAFKA,
-    //     options: {
-    //       client: {
-    //         ...KAFKA_CLIENT_CONFIG,
-    //         clientId: 'main-service',
-    //       },
-    //       consumer: {
-    //         groupId: 'main-service-consumer',
-    //       },
-    //     },
-    //   },
-    // ]),
-    // AuthModule,
     UsersModule,
     FncRoleModule,
     TokenModule,
     PolicyAdminModule,
-    // FileModule, // Module mới để xử lý file upload qua Kafka
     WarehouseGroupsModule,
     WarehousesModule,
     WarehouseTransitionsModule,
     CategoriesModule,
     DevicesModule,
+    MailModule,
     DeviceImportModule,
     DeviceExportModule,
     DeviceHistoryModule,
@@ -169,10 +153,6 @@ import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activat
       useClass: CustomRoleGuard,
     },
 
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: OpaAuthorizationGuard,
-    // },
   ],
 })
 

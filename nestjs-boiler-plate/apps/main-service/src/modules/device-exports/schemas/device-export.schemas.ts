@@ -125,6 +125,13 @@ export class DeviceExport extends Document {
 
   @Prop()
   exportDate: Date;
+
+  @Prop({ default: false })
+  isSubmitNotified: boolean;
+
+  @Prop({ default: false })
+  isResultNotified: boolean;
+
   declare id?: string;
 }
 

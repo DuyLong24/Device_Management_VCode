@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Thông báo Kết quả Duyệt Phiếu</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .status-approved {
+            background-color: #52c41a;
+        }
+
+        .status-rejected {
+            background-color: #f5222d;
+        }
+
+        .info-box {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 4px;
+            border-left: 4px solid #ddd;
+            margin: 20px 0;
+        }
+
+        .approved-border {
+            border-left-color: #52c41a;
+        }
+
+        .rejected-border {
+            border-left-color: #f5222d;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #eee;
+            color: #333;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            {{#if isApproved}}
+            <div class="status-badge status-approved">ĐÃ ĐƯỢC PHÊ DUYỆT</div>
+            <h1 style="color: #333; margin: 10px 0 0;">Phiếu Xuất kho Hoàn Tất</h1>
+            {{else}}
+            <div class="status-badge status-rejected">ĐÃ BỊ TỪ CHỐI</div>
+            <h1 style="color: #333; margin: 10px 0 0;">Phiếu Xuất kho Bị Từ chối</h1>
+            {{/if}}
+        </div>
+
+        <p>Xin chào <strong>{{creatorName}}</strong>,</p>
+
+        {{#if isApproved}}
+        <p>Tin vui! Phiếu xuất kho của bạn gửi đã được phê duyệt bởi <strong>{{approverName}}</strong>.</p>
+        <div class="info-box approved-border">
+            {{else}}
+            <p>Rất tiếc, phiếu xuất kho của bạn đã bị từ chối bởi <strong>{{approverName}}</strong>.</p>
+            <div class="info-box rejected-border">
+                {{/if}}
+
+                <p><span class="label">Mã phiếu:</span> {{code}}</p>
+                <p><span class="label">Dự án:</span> {{projectName}}</p>
+                <p><span class="label">Thời gian duyệt:</span> {{approvedDate}}</p>
+
+                {{#unless isApproved}}
+                <p style="margin-top: 15px;"><span class="label" style="color: #f5222d;">Lý do từ chối:</span></p>
+                <p style="background: #fff1f0; padding: 10px; border-radius: 4px; color: #cf1322;">{{rejectedReason}}
+                </p>
+                {{/unless}}
+            </div>
+
+            <p>Bạn có thể truy cập hệ thống để xem chi tiết hoặc thực hiện các bước tiếp theo.</p>
+
+            <div style="text-align: center; margin-top: 25px;">
+                <a href="{{link}}" class="button">Xem chi tiết phiếu</a>
+            </div>
+
+            <div class="footer">
+                <p>Đây là email tự động. Vui lòng không trả lời email này.</p>
+                <p>&copy; 2026 Device Management System</p>
+            </div>
+        </div>
+</body>
+
+</html>

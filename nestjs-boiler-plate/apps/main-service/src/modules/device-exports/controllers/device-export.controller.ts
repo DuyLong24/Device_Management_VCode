@@ -15,6 +15,7 @@ import {
 import { Roles } from 'nest-keycloak-connect';
 import { DeviceExportService } from '../services/device-export.service';
 import { ExportSessionService } from '../services/export-session.service';
+import { ExportNotificationTask } from '../tasks/export-notification.task';
 import { CreateDeviceExportDto } from '../dto/create-device-export.dto';
 import { CreateExportSessionDto } from '../dto/create-export-session.dto';
 
@@ -28,7 +29,8 @@ export class DeviceExportController {
   constructor(
     private readonly deviceExportService: DeviceExportService,
     private readonly exportSessionService: ExportSessionService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly exportNotificationTask: ExportNotificationTask
   ) { }
 
 
@@ -179,6 +181,11 @@ export class DeviceExportController {
     const userId = user._id.toString();
 
     return this.exportSessionService.completeSession(id, userId);
+  }
+
+  @Post('trigger-notifications')
+  async triggerNotifications() {
+    return this.exportNotificationTask.processAllNotifications();
   }
 }
 

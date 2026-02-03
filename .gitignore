@@ -42,3 +42,5 @@ coverage/
 
 operations-and-design/
 .agent/
+
+curl.txt

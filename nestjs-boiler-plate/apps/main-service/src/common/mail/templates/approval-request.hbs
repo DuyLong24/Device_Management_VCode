@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Yêu cầu Duyệt Phiếu Xuất kho</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 2px solid #1890ff; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { color: #1890ff; margin: 0; font-size: 24px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .info-item { background: #f9f9f9; padding: 10px; border-radius: 4px; }
+        .label { font-size: 12px; color: #888; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 5px; }
+        .value { font-size: 14px; font-weight: 500; color: #000; }
+        .table-wrapper { margin: 20px 0; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { background: #fafafa; padding: 10px; text-align: left; border-bottom: 2px solid #eee; color: #666; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        .cta-button { display: inline-block; background-color: #1890ff; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 20px; text-align: center; }
+        .cta-button:hover { background-color: #096dd9; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #999; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Yêu cầu Duyệt Phiếu Xuất kho</h1>
+            <p style="margin-top: 10px; color: #666;">Bạn có một phiếu xuất kho mới cần phê duyệt</p>
+        </div>
+
+        <p>Xin chào <strong>{{approverName}}</strong>,</p>
+        <p>Hệ thống Device Management vừa ghi nhận một yêu cầu xuất kho mới được gán cho bạn. Vui lòng kiểm tra và xử lý:</p>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="label">Mã phiếu</span>
+                <span class="value">{{code}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Người tạo</span>
+                <span class="value">{{creatorName}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Dự án</span>
+                <span class="value">{{projectName}}</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Khách hàng</span>
+                <span class="value">{{customer}}</span>
+            </div>
+        </div>
+
+        <p><strong>Lý do xuất kho:</strong> {{exportReason}}</p>
+
+        <h3>Danh sách thiết bị (Tóm tắt)</h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Model</th>
+                        <th>Tên thiết bị</th>
+                        <th>Số lượng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each items}}
+                    <tr>
+                        <td>{{inc @index}}</td>
+                        <td>{{this.deviceCode}}</td>
+                        <td>{{this.deviceName}}</td>
+                        <td><strong>{{this.quantity}}</strong></td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="{{link}}" class="cta-button">Truy cập Hệ thống để Duyệt</a>
+        </div>
+
+        <div class="footer">
+            <p>Đây là email tự động. Vui lòng không trả lời email này.</p>
+            <p>&copy; 2026 Device Management System</p>
+        </div>
+    </div>
+</body>
+</html>

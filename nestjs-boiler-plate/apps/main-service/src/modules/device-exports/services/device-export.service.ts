@@ -125,11 +125,16 @@ export class DeviceExportService {
     }
 
     // Check Assigned Approver
+    // Check Assigned Approver
     if (exportRecord.assignedApprover) {
-      const assignedId = exportRecord.assignedApprover.toString();
+      const assignedId = (exportRecord.assignedApprover as any)._id
+        ? (exportRecord.assignedApprover as any)._id.toString()
+        : exportRecord.assignedApprover.toString();
+
       const currentUserId = user._id.toString();
+
       if (assignedId !== currentUserId) {
-        throw new ForbiddenException('Bạn không được chỉ định duyệt phiếu này.');
+        throw new ForbiddenException(`Bạn không được chỉ định duyệt phiếu này.`);
       }
     }
 

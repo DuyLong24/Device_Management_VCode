@@ -268,8 +268,18 @@ export default function SerialDetailPage() {
                     {(device.warrantyActivatedDate || device.warrantyExpiredDate) && (
                         <Card title="Thông tin bảo hành" size="small">
                             <Descriptions column={1} size="small">
+                                <Descriptions.Item label="Thời hạn">{device.warrantyMonths ? `${device.warrantyMonths} tháng` : '-'}</Descriptions.Item>
                                 <Descriptions.Item label="Kích hoạt">{device.warrantyActivatedDate ? dayjs(device.warrantyActivatedDate).format('DD/MM/YYYY') : '-'}</Descriptions.Item>
                                 <Descriptions.Item label="Hết hạn">{device.warrantyExpiredDate ? dayjs(device.warrantyExpiredDate).format('DD/MM/YYYY') : '-'}</Descriptions.Item>
+                                {device.warrantyExpiredDate && (
+                                    <Descriptions.Item label="Trạng thái">
+                                        {dayjs(device.warrantyExpiredDate).isAfter(dayjs()) ? (
+                                            <Tag color="green">Còn hạn</Tag>
+                                        ) : (
+                                            <Tag color="red">Hết hạn</Tag>
+                                        )}
+                                    </Descriptions.Item>
+                                )}
                             </Descriptions>
                         </Card>
                     )}

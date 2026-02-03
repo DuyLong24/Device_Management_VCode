@@ -56,12 +56,17 @@ export interface DeviceExport {
     createdBy?: any;
     approvedBy?: any;
     assignedApprover?: any;
+
+    activationDays?: number;
+    defaultWarrantyMonths?: number;
 }
 
 export interface CreateExportDto {
     exportName?: string;
     type: string;
     exportReason?: string;
+    activationDays?: number;
+    defaultWarrantyMonths?: number;
     project?: string;
     receiver?: string;
     receiverPerson?: string;

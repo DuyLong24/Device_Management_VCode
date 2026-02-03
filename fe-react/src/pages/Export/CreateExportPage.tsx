@@ -298,13 +298,26 @@ export default function CreateExportPage() {
                         </Col>
                         <Col xs={24} md={12}>
                             <Form.Item
+                                name="defaultWarrantyMonths"
+                                label="Thời hạn bảo hành (Tháng)"
+                                initialValue={12}
+                            >
+                                <InputNumber min={0} className="w-full" addonAfter="Tháng" />
+                            </Form.Item>
+                        </Col>
+
+                    </Row>
+
+                    <Row gutter={16}>
+                        <Col xs={24} md={8}>
+                            <Form.Item
                                 name="customer"
                                 label="Khách hàng"
                             >
                                 <Input />
                             </Form.Item>
                         </Col>
-                        <Col span={24}>
+                        <Col xs={24} md={16}>
                             <Form.Item
                                 name="deliveryAddress"
                                 label="Địa chỉ giao hàng"

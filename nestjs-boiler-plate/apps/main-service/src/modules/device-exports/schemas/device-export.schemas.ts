@@ -104,6 +104,9 @@ export class DeviceExport extends Document {
   @Prop({ default: 0 })
   activationDays: number; // 0 = Kích hoạt ngay, > 0 = Kích hoạt sau
 
+  @Prop({ default: 12 })
+  defaultWarrantyMonths: number; // Mặc định 12 tháng
+
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   createdBy: User;

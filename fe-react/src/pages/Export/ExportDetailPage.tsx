@@ -56,10 +56,6 @@ export default function ExportDetailPage() {
     const projectName = projects.find(p => p.code === exportInfo?.project)?.name || exportInfo?.project;
 
     // Access Control Logic
-    console.log('--- DEBUG PERMISSIONS ---');
-    console.log('CurrentUser:', user);
-    console.log('AssignedTo:', exportInfo.assignedApprover);
-
     const isAssigned = (() => {
         if (!exportInfo?.assignedApprover || !user) return false;
 

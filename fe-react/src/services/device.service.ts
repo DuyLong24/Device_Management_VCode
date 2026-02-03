@@ -25,6 +25,7 @@ export interface Device {
     warehouseUpdatedAt?: string;
     qcNote?: string;
     warrantyActivatedDate?: string;
+    warrantyMonths?: number;
     warrantyExpiredDate?: string;
     createdAt?: string;
     updatedAt?: string;

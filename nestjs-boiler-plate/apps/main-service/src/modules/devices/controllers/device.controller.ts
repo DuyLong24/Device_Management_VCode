@@ -241,4 +241,9 @@ export class DeviceController implements OnModuleInit {
   ): Promise<ValidateMacsResponse> {
     return this.deviceValidationService.validateMacs(dto);
   }
+
+  @Post('trigger-warranty-check')
+  async triggerWarrantyCheck() {
+    return this.deviceService.processWarrantyExpirationCheck();
+  }
 }

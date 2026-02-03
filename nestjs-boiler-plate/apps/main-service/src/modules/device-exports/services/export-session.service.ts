@@ -143,19 +143,14 @@ export class ExportSessionService {
         const warnings: { serial: string; warning: string }[] = [];
         const uniqueMacs = [...new Set(serials)];
 
-        // Pre-fetch all devices for performance
         const devices = await this.deviceService.findByMacs(uniqueMacs);
         const deviceMap = new Map();
         devices.forEach(d => deviceMap.set(d.mac, d));
 
-        // Get Ready Warehouse ID Once
         const readyWarehouse = await this.warehouseRepository.findOne({ code: 'READY_TO_EXPORT' });
 
         for (const serial of uniqueMacs) {
             try {
-                // Custom validate for bulk passing pre-fetched data if possible, but validateScan is robust
-                // For bulk, let's call validateScan but we need to handle "Device Not Found" cleanly
-                // Optimization: Re-implement checks here to avoid N queries
 
                 // 1. Session Duplicate
                 if (session.items.some(i => i.serial === serial)) {
@@ -303,7 +298,15 @@ export class ExportSessionService {
             ? (session.exportId as any)._id.toString()
             : (session.exportId as any).toString();
 
-        await this.deviceService.moveDevicesToWarehouse(serials, targetWarehouseCode, exportRecord?.code || 'EXPORT-SESSION', userId, activationDate, exportIdStr);
+        await this.deviceService.moveDevicesToWarehouse(
+            serials,
+            targetWarehouseCode,
+            exportRecord?.code || 'EXPORT-SESSION',
+            userId,
+            activationDate,
+            exportIdStr,
+            exportRecord?.defaultWarrantyMonths
+        );
 
         const sessionUpdateResult = await this.exportSessionRepository.update(sessionId, {
             status: ExportSessionStatus.COMPLETED,

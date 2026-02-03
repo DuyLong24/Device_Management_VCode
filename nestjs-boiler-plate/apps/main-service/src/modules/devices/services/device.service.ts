@@ -230,16 +230,9 @@ export class DeviceService implements OnModuleInit {
     return result;
   }
 
-  async moveDevicesToWarehouse(macs: string[], targetWarehouseCode: string, exportCode: string, userId?: string, activationDate?: Date, exportId?: string): Promise<void> {
-    console.log(`[DEBUG] moveDevicesToWarehouse called with:`, {
-      macsCount: macs.length,
-      targetWarehouseCode,
-      exportCode,
-      macs: macs.slice(0, 3)
-    });
+  async moveDevicesToWarehouse(macs: string[], targetWarehouseCode: string, exportCode: string, userId?: string, activationDate?: Date, exportId?: string, warrantyMonths?: number): Promise<void> {
 
     const targetWarehouse = await this.warehouseService.findByCode(targetWarehouseCode);
-    console.log(`[DEBUG] Target warehouse found:`, targetWarehouse ? { id: targetWarehouse._id, name: targetWarehouse.name, code: targetWarehouse.code } : 'NOT FOUND');
 
     if (!targetWarehouse) {
       throw new BadRequestException(`Kho đích "${targetWarehouseCode}" không tồn tại`);
@@ -250,7 +243,6 @@ export class DeviceService implements OnModuleInit {
       $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }]
     }).exec();
 
-    console.log(`[DEBUG] Found ${devicesToMove.length} devices to move`);
 
     const updatePayload: any = {
       warehouseId: targetWarehouse._id,
@@ -268,7 +260,15 @@ export class DeviceService implements OnModuleInit {
     }
 
     if (targetWarehouse.code === 'SOLD') {
-      updatePayload.warrantyActivatedDate = activationDate || new Date();
+      const activatedDate = activationDate || new Date();
+      updatePayload.warrantyActivatedDate = activatedDate;
+
+      if (warrantyMonths && warrantyMonths > 0) {
+        updatePayload.warrantyMonths = warrantyMonths;
+        const expiredDate = new Date(activatedDate);
+        expiredDate.setMonth(expiredDate.getMonth() + warrantyMonths);
+        updatePayload.warrantyExpiredDate = expiredDate;
+      }
     }
 
     const result = await this.deviceModel.updateMany(
@@ -359,6 +359,40 @@ export class DeviceService implements OnModuleInit {
 
     // Chuyển tới kho Đang bảo hành
     await this.moveDevicesToWarehouse(serials, 'SOLD', 'AUTO-WARRANTY-ACTIVATION', 'SYSTEM');
+
+    return { processedCount: serials.length };
+  }
+
+  async processWarrantyExpirationCheck(): Promise<{ processedCount: number }> {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    // 1. Tìm các thiết bị trong kho SOLD (Đang bảo hành) mà đã đễn ngày hết hạn
+    const soldWarehouse = await this.warehouseService.findByCode('SOLD');
+    if (!soldWarehouse) {
+      this.logger.warn('Kho SOLD không tồn tại, bỏ qua kiểm tra hết hạn bảo hành.');
+      return { processedCount: 0 };
+    }
+
+    const devicesToExpire = await this.deviceModel.find({
+      warehouseId: soldWarehouse._id,
+      warrantyExpiredDate: { $lte: today }
+    }).select('mac').exec();
+
+    if (devicesToExpire.length === 0) {
+      return { processedCount: 0 };
+    }
+
+    const serials = devicesToExpire.map(d => d.mac);
+    this.logger.warn(`Found ${serials.length} devices to expire warranty: ${serials.join(', ')}`);
+
+    // 2. Chuyển sang kho Hết hạn bảo hành (SOLD_WARRANTY)
+    await this.moveDevicesToWarehouse(
+      serials,
+      'SOLD_WARRANTY',
+      'AUTO-WARRANTY-EXPIRATION',
+      'SYSTEM_EXPIRATION'
+    );
 
     return { processedCount: serials.length };
   }

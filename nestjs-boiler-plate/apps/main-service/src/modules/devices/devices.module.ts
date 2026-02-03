@@ -14,7 +14,9 @@ import { DeviceHistory, DeviceHistorySchema } from '../device-histories/schemas/
 import { ExcelModule } from '../../common/excel/excel.module';
 import { WarehousesModule } from '../warehouses/warehouses.module';
 import { UsersModule } from '../../users/users.module';
-import { SharedDataModule } from '../shared-data/shared-data.module'; // Added
+import { SharedDataModule } from '../shared-data/shared-data.module';
+import { WarrantyActivationTask } from './tasks/warranty-activation.task';
+import { WarrantyExpirationTask } from './tasks/warranty-expiration.task';
 
 @Module({
   imports: [
@@ -29,7 +31,7 @@ import { SharedDataModule } from '../shared-data/shared-data.module'; // Added
     SharedDataModule,
   ],
   controllers: [DeviceController],
-  providers: [DeviceService, DeviceStatsService, DeviceTransferService, DeviceValidationService, DeviceRepository],
+  providers: [DeviceService, DeviceStatsService, DeviceTransferService, DeviceValidationService, DeviceRepository, WarrantyActivationTask, WarrantyExpirationTask],
   exports: [DeviceService, DeviceStatsService, DeviceTransferService, DeviceValidationService, DevicesModule],
 })
 export class DevicesModule { }

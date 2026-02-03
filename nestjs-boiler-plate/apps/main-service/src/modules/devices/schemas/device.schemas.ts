@@ -66,6 +66,9 @@ export class Device extends Document {
   warrantyActivatedDate?: Date;
 
   @Prop()
+  warrantyMonths?: number; // Thời gian bảo hành (tháng)
+
+  @Prop()
   activationDate?: Date; // Ngày kích hoạt
 
 

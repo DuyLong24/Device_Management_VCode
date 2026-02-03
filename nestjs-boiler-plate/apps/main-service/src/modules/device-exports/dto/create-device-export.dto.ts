@@ -66,6 +66,10 @@ export class CreateDeviceExportDto {
   activationDays?: number;
 
   @IsOptional()
+  @IsNumber()
+  defaultWarrantyMonths?: number;
+
+  @IsOptional()
   @IsString()
   assignedApprover?: string;
 }

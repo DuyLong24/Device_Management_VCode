@@ -124,7 +124,7 @@ export default function RoleManagementPage() {
     ];
 
     return (
-        <div className="p-6">
+        <div className="p-3">
             {/* Page Header */}
             <div className="mb-6">
                 <div className="flex justify-between items-center">

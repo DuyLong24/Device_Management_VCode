@@ -159,30 +159,26 @@ export default function WarehousePage() {
     };
 
     const getColumnDef = (colConfig: { key: string; title: string; type: string }) => {
-        let key = colConfig.key;
-        if (key === 'model') key = 'deviceModel';
+        const rawKey = String(colConfig.key || '');
+        const dataKey = rawKey === 'model' ? 'deviceModel' : rawKey;
 
         const base = {
-            title: titleMap(colConfig),
-            key: key,
-            dataIndex: key,
+            title: colConfig.title || titleMap(colConfig),
+            key: dataKey,
+            dataIndex: dataKey,
         };
-        base.title = colConfig.title || base.title;
 
-        if (colConfig.key === 'mac') {
+        if (rawKey === 'mac') {
             return {
                 ...base,
                 render: (text: string) => (
-                    <Button
-                        type="link"
-                        className="p-0"
-                        onClick={() => navigate(`/serial/${text}`)}
-                    >
+                    <Button type="link" className="p-0" onClick={() => navigate(`/serial/${text}`)}>
                         {text}
                     </Button>
                 )
             };
         }
+
         if (colConfig.type === 'action') {
             return {
                 ...base,
@@ -195,7 +191,6 @@ export default function WarehousePage() {
                         type="text"
                         icon={<EyeOutlined />}
                         size="small"
-                        title="Xem chi tiết"
                         onClick={() => navigate(`/serial/${record.mac}`)}
                     >
                         Chi tiết
@@ -203,20 +198,42 @@ export default function WarehousePage() {
                 )
             };
         }
-        if (colConfig.type === 'date' || colConfig.key.includes('Date') || colConfig.key.includes('At')) {
+
+        if (
+            colConfig.type === 'date' ||
+            rawKey.includes('Date') ||
+            rawKey.includes('At')
+        ) {
             return {
                 ...base,
-                render: (date: string) => date ? new Date(date).toLocaleDateString('vi-VN') : '-'
+                render: (date: string) =>
+                    date ? new Date(date).toLocaleDateString('vi-VN') : '-'
             };
         }
 
-        if (colConfig.key === 'deviceModel' || colConfig.key === 'model') {
+        if (rawKey === 'importBy' || rawKey.includes('importId')) {
             return {
                 ...base,
-                render: (text: string, record: any) => {
-                    const value = text || record.deviceModel || record.model;
-                    // console.log('Rendering DeviceModel:', { text, recordValue: value, record });
-                    return <Text>{value || '--'}</Text>;
+                render: (_: any, record: any) => {
+                    const name =
+                        record?.importId?.createdBy?.name ??
+                        record?.importedBy;
+
+                    return <Text>{name || '--'}</Text>;
+                }
+            };
+        }
+
+        if (rawKey === 'qcBy' || rawKey.includes('qcBy')) {
+            return {
+                ...base,
+                render: (_: any, record: any) => {
+                    const name =
+                        typeof record?.qcBy === 'object'
+                            ? record?.qcBy?.name
+                            : record?.qcBy;
+
+                    return <Text>{name || '--'}</Text>;
                 }
             };
         }
@@ -230,8 +247,10 @@ export default function WarehousePage() {
             mac: 'MAC Address',
             name: 'Tên thiết bị',
             model: 'Mã Model',
-            deviceModel: 'Mã Model', // Updated
+            deviceModel: 'Mã Model',
             importDate: 'Ngày nhập',
+            importBy: 'Người nhập',
+            qcBy: 'Người QC',
             qcStatus: 'QC Status',
             qcNote: 'QC Note',
         };
@@ -285,17 +304,9 @@ export default function WarehousePage() {
     if (!code) return null;
 
     return (
-        <div className="p-3">
+        <div className="p-2">
             {/* Header */}
             <div className="mb-1">
-                {/* <Button
-                    type="link"
-                    icon={<ArrowLeftOutlined />}
-                    onClick={() => navigate('/dashboard')}
-                    className="pl-0 mb-2"
-                >
-                    Quay lại Danh sách tổng
-                </Button> */}
                 <div className="flex justify-between items-center">
                     <div>
                         <Title level={3} className="!m-0">

@@ -174,9 +174,9 @@ export default function UserManagementPage() {
     ];
 
     return (
-        <div style={{ padding: 24 }}>
-            <div style={{ marginBottom: 24 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className='p-3'>
+            <div className="mb-4">
+                <div className="flex justify-between items-center">
                     <div>
                         <Title level={3} style={{ margin: 0 }}>
                             Quản lý tài khoản

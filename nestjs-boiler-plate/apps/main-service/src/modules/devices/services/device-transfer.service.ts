@@ -58,9 +58,11 @@ export class DeviceTransferService {
 
         if (transition.transitionType === 'QC_PASS') {
             device.qcStatus = 'PASS';
+            device.qcBy = userId as any;
         } else if (transition.transitionType === 'QC_FAIL') {
             device.qcStatus = 'FAIL';
             if (errorReason) device.qcNote = errorReason;
+            device.qcBy = userId as any;
         }
 
         const toWarehouse = await this.warehouseService.findById(toWarehouseId);

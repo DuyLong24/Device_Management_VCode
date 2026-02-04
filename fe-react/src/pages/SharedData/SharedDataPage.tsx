@@ -152,20 +152,26 @@ export default function SharedDataPage() {
             {/* RIGHT: Data List */}
             <Card
                 className="flex-1 h-full shadow-sm flex flex-col"
-                bodyStyle={{ padding: 0, height: '100%', display: 'flex', flexDirection: 'column' }}
-                title={
+                styles={{
+                    body: {
+                        padding: 0,
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                    }
+                }} title={
                     selectedGroup ? (
-                        <div className="flex justify-between items-center w-full pr-4">
+                        <div className="flex justify-between items-center w-full pr-4 gap-4">
                             <Space>
                                 <AppstoreOutlined className="text-blue-500" />
                                 <span>Dữ liệu: <Text strong>{selectedGroup.name}</Text></span>
                             </Space>
                             <Input
-                                placeholder="Tìm kiếm tên, mã..."
+                                placeholder="Tìm kiếm tên, mã."
                                 prefix={<SearchOutlined className="text-gray-400" />}
                                 value={searchText}
                                 onChange={handleSearch}
-                                className="w-[250px]"
+                                className="w-[150px]"
                                 allowClear
                             />
                         </div>

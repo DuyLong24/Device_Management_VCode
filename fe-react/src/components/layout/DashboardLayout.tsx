@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Badge, Avatar, Dropdown, Breadcrumb, Space, Typography, Spin } from 'antd';
+import { Layout, Menu, Badge, Avatar, Dropdown, Breadcrumb, Space, Typography } from 'antd';
 import { useQuery } from '@tanstack/react-query';
-import { BellOutlined, UserOutlined, LoadingOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { BellOutlined, UserOutlined, AppstoreOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { warehouseService } from '../../services/warehouse.service';
 import type { Warehouse } from '../../types/warehouse.type';
@@ -44,7 +44,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const { notifications, unreadCount, markAsRead, markAllRead } = useNotification();
 
     // Logic lấy dữ liệu kho từ API
-    const { data: warehouses, isLoading } = useQuery({
+    const { data: warehouses } = useQuery({
         queryKey: ['warehouses'],
         queryFn: warehouseService.getAll,
     });
@@ -273,28 +273,33 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 onCollapse={setCollapsed}
                 width={280}
                 style={{
-                    overflowY: 'scroll',
-                    overflowX: 'hidden',
                     height: '100vh',
                     position: 'fixed',
                     left: 0,
                     top: 0,
-                    bottom: 0,
                     zIndex: 100,
                 }}
                 className="bg-[#001529]"
                 theme="dark"
             >
+                {/* Header */}
                 <div className="flex items-center justify-center p-4 border-b border-gray-700 bg-[#001529] sticky top-0 z-10">
                     <img src={logoImage} alt="Logo" className={collapsed ? "w-8 h-8" : "w-10 h-10"} />
-                    {!collapsed && <span className="text-white font-semibold ml-2 text-base">Quản lý kho Alvar</span>}
+                    {!collapsed && (
+                        <span className="text-white font-semibold ml-2 text-base">
+                            Quản lý kho Alvar
+                        </span>
+                    )}
                 </div>
 
-                {isLoading ? (
-                    <div className="flex justify-center mt-10">
-                        <Spin indicator={<LoadingOutlined className="text-2xl text-white" spin />} />
-                    </div>
-                ) : (
+                {/* Scroll area */}
+                <div
+                    className="overflow-y-auto"
+                    style={{
+                        height: 'calc(100vh - 64px)', // trừ chiều cao header
+                        paddingBottom: 48, // chừa chỗ cho trigger
+                    }}
+                >
                     <Menu
                         theme="dark"
                         mode="inline"
@@ -304,7 +309,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         items={filteredMenuItems as any}
                         className="border-r-0"
                     />
-                )}
+                </div>
             </Sider>
 
             <Layout

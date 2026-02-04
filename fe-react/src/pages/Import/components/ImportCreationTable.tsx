@@ -149,7 +149,7 @@ export const ImportCreationTable: React.FC<ImportCreationTableProps> = ({
         <Card
             title={<span className="text-lg font-semibold">Danh sách thiết bị ({deviceList.length})</span>}
             className="shadow-sm border-gray-200"
-            bordered={false}
+            variant="borderless"
             extra={
                 <Space>
                     <Button icon={<ImportOutlined />} onClick={onOpenWizard}>Import Excel Tổng</Button>

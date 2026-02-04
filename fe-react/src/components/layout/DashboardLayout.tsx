@@ -17,7 +17,7 @@ import {
 } from '../../constants/dashboard.constants';
 import { findMenuItemLabel, getActiveKeysFromPath } from '../../utils/navigation.utils';
 import { useAuth } from '../../hooks/useAuth';
-import { useNotification } from '../../contexts/NotificationContext';
+import { useNotification } from '../../contexts/useNotification';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/vi';

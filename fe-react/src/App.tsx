@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import enUS from 'antd/locale/en_US';
 import DashboardLayout from './components/layout/DashboardLayout';
 import { PermissionRoute } from './components/routes/PermissionRoute';
-import { NotificationProvider } from './contexts/NotificationContext';
+import { NotificationProvider } from './contexts/NotificationProvider';
 
 import ImportListPage from './pages/Import/ImportListPage';
 import CreateImportPage from './pages/Import/CreateImportPage';

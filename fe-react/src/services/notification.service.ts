@@ -13,7 +13,7 @@ export interface Notification {
 export const notificationService = {
     getAll: async (): Promise<Notification[]> => {
         const response = await axiosInstance.get('/notifications');
-        return response.data;
+        return response.data.results || response.data;
     },
 
     markAsRead: async (id: string): Promise<Notification> => {

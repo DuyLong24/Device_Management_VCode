@@ -79,7 +79,7 @@ export default function SerialDetailPage() {
     const isRemoved = currentWarehouse?.code === 'REMOVED';
 
     return (
-        <div className="p-6">
+        <div className="p-3">
             {/* Page Header */}
             <div className="mb-6">
                 <div className="flex justify-between items-start">

@@ -48,7 +48,7 @@ export default function ResetPasswordModal({ visible, user, onSuccess, onCancel,
             <Alert
                 type="warning"
                 message={`Reset mật khẩu cho: ${user?.email}`}
-                style={{ marginBottom: 16 }}
+                className="mb-4"
             />
 
             <Form

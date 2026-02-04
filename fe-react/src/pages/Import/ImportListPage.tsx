@@ -251,8 +251,8 @@ export default function ImportListPage() {
             render: (text, record) => (
                 <Button
                     type="link"
-                    onClick={() => handleViewDetail(record.key)} style={{ padding: 0 }}
-                    className="whitespace-nowrap">
+                    onClick={() => handleViewDetail(record.key)}
+                    className="p-0 whitespace-nowrap">
                     {text}
                 </Button>
             ),
@@ -363,7 +363,7 @@ export default function ImportListPage() {
                 }
             />
 
-            <div className="mt-6">
+            <div className="mt-3">
                 <StatisticsCards cards={statisticsCards} />
             </div>
 

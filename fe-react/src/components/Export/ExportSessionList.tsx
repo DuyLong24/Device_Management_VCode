@@ -69,7 +69,7 @@ export const ExportSessionList = ({ sessions, onCreateSession, onContinueSession
     ];
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mt-6">
+        <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 mt-3">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Danh sách phiên xuất kho</h3>
                 {canCreate && (

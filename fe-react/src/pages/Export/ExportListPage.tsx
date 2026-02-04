@@ -83,8 +83,7 @@ const ExportListPage = () => {
             render: (text: string, record: DeviceExport) => (
                 <Button
                     type="link"
-                    className="whitespace-nowrap"
-                    style={{ padding: 0 }}
+                    className="whitespace-nowrap p-0"
                     onClick={() => handleViewDetail(record.id || record._id || '', record.status === 'DRAFT')}
                 >
                     {text}
@@ -251,7 +250,7 @@ const ExportListPage = () => {
     ];
 
     return (
-        <div className="p-6">
+        <div className="p-3">
             <PageHeader
                 title="Danh sách phiếu xuất kho"
                 subtitle="Quản lý các phiếu xuất kho thiết bị"

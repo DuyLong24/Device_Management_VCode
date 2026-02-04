@@ -52,7 +52,7 @@ export const Step1_Upload: React.FC<Step1Props> = ({ onUploadFile, onConfigChang
                     <Form layout="inline">
                         <Form.Item label="Chọn Sheet dữ liệu">
                             <Select
-                                style={{ width: 200 }}
+                                className="w-[200px]"
                                 value={config.sheetName}
                                 onChange={v => onConfigChange(v, config.headerRow)}
                                 options={session.sheets.map(s => ({ label: s, value: s }))}

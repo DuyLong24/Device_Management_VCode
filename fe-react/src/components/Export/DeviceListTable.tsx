@@ -59,7 +59,7 @@ export const DeviceListTable = ({ exportInfo }: DeviceListTableProps) => {
             width: 200,
             align: 'center' as const,
             render: (_: any, item: any) => (
-                <Space direction="vertical" size={0} style={{ width: '100%' }}>
+                <Space direction="vertical" size={0} className="w-full">
                     <div className="flex justify-between text-xs mb-1">
                         <Text strong>
                             {item.serialExported}/{item.serialExpected}

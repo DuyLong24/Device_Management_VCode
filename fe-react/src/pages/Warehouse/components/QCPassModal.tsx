@@ -124,7 +124,7 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
 
     return (
         <Modal
-            title={<Space><CheckCircleOutlined style={{ color: '#52c41a' }} /><span>Tiếp nhận thiết bị đạt QC</span></Space>}
+            title={<Space><CheckCircleOutlined className="text-green-500" /><span>Tiếp nhận thiết bị đạt QC</span></Space>}
             open={open}
             onCancel={onCancel}
             width={1000}

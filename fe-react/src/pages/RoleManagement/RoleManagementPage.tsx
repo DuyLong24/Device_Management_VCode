@@ -15,6 +15,7 @@ import {
     ReloadOutlined,
     EyeOutlined,
     SafetyOutlined,
+    InfoCircleOutlined,
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import { roleService } from '../../services/role.service';
@@ -64,10 +65,8 @@ export default function RoleManagementPage() {
             render: (name, record) => (
                 <Space>
                     <SafetyOutlined
-                        style={{
-                            color: roleConfig[record.code]?.color || '#1890ff',
-                            fontSize: 16
-                        }}
+                        className="text-base"
+                        style={{ color: roleConfig[record.code]?.color || '#1890ff' }}
                     />
                     <Tag color={roleConfig[record.code]?.color || 'default'}>
                         {roleConfig[record.code]?.label || name}
@@ -125,13 +124,28 @@ export default function RoleManagementPage() {
     ];
 
     return (
-        <div style={{ padding: 24 }}>
+        <div className="p-6">
             {/* Page Header */}
-            <div style={{ marginBottom: 24 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="mb-6">
+                <div className="flex justify-between items-center">
                     <div>
-                        <Title level={3} style={{ margin: 0 }}>
-                            Quản lý vai trò & phân quyền
+                        <Title level={3} className="!m-0">
+                            <Space>
+                                Quản lý vai trò & phân quyền
+                                <Tooltip
+                                    title={
+                                        <div className="text-[13px]">
+                                            <div className="mb-1.5 font-bold">Lưu ý:</div>
+                                            <div>• Hệ thống có <strong>3 vai trò cố định</strong> (Super Admin, Admin, User)</div>
+                                            <div>• Chỉ <strong>Super Admin</strong> mới được chỉnh sửa phân quyền</div>
+                                            <div>• Các vai trò khác chỉ có quyền xem (read-only)</div>
+                                        </div>
+                                    }
+                                    placement="right"
+                                >
+                                    <InfoCircleOutlined className="text-base text-blue-500 cursor-help" />
+                                </Tooltip>
+                            </Space>
                         </Title>
                         <Text type="secondary">Xem và cấu hình phân quyền cho từng vai trò</Text>
                     </div>
@@ -144,31 +158,6 @@ export default function RoleManagementPage() {
                 </div>
             </div>
 
-            {/* Info Alert */}
-            <Card
-                size="small"
-                style={{
-                    marginBottom: 16,
-                    backgroundColor: '#e6f7ff',
-                    borderColor: '#91d5ff'
-                }}
-            >
-                <Space direction="vertical" size={4}>
-                    <Text strong style={{ color: '#0050b3' }}>
-                        Lưu ý:
-                    </Text>
-                    <Text style={{ color: '#0050b3' }}>
-                        • Hệ thống có <strong>3 vai trò cố định</strong> (Super Admin, Admin, User), không thể thêm/xóa vai trò mới
-                    </Text>
-                    <Text style={{ color: '#0050b3' }}>
-                        • Chỉ <strong>Super Admin</strong> mới được chỉnh sửa phân quyền
-                    </Text>
-                    <Text style={{ color: '#0050b3' }}>
-                        • Các vai trò khác chỉ có quyền xem (read-only)
-                    </Text>
-                </Space>
-            </Card>
-
             {/* Error Alert */}
             {error && (
                 <Alert
@@ -177,16 +166,16 @@ export default function RoleManagementPage() {
                     type="error"
                     closable
                     onClose={() => setError(null)}
-                    style={{ marginBottom: 16 }}
+                    className="mb-4"
                 />
             )}
 
             {/* Table */}
             <Card size="small">
                 {loading && !roles.length ? (
-                    <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                    <div className="text-center py-10">
                         <Spin size="large" />
-                        <div style={{ marginTop: 16 }}>
+                        <div className="mt-4">
                             <Text type="secondary">Đang tải dữ liệu...</Text>
                         </div>
                     </div>

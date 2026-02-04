@@ -63,7 +63,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <span>{label}</span>
                 <Badge
                     count={count}
-                    style={{ backgroundColor: color, boxShadow: 'none', marginLeft: 8 }}
+                    className="shadow-none ml-2"
+                    style={{ backgroundColor: color }}
                     overflowCount={9999}
                     size="small"
                 />
@@ -237,7 +238,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         {!noti.isRead && <span className="w-2 h-2 rounded-full bg-blue-500 mt-1"></span>}
                     </div>
                     <Text className="text-xs text-gray-500 block truncate">{noti.message}</Text>
-                    <Text type="secondary" style={{ fontSize: 11 }}>{dayjs(noti.createdAt).fromNow()}</Text>
+                    <Text type="secondary" className="text-[11px]">{dayjs(noti.createdAt).fromNow()}</Text>
                 </div>
             )
         })) : [{ key: 'empty', label: <Text type="secondary" className="block text-center py-4">Không có thông báo nào</Text>, disabled: true }]),

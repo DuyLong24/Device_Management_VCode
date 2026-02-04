@@ -145,7 +145,7 @@ export const BulkInputModal = ({
                     children: (
                         <div className="p-8 text-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
                             <div className="mb-4">
-                                <FileExcelOutlined style={{ fontSize: 48, color: '#52c41a' }} />
+                                <FileExcelOutlined className="text-[48px] text-green-500" />
                             </div>
                             <Title level={5}>Tải lên file Excel</Title>
                             <Text type="secondary" className="block mb-4">

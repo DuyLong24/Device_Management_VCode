@@ -175,7 +175,7 @@ export default function WarehousePage() {
                 render: (text: string) => (
                     <Button
                         type="link"
-                        style={{ padding: 0 }}
+                        className="p-0"
                         onClick={() => navigate(`/serial/${text}`)}
                     >
                         {text}
@@ -285,7 +285,7 @@ export default function WarehousePage() {
     if (!code) return null;
 
     return (
-        <div className="p-6">
+        <div className="p-3">
             {/* Header */}
             <div className="mb-1">
                 {/* <Button

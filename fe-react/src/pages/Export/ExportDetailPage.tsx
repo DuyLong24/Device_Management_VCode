@@ -106,7 +106,7 @@ export default function ExportDetailPage() {
     }
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-3 max-w-7xl mx-auto">
             {/* Header */}
             <div className="mb-4 flex justify-between items-center">
                 <Space>

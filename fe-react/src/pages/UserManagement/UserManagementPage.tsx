@@ -195,7 +195,7 @@ export default function UserManagementPage() {
                 </div>
             </div>
 
-            <Card size="small" style={{ marginBottom: 16 }}>
+            <Card size="small" className="mb-4">
                 <Space wrap>
                     <Input
                         placeholder="Tìm theo email hoặc tên"

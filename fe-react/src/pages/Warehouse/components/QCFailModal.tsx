@@ -127,7 +127,7 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
 
     return (
         <Modal
-            title={<Space><CloseCircleOutlined style={{ color: '#ff4d4f' }} /><span>Tiếp nhận thiết bị Không đạt</span></Space>}
+            title={<Space><CloseCircleOutlined className="text-red-500" /><span>Tiếp nhận thiết bị Không đạt</span></Space>}
             open={open}
             onCancel={onCancel}
             width={1000}

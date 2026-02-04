@@ -86,7 +86,7 @@ export default function SharedDataPage() {
     ];
 
     return (
-        <div className="h-[calc(100vh-140px)] flex gap-6">
+        <div className="h-[calc(100vh-140px)] flex gap-3">
             {/* LEFT: Group List */}
             <Card
                 className="w-1/3 h-full overflow-hidden flex flex-col shadow-sm"
@@ -165,7 +165,7 @@ export default function SharedDataPage() {
                                 prefix={<SearchOutlined className="text-gray-400" />}
                                 value={searchText}
                                 onChange={handleSearch}
-                                style={{ width: 250 }}
+                                className="w-[250px]"
                                 allowClear
                             />
                         </div>
@@ -202,7 +202,7 @@ export default function SharedDataPage() {
                 ) : (
                     <div className="flex items-center justify-center h-full text-gray-400">
                         <Space direction="vertical" align="center">
-                            <AppstoreOutlined style={{ fontSize: 48 }} />
+                            <AppstoreOutlined className="text-[48px]" />
                             <span>Vui lòng chọn danh mục bên trái</span>
                         </Space>
                     </div>

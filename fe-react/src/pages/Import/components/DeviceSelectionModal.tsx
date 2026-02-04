@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Tabs, Typography, Input, Button, Upload, message, Tooltip } from 'antd';
-import { FileTextOutlined, FileExcelOutlined, UploadOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { FileTextOutlined, FileExcelOutlined, UploadOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import * as XLSX from 'xlsx';
 
@@ -77,7 +77,7 @@ export const DeviceSelectionModal: React.FC<DeviceSelectionModalProps> = ({
                 <div className="flex items-center gap-2">
                     <span>Nhập danh sách MAC</span>
                     <Tooltip title="Bạn có thể nhập thủ công (mỗi MAC 1 dòng) hoặc tải lên file Excel (cột A chứa MAC).">
-                        <QuestionCircleOutlined className="text-gray-400 cursor-pointer text-sm font-normal" />
+                        <InfoCircleOutlined className="text-gray-400 cursor-pointer text-sm font-normal" />
                     </Tooltip>
                 </div>
             }
@@ -109,7 +109,7 @@ export const DeviceSelectionModal: React.FC<DeviceSelectionModalProps> = ({
                 <TabPane tab={<span><FileExcelOutlined /> Upload Excel</span>} key="excel">
                     <div className="p-8 text-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
                         <div className="mb-4">
-                            <FileExcelOutlined style={{ fontSize: 48, color: '#52c41a' }} />
+                            <FileExcelOutlined className="text-[48px] text-green-500" />
                         </div>
                         <Title level={5}>Tải lên file danh sách MAC</Title>
                         <Text type="secondary" className="block mb-4">

@@ -3,7 +3,7 @@ import {
     Card, Button, Table, Tag, Typography, Alert, message, Modal, Space, Form, Input, Select, Divider, Spin, Progress, Popover
 } from 'antd';
 import {
-    ReloadOutlined, PlusOutlined, SearchOutlined, QuestionCircleOutlined
+    ReloadOutlined, PlusOutlined, SearchOutlined, InfoCircleOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
@@ -178,7 +178,7 @@ export default function ExportCheckListPage() {
                     ? Math.round(((record.totalItems || 0) / record.totalQuantity) * 100)
                     : 0;
                 return (
-                    <div style={{ width: 150 }}>
+                    <div className="w-[150px]">
                         <Progress percent={percent} size="small" />
                         <div className="text-xs text-gray-500">
                             {record.totalItems || 0} / {record.totalQuantity}
@@ -224,7 +224,7 @@ export default function ExportCheckListPage() {
     ];
 
     return (
-        <div className="p-6">
+        <div className="p-3">
             {contextHolder}
             {modalContextHolder}
             <Space align="center" className="mb-4">
@@ -232,7 +232,7 @@ export default function ExportCheckListPage() {
                 <Popover
                     title="Hướng dẫn"
                     content={
-                        <div style={{ maxWidth: 400 }}>
+                        <div className="max-w-[400px]">
                             <Text>Chọn phiếu xuất để tiến hành quét MAC (Xuất kho thực tế):</Text>
                             <ul className="mt-2 mb-0 pl-5">
                                 <li>
@@ -245,7 +245,7 @@ export default function ExportCheckListPage() {
                         </div>
                     }
                 >
-                    <QuestionCircleOutlined className="text-gray-400 cursor-pointer text-lg hover:text-blue-500 transition-colors" />
+                    <InfoCircleOutlined className="text-gray-400 cursor-pointer text-lg hover:text-blue-500 transition-colors" />
                 </Popover>
             </Space>
 

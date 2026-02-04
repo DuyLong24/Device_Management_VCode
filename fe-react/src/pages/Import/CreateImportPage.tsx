@@ -47,7 +47,7 @@ export default function CreateImportPage() {
     } = useCreateImport();
 
     return (
-        <main className="p-6 pb-24 max-w-none mx-auto">
+        <main className="p-3 pb-24 max-w-none mx-auto">
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-1 gap-4">
                 <div>
@@ -55,7 +55,7 @@ export default function CreateImportPage() {
                         {isEditMode ? 'Cập nhật phiếu nhập kho' : 'Thêm mới phiếu nhập kho'}
                     </Title>
                     <Text className="text-gray-500">
-                        {isEditMode ? 'Chỉnh sửa thông tin phiếu nhập' : 'Tạo phiếu nhập và khai báo MAC (nếu có)'}
+                        {isEditMode ? 'Chỉnh sửa thông tin phiếu nhập' : 'Tạo phiếu nhập'}
                     </Text>
                 </div>
                 <div className="flex flex-wrap gap-2">

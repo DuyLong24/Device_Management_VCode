@@ -217,7 +217,7 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
                     <Button onClick={onCancel}>Hủy</Button>
                     <div>
                         {currentStep > 0 && (
-                            <Button style={{ margin: '0 8px' }} onClick={prev}>
+                            <Button className="mx-2" onClick={prev}>
                                 Quay lại
                             </Button>
                         )}

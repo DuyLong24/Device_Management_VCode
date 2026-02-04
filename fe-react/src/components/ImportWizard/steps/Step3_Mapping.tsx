@@ -60,7 +60,7 @@ export const Step3_Mapping: React.FC<Step3Props> = ({ excelHeaders, fieldDefinit
 
                             <div className="flex-1">
                                 <Select
-                                    style={{ width: '100%' }}
+                                    className="w-full"
                                     placeholder="Chọn cột Excel"
                                     value={mapping[field.key]}
                                     onChange={(val) => handleMap(field.key, val)}

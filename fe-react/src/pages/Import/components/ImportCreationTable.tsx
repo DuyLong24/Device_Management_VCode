@@ -170,7 +170,7 @@ export const ImportCreationTable: React.FC<ImportCreationTableProps> = ({
             />
 
             {deviceList.length > 0 && (
-                <div className="mt-6 flex justify-end items-center gap-2">
+                <div className="mt-3 flex justify-end items-center gap-2">
                     <span className="text-gray-600">Tổng số lượng:</span>
                     <span className="text-xl font-bold text-green-600">
                         {deviceList.reduce((acc, cur) => acc + (cur.quantity || 0), 0)}

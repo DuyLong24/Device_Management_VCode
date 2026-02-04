@@ -67,7 +67,7 @@ const ImportDetailPage = () => {
     ];
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-3 max-w-7xl mx-auto">
             <ImportHeader
                 code={code}
                 inventoryStatus={inventoryStatus}

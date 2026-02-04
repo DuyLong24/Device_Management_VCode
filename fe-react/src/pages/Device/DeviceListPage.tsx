@@ -27,7 +27,7 @@ export default function DeviceListPage() {
     } = useAllSerials();
 
     return (
-        <div className="p-6 max-w-400 mx-auto">
+        <div className="p-3 max-w-400 mx-auto">
             {/* Header */}
             <div className="mb-6">
                 <Title level={3} className="mb-1!"> Danh sách thiết bị</Title>

@@ -4,7 +4,7 @@ import {
     Divider, Popover
 } from 'antd';
 import {
-    ReloadOutlined, PlusOutlined, SearchOutlined, QuestionCircleOutlined
+    ReloadOutlined, PlusOutlined, SearchOutlined, InfoCircleOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
@@ -136,7 +136,7 @@ export default function InventoryListPage() {
             dataIndex: 'code',
             width: 150,
             render: (text, record) => (
-                <a onClick={() => handleOpenSelectModal(record)} style={{ fontWeight: 500 }} className="whitespace-nowrap block truncate">
+                <a onClick={() => handleOpenSelectModal(record)} className="font-medium whitespace-nowrap block truncate">
                     {text}
                 </a>
             ),
@@ -163,8 +163,8 @@ export default function InventoryListPage() {
             render: (_, record) => {
                 const current = record.serialImported || 0;
                 const total = record.totalQuantity || 0;
-                const color = current < total ? '#ff4d4f' : '#52c41a';
-                return <span style={{ color, whiteSpace: 'nowrap' }}>{current}/{total}</span>;
+                const colorClass = current < total ? 'text-red-500' : 'text-green-500';
+                return <span className={`${colorClass} whitespace-nowrap`}>{current}/{total}</span>;
             },
         },
         {
@@ -198,13 +198,13 @@ export default function InventoryListPage() {
     ];
 
     return (
-        <div className="p-6">
+        <div className="p-3">
             <Space align="center" className="mb-4">
                 <Title level={3} className="!mb-0 !mt-0">{INVENTORY_LABELS.PAGE_TITLE_LIST}</Title>
                 <Popover
                     title="Điều kiện kiểm kê"
                     content={
-                        <div style={{ maxWidth: 450 }}>
+                        <div className="max-w-[450px]">
                             <Text>Chỉ hiển thị các phiếu nhập đáp ứng điều kiện sau:</Text>
                             <ul className="mt-2 mb-0 pl-5">
                                 <li>
@@ -224,7 +224,7 @@ export default function InventoryListPage() {
                         </div>
                     }
                 >
-                    <QuestionCircleOutlined className="text-gray-400 cursor-pointer text-lg hover:text-blue-500 transition-colors" />
+                    <InfoCircleOutlined className="text-gray-400 cursor-pointer text-lg hover:text-blue-500 transition-colors" />
                 </Popover>
             </Space>
 

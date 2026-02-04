@@ -182,7 +182,7 @@ export default function InventoryCheckPage() {
   }, [deviceModels, importInfo, processedItems, otherCompletedItemsByModel]);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-3 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-4">
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/import/list')} className="mb-4">

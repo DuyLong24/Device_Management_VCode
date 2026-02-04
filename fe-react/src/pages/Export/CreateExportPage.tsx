@@ -131,7 +131,7 @@ export default function CreateExportPage() {
     ];
 
     return (
-        <div className="p-6 max-w-full mx-auto">
+        <div className="p-3 max-w-full mx-auto">
             {/* Page Header */}
             <div className="mb-6">
                 <div className="flex justify-between items-start">
@@ -393,7 +393,7 @@ export default function CreateExportPage() {
                 </Card>
             </Form>
 
-            <div className="sticky bottom-0 bg-white py-4 mt-6 border-t border-gray-200 z-10">
+            <div className="sticky bottom-0 bg-white py-4 mt-3 border-t border-gray-200 z-10">
                 <div className="flex justify-end gap-2">
                     <Button icon={<SaveOutlined />} onClick={handleSaveDraft} loading={loading} size="large">
                         {isEditMode ? 'Cập nhật nháp' : 'Lưu nháp'}
@@ -441,7 +441,7 @@ export default function CreateExportPage() {
                         >
                             <Input />
                         </Form.Item>
-                        <div className="flex justify-end space-x-2 mt-6">
+                        <div className="flex justify-end space-x-2 mt-3">
                             <Button onClick={handleCancelProjectCreation}>Hủy</Button>
                             <Button type="primary" htmlType="submit">
                                 Tạo Dự án

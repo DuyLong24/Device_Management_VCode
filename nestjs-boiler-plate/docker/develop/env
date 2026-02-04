@@ -52,3 +52,9 @@ CORS_ORIGIN=http://localhost:5173,https://wms.alvar.quytb.com,https://api.wms.al
 # Rate Limiting
 RATE_LIMIT_TTL=60
 RATE_LIMIT_LIMIT=100
+
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USER=longnd@bfd.vn
+MAIL_PASS=vafe rjsd rfjk nklc
+MAIL_FROM="Device Management <no-reply@devicemanagement.com>"

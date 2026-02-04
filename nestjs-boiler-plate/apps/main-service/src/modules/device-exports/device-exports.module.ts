@@ -12,6 +12,7 @@ import { WarehousesModule } from '../warehouses/warehouses.module';
 import { UsersModule } from '../../users/users.module';
 import { MailModule } from '../../common/mail/mail.module';
 import { ExportNotificationTask } from './tasks/export-notification.task';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { ExportNotificationTask } from './tasks/export-notification.task';
     forwardRef(() => DevicesModule),
     WarehousesModule,
     UsersModule,
-    MailModule
+    MailModule,
+    NotificationsModule
   ],
   controllers: [DeviceExportController],
   providers: [DeviceExportService, ExportSessionService, DeviceExportRepository, ExportSessionRepository, ExportNotificationTask],

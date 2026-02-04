@@ -17,6 +17,13 @@ import {
 } from '../../constants/dashboard.constants';
 import { findMenuItemLabel, getActiveKeysFromPath } from '../../utils/navigation.utils';
 import { useAuth } from '../../hooks/useAuth';
+import { useNotification } from '../../contexts/NotificationContext';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/vi';
+
+dayjs.extend(relativeTime);
+dayjs.locale('vi');
 
 const { Header, Sider, Content, Footer } = Layout;
 const { Text } = Typography;
@@ -34,6 +41,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const [openKeys, setOpenKeys] = useState<string[]>([]);
 
     const { user, logout, hasRole } = useAuth();
+    const { notifications, unreadCount, markAsRead, markAllRead } = useNotification();
 
     // Logic lấy dữ liệu kho từ API
     const { data: warehouses, isLoading } = useQuery({
@@ -203,10 +211,38 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     ];
 
     const notificationItems: MenuProps['items'] = [
-        { key: '1', label: <div className="py-2"><Text strong>Có 5 thiết bị chờ QC</Text><br /><Text type="secondary" style={{ fontSize: 12 }}>2 phút trước</Text></div> },
-        { key: '2', label: <div className="py-2"><Text strong>3 thiết bị lỗi cần xử lý</Text><br /><Text type="secondary" style={{ fontSize: 12 }}>15 phút trước</Text></div> },
+        {
+            key: 'header',
+            label: <div className="flex justify-between items-center py-1">
+                <Text strong>Thông báo</Text>
+                <Text type="secondary" className="cursor-pointer hover:text-blue-500" onClick={(e) => { e.preventDefault(); markAllRead(); }}>Đánh dấu đã đọc</Text>
+            </div>,
+            disabled: true
+        },
         { type: 'divider' },
-        { key: 'all', label: <Text className="text-blue-500">Xem tất cả thông báo</Text> },
+        ...(notifications.length > 0 ? notifications.slice(0, 5).map(noti => ({
+            key: noti._id,
+            label: (
+                <div
+                    className={`py-2 max-w-[300px] ${!noti.isRead ? 'bg-blue-50 -mx-3 px-3' : ''}`}
+                    onClick={() => {
+                        markAsRead(noti._id);
+                        if (noti.metadata?.link) {
+                            navigate(noti.metadata.link);
+                        }
+                    }}
+                >
+                    <div className="flex justify-between">
+                        <Text strong className="text-sm">{noti.title}</Text>
+                        {!noti.isRead && <span className="w-2 h-2 rounded-full bg-blue-500 mt-1"></span>}
+                    </div>
+                    <Text className="text-xs text-gray-500 block truncate">{noti.message}</Text>
+                    <Text type="secondary" style={{ fontSize: 11 }}>{dayjs(noti.createdAt).fromNow()}</Text>
+                </div>
+            )
+        })) : [{ key: 'empty', label: <Text type="secondary" className="block text-center py-4">Không có thông báo nào</Text>, disabled: true }]),
+        { type: 'divider' },
+        { key: 'all', label: <Text className="text-blue-500 block text-center">Xem tất cả thông báo</Text> }
     ];
 
     const currentBreadcrumbTitle = (findMenuItemLabel(menuItems, selectedKey) as ReactNode) || MENU_LABELS.DASHBOARD;
@@ -279,8 +315,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <Breadcrumb items={breadcrumbItems} />
 
                     <Space size="large">
-                        <Dropdown menu={{ items: notificationItems }} trigger={['click']}>
-                            <Badge count={8} overflowCount={99}>
+                        <Dropdown menu={{ items: notificationItems }} trigger={['click']} placement="bottomRight" overlayStyle={{ minWidth: 350 }}>
+                            <Badge count={unreadCount} overflowCount={99}>
                                 <BellOutlined className="text-xl cursor-pointer" />
                             </Badge>
                         </Dropdown>

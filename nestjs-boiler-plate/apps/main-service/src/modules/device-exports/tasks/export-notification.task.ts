@@ -33,8 +33,9 @@ export class ExportNotificationTask {
     @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
     async handleDailyNotifications() {
         this.logger.log('Standard daily email notification check started...');
-        await this.processApprovalRequests();
-        await this.processExportResults();
+        // await this.processApprovalRequests();
+        // await this.processExportResults();
+        this.logger.log('Daily notification check skipped (Switched to Real-time).');
     }
 
     // Kích hoạt thủ công

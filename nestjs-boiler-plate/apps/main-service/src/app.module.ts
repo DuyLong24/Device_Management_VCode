@@ -39,6 +39,7 @@ import { InventorySessionModule } from './modules/inventory-sessions/inventory-s
 import { ExcelModule } from './common/excel/excel.module';
 import { DataImportModule } from './modules/data-import/data-import.module';
 import { SharedDataModule } from './modules/shared-data/shared-data.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 import { FncRole, FncRoleSchema } from './fnc-roles/entities/fnc-role.entity';
 import { User, UserSchema } from './users/entities/user.entity';
@@ -134,24 +135,26 @@ import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activat
     InventorySessionModule,
     ExcelModule,
     DataImportModule,
+    DataImportModule,
     SharedDataModule,
+    NotificationsModule,
   ],
   controllers: [HealthController, AppController],
   providers: [
     SeedService,
     WarrantyActivationTask,
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: AuthGuard,
-    // },
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: ResourceGuard,
-    // },
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: CustomRoleGuard,
-    // },
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ResourceGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: CustomRoleGuard,
+    },
 
   ],
 })

@@ -4,12 +4,13 @@ import { CreateDeviceExportDto } from '../dto/create-device-export.dto';
 import { UpdateDeviceExportDto } from '../dto/update-device-export.dto';
 import { PaginateResult } from '../interfaces/pagination-result.interface';
 import { DeviceExport, ExportStatus } from '../schemas/device-export.schemas';
-import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
+import { ERROR_MESSAGES } from '../../../common/constants/messages.constants';
 import { FilterQuery } from 'mongoose';
 import { AppLogger } from '../../../common/utils/logger.util';
 import { ExportStatus as ExportStatusEnum } from '../../../common/constants/export-status.constant';
 
 import { DeviceService } from '../../devices/services/device.service';
+import { NotificationService } from '../../notifications/services/notification.service';
 
 @Injectable()
 export class DeviceExportService {
@@ -17,7 +18,8 @@ export class DeviceExportService {
 
   constructor(
     private readonly deviceExportRepository: DeviceExportRepository,
-    private readonly deviceService: DeviceService
+    private readonly deviceService: DeviceService,
+    private readonly notificationService: NotificationService,
   ) { }
 
   async create(createDeviceExportDto: CreateDeviceExportDto): Promise<DeviceExport> {
@@ -34,7 +36,22 @@ export class DeviceExportService {
         createDeviceExportDto.totalQuantity = createDeviceExportDto.requirements.reduce((sum, req) => sum + req.quantity, 0);
       }
 
-      return await this.deviceExportRepository.create(createDeviceExportDto);
+      const newExport = await this.deviceExportRepository.create(createDeviceExportDto);
+
+      // Nếu tạo phiếu ở trạng thái PENDING_APPROVAL luôn thì gửi mail luôn
+      if (newExport.status === ExportStatusEnum.PENDING_APPROVAL) {
+        try {
+          const fullExport = await this.findById(newExport._id.toString());
+          if (fullExport) {
+            await this.notificationService.sendApprovalRequest(fullExport);
+          }
+        } catch (err) {
+          this.logger.error(`Failed to trigger approval notification for ${newExport.code}`, err);
+        }
+      }
+
+      return newExport;
+
     } catch (error) {
       this.logger.errorWithContext('Failed to create device export', error, {
         dto: createDeviceExportDto,
@@ -103,8 +120,6 @@ export class DeviceExportService {
     return deletedDeviceExport;
   }
 
-
-
   async submitForApproval(id: string): Promise<DeviceExport> {
     const exportRecord = await this.findById(id);
     if (exportRecord.status !== ExportStatusEnum.DRAFT) {
@@ -115,7 +130,19 @@ export class DeviceExportService {
       throw new BadRequestException('Phiếu xuất chưa có danh sách hàng hóa yêu cầu.');
     }
 
-    return this.update(id, { status: ExportStatusEnum.PENDING_APPROVAL as any } as any);
+    const updatedExport = await this.update(id, { status: ExportStatusEnum.PENDING_APPROVAL as any } as any);
+
+    // Trigger notification
+    try {
+      const fullExport = await this.findById(id);
+      if (fullExport) {
+        await this.notificationService.sendApprovalRequest(fullExport);
+      }
+    } catch (err) {
+      this.logger.error(`Failed to trigger approval notification for ${id}`, err);
+    }
+
+    return updatedExport;
   }
 
   async approve(id: string, user: any): Promise<DeviceExport> {
@@ -149,11 +176,23 @@ export class DeviceExportService {
       }
     }
 
-    return this.update(id, {
+    const updatedExport = await this.update(id, {
       status: ExportStatusEnum.APPROVED as any,
       approvedBy: user._id,
       approvedDate: new Date()
     } as any);
+
+    // Trigger Notification
+    try {
+      const fullExport = await this.findById(id);
+      if (fullExport) {
+        await this.notificationService.sendExportResult(fullExport);
+      }
+    } catch (err) {
+      this.logger.error(`Failed to trigger result notification for ${id}`, err);
+    }
+
+    return updatedExport;
   }
 
   async reject(id: string, reason: string): Promise<DeviceExport> {
@@ -161,12 +200,24 @@ export class DeviceExportService {
     if (exportRecord.status !== ExportStatusEnum.PENDING_APPROVAL) {
       throw new BadRequestException('Chỉ có thể từ chối phiếu đang Chờ duyệt (PENDING_APPROVAL).');
     }
-    return this.update(id, {
+
+    const updatedExport = await this.update(id, {
       status: ExportStatusEnum.REJECTED as any,
       rejectedReason: reason
     } as any);
-  }
 
+    // Trigger Notification
+    try {
+      const fullExport = await this.findById(id);
+      if (fullExport) {
+        await this.notificationService.sendExportResult(fullExport);
+      }
+    } catch (err) {
+      this.logger.error(`Failed to trigger result notification for ${id}`, err);
+    }
+
+    return updatedExport;
+  }
 
   async getInventoryStatus(model: string): Promise<{ inStock: number; reserved: number; available: number }> {
     const inStock = await this.deviceService.countReadyToExport(model);

@@ -124,7 +124,7 @@ export default function SerialDetailPage() {
                 {/* Left Column */}
                 <Col xs={24} lg={16}>
                     {/* Info */}
-                    <Card title="📦 Thông tin thiết bị" size="small" className="mb-4">
+                    <Card title=" Thông tin thiết bị" size="small" className="mb-4">
                         <Descriptions column={2} size="small" bordered>
                             <Descriptions.Item label="MAC" span={2}><Text strong>{device.mac}</Text></Descriptions.Item>
                             <Descriptions.Item label="Model">{device.deviceModel}</Descriptions.Item>

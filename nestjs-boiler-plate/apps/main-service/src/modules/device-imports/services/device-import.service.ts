@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { DeviceImportRepository } from '../repositories/device-import.repository';
 import { CreateDeviceImportDto } from '../dto/create-device-import.dto';
 import { UpdateDeviceImportDto } from '../dto/update-device-import.dto';
@@ -7,7 +7,7 @@ import { DeviceImport } from '../schemas/device-import.schemas';
 import { DeviceService } from '../../devices/services/device.service';
 import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
 import { FilterQuery } from 'mongoose';
-import { InventorySessionService } from '../../inventory-sessions/services/inventory-session.service';
+import { InventoryCoordinatorService } from '../../inventory-coordinator/services/inventory-coordinator.service';
 import { UserService } from '../../../users/services/user.service';
 
 @Injectable()
@@ -15,8 +15,7 @@ export class DeviceImportService {
   constructor(
     private readonly deviceImportRepository: DeviceImportRepository,
     private readonly deviceService: DeviceService,
-    @Inject(forwardRef(() => InventorySessionService))
-    private readonly inventorySessionService: InventorySessionService,
+    private readonly coordinatorService: InventoryCoordinatorService,
     private readonly userService: UserService
   ) { }
 
@@ -168,69 +167,7 @@ export class DeviceImportService {
     };
   }
 
-  async updateProgress(id: string, data: { serialImported: number, deviceCounts?: Record<string, number> }) {
-    const ticket = await this.findById(id);
-    let newStatus = ticket.inventoryStatus;
-
-    // 1. Tính toán trạng thái kiểm kê dựa trên số lượng đã quét
-    if (data.serialImported >= ticket.totalQuantity) {
-      newStatus = 'completed';
-    } else if (data.serialImported > 0) {
-      newStatus = 'in-progress';
-    }
-
-    const updatePayload: any = {
-      serialImported: data.serialImported,
-      inventoryStatus: newStatus
-    };
-
-    // Update device specific counts if provided
-    if (data.deviceCounts) {
-      // Ensure we work with plain objects
-      const currentDevices = ticket.devices || [];
-
-      updatePayload.devices = currentDevices.map(d => {
-        // Convert to plain object if it's a Mongoose document
-        const deviceObj = (typeof (d as any).toObject === 'function') ? (d as any).toObject() : d;
-
-        const additional = data.deviceCounts?.[deviceObj.deviceCode] || 0;
-        if (additional > 0) {
-          return {
-            ...deviceObj,
-            serialImported: (deviceObj.serialImported || 0) + additional
-          };
-        }
-        return deviceObj;
-      });
-    }
-
-    return this.deviceImportRepository.update(id, updatePayload);
-  }
-
   async complete(id: string, userId: string | null): Promise<DeviceImport> {
-    const ticket = await this.findById(id);
-    if (!ticket) throw new NotFoundException(ERROR_MESSAGES.DEVICE_IMPORT.NOT_FOUND);
-
-    if (ticket.inventoryStatus === 'completed') {
-      throw new BadRequestException('Phiếu nhập đã hoàn tất kiểm kê trước đó.');
-    }
-
-    // 1. Kiểm tra số lượng
-    if (ticket.serialImported < ticket.totalQuantity) {
-      throw new BadRequestException(`Chưa đủ số lượng (${ticket.serialImported}/${ticket.totalQuantity}). Không thể hoàn tất.`);
-    }
-
-    // 2. Kiểm tra các phiên kiểm kê
-    const sessions = await this.inventorySessionService.findAll({ importId: id });
-    const hasPendingSession = sessions.some(s => s.status !== 'completed');
-    if (hasPendingSession) {
-      throw new BadRequestException('Tất cả các phiên kiểm kê phải được hoàn tất trước khi đóng phiếu nhập.');
-    }
-
-    // 3. Cập nhật trạng thái
-    return this.deviceImportRepository.update(id, {
-      inventoryStatus: 'completed',
-      updatedBy: userId
-    } as any);
+    return this.coordinatorService.manualCompleteImport(id, userId);
   }
 }

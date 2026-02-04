@@ -49,22 +49,22 @@ export class OpaService {
   async publishApp(payload: OpaPublishPayload): Promise<void> {
     try {
       console.log('Publishing to OPA with payload:', JSON.stringify(payload, null, 2));
-      
+
       // Check OPA health first
       const isHealthy = await this.healthCheck();
       if (!isHealthy) {
         throw new Error('OPA server is not healthy');
       }
       console.log('✅ OPA server is healthy');
-      
+
       // First, publish the data
       await this.opaClient.put('/v1/data/app', payload);
       console.log('✅ Data published successfully to OPA');
-      
+
       // Load existing policy and merge with new policy
       const mergedPolicy = this.mergePolicies();
       console.log('✅ Policy merged successfully');
-      
+
       // Write merged policy to local file
       try {
         const targetFile = path.join(process.cwd(), 'config', 'opa', 'authz.rego');
@@ -91,7 +91,7 @@ export class OpaService {
       if (error.response) {
         console.error('Response status:', error.response.status);
         console.error('Response data:', error.response.data);
-        
+
         // If it's a policy compilation error, log the policy for debugging
         if (error.response.status === 400 && error.response.data?.errors) {
           console.error('Policy compilation errors:', error.response.data.errors);
@@ -113,14 +113,14 @@ export class OpaService {
         const policyContent = fs.readFileSync(policyPath, 'utf8');
         return policyContent;
       }
-      
+
       // If authz.rego doesn't exist, try policy.rego
       policyPath = path.join(process.cwd(), 'config', 'opa', 'policy.rego');
       if (fs.existsSync(policyPath)) {
         const policyContent = fs.readFileSync(policyPath, 'utf8');
         return policyContent;
       }
-      
+
       throw new Error('No policy file found');
     } catch (error) {
       throw new Error(`Failed to load policy from file: ${error.message}`);
@@ -150,12 +150,12 @@ export class OpaService {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    
+
     // Format the JSON with proper indentation
     const formattedJson = JSON.stringify(payload, null, 2);
     fs.writeFileSync(filePath, formattedJson, { encoding: 'utf8' });
-    
-    console.log('📊 Data file updated with:');
+
+    console.log(' Data file updated with:');
     console.log(`  - ${Object.keys(payload.app.permissions).length} permissions`);
     console.log(`  - ${payload.app.catalog.modules.length} modules`);
     console.log(`  - ${payload.app.catalog.resourceTemplates.length} resource templates`);
@@ -164,7 +164,7 @@ export class OpaService {
   private mergePolicies(): string {
     try {
       console.log('🔄 === POLICY MERGE START ===');
-      
+
       // Try to load existing policy from file
       let existingPolicy = '';
       try {
@@ -178,7 +178,7 @@ export class OpaService {
         console.log('📄 No existing policy file found, starting fresh');
         existingPolicy = '';
       }
-      
+
       // Generate new policy rules
       const newPolicyRules = this.generatePolicyRules();
       console.log('📝 Generated new policy rules');
@@ -186,22 +186,22 @@ export class OpaService {
       console.log('-'.repeat(40));
       console.log(newPolicyRules);
       console.log('-'.repeat(40));
-      
+
       // If no existing policy, just return the new policy
       if (!existingPolicy || existingPolicy.trim() === '') {
         console.log('ℹ️ No existing policy, using generated policy only');
         console.log('🔄 === POLICY MERGE END (GENERATED ONLY) ===');
         return newPolicyRules;
       }
-      
+
       // Check if existing policy already contains our rules
-      if (existingPolicy.includes('# Function to check if user has permission for the requested resource') || 
-          existingPolicy.includes('allow_permission(payload, method, path) if {')) {
+      if (existingPolicy.includes('# Function to check if user has permission for the requested resource') ||
+        existingPolicy.includes('allow_permission(payload, method, path) if {')) {
         console.log('ℹ️ Existing policy already contains RBAC rules, using existing policy');
         console.log('🔄 === POLICY MERGE END (EXISTING ONLY) ===');
         return existingPolicy;
       }
-      
+
       // Merge policies: existing policy + new RBAC rules
       const mergedPolicy = `${existingPolicy}
 
@@ -210,7 +210,7 @@ export class OpaService {
 # ========================================
 
 ${newPolicyRules}`;
-      
+
       console.log('🔗 Merged existing policy with new RBAC rules');
       console.log('🔗 Final merged policy content:');
       console.log('='.repeat(80));
@@ -218,7 +218,7 @@ ${newPolicyRules}`;
       console.log('='.repeat(80));
       console.log('🔄 === POLICY MERGE END (MERGED) ===');
       return mergedPolicy;
-      
+
     } catch (error) {
       console.warn('❌ Failed to merge policies, using generated policy only:', error.message);
       return this.generatePolicyRules();
@@ -227,7 +227,7 @@ ${newPolicyRules}`;
 
   private generatePolicyRules(): string {
     console.log('📝 === GENERATING POLICY RULES ===');
-    
+
     const policy = `package envoy.authz
 
 import future.keywords
@@ -261,13 +261,13 @@ allow_permission(payload, method, path) if {
 method_allowed(method, allowed_methods) if {
     method == allowed_methods[_]
 }`;
-    
+
     console.log('📝 Generated policy rules:');
     console.log('-'.repeat(40));
     console.log(policy);
     console.log('-'.repeat(40));
     console.log('📝 === POLICY RULES GENERATED ===');
-    
+
     return policy;
   }
 
@@ -378,37 +378,37 @@ method_allowed(method, allowed_methods) if {
       console.log('='.repeat(80));
       console.log(policyRules);
       console.log('='.repeat(80));
-      
+
       // Check both packages if they exist
       const queries = [];
-      
+
       if (policyRules.includes('package authz')) {
         queries.push('data.authz.allow');
         console.log('✅ Found package: authz');
       }
-      
+
       if (policyRules.includes('package envoy.authz')) {
         queries.push('data.envoy.authz.allow');
         console.log('✅ Found package: envoy.authz');
       }
-      
+
       if (policyRules.includes('package policy_admin')) {
         queries.push('data.policy_admin.allow');
         console.log('✅ Found package: policy_admin');
       }
-      
+
       // If no packages found, return false
       if (queries.length === 0) {
         console.error('❌ No valid packages found in policy');
         return false;
       }
-      
+
       console.log('🔍 Queries to validate:', queries);
-      
+
       // Validate each package
       for (const query of queries) {
         console.log(`🔍 Validating query: ${query}`);
-        
+
         const response = await this.opaClient.post('/v1/check', {
           query: query,
           modules: [{
@@ -416,9 +416,9 @@ method_allowed(method, allowed_methods) if {
             raw: policyRules
           }]
         });
-        
+
         console.log(`✅ Query ${query} validation response:`, JSON.stringify(response.data, null, 2));
-        
+
         // If any compilation errors, the policy is invalid
         if (response.data.errors && response.data.errors.length > 0) {
           console.error('❌ Policy validation failed for query:', query);
@@ -426,7 +426,7 @@ method_allowed(method, allowed_methods) if {
           return false;
         }
       }
-      
+
       console.log('✅ === POLICY VALIDATION SUCCESS ===');
       // If no compilation errors, the policy is valid
       return true;
@@ -460,7 +460,7 @@ method_allowed(method, allowed_methods) if {
           raw: policyRules
         }]
       });
-      
+
       return { result: response.data.result.allowed === true };
     } catch (error) {
       return { result: false, explanation: error.response?.data?.errors?.[0]?.message || error.message };

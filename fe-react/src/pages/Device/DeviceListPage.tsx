@@ -30,7 +30,7 @@ export default function DeviceListPage() {
         <div className="p-6 max-w-400 mx-auto">
             {/* Header */}
             <div className="mb-6">
-                <Title level={3} className="mb-1!">📊 Danh sách thiết bị</Title>
+                <Title level={3} className="mb-1!"> Danh sách thiết bị</Title>
                 <Text type="secondary">Quản lý toàn bộ thiết bị (Device) trong hệ thống</Text>
             </div>
 

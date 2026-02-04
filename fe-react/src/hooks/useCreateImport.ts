@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Form, App, message } from 'antd';
+import { Form, App } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 
@@ -15,7 +15,7 @@ export const useCreateImport = () => {
     const { id } = useParams<{ id: string }>();
     const isEditMode = !!id;
     const [form] = Form.useForm();
-    const { modal } = App.useApp();
+    const { modal, message } = App.useApp();
     const { user } = useAuth();
 
     const [loading, setLoading] = useState(false);
@@ -70,33 +70,51 @@ export const useCreateImport = () => {
                 }
 
                 if (isEditMode) {
-                    const res = await importService.getImportDetail(id!);
-                    const data = res.data;
+                    const fetchImportDetail = async (importId: string) => {
+                        try {
+                            setLoading(true);
+                            const res = await importService.getImportDetail(importId);
+                            const data = res.data;
 
-                    if (data.status !== 'DRAFT') {
-                        message.warning('Chỉ có thể sửa phiếu nhập ở trạng thái NHÁP');
-                        navigate('/import/list');
-                        return;
-                    }
+                            if (data.status !== 'DRAFT') {
+                                message.warning('Chỉ có thể sửa phiếu nhập ở trạng thái NHÁP');
+                                navigate('/import/list');
+                                return;
+                            }
 
-                    form.setFieldsValue({
-                        ...data,
-                        importDate: dayjs(data.importDate),
-                    });
+                            form.setFieldsValue({
+                                code: data.code,
+                                supplier: data.supplier,
+                                deviceType: data.deviceType,
+                                totalQuantity: data.totalQuantity,
+                                importDate: dayjs(data.importDate),
+                                notes: data.notes,
+                                status: data.status
+                            });
 
-                    // Map backend data (devices) to Frontend DeviceEntry
-                    const mappedDevices: DeviceEntry[] = (data.devices || []).map((p: any, index: number) => ({
-                        key: p._id || `dev-${index}`,
-                        deviceCode: p.deviceCode,
-                        quantity: p.quantity,
-                        boxCount: p.boxCount,
-                        itemsPerBox: p.itemsPerBox,
-                        expectedSerials: p.expectedSerials || [],
-                        serialImported: p.serialImported || 0,
-                        expectedDetails: p.expectedDetails || []
-                    }));
-                    setDeviceList(mappedDevices);
+                            if (data.devices && data.devices.length > 0) {
+                                const mappedDevices: DeviceEntry[] = data.devices.map((device: any, index: number) => ({
+                                    key: device._id || `prod-${index}-${Date.now()}`,
+                                    deviceCode: device.deviceCode,
+                                    quantity: device.quantity || 0,
+                                    boxCount: device.boxCount || null,
+                                    itemsPerBox: device.itemsPerBox || null,
+                                    expectedSerials: device.expectedSerials || [],
+                                    serialImported: device.serialImported || 0,
+                                    expectedDetails: device.expectedDetails || []
+                                }));
+                                setDeviceList(mappedDevices);
+                            }
 
+                        } catch (error) {
+                            console.error('Failed to fetch import detail', { error });
+                            message.error('Không thể tải chi tiết phiếu nhập');
+                            navigate('/import/list');
+                        } finally {
+                            setLoading(false);
+                        }
+                    };
+                    fetchImportDetail(id!);
                 } else {
                     form.setFieldValue('code', generateImportCode());
                     if (user && user.username) {
@@ -141,8 +159,8 @@ export const useCreateImport = () => {
             quantity: 1,
             boxCount: null,
             itemsPerBox: null,
-            expectedSerials: [], // Updated
-            serialImported: 0,   // Updated
+            expectedSerials: [],
+            serialImported: 0,
             expectedDetails: []
         };
         setDeviceList([...deviceList, newDevice]);
@@ -159,7 +177,7 @@ export const useCreateImport = () => {
             if (item.key === key) {
                 const newItem = { ...item, [field]: value };
                 if (field === 'deviceCode') {
-                    newItem.expectedSerials = []; // Updated
+                    newItem.expectedSerials = [];
                 }
                 return newItem;
             }
@@ -170,7 +188,7 @@ export const useCreateImport = () => {
 
     const openMacModal = (record: DeviceEntry) => {
         setCurrentDeviceKey(record.key);
-        setTempMacs((record.expectedSerials || []).join('\n')); // Updated
+        setTempMacs((record.expectedSerials || []).join('\n'));
         setIsMacModalOpen(true);
     };
 
@@ -179,7 +197,7 @@ export const useCreateImport = () => {
 
         setDeviceList(deviceList.map(p => {
             if (p.key === currentDeviceKey) {
-                return { ...p, expectedSerials: uniqueList }; // Updated
+                return { ...p, expectedSerials: uniqueList };
             }
             return p;
         }));
@@ -215,7 +233,7 @@ export const useCreateImport = () => {
                 deviceType: values.deviceType || values.deviceType,
                 origin: values.origin,
                 importDate: values.importDate.toISOString(),
-                importedBy: values.importedBy, // Controller will override with req.user if needed, but let's keep form value if set
+                importedBy: values.importedBy,
                 supplier: values.supplier,
                 handoverPerson: values.handoverPerson,
                 notes: values.notes,
@@ -225,7 +243,7 @@ export const useCreateImport = () => {
                     quantity: p.quantity,
                     boxCount: p.boxCount || undefined,
                     itemsPerBox: p.itemsPerBox || undefined,
-                    expectedSerials: p.expectedSerials, // Updated
+                    expectedSerials: p.expectedSerials,
                     expectedDetails: p.expectedDetails?.map(({ _id, ...rest }: any) => rest)
                 })),
             };
@@ -333,7 +351,6 @@ export const useCreateImport = () => {
             deviceMap.set(pCode, current);
         });
 
-        // Convert map back to list and merge/append
         const newDevices: DeviceEntry[] = [];
         deviceMap.forEach((val, key) => {
             newDevices.push({
@@ -342,8 +359,8 @@ export const useCreateImport = () => {
                 quantity: val.quantity,
                 boxCount: val.boxCount,
                 itemsPerBox: val.itemsPerBox,
-                serialImported: 0, // Updated
-                expectedSerials: val.serials, // Updated
+                serialImported: 0,
+                expectedSerials: val.serials,
                 expectedDetails: val.details
             });
         });

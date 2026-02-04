@@ -73,6 +73,11 @@ export class DeviceImportRepository {
     return this.deviceimportModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
   }
 
+  async updateWithSession(id: string, updateData: any, session: any): Promise<DeviceImport | null> {
+    updateData.updatedAt = new Date();
+    return this.deviceimportModel.findByIdAndUpdate(id, updateData, { new: true, session }).exec();
+  }
+
   async delete(id: string): Promise<DeviceImport | null> {
     return this.deviceimportModel.findByIdAndDelete(id).exec();
   }

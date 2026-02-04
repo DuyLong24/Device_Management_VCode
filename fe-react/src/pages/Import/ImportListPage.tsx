@@ -353,7 +353,7 @@ export default function ImportListPage() {
     ];
 
     return (
-        <div className="min-h-full p-6">
+        <div className="min-h-full p-3 ">
             <PageHeader
                 title={IMPORT_LABELS.PAGE_TITLE}
                 extra={
@@ -363,7 +363,10 @@ export default function ImportListPage() {
                 }
             />
 
-            <StatisticsCards cards={statisticsCards} />
+            <div className="mt-6">
+                <StatisticsCards cards={statisticsCards} />
+            </div>
+
 
             <FilterBar
                 form={form}

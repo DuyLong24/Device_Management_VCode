@@ -4,7 +4,6 @@ import { Card, Table, Typography, Space, Button, Checkbox, Input, Select, App } 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '../../hooks/useDebounce';
 import {
-    ArrowLeftOutlined,
     ReloadOutlined,
     ScanOutlined,
     ImportOutlined,
@@ -289,18 +288,18 @@ export default function WarehousePage() {
         <div className="p-6">
             {/* Header */}
             <div className="mb-1">
-                <Button
+                {/* <Button
                     type="link"
                     icon={<ArrowLeftOutlined />}
                     onClick={() => navigate('/dashboard')}
                     className="pl-0 mb-2"
                 >
                     Quay lại Danh sách tổng
-                </Button>
+                </Button> */}
                 <div className="flex justify-between items-center">
                     <div>
                         <Title level={3} className="!m-0">
-                            📦 {currentWarehouse ? currentWarehouse.name : code}
+                            {currentWarehouse ? currentWarehouse.name : code}
                             <span className="text-base text-gray-400 ml-3 font-normal">
                                 {deviceData?.totalResults || 0} thiết bị
                             </span>

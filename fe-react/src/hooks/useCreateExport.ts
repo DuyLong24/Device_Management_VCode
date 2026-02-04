@@ -198,7 +198,21 @@ export const useCreateExport = () => {
             }
 
             form.setFieldsValue({
-                ...data,
+                code: data.code,
+                type: data.type,
+                exportName: data.exportName,
+                project: data.project,
+                assignedApprover: data.assignedApprover,
+                receiver: data.receiver,
+                receiverPerson: data.receiverPerson,
+                deliveryAddress: data.deliveryAddress,
+                notes: data.notes,
+                exportDate: data.exportDate,
+                exportReason: data.exportReason,
+                customer: data.customer,
+                activationDays: data.activationDays,
+                defaultWarrantyMonths: data.defaultWarrantyMonths,
+                status: data.status
             });
 
             if (data.requirements) {
@@ -344,13 +358,18 @@ export const useCreateExport = () => {
         // Lấy tồn kho khả dụng từ API
         if (field === 'deviceModel' && value) {
             try {
-                const status = await exportService.getInventoryStatus(value);
+                const response = await exportService.getInventoryStatus(value);
+                const statusData = response.data || response;
+
+                // Extract only needed fields to avoid circular reference
                 setStockMap(prev => ({
                     ...prev,
-                    [value]: status.data || status
+                    [value]: {
+                        available: statusData.available || 0,
+                        inStock: statusData.inStock || 0,
+                        reserved: statusData.reserved || 0
+                    }
                 }));
-
-                //
             } catch (error) {
                 console.error('Failed to fetch inventory status', error);
             }

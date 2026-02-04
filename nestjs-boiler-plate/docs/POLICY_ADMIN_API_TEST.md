@@ -193,7 +193,7 @@ curl -X POST "http://localhost:8181/v1/check" \
   }'
 ```
 
-## 📊 Expected Logs
+##  Expected Logs
 
 ### Successful Publish
 ```

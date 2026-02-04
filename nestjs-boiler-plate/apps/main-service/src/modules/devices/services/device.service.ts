@@ -109,11 +109,18 @@ export class DeviceService implements OnModuleInit {
 
   async findAll(filter: any = {}): Promise<Device[]> {
     return this.deviceModel.find(filter)
-      .populate('warehouseId')
-      .populate('currentExportId')
+      .populate({
+        path: 'warehouseId',
+        select: 'name code color icon'
+      })
+      .populate({
+        path: 'currentExportId',
+        select: 'code type exportDate'
+      })
       .sort({ createdAt: -1 })
       .exec();
   }
+
 
   async findAllWithPagination(filter: any, options: any) {
     return this.deviceModel.paginate(filter, options);

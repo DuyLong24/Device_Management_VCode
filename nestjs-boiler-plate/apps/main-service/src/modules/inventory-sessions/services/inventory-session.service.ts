@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger, ConflictException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, ConflictException } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { InventorySessionRepository } from '../repositories/inventory-session.repository';
@@ -6,7 +6,8 @@ import { DeviceHistoryRepository } from '../../device-histories/repositories/dev
 import { CreateInventorySessionDto } from '../dto/create-inventory-session.dto';
 import { UpdateInventorySessionDto } from '../dto/update-inventory-session.dto';
 import { InventorySession } from '../schemas/inventory-session.schema';
-import { DeviceImportService } from '../../device-imports/services/device-import.service';
+import { DeviceImportRepository } from '../../device-imports/repositories/device-import.repository';
+import { InventoryCoordinatorService } from '../../inventory-coordinator/services/inventory-coordinator.service';
 import { DeviceService } from '../../devices/services/device.service';
 import { WarehouseRepository } from '../../warehouses/repositories/warehouse.repository';
 import { CategoryRepository } from '../../categories/repositories/categories.repository';
@@ -19,8 +20,8 @@ export class InventorySessionService {
 
     constructor(
         private readonly sessionRepo: InventorySessionRepository,
-        @Inject(forwardRef(() => DeviceImportService))
-        private readonly deviceImportService: DeviceImportService,
+        private readonly importRepo: DeviceImportRepository,
+        private readonly coordinatorService: InventoryCoordinatorService,
         private readonly deviceService: DeviceService,
         private readonly warehouseRepo: WarehouseRepository,
         private readonly categoryRepo: CategoryRepository,
@@ -29,7 +30,7 @@ export class InventorySessionService {
     ) { }
 
     async create(createDto: CreateInventorySessionDto, userId: string): Promise<InventorySession> {
-        const importTicket = await this.deviceImportService.findById(createDto.importId);
+        const importTicket = await this.importRepo.findById(createDto.importId);
         if (!importTicket) throw new NotFoundException(ERROR_MESSAGES.INVENTORY.IMPORT_NOT_FOUND);
         if (importTicket.status !== 'PUBLIC') throw new BadRequestException('Phiếu nhập phải ở trạng thái PUBLIC mới được kiểm kê');
         if (importTicket.inventoryStatus === 'completed') throw new BadRequestException(ERROR_MESSAGES.INVENTORY.IMPORT_ALREADY_COMPLETED);
@@ -84,7 +85,6 @@ export class InventorySessionService {
     }
 
     private async completeSession(session: InventorySession, userId: string): Promise<InventorySession> {
-        // check trùng lặp
         const macsToCheck = session.details.map(d => d.serial);
         if (macsToCheck.length > 0) {
             const existingDevices = await this.deviceService.findByMacs(macsToCheck);
@@ -108,7 +108,7 @@ export class InventorySessionService {
             if (!warehouse) throw new Error(ERROR_MESSAGES.INVENTORY.CONFIG_ERROR.replace('{warehouse}', 'PENDING_QC'));
 
             const importIdStr = String(session.importId);
-            const importTicket = await this.deviceImportService.findById(importIdStr);
+            const importTicket = await this.importRepo.findById(importIdStr);
             if (!importTicket) throw new Error(ERROR_MESSAGES.INVENTORY.IMPORT_NOT_FOUND);
 
             const category = await this.categoryRepo.findOne({ name: importTicket.deviceType });
@@ -178,11 +178,6 @@ export class InventorySessionService {
                 }
             });
 
-            await this.deviceImportService.updateProgress(String(importTicket._id), {
-                serialImported: newTotal,
-                deviceCounts: deviceCounts
-            });
-
             await this.sessionRepo.sessionModel.findByIdAndUpdate(
                 String(session._id),
                 { status: 'completed', updatedBy: userId },
@@ -191,6 +186,13 @@ export class InventorySessionService {
 
             await mongoSession.commitTransaction();
             this.logger.log(`Hoàn tất phiên ${session.code} thành công. Đã tạo ${devicesToCreate.length} thiết bị.`);
+
+            await this.coordinatorService.updateProgressAndAutoComplete(
+                importIdStr,
+                { serialImported: newTotal, deviceCounts },
+                String(session._id),
+                userId
+            );
 
             return await this.sessionRepo.findById(String(session._id)) as InventorySession;
 

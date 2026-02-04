@@ -36,6 +36,7 @@ import { DeviceImportModule } from './modules/device-imports/device-imports.modu
 import { DeviceExportModule } from './modules/device-exports/device-exports.module';
 import { DeviceHistoryModule } from './modules/device-histories/device-historys.module';
 import { InventorySessionModule } from './modules/inventory-sessions/inventory-sessions.module';
+import { InventoryCoordinatorModule } from './modules/inventory-coordinator/inventory-coordinator.module';
 import { ExcelModule } from './common/excel/excel.module';
 import { DataImportModule } from './modules/data-import/data-import.module';
 import { SharedDataModule } from './modules/shared-data/shared-data.module';
@@ -133,6 +134,7 @@ import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activat
     DeviceExportModule,
     DeviceHistoryModule,
     InventorySessionModule,
+    InventoryCoordinatorModule,
     ExcelModule,
     DataImportModule,
     DataImportModule,

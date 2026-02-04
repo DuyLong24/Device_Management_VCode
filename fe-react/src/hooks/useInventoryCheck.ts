@@ -268,7 +268,7 @@ export const useInventoryCheck = () => {
             message.success('Hoàn tất kiểm kê thành công!');
             setSessionStatus('completed');
             setCompleteModalVisible(false);
-            navigate('/import/list');
+            navigate('/import/inventory-list');
         } catch (e: any) {
             const data = e.response?.data;
             const msg = data?.message || 'Lỗi hoàn tất phiên';

@@ -22,6 +22,7 @@ import ExportCheckListPage from './pages/Export/ExportCheckListPage';
 import RoleManagementPage from './pages/RoleManagement/RoleManagementPage';
 import UserManagementPage from './pages/UserManagement/UserManagementPage';
 import SharedDataPage from './pages/SharedData/SharedDataPage';
+import DashboardPage from './pages/Dashboard/DashboardPage';
 // import LoginPage from './pages/Auth/LoginPage';
 
 const queryClient = new QueryClient({
@@ -55,7 +56,7 @@ function App() {
 
                 <Route path="/" element={<DashboardLayout />}>
                   <Route index element={<Navigate to="/dashboard" replace />} />
-                  <Route path="dashboard" element={<div>Nội dung Dashboard</div>} />
+                  <Route path="dashboard" element={<DashboardPage />} />
 
                   {/* MODULE NHẬP KHO */}
                   <Route path="import">

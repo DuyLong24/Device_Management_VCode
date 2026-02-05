@@ -37,8 +37,19 @@ export class DeviceStatsService {
         const whMap = new Map<string, string>(); // Id -> Code
         warehouses.forEach((w: any) => whMap.set(w._id.toString(), w.code));
 
-        // 2. Tính tổng
-        const aggregate = await this.deviceModel.aggregate([
+        // 2. Aggregate Stats Tổng (Theo trạng thái kho)
+        const stats = {
+            total: 0,
+            PENDING_QC: 0,
+            READY_TO_EXPORT: 0,
+            DEFECT: 0,
+            IN_WARRANTY: 0,
+            SOLD: 0,
+            REMOVED: 0,
+            categoryBreakdown: [] as any[]
+        };
+
+        const statusAggregate = await this.deviceModel.aggregate([
             { $match: aggFilter },
             {
                 $group: {
@@ -48,17 +59,7 @@ export class DeviceStatsService {
             }
         ]);
 
-        const stats = {
-            total: 0,
-            PENDING_QC: 0,
-            READY_TO_EXPORT: 0,
-            DEFECT: 0,
-            IN_WARRANTY: 0,
-            SOLD: 0,
-            REMOVED: 0
-        };
-
-        aggregate.forEach((item) => {
+        statusAggregate.forEach((item) => {
             stats.total += item.count;
             const whId = item._id ? item._id.toString() : 'UNKNOWN';
             const code = whMap.get(whId);
@@ -70,6 +71,75 @@ export class DeviceStatsService {
             else if (code === 'SOLD') stats.SOLD += item.count;
             else if (code === 'REMOVED') stats.REMOVED += item.count;
         });
+
+        // 3. Aggregate Stats theo Category (Loại sản phẩm)
+        // Group by { categoryId, warehouseId }
+        const categoryAggregate = await this.deviceModel.aggregate([
+            { $match: aggFilter },
+            {
+                $group: {
+                    _id: {
+                        category: '$categoryId',
+                        warehouse: '$warehouseId'
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'categories', // Collection name
+                    localField: '_id.category',
+                    foreignField: '_id',
+                    as: 'categoryInfo'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$categoryInfo',
+                    preserveNullAndEmptyArrays: true
+                }
+            }
+        ]);
+
+        // Transform category aggregation
+        const catMap = new Map<string, any>();
+
+        categoryAggregate.forEach(item => {
+            const catId = item._id.category ? item._id.category.toString() : 'UNKNOWN_CAT';
+            const catName = item.categoryInfo ? item.categoryInfo.name : 'Chưa phân loại';
+            const whId = item._id.warehouse ? item._id.warehouse.toString() : 'UNKNOWN_WH';
+            const whCode = whMap.get(whId);
+
+            if (!catMap.has(catId)) {
+                catMap.set(catId, {
+                    key: catId,
+                    productType: catName,
+                    totalPurchased: 0, // Tổng count tất cả các kho
+                    pending: 0,
+                    imported: 0, // READY_TO_EXPORT
+                    exported: 0, // SOLD
+                    defect: 0,
+                    defectRate: 0
+                });
+            }
+
+            const current = catMap.get(catId);
+            current.totalPurchased += item.count;
+
+            if (whCode === 'PENDING_QC') current.pending += item.count;
+            else if (whCode === 'READY_TO_EXPORT') current.imported += item.count;
+            else if (whCode === 'SOLD' || whCode === 'REMOVED') current.exported += item.count;
+            else if (whCode === 'DEFECT') current.defect += item.count;
+        });
+
+        // Calculate Rates
+        catMap.forEach(v => {
+            if (v.totalPurchased > 0) {
+                v.defectRate = parseFloat(((v.defect / v.totalPurchased) * 100).toFixed(2));
+            }
+        });
+
+        stats.categoryBreakdown = Array.from(catMap.values());
 
         return stats;
     }

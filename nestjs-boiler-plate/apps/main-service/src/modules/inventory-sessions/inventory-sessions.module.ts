@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { InventorySessionController } from './controllers/inventory-session.controller';
 import { InventorySessionService } from './services/inventory-session.service';
@@ -11,7 +11,7 @@ import { DevicesModule } from '../devices/devices.module';
 import { WarehousesModule } from '../warehouses/warehouses.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { UsersModule } from '../../users/users.module';
-import { DeviceHistoryModule } from '../device-histories/device-historys.module';
+import { DeviceHistoryModule } from '../device-histories/device-histories.module';
 
 @Module({
     imports: [
@@ -20,7 +20,7 @@ import { DeviceHistoryModule } from '../device-histories/device-historys.module'
             { name: DeviceImport.name, schema: DeviceImportSchema }
         ]),
         InventoryCoordinatorModule,
-        DevicesModule,
+        forwardRef(() => DevicesModule),
         WarehousesModule,
         CategoriesModule,
         UsersModule,

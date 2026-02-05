@@ -13,10 +13,11 @@ import {
   Patch,
   Request,
   UnauthorizedException,
-  OnModuleInit
+  Inject,
+  forwardRef
 } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { Response } from 'express';
+import { DeviceQueryBuilder } from '../utils/device-query.builder';
 import { DeviceService } from '../services/device.service';
 import { UserService } from '../../../users/services/user.service';
 import { DeviceStatsService } from '../services/device-stats.service';
@@ -30,22 +31,21 @@ import { DeviceImportRepository } from '../../device-imports/repositories/device
 import { DeviceExportRepository } from '../../device-exports/repositories/device-export.repository';
 
 @Controller('devices')
-export class DeviceController implements OnModuleInit {
-  private deviceImportRepository: DeviceImportRepository;
-  private deviceExportRepository: DeviceExportRepository;
-
+export class DeviceController {
   constructor(
     private readonly deviceService: DeviceService,
     private readonly deviceStatsService: DeviceStatsService,
     private readonly deviceTransferService: DeviceTransferService,
     private readonly deviceValidationService: DeviceValidationService,
     private readonly userService: UserService,
-    private readonly moduleRef: ModuleRef
+    @Inject(forwardRef(() => DeviceImportRepository))
+    private readonly deviceImportRepository: DeviceImportRepository,
+    @Inject(forwardRef(() => DeviceExportRepository))
+    private readonly deviceExportRepository: DeviceExportRepository,
   ) { }
 
   onModuleInit() {
-    this.deviceImportRepository = this.moduleRef.get(DeviceImportRepository, { strict: false });
-    this.deviceExportRepository = this.moduleRef.get(DeviceExportRepository, { strict: false });
+    // Removed ModuleRef anti-pattern
   }
 
   @Get('import-template')
@@ -69,7 +69,7 @@ export class DeviceController implements OnModuleInit {
 
   @Get('export')
   async exportExcel(@Query() query: DevicePaginationDto, @Res() res: Response) {
-    const filter = await this.buildFilter(query);
+    const filter = await DeviceQueryBuilder.build(query, this.deviceImportRepository, this.deviceExportRepository);
 
     const buffer = await this.deviceService.exportExcel(filter);
 
@@ -84,7 +84,7 @@ export class DeviceController implements OnModuleInit {
 
   @Get()
   async findAll(@Query() query: DevicePaginationDto) {
-    const filter = await this.buildFilter(query);
+    const filter = await DeviceQueryBuilder.build(query, this.deviceImportRepository, this.deviceExportRepository);
 
     const options = {
       page: query.page || 1,
@@ -106,7 +106,7 @@ export class DeviceController implements OnModuleInit {
 
   @Get('stats')
   async getStatistics(@Query() query: DevicePaginationDto) {
-    const filter = await this.buildFilter(query);
+    const filter = await DeviceQueryBuilder.build(query, this.deviceImportRepository, this.deviceExportRepository);
     return this.deviceStatsService.getStatistics(filter);
   }
 
@@ -130,83 +130,6 @@ export class DeviceController implements OnModuleInit {
     return this.deviceService.delete(id);
   }
 
-  private async buildFilter(query: DevicePaginationDto): Promise<any> {
-    const filter: any = {};
-
-    // 1. Lọc theo kho
-    if (query.warehouseId) filter.warehouseId = query.warehouseId;
-    if (query.categoryId) filter.categoryId = query.categoryId;
-    if (query.importId) filter.importId = query.importId;
-
-    // 2. Lọc theo mã serial, mã MAC, tên thiết bị, model
-    if (query.serial) filter.serial = { $regex: query.serial, $options: 'i' };
-    if (query.mac) {
-      const macQuery = query.mac.trim();
-      // Nếu query không có dấu cách, cho phép tìm kiếm với các dấu cách
-      if (/^[a-fA-F0-9]+$/.test(macQuery)) {
-        const fuzzyRegex = macQuery.split('').join('[:\\.-]?');
-        filter.mac = { $regex: fuzzyRegex, $options: 'i' };
-      } else {
-        filter.mac = { $regex: macQuery, $options: 'i' };
-      }
-    }
-    if (query.name) filter.name = { $regex: query.name, $options: 'i' };
-    if (query.model) filter.deviceModel = { $regex: query.model, $options: 'i' };
-
-    // 3. Lọc theo mã phiếu nhập/xuất
-    if (query.importCode) {
-      // Tìm import theo code
-      const imports = await this.deviceImportRepository.findAll({ code: { $regex: query.importCode, $options: 'i' } });
-      if (imports.length > 0) {
-        filter.importId = { $in: imports.map(i => i._id) };
-      } else {
-        filter.importId = '000000000000000000000000'; // Force empty
-      }
-    }
-
-    if (query.exportCode) {
-      const exports = await this.deviceExportRepository.findAll({ code: { $regex: query.exportCode, $options: 'i' } });
-      if (exports.length > 0) {
-        filter.currentExportId = { $in: exports.map(e => e._id) };
-      } else {
-        filter.currentExportId = '000000000000000000000000'; // Force empty
-      }
-    }
-
-    // 4. Lọc theo từ khóa (Global Search)
-    if (query.search) {
-      const searchStr = query.search.trim();
-      const searchRegex = { $regex: searchStr, $options: 'i' };
-      const orConditions: any[] = [
-        { serial: searchRegex },
-        { name: searchRegex },
-        { deviceModel: searchRegex }
-      ];
-
-      // Tìm kiếm MAC theo định dạng fuzzy
-      if (/^[a-fA-F0-9]+$/.test(searchStr)) {
-        const fuzzyMacRegex = { $regex: searchStr.split('').join('[:\\.-]?'), $options: 'i' };
-        orConditions.push({ mac: fuzzyMacRegex });
-      } else {
-        orConditions.push({ mac: searchRegex });
-      }
-
-      if (Object.keys(filter).length > 0) {
-        filter.$or = orConditions;
-      } else {
-        Object.assign(filter, { $or: orConditions });
-      }
-    }
-
-    // 5. Lọc theo ngày tạo
-    if (query.createdFrom || query.createdTo) {
-      filter.createdAt = {};
-      if (query.createdFrom) filter.createdAt.$gte = new Date(query.createdFrom);
-      if (query.createdTo) filter.createdAt.$lte = new Date(query.createdTo);
-    }
-
-    return filter;
-  }
 
   /**
    * API Chuyển kho (Transfer)

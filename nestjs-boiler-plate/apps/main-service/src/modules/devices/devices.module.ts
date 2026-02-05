@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DeviceService } from './services/device.service';
 import { DeviceStatsService } from './services/device-stats.service';
@@ -10,6 +10,7 @@ import { Device, DeviceSchema } from './schemas/device.schemas';
 
 import { WarehouseTransition, WarehouseTransitionSchema } from '../warehouse-transitions/schemas/warehouse-transition.schemas';
 import { DeviceHistory, DeviceHistorySchema } from '../device-histories/schemas/device-history.schemas';
+import { Warehouse, WarehouseSchema } from '../warehouses/schemas/warehouse.schemas';
 
 import { ExcelModule } from '../../common/excel/excel.module';
 import { WarehousesModule } from '../warehouses/warehouses.module';
@@ -17,18 +18,27 @@ import { UsersModule } from '../../users/users.module';
 import { SharedDataModule } from '../shared-data/shared-data.module';
 import { WarrantyActivationTask } from './tasks/warranty-activation.task';
 import { WarrantyExpirationTask } from './tasks/warranty-expiration.task';
+import { DeviceHistoryModule } from '../device-histories/device-histories.module';
+import { InventorySessionModule } from '../inventory-sessions/inventory-sessions.module';
+import { DeviceImportModule } from '../device-imports/device-imports.module';
+import { DeviceExportModule } from '../device-exports/device-exports.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Device.name, schema: DeviceSchema },
+      { name: Warehouse.name, schema: WarehouseSchema },
       { name: WarehouseTransition.name, schema: WarehouseTransitionSchema },
-      { name: DeviceHistory.name, schema: DeviceHistorySchema },
+      { name: DeviceHistory.name, schema: DeviceHistorySchema }
     ]),
-    ExcelModule,
     WarehousesModule,
-    UsersModule,
     SharedDataModule,
+    forwardRef(() => DeviceImportModule),
+    forwardRef(() => DeviceExportModule),
+    forwardRef(() => DeviceHistoryModule),
+    forwardRef(() => InventorySessionModule),
+    UsersModule,
+    ExcelModule,
   ],
   controllers: [DeviceController],
   providers: [DeviceService, DeviceStatsService, DeviceTransferService, DeviceValidationService, DeviceRepository, WarrantyActivationTask, WarrantyExpirationTask],

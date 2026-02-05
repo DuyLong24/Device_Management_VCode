@@ -36,11 +36,11 @@ export class DeviceService implements OnModuleInit {
     try {
       // Xóa index cũ trên serial nếu nó tồn tại
       await this.deviceModel.collection.dropIndex('serial_1');
-      console.log('Đã xóa index cũ: serial_1');
+      this.logger.log('Đã xóa index cũ: serial_1');
     } catch (error) {
       // Bỏ qua lỗi nếu index không tồn tại
       if (error.codeName !== 'IndexNotFound') {
-        console.warn('Cảnh báo: Không thể xóa index serial_1 (nó có thể không tồn tại hoặc cần kiểm tra thủ công)', error.message);
+        this.logger.warn('Cảnh báo: Không thể xóa index serial_1 (nó có thể không tồn tại hoặc cần kiểm tra thủ công)', error.message);
       }
     }
   }
@@ -285,7 +285,7 @@ export class DeviceService implements OnModuleInit {
       }
     ).exec();
 
-    console.log(`[DEBUG] UpdateMany result:`, {
+    this.logger.debug(`[DEBUG] UpdateMany result:`, {
       matchedCount: result.matchedCount,
       modifiedCount: result.modifiedCount,
       acknowledged: result.acknowledged
@@ -294,9 +294,8 @@ export class DeviceService implements OnModuleInit {
     // Tạo lịch sử
     if (devicesToMove.length > 0) {
       let actorId = userId;
-      // Check if actorId is valid ObjectId (24 hex characters)
       if (!actorId || !/^[0-9a-fA-F]{24}$/.test(actorId)) {
-        actorId = '000000000000000000000000'; // System/Unknown ID
+        actorId = '000000000000000000000000';
       }
 
       const historyRecords = devicesToMove.map(device => ({
@@ -309,7 +308,7 @@ export class DeviceService implements OnModuleInit {
       }));
 
       await this.historyModel.insertMany(historyRecords);
-      console.log(`[DEBUG] Created ${historyRecords.length} device history records with actorId: ${actorId}`);
+      this.logger.debug(`[DEBUG] Created ${historyRecords.length} device history records with actorId: ${actorId}`);
     }
   }
 

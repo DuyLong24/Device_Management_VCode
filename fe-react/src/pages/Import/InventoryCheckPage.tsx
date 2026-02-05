@@ -184,14 +184,14 @@ export default function InventoryCheckPage() {
   return (
     <div className="p-3 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-4">
+      <div className="mb-0">
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/import/list')} className="mb-4">
           {INVENTORY_LABELS.BTN_BACK}
         </Button>
       </div>
 
       {/* Session Info & Statistics */}
-      <Row gutter={16} className="mb-6">
+      <Row gutter={16} className="mb-0">
         <Col span={8}>
           <Card title={INVENTORY_LABELS.SESSION_INFO} className="h-full shadow-sm">
             <Descriptions column={1} size="small" bordered>

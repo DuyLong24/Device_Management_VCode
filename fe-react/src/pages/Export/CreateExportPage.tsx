@@ -133,27 +133,13 @@ export default function CreateExportPage() {
     return (
         <div className="p-3 max-w-full mx-auto">
             {/* Page Header */}
-            <div className="mb-6">
+            <div className="mb-2">
                 <div className="flex justify-between items-start">
                     <div>
                         <Title level={3} className="!m-0">
                             {isEditMode ? 'Cập nhật phiếu xuất kho' : 'Thêm mới phiếu xuất kho'}
                         </Title>
-                        <Text type="secondary">
-                            {isEditMode ? 'Chỉnh sửa thông tin phiếu xuất nháp' : 'Tạo mới phiếu xuất kho và danh sách thiết bị đi kèm'}
-                        </Text>
                     </div>
-                    <Space>
-                        <Button icon={<SaveOutlined />} onClick={handleSaveDraft} loading={loading}>
-                            {isEditMode ? 'Cập nhật nháp' : 'Lưu nháp'}
-                        </Button>
-                        <Button type="primary" icon={<SendOutlined />} onClick={handleSaveAndSubmit} loading={loading}>
-                            {isEditMode ? 'Cập nhật & Gửi duyệt' : 'Lưu & Gửi duyệt'}
-                        </Button>
-                        <Button danger icon={<CloseOutlined />} onClick={handleCancel}>
-                            Hủy
-                        </Button>
-                    </Space>
                 </div>
             </div>
 
@@ -394,7 +380,7 @@ export default function CreateExportPage() {
             </Form>
 
             <div className="sticky bottom-0 bg-white py-4 mt-3 border-t border-gray-200 z-10">
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-2 pr-6">
                     <Button icon={<SaveOutlined />} onClick={handleSaveDraft} loading={loading} size="large">
                         {isEditMode ? 'Cập nhật nháp' : 'Lưu nháp'}
                     </Button>

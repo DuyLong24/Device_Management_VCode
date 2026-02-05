@@ -1,65 +1,49 @@
-import { useEffect, useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Table, Typography, Space, Button, Checkbox, Input, Select, App } from 'antd';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useDebounce } from '../../hooks/useDebounce';
+import { useState } from 'react';
+import { Card, Typography, Space, Button, Input, Select, Checkbox } from 'antd';
 import {
     ReloadOutlined,
     ScanOutlined,
     ImportOutlined,
     SwapOutlined,
     DownloadOutlined,
-    SearchOutlined,
-    EyeOutlined
+    SearchOutlined
 } from '@ant-design/icons';
 
-import { deviceService } from '../../services/device.service';
-import { warehouseService } from '../../services/warehouse.service';
-import { warehouseTransitionService, type WarehouseTransition } from '../../services/warehouse-transition.service';
-import { sharedDataService } from '../../services/shared-data.service';
 import { WAREHOUSE_LABELS } from '../../constants/warehouse.constants';
-
 import TransferModal from './components/TransferModal';
 import { ScanSelectionModal } from './components/ScanSelectionModal';
 import { ImportWizardModal } from '../../components/ImportWizard/ImportWizardModal';
 import { type FieldDefinition } from '../../components/ImportWizard/steps/Step3_Mapping';
+import { useWarehouseData } from '../../hooks/useWarehouseData';
+import { WarehouseTable } from './components/WarehouseTable';
 
 const { Title, Text } = Typography;
 
 export default function WarehousePage() {
-    const { code } = useParams();
-    const navigate = useNavigate();
-    const queryClient = useQueryClient();
-    const { message } = App.useApp(); // Use Context
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(20);
+    const {
+        code,
+        currentWarehouse,
+        isLoading,
+        dataSource,
+        totalResults,
+        page, setPage,
+        pageSize, setPageSize,
+        searchText, setSearchText,
+        importCode, setImportCode,
+        exportCode, setExportCode,
+        selectedDeviceModel, setSelectedDeviceModel,
+        selectedRowKeys, setSelectedRowKeys,
+        setPriorityItems,
+        modelOptions,
+        transferOptions,
+        refetch,
+        handleTransferSubmit
+    } = useWarehouseData();
 
-    // Filter States
-    const [searchText, setSearchText] = useState('');
-    const debouncedSearch = useDebounce(searchText, 500);
-    const [importCode, setImportCode] = useState('');
-    const debouncedImportCode = useDebounce(importCode, 500);
-    const [exportCode, setExportCode] = useState('');
-    const debouncedExportCode = useDebounce(exportCode, 500);
-    const [selectedDeviceModel, setSelectedDeviceModel] = useState<string | undefined>(undefined);
-
-    // Selection State
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-
-    // Modal States
-    // Modal States
+    // Modal States - local UI state can remain here or move to hook if complex
     const [transferModalVisible, setTransferModalVisible] = useState(false);
     const [importModalVisible, setImportModalVisible] = useState(false);
-    const [modelOptions, setModelOptions] = useState<{ label: string, value: string, desc?: string }[]>([]);
     const [scanModalVisible, setScanModalVisible] = useState(false);
-
-    useEffect(() => {
-        sharedDataService.getDataByGroupCode('MODEL').then(res => {
-            if (res) {
-                setModelOptions(res.map(m => ({ label: m.code, value: m.code, desc: m.name })));
-            }
-        });
-    }, []);
 
     // Import Fields
     const DEVICE_IMPORT_FIELDS: FieldDefinition[] = [
@@ -68,238 +52,6 @@ export default function WarehousePage() {
         { key: 'deviceModel', label: 'Mã Model', required: true, description: 'Mã thiết bị (SKU)' },
         { key: 'name', label: 'Tên thiết bị', description: 'Tên hiển thị (nếu trống sẽ dùng Model)' },
     ];
-
-    // 1. Get Warehouse Info
-    const { data: warehouses } = useQuery({
-        queryKey: ['warehouses'],
-        queryFn: warehouseService.getAll,
-        staleTime: 5 * 60 * 1000
-    });
-
-    const currentWarehouse = useMemo(() => warehouses?.find(w => w.code === code), [warehouses, code]);
-
-    // 2. Get Devices in Warehouse
-    const { data: deviceData, isLoading, refetch } = useQuery({
-        queryKey: ['devices', code, page, pageSize, debouncedSearch, selectedDeviceModel, debouncedImportCode, debouncedExportCode],
-        queryFn: () => {
-            const params: any = {
-                page,
-                limit: pageSize,
-                warehouseId: currentWarehouse?.id,
-                sortBy: 'updatedAt:desc',
-            };
-            if (debouncedSearch) params.search = debouncedSearch;
-            if (selectedDeviceModel) params.model = selectedDeviceModel;
-            if (debouncedImportCode) params.importCode = debouncedImportCode;
-            if (debouncedExportCode) params.exportCode = debouncedExportCode;
-
-            return deviceService.getAll(params);
-        },
-        enabled: !!currentWarehouse?.id
-    });
-
-    // Hiển thị thiết bị đã quét
-    const [priorityItems, setPriorityItems] = useState<any[]>([]);
-
-    useEffect(() => {
-        setPage(1);
-        setSelectedRowKeys([]);
-        setSearchText('');
-        setImportCode('');
-        setExportCode('');
-        setPriorityItems([]);
-    }, [code]);
-
-    const dataSource = useMemo(() => {
-        const raw = deviceData?.results || [];
-        if (priorityItems.length === 0) return raw;
-
-        const map = new Map();
-
-        // Thêm thiết bị đã quét vào danh sách
-        priorityItems.forEach(item => map.set(item.id, { ...item, _isPriority: true }));
-
-        // Thêm thiết bị trong kho vào danh sách
-        raw.forEach(item => {
-            if (!map.has(item.id)) {
-                map.set(item.id, item);
-            }
-        });
-
-        return Array.from(map.values());
-    }, [deviceData?.results, priorityItems]);
-
-
-    // --- Actions ---
-    const { mutate: transferDevices } = useMutation({
-        mutationFn: deviceService.bulkTransfer,
-        onSuccess: (data) => {
-            message.success(`Đã chuyển thành công ${data.success.length} thiết bị.`);
-            queryClient.invalidateQueries({ queryKey: ['devices'] });
-            refetch();
-            setTransferModalVisible(false);
-            setSelectedRowKeys([]);
-            setPriorityItems([]);
-        },
-        onError: () => message.error('Có lỗi xảy ra khi xử lý')
-    });
-
-    const handleTransferSubmit = (toWarehouse: string, note: string, errorReason?: string) => {
-        const targetWh = warehouses?.find(w => w.code === toWarehouse);
-        if (!targetWh) {
-            message.error('Kho đích không hợp lệ');
-            return;
-        }
-        transferDevices({
-            deviceIds: selectedRowKeys as string[],
-            toWarehouseId: targetWh.id,
-            note,
-            errorReason
-        });
-    };
-
-    const getColumnDef = (colConfig: { key: string; title: string; type: string }) => {
-        const rawKey = String(colConfig.key || '');
-        const dataKey = rawKey === 'model' ? 'deviceModel' : rawKey;
-
-        const base = {
-            title: colConfig.title || titleMap(colConfig),
-            key: dataKey,
-            dataIndex: dataKey,
-        };
-
-        if (rawKey === 'mac') {
-            return {
-                ...base,
-                render: (text: string) => (
-                    <Button type="link" className="p-0" onClick={() => navigate(`/serial/${text}`)}>
-                        {text}
-                    </Button>
-                )
-            };
-        }
-
-        if (colConfig.type === 'action') {
-            return {
-                ...base,
-                title: 'Thao tác',
-                align: 'center' as const,
-                width: 100,
-                fixed: 'right' as const,
-                render: (_: any, record: any) => (
-                    <Button
-                        type="text"
-                        icon={<EyeOutlined />}
-                        size="small"
-                        onClick={() => navigate(`/serial/${record.mac}`)}
-                    >
-                        Chi tiết
-                    </Button>
-                )
-            };
-        }
-
-        if (
-            colConfig.type === 'date' ||
-            rawKey.includes('Date') ||
-            rawKey.includes('At')
-        ) {
-            return {
-                ...base,
-                render: (date: string) =>
-                    date ? new Date(date).toLocaleDateString('vi-VN') : '-'
-            };
-        }
-
-        if (rawKey === 'importBy' || rawKey.includes('importId')) {
-            return {
-                ...base,
-                render: (_: any, record: any) => {
-                    const name =
-                        record?.importId?.createdBy?.name ??
-                        record?.importedBy;
-
-                    return <Text>{name || '--'}</Text>;
-                }
-            };
-        }
-
-        if (rawKey === 'qcBy' || rawKey.includes('qcBy')) {
-            return {
-                ...base,
-                render: (_: any, record: any) => {
-                    const name =
-                        typeof record?.qcBy === 'object'
-                            ? record?.qcBy?.name
-                            : record?.qcBy;
-
-                    return <Text>{name || '--'}</Text>;
-                }
-            };
-        }
-
-        return base;
-    };
-
-    const titleMap = (c: any) => {
-        const map: Record<string, string> = {
-            serial: 'Serial',
-            mac: 'MAC Address',
-            name: 'Tên thiết bị',
-            model: 'Mã Model',
-            deviceModel: 'Mã Model',
-            importDate: 'Ngày nhập',
-            importBy: 'Người nhập',
-            qcBy: 'Người QC',
-            qcStatus: 'QC Status',
-            qcNote: 'QC Note',
-        };
-        return c.title || map[c.key] || c.key;
-    };
-
-    const columns = currentWarehouse?.config?.columns;
-    const safeColumns = Array.isArray(columns) ? columns : [];
-
-    const normalizedColumns = safeColumns.map((c: any) => {
-        if (typeof c === 'string') return { key: c, title: titleMap({ key: c }), type: 'text' };
-        return c;
-    });
-
-    const dataColumns = normalizedColumns.map(getColumnDef);
-
-
-    // 2.5 Get Allowed Transitions (Dynamic)
-    const { data: transitions } = useQuery({
-        queryKey: ['warehouse-transitions', currentWarehouse?.id],
-        queryFn: () => warehouseTransitionService.getBySourceWarehouse(currentWarehouse!.id),
-        enabled: !!currentWarehouse?.id
-    });
-
-    const transferOptions = useMemo(() => {
-        if (!transitions || !warehouses) return [];
-
-        const uniqueTargets = new Set();
-        return transitions.map((t: WarehouseTransition) => {
-            const target = warehouses.find(w => w.id === t.toWarehouseId);
-            if (!target) return null;
-
-            // Deduplicate: If we already have an option for this target, skip
-            if (uniqueTargets.has(target.code)) return null;
-            uniqueTargets.add(target.code);
-
-            return {
-                to: target.code,
-                label: `Chuyển sang ${target.name}`,
-                description: t.requiresApproval ? '(Cần duyệt)' : undefined,
-                // Auto-determine color/icon based on target code or type
-            };
-        }).filter(Boolean) as any[];
-    }, [transitions, warehouses]);
-
-    const rowSelection = {
-        selectedRowKeys,
-        onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
-    };
 
     if (!code) return null;
 
@@ -312,7 +64,7 @@ export default function WarehousePage() {
                         <Title level={3} className="!m-0">
                             {currentWarehouse ? currentWarehouse.name : code}
                             <span className="text-base text-gray-400 ml-3 font-normal">
-                                {deviceData?.totalResults || 0} thiết bị
+                                {totalResults || 0} thiết bị
                             </span>
                         </Title>
                         {currentWarehouse?.description && <Text type="secondary">{currentWarehouse.description}</Text>}
@@ -412,24 +164,21 @@ export default function WarehousePage() {
                         <Text type="secondary">{WAREHOUSE_LABELS.NOT_FOUND}</Text>
                     </div>
                 ) : (
-                    <Table
-                        columns={dataColumns}
+                    <WarehouseTable
                         dataSource={dataSource}
-                        loading={isLoading}
-                        rowKey="id"
-                        rowSelection={rowSelection}
-                        pagination={{
-                            current: page,
-                            pageSize: pageSize,
-                            total: deviceData?.totalResults || 0,
-                            onChange: (p, ps) => {
-                                setPage(p);
-                                setPageSize(ps);
-                            },
-                            showSizeChanger: true,
-                            showTotal: (total) => `Tổng ${total} thiết bị`
+                        isLoading={isLoading}
+                        currentWarehouse={currentWarehouse}
+                        page={page}
+                        pageSize={pageSize}
+                        totalResults={totalResults}
+                        onChangePage={(p, ps) => {
+                            setPage(p);
+                            setPageSize(ps);
                         }}
-                        rowClassName={(record: any) => record._isPriority ? 'bg-yellow-50' : ''}
+                        rowSelection={{
+                            selectedRowKeys,
+                            onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
+                        }}
                     />
                 )}
             </Card>
@@ -438,7 +187,10 @@ export default function WarehousePage() {
             <TransferModal
                 open={transferModalVisible}
                 onCancel={() => setTransferModalVisible(false)}
-                onConfirm={handleTransferSubmit}
+                onConfirm={(to, note, err) => {
+                    handleTransferSubmit(to, note, err);
+                    setTransferModalVisible(false);
+                }}
                 count={selectedRowKeys.length}
                 options={transferOptions}
             />
@@ -471,8 +223,6 @@ export default function WarehousePage() {
                             return Array.from(unique.values());
                         });
                     }
-
-
                 }}
                 currentWarehouseId={currentWarehouse?.id}
             />

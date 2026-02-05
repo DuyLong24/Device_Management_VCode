@@ -30,7 +30,7 @@ import { useMacDetail, getTimelineIcon } from '../../hooks/useSerialDetail';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
-export default function SerialDetailPage() {
+export default function DeviceDetailPage() {
     const { serial: mac } = useParams(); // URL params might still be named 'serial' if defined in router
     const navigate = useNavigate();
     const [form] = Form.useForm();

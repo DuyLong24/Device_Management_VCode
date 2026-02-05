@@ -34,7 +34,7 @@ import { DevicesModule } from './modules/devices/devices.module';
 import { MailModule } from './common/mail/mail.module';
 import { DeviceImportModule } from './modules/device-imports/device-imports.module';
 import { DeviceExportModule } from './modules/device-exports/device-exports.module';
-import { DeviceHistoryModule } from './modules/device-histories/device-historys.module';
+import { DeviceHistoryModule } from './modules/device-histories/device-histories.module';
 import { InventorySessionModule } from './modules/inventory-sessions/inventory-sessions.module';
 import { InventoryCoordinatorModule } from './modules/inventory-coordinator/inventory-coordinator.module';
 import { ExcelModule } from './common/excel/excel.module';
@@ -136,7 +136,6 @@ import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activat
     InventorySessionModule,
     InventoryCoordinatorModule,
     ExcelModule,
-    DataImportModule,
     DataImportModule,
     SharedDataModule,
     NotificationsModule,

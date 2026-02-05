@@ -16,7 +16,7 @@ import WarehousePage from './pages/Warehouse/WarehousePage';
 import ExportListPage from './pages/Export/ExportListPage';
 import CreateExportPage from './pages/Export/CreateExportPage';
 import ExportDetailPage from './pages/Export/ExportDetailPage';
-import SerialDetailPage from './pages/Warehouse/SerialDetailPage';
+import DeviceDetailPage from './pages/Warehouse/DeviceDetailPage';
 import ExportProcessPage from './pages/Export/ExportProcessPage';
 import ExportCheckListPage from './pages/Export/ExportCheckListPage';
 import RoleManagementPage from './pages/RoleManagement/RoleManagementPage';
@@ -87,7 +87,7 @@ function App() {
 
                   {/* --- CÁC MODULE KHÁC --- */}
                   <Route path="all-devices" element={<DeviceListPage />} />
-                  <Route path="serial/:serial" element={<SerialDetailPage />} />
+                  <Route path="serial/:serial" element={<DeviceDetailPage />} />
                   <Route path="warehouse/:code" element={<WarehousePage />} />
 
 

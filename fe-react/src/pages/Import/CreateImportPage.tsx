@@ -54,20 +54,6 @@ export default function CreateImportPage() {
                     <Title level={2} className="mb-1! text-2xl! font-bold text-gray-800">
                         {isEditMode ? 'Cập nhật phiếu nhập kho' : 'Thêm mới phiếu nhập kho'}
                     </Title>
-                    <Text className="text-gray-500">
-                        {isEditMode ? 'Chỉnh sửa thông tin phiếu nhập' : 'Tạo phiếu nhập'}
-                    </Text>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    <Button icon={<SaveOutlined />} onClick={() => submitImport('DRAFT')} loading={loading}>
-                        {isEditMode ? 'Cập nhật Nháp' : 'Lưu nháp'}
-                    </Button>
-                    <Button type="primary" icon={<SaveOutlined />} onClick={() => submitImport('PUBLIC')} loading={loading} className="bg-blue-600 hover:bg-blue-700">
-                        Hoàn thiện & đóng
-                    </Button>
-                    <Button danger icon={<CloseOutlined />} onClick={handleCancel}>
-                        Hủy
-                    </Button>
                 </div>
             </header>
 
@@ -101,7 +87,7 @@ export default function CreateImportPage() {
 
             {/* Sticky Footer */}
             <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
-                <div className="max-w-7xl mx-auto flex justify-end gap-3">
+                <div className="max-w-full mx-auto flex justify-end gap-3">
                     <Button icon={<SaveOutlined />} onClick={() => submitImport('DRAFT')} loading={loading} size="large" className="min-w-30">
                         Lưu nháp
                     </Button>

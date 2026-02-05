@@ -17,7 +17,7 @@ import { DeviceHistoryPaginationDto } from '../dto/device-history-pagination.dto
 import { createFilterAndOptions } from '../../../utils/pick.util';
 import { Roles } from 'nest-keycloak-connect';
 
-@Controller('device-historys')
+@Controller('device-histories')
 export class DeviceHistoryController {
   constructor(private readonly deviceHistoryService: DeviceHistoryService) { }
 

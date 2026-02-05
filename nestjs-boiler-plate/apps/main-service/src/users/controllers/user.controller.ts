@@ -12,8 +12,9 @@ import {
   Patch,
   UseGuards,
 } from '@nestjs/common';
-import { Roles } from 'nest-keycloak-connect';
+import { Roles, AuthenticatedUser } from 'nest-keycloak-connect';
 import { UserService } from '../services/user.service';
+import { FncRoleService } from '../../fnc-roles/services/fnc-role.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { SetPasswordDto } from '../dto/set-password.dto';
@@ -23,7 +24,36 @@ import { ChangePasswordDto } from '../dto/change-password.dto';
 export class UserController {
   constructor(
     private readonly userService: UserService,
+    private readonly fncRoleService: FncRoleService,
   ) { }
+
+  @Get('permissions/me')
+  async getMyPermissions(@AuthenticatedUser() user: any) {
+    if (!user || !user.sub) {
+      return { permissions: [] };
+    }
+
+    const keycloakId = user.sub;
+
+    // Lookup user in MongoDB by keycloakId
+    const mongoUser = await this.userService.findByKeycloakId(keycloakId);
+    if (!mongoUser || !mongoUser.funcRoleId) {
+      return { permissions: [] };
+    }
+
+    // Get role by ID
+    const role = await this.fncRoleService.findById(mongoUser.funcRoleId);
+    if (!role) {
+      return { permissions: [] };
+    }
+
+    // Super admin check
+    if (role.code === 'super_admin' || role.code === 'SUPER_ADMIN') {
+      return { permissions: ['*'] };
+    }
+
+    return { permissions: role.permissions || [] };
+  }
 
   @Post()
   // @Roles({ roles: ['super_admin', 'superadmin', 'Super admin'] })

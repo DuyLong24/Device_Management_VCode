@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Space, Typography, Tag } from 'antd';
+import { Button, Space, Typography, Tag, Tooltip } from 'antd';
 import {
     PrinterOutlined,
     EditOutlined,
@@ -7,13 +7,15 @@ import {
     ArrowLeftOutlined
 } from '@ant-design/icons';
 import { IMPORT_STATUS_CONFIG } from '../../../constants/import.constants';
+import { useAuth } from '../../../hooks/useAuth';
+import { PERMISSION_KEYS } from '../../../constants/permissionKeys';
 
 const { Title, Text } = Typography;
 
 interface ImportHeaderProps {
     code: string;
     inventoryStatus: string;
-    status?: string; // [NEW]
+    status?: string;
     onBack: () => void;
     onPrint: () => void;
     onEdit: () => void;
@@ -29,6 +31,9 @@ export const ImportHeader: React.FC<ImportHeaderProps> = ({
     onEdit,
     onDelete
 }) => {
+    const { hasPermission } = useAuth();
+    const canExport = hasPermission(PERMISSION_KEYS.IMPORT.ROOT.EXPORT);
+
     const statusConfig = IMPORT_STATUS_CONFIG[inventoryStatus as keyof typeof IMPORT_STATUS_CONFIG]
         || { color: 'default', text: inventoryStatus };
 
@@ -65,7 +70,15 @@ export const ImportHeader: React.FC<ImportHeaderProps> = ({
                 </div>
 
                 <Space>
-                    <Button icon={<PrinterOutlined />} onClick={onPrint}>In phiếu</Button>
+                    <Tooltip title={!canExport ? 'Bạn không có quyền in phiếu' : 'In phiếu nhập kho'}>
+                        <Button
+                            icon={<PrinterOutlined />}
+                            onClick={onPrint}
+                            disabled={!canExport}
+                        >
+                            In phiếu
+                        </Button>
+                    </Tooltip>
                     <Button icon={<EditOutlined />} onClick={onEdit}>Sửa</Button>
                     <Button danger icon={<DeleteOutlined />} onClick={onDelete}>Xóa</Button>
                 </Space>

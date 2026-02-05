@@ -3,18 +3,28 @@ import { useAuth } from '../../hooks/useAuth';
 import { Result, Button } from 'antd';
 
 interface PermissionRouteProps {
-    requiredRole: string;
+    requiredRole?: string;
+    requiredPermission?: string;
     children?: React.ReactNode;
 }
 
-export const PermissionRoute = ({ requiredRole, children }: PermissionRouteProps) => {
-    const { hasRole } = useAuth();
+export const PermissionRoute = ({ requiredRole, requiredPermission, children }: PermissionRouteProps) => {
+    const { hasRole, hasPermission } = useAuth();
 
-    const canAccess =
-        hasRole('super admin') ||
-        hasRole('Super admin') ||
-        hasRole('superadmin') ||
-        hasRole(requiredRole);
+    let canAccess = true;
+
+    if (requiredRole) {
+        canAccess = canAccess && (
+            hasRole('super admin') ||
+            hasRole('Super admin') ||
+            hasRole('superadmin') ||
+            hasRole(requiredRole)
+        );
+    }
+
+    if (requiredPermission) {
+        canAccess = canAccess && hasPermission(requiredPermission);
+    }
 
     if (!canAccess) {
         return (

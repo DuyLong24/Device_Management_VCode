@@ -14,12 +14,14 @@ import { importService } from '../../services/import.service';
 import { inventorySessionService } from '../../services/inventory-session.service';
 import type { InventorySession } from '../../services/inventory-session.service';
 import type { DeviceImport } from '../../types/import.type';
+import { useSessionPermission } from '../../hooks/useSessionPermission';
+import { SessionPermissionAlert } from '../../components/permissions/SessionPermissionAlert';
+import { IMPORT_INVENTORY_CHECK } from '../../constants/permissionKeys';
+import { INVENTORY_LABELS } from '../../constants/inventory.constants';
 
 const { Title, Text } = Typography;
 
-import { INVENTORY_LABELS } from '../../constants/inventory.constants';
-
-// Config hiển thị trạng thái kiểm kê
+// Map trạng thái kiểm kê sang UI tag (color + text)
 const getInventoryStatusConfig = (status: string) => {
     const configs: Record<string, { color: string; text: string }> = {
         pending: { color: 'default', text: INVENTORY_LABELS.STATUS_PROCESSING },
@@ -32,6 +34,7 @@ const getInventoryStatusConfig = (status: string) => {
 export default function InventoryListPage() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
+    const { canAccess: canManageSession, guardAction } = useSessionPermission(IMPORT_INVENTORY_CHECK);
 
     // Data State
     const [loading, setLoading] = useState(false);
@@ -44,13 +47,12 @@ export default function InventoryListPage() {
     const [sessions, setSessions] = useState<InventorySession[]>([]);
     const [sessionLoading, setSessionLoading] = useState(false);
 
-    // 1. Fetch Data
     const fetchData = async () => {
         setLoading(true);
         try {
             const res = await importService.getImports({});
             if (res.data) {
-                // Lọc phiếu chưa hoàn thành
+                // Chỉ hiển thị phiếu đang chờ hoặc đang kiểm kê (loại bỏ hoàn thành)
                 const activeImports = res.data.filter((item: DeviceImport) =>
                     item.inventoryStatus === 'pending' || item.inventoryStatus === 'in-progress'
                 );
@@ -68,7 +70,6 @@ export default function InventoryListPage() {
         fetchData();
     }, []);
 
-    // 2. Handle Mở Modal
     const handleOpenSelectModal = async (record: DeviceImport) => {
         setSelectedImport(record);
         setModalVisible(true);
@@ -83,33 +84,36 @@ export default function InventoryListPage() {
         }
     };
 
-    // 3. Handle Tạo phiên mới
     const handleCreateSession = async () => {
         if (!selectedImport) return;
-        try {
-            const newSessionName = `Kiểm kê lần ${sessions.length + 1} (${dayjs().format('DD/MM HH:mm')})`;
 
-            const newSession = await inventorySessionService.create({
-                importId: selectedImport.id,
-                name: newSessionName,
-                note: 'Tạo từ danh sách phiếu nhập'
-            });
+        // Sử dụng guardAction để tự động check permission + hiện lỗi
+        guardAction(async () => {
+            try {
+                const newSessionName = `Kiểm kê lần ${sessions.length + 1} (${dayjs().format('DD/MM HH:mm')})`;
 
-            message.success('Đã tạo phiên mới');
-            setModalVisible(false);
-            // Điều hướng kèm sessionId
-            navigate(`/import/inventory-check/${selectedImport.id}?sessionId=${newSession.id}`);
-        } catch (error) {
-            message.error('Lỗi tạo phiên');
-        }
+                const newSession = await inventorySessionService.create({
+                    importId: selectedImport.id,
+                    name: newSessionName,
+                    note: 'Tạo từ danh sách phiếu nhập'
+                });
+
+                message.success('Đã tạo phiên mới');
+                setModalVisible(false);
+                navigate(`/import/inventory-check/${selectedImport.id}?sessionId=${newSession.id}`);
+            } catch (error) {
+                message.error('Lỗi tạo phiên');
+            }
+        });
     };
 
-    // 4. Handle Chọn phiên cũ
     const handleResumeSession = (sessionId: string) => {
         if (!selectedImport) return;
-        setModalVisible(false);
-        // Điều hướng kèm sessionId
-        navigate(`/import/inventory-check/${selectedImport.id}?sessionId=${sessionId}`);
+
+        guardAction(() => {
+            setModalVisible(false);
+            navigate(`/import/inventory-check/${selectedImport.id}?sessionId=${sessionId}`);
+        });
     };
 
     // Filter Logic
@@ -288,7 +292,7 @@ export default function InventoryListPage() {
                                 renderItem={(item) => (
                                     <List.Item
                                         actions={[
-                                            <Button type="primary" size="small" onClick={() => handleResumeSession(item.id)} disabled={item.status === 'completed'}>
+                                            <Button type="primary" size="small" onClick={() => handleResumeSession(item.id)} disabled={item.status === 'completed' || !canManageSession}>
                                                 {item.status === 'completed' ? 'Đã xong' : 'Tiếp tục'}
                                             </Button>
                                         ]}
@@ -311,9 +315,13 @@ export default function InventoryListPage() {
                             />
                         </div>
 
-                        <Button type="dashed" block icon={<PlusOutlined />} size="large" onClick={handleCreateSession}>
-                            Tạo phiên kiểm kê mới
-                        </Button>
+                        {!canManageSession && <SessionPermissionAlert sessionType="inventory" />}
+
+                        {canManageSession && (
+                            <Button type="dashed" block icon={<PlusOutlined />} size="large" onClick={handleCreateSession}>
+                                Tạo phiên kiểm kê mới
+                            </Button>
+                        )}
                     </Space>
                 )}
             </Modal>

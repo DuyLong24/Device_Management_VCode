@@ -14,10 +14,15 @@ import {
     SyncOutlined,
     CheckSquareOutlined,
 } from '@ant-design/icons';
+import { useAuth } from '../../hooks/useAuth';
+import { PERMISSION_KEYS } from '../../constants/permissionKeys';
 
 const { Text } = Typography;
 
 const ExportListPage = () => {
+    const { hasPermission } = useAuth();
+    const canExport = hasPermission(PERMISSION_KEYS.EXPORT.ROOT.EXPORT);
+
     const {
         filteredData,
         loading,
@@ -233,11 +238,15 @@ const ExportListPage = () => {
                                 Xóa
                             </Button>
                         )}
-                        <Tooltip title={!isCompleted ? 'Chỉ phiếu đã xuất mới được phép xuất file' : 'Xuất phiếu xuất kho'}>
+                        <Tooltip title={
+                            !canExport
+                                ? 'Bạn không có quyền xuất file'
+                                : (!isCompleted ? 'Chỉ phiếu đã xuất mới được phép xuất file' : 'Xuất phiếu xuất kho')
+                        }>
                             <Button
                                 size="small"
                                 icon={<FileExcelOutlined />}
-                                disabled={!isCompleted}
+                                disabled={!canExport || !isCompleted}
                                 onClick={() => handleExportExcel(record)}
                             >
                                 Xuất

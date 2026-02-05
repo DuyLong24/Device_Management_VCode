@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
-    Card, Button, Table, Tag, Typography, Alert, message, Modal, Space, Form, Input, Select, Divider, Spin, Progress, Popover
+    Card, Button, Table, Tag, Typography, message, Modal, Space, Form, Input, Select, Divider, Spin, Progress, Popover,
+    Alert
 } from 'antd';
 import {
     ReloadOutlined, PlusOutlined, SearchOutlined, InfoCircleOutlined
@@ -13,6 +14,9 @@ import { exportService } from '../../services/export.service';
 import { exportSessionService } from '../../services/export-session.service';
 import { getExportStatusTag } from '../../utils/export-status.util';
 import type { DeviceExport } from '../../types/export.type';
+import { useSessionPermission } from '../../hooks/useSessionPermission';
+import { SessionPermissionAlert } from '../../components/permissions/SessionPermissionAlert';
+import { EXPORT_CHECK } from '../../constants/permissionKeys';
 
 const { Title, Text } = Typography;
 
@@ -20,6 +24,7 @@ export default function ExportCheckListPage() {
     const navigate = useNavigate();
     const [filterForm] = Form.useForm();
     const [createForm] = Form.useForm();
+    const { canAccess: canManageSession, guardAction } = useSessionPermission(EXPORT_CHECK);
 
     // State for Modal Mode
     const [isCreating, setIsCreating] = useState(false);
@@ -95,42 +100,46 @@ export default function ExportCheckListPage() {
         }
     };
 
-    // 3. Create Session Logic
     const handleCreateSession = async () => {
         if (!selectedExport) return;
-        try {
-            const values = await createForm.validateFields();
-            const exportId = selectedExport.id || selectedExport._id;
 
-            if (!exportId) return;
+        guardAction(async () => {
+            try {
+                const values = await createForm.validateFields();
+                const exportId = selectedExport.id || selectedExport._id;
 
-            setLoading(true);
+                if (!exportId) return;
 
-            const res = await exportSessionService.create({
-                exportId: exportId,
-                sessionName: values.sessionName,
-                note: values.note
-            });
+                setLoading(true);
 
-            messageApi.success('Đã tạo phiên mới');
-            setModalVisible(false);
+                const res = await exportSessionService.create({
+                    exportId: exportId,
+                    sessionName: values.sessionName,
+                    note: values.note
+                });
 
-            const newSessionId = res.data?.id || res.data?._id;
-            navigate(`/export/${exportId}/check?sessionId=${newSessionId}`);
-        } catch (error) {
-            messageApi.error('Lỗi tạo phiên hoặc vui lòng kiểm tra thông tin nhập');
-        } finally {
-            setLoading(false);
-        }
+                messageApi.success('Đã tạo phiên mới');
+                setModalVisible(false);
+
+                const newSessionId = res.data?.id || res.data?._id;
+                navigate(`/export/${exportId}/check?sessionId=${newSessionId}`);
+            } catch (error) {
+                messageApi.error('Lỗi tạo phiên hoặc vui lòng kiểm tra thông tin nhập');
+            } finally {
+                setLoading(false);
+            }
+        });
     };
 
-    // 4. Resume Session
     const handleResumeSession = (sessionId: string) => {
         if (!selectedExport) return;
-        setModalVisible(false);
-        const exportId = selectedExport.id || selectedExport._id;
-        if (!exportId) return;
-        navigate(`/export/${exportId}/check?sessionId=${sessionId}`);
+
+        guardAction(() => {
+            setModalVisible(false);
+            const exportId = selectedExport.id || selectedExport._id;
+            if (!exportId) return;
+            navigate(`/export/${exportId}/check?sessionId=${sessionId}`);
+        });
     };
 
     // Filter Logic
@@ -149,6 +158,24 @@ export default function ExportCheckListPage() {
             result = result.filter(item => item.status === values.status);
         }
         setFilteredData(result);
+    };
+
+    // Render modal footer - Tách ra để tránh nested ternary
+    const renderFooter = () => {
+        if (!selectedExport || (selectedExport.status !== 'APPROVED' && !isCreating)) {
+            return null;
+        }
+        if (!canManageSession) {
+            return <SessionPermissionAlert sessionType="export" />;
+        }
+        return (
+            <div className="flex justify-end gap-2">
+                {selectedExport.status === 'IN_PROGRESS' && isCreating && (
+                    <Button onClick={() => setIsCreating(false)}>Hủy</Button>
+                )}
+                <Button type="primary" onClick={handleCreateSession}>Tạo phiên</Button>
+            </div>
+        );
     };
 
 
@@ -293,16 +320,7 @@ export default function ExportCheckListPage() {
                     setModalVisible(false);
                     setIsCreating(false);
                 }}
-                footer={
-                    (selectedExport?.status === 'APPROVED' || isCreating) ? (
-                        <div className="flex justify-end gap-2">
-                            {(selectedExport?.status === 'IN_PROGRESS' && isCreating) && (
-                                <Button onClick={() => setIsCreating(false)}>Hủy</Button>
-                            )}
-                            <Button type="primary" onClick={handleCreateSession}>Tạo phiên</Button>
-                        </div>
-                    ) : null
-                }
+                footer={renderFooter()}
                 width={700}
             >
                 {selectedExport && (
@@ -390,22 +408,27 @@ export default function ExportCheckListPage() {
 
                                 <Divider className="my-2" />
 
-                                <Button
-                                    type="dashed"
-                                    block
-                                    size="large"
-                                    icon={<PlusOutlined />}
-                                    onClick={() => {
-                                        setIsCreating(true);
-                                        // Auto-fill form
-                                        createForm.setFieldsValue({
-                                            sessionName: `Xuất kho lần ${sessions.length + 1} (${dayjs().format('DD/MM')})`,
-                                            note: ''
-                                        });
-                                    }}
-                                >
-                                    Tạo phiên xuất kho mới
-                                </Button>
+                                {!canManageSession && (
+                                    <SessionPermissionAlert sessionType="export" />
+                                )}
+
+                                {canManageSession && (
+                                    <Button
+                                        type="dashed"
+                                        block
+                                        size="large"
+                                        icon={<PlusOutlined />}
+                                        onClick={() => {
+                                            setIsCreating(true);
+                                            createForm.setFieldsValue({
+                                                sessionName: `Xuất kho lần ${sessions.length + 1} (${dayjs().format('DD/MM')})`,
+                                                note: ''
+                                            });
+                                        }}
+                                    >
+                                        Tạo phiên xuất kho mới
+                                    </Button>
+                                )}
                             </div>
                         )}
 

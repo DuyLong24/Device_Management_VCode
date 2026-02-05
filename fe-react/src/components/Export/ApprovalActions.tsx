@@ -1,4 +1,4 @@
-import { Button, Space, Popconfirm } from 'antd';
+import { Button, Space, Popconfirm, Tooltip } from 'antd';
 import {
     CheckCircleOutlined,
     CloseCircleOutlined,
@@ -6,6 +6,8 @@ import {
     PrinterOutlined,
 } from '@ant-design/icons';
 import { EXPORT_STATUS, type ExportStatusType } from '../../constants/export-status.constant';
+import { useAuth } from '../../hooks/useAuth';
+import { PERMISSION_KEYS } from '../../constants/permissionKeys';
 
 interface ApprovalActionsProps {
     status: ExportStatusType;
@@ -24,6 +26,9 @@ export const ApprovalActions = ({
     onReject,
     canApprove = false
 }: ApprovalActionsProps) => {
+    const { hasPermission } = useAuth();
+    const canExport = hasPermission(PERMISSION_KEYS.EXPORT.ROOT.EXPORT);
+
     const handleRejectClick = () => {
         onReject();
     };
@@ -62,7 +67,14 @@ export const ApprovalActions = ({
 
 
             {status === EXPORT_STATUS.COMPLETED && (
-                <Button icon={<PrinterOutlined />}>In phiếu</Button>
+                <Tooltip title={!canExport ? 'Bạn không có quyền in phiếu' : 'In phiếu xuất kho'}>
+                    <Button
+                        icon={<PrinterOutlined />}
+                        disabled={!canExport}
+                    >
+                        In phiếu
+                    </Button>
+                </Tooltip>
             )}
         </Space>
     );

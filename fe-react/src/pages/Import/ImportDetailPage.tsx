@@ -1,4 +1,4 @@
-import { Button, Space, Tag, Spin, Card } from 'antd';
+import { Button, Space, Tag, Spin, Card, Tooltip } from 'antd';
 import { FileTextOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -8,10 +8,15 @@ import { InventorySessionList } from './components/InventorySessionList';
 import { ImportHeader } from './components/ImportHeader';
 import { ImportOverviewCard } from './components/ImportOverviewCard';
 import { useImportDetail } from '../../hooks/useImportDetail';
+import { useAuth } from '../../hooks/useAuth';
+import { PERMISSION_KEYS } from '../../constants/permissionKeys';
 
 import { IMPORT_STATUS_CONFIG } from '../../constants/import.constants';
 
 const ImportDetailPage = () => {
+    const { hasPermission } = useAuth();
+    const canExport = hasPermission(PERMISSION_KEYS.IMPORT.ROOT.EXPORT);
+
     const {
         importData,
         loading,
@@ -99,12 +104,15 @@ const ImportDetailPage = () => {
                     className="shadow-sm"
                     styles={{ body: { padding: 0 } }}
                     extra={
-                        <Button
-                            icon={<FileTextOutlined />}
-                            onClick={handlePrint}
-                        >
-                            Xuất danh sách
-                        </Button>
+                        <Tooltip title={!canExport ? 'Bạn không có quyền xuất file' : 'Xuất danh sách thiết bị ra PDF'}>
+                            <Button
+                                icon={<FileTextOutlined />}
+                                onClick={handlePrint}
+                                disabled={!canExport}
+                            >
+                                Xuất danh sách
+                            </Button>
+                        </Tooltip>
                     }
                 >
                     <ImportDeviceTable devices={devicesUI} />
@@ -114,7 +122,7 @@ const ImportDetailPage = () => {
                 <InventorySessionList
                     sessions={sessions}
                     importStatus={inventoryStatus}
-                    ticketStatus={status} // [NEW]
+                    ticketStatus={status}
                     onContinue={handleContinueSession}
                     onExport={handlePrint}
                     onViewInfo={() => { }}

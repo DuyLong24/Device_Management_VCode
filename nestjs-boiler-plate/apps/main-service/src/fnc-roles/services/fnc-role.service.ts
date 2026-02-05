@@ -7,7 +7,7 @@ import { FncRole } from '../entities/fnc-role.entity';
 
 @Injectable()
 export class FncRoleService {
-  constructor(private readonly fncRoleRepository: FncRoleRepository) {}
+  constructor(private readonly fncRoleRepository: FncRoleRepository) { }
 
   async create(createFncRoleDto: CreateFncRoleDto): Promise<FncRole> {
     return this.fncRoleRepository.create(createFncRoleDto);
@@ -35,6 +35,11 @@ export class FncRoleService {
       throw new NotFoundException('FncRole not found');
     }
 
+    // Guard: Prevent updating Super Admin
+    if (fncrole.code === 'super_admin' || fncrole.code === 'SUPER_ADMIN') {
+      throw new BadRequestException('Cannot modify Super Admin role');
+    }
+
     const updatedFncRole = await this.fncRoleRepository.update(id, updateFncRoleDto);
     if (!updatedFncRole) {
       throw new BadRequestException('Failed to update fncrole');
@@ -55,5 +60,18 @@ export class FncRoleService {
     }
 
     return deletedFncRole;
+  }
+
+  async getPermissionsByCodes(codes: string[]): Promise<string[]> {
+    const roles = await this.fncRoleRepository.findAll({ code: { $in: codes } });
+    const permissions = new Set<string>();
+
+    roles.forEach(role => {
+      if (role.permissions) {
+        role.permissions.forEach(p => permissions.add(p));
+      }
+    });
+
+    return Array.from(permissions);
   }
 }

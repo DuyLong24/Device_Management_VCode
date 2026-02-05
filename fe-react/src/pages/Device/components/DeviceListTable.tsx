@@ -1,8 +1,10 @@
 import React from 'react';
-import { Card, Table, Button, Typography, Tag, Space } from 'antd';
+import { Card, Table, Button, Typography, Tag, Space, Tooltip } from 'antd';
 import { DownloadOutlined, EyeOutlined } from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
+import { useAuth } from '../../../hooks/useAuth';
+import { PERMISSION_KEYS } from '../../../constants/permissionKeys';
 
 const { Text } = Typography;
 
@@ -34,6 +36,8 @@ export const DeviceListTable: React.FC<DeviceListTableProps> = ({
     onExport,
     onViewDetail
 }) => {
+    const { hasPermission } = useAuth();
+    const canExport = hasPermission(PERMISSION_KEYS.DEVICE.EXPORT);
     const columns: ColumnsType<DeviceUI> = [
         {
             title: 'MAC Address',
@@ -118,9 +122,15 @@ export const DeviceListTable: React.FC<DeviceListTableProps> = ({
                 <Text strong>
                     Kết quả: <span className="text-blue-600">{pagination.total}</span> thiết bị
                 </Text>
-                <Button icon={<DownloadOutlined />} onClick={onExport}>
-                    Xuất Excel
-                </Button>
+                <Tooltip title={!canExport ? 'Bạn không có quyền xuất file' : 'Xuất danh sách thiết bị ra Excel'}>
+                    <Button
+                        icon={<DownloadOutlined />}
+                        onClick={onExport}
+                        disabled={!canExport}
+                    >
+                        Xuất Excel
+                    </Button>
+                </Tooltip>
             </div>
 
             <Table

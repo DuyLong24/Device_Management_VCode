@@ -12,6 +12,8 @@ import { StatisticsCards, PageHeader, FilterBar } from '../../components/ui';
 import { FileTextOutlined, ClockCircleOutlined, SyncOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { exportImportPDF } from '../../utils/export-import-pdf';
 import { message } from 'antd';
+import { useAuth } from '../../hooks/useAuth';
+import { PERMISSION_KEYS } from '../../constants/permissionKeys';
 
 const { Text } = Typography;
 
@@ -50,6 +52,8 @@ interface ImportRecord {
 export default function ImportListPage() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
+    const { hasPermission } = useAuth();
+    const canExport = hasPermission(PERMISSION_KEYS.IMPORT.ROOT.EXPORT);
 
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<ImportRecord[]>([]);
@@ -344,9 +348,16 @@ export default function ImportListPage() {
                     <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.key)}>
                         {IMPORT_LABELS.BTN_DETAIL}
                     </Button>
-                    <Button size="small" icon={<FileTextOutlined />} onClick={() => handleExportPdf(record)}>
-                        Xuất PDF
-                    </Button>
+                    <Tooltip title={!canExport ? 'Bạn không có quyền xuất file' : 'Xuất phiếu nhập kho ra PDF'}>
+                        <Button
+                            size="small"
+                            icon={<FileTextOutlined />}
+                            onClick={() => handleExportPdf(record)}
+                            disabled={!canExport}
+                        >
+                            Xuất PDF
+                        </Button>
+                    </Tooltip>
                 </Space>
             ),
         },

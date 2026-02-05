@@ -1,5 +1,8 @@
 import { Table, Tag, Button, Space, Typography } from 'antd';
 import dayjs from 'dayjs';
+import { useSessionPermission } from '../../hooks/useSessionPermission';
+import { SessionPermissionAlert } from '../../components/permissions/SessionPermissionAlert';
+import { EXPORT_CHECK } from '../../constants/permissionKeys';
 
 const { Text } = Typography;
 
@@ -11,6 +14,8 @@ interface ExportSessionListProps {
 }
 
 export const ExportSessionList = ({ sessions, onCreateSession, onContinueSession, canCreate }: ExportSessionListProps) => {
+    const { canAccess: canManageSession } = useSessionPermission(EXPORT_CHECK);
+
     const columns = [
         {
             title: 'Mã phiên',
@@ -58,7 +63,7 @@ export const ExportSessionList = ({ sessions, onCreateSession, onContinueSession
             key: 'action',
             render: (_: any, record: any) => (
                 <Space>
-                    {record.status === 'IN_PROGRESS' && (
+                    {record.status === 'IN_PROGRESS' && canManageSession && (
                         <Button type="primary" size="small" onClick={() => onContinueSession(record._id || record.id)}>
                             Tiếp tục
                         </Button>
@@ -72,12 +77,15 @@ export const ExportSessionList = ({ sessions, onCreateSession, onContinueSession
         <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 mt-3">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Danh sách phiên xuất kho</h3>
-                {canCreate && (
+                {canCreate && canManageSession && (
                     <Button type="primary" onClick={onCreateSession}>
                         + Tạo phiên mới
                     </Button>
                 )}
             </div>
+            {!canManageSession && canCreate && (
+                <SessionPermissionAlert sessionType="export" />
+            )}
             <Table
                 columns={columns}
                 dataSource={sessions}

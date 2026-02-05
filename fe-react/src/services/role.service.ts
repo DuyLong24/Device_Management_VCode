@@ -43,4 +43,10 @@ export const roleService = {
         const role = await roleService.getById(roleId);
         return role.permissions || [];
     },
+
+    // Cập nhật role (bao gồm permissions)
+    update: async (id: string, data: Partial<RoleDTO>) => {
+        const response = await axiosInstance.put<RoleDTO>(`/fnc-roles/${id}`, data);
+        return response.data;
+    },
 };

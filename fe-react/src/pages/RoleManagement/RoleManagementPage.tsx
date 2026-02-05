@@ -11,6 +11,7 @@ import {
     Alert,
     Tooltip,
 } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import {
     ReloadOutlined,
     EyeOutlined,
@@ -31,6 +32,7 @@ const roleConfig: Record<string, { color: string; label: string }> = {
 };
 
 export default function RoleManagementPage() {
+    const navigate = useNavigate();
     const [roles, setRoles] = useState<RoleDTO[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export default function RoleManagementPage() {
     };
 
     const handleViewPermission = (role: RoleDTO) => {
-        console.log('View permissions for role:', role);
+        navigate(`/system/roles/${role.id}`);
     };
 
     const columns: TableColumnsType<RoleDTO> = [

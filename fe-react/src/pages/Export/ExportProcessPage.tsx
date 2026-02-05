@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-    Button, Typography, message, Tag, Space, Modal, Card, Descriptions, Row, Col, Statistic, Divider, Progress, Alert, Input, Table, Popconfirm
+    Button, Typography, message, Tag, Space, Modal, Card, Descriptions, Row, Col, Statistic, Divider, Progress, Alert, Input, Table, Popconfirm, Tooltip
 } from 'antd';
 import {
     // ArrowLeftOutlined,
@@ -19,12 +19,17 @@ import { exportSessionService } from '../../services/export-session.service';
 import { getExportStatusTag } from '../../utils/export-status.util';
 import { processScannerInput } from '../../utils/mac.util';
 import type { DeviceExport } from '../../types/export.type';
+import { useAuth } from '../../hooks/useAuth';
+import { PERMISSION_KEYS } from '../../constants/permissionKeys';
 // import { useScanSound } from '../../hooks/useScanSound';
 
 const { Text } = Typography;
 // const { Dragger } = Upload;
 
 export default function ExportProcessPage() {
+    const { hasPermission } = useAuth();
+    const canExport = hasPermission(PERMISSION_KEYS.EXPORT.ROOT.EXPORT);
+
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -405,7 +410,16 @@ export default function ExportProcessPage() {
             {/* List */}
             <Card
                 title="Danh sách MAC"
-                extra={<Button icon={<FileExcelOutlined />}>Xuất Excel</Button>}
+                extra={
+                    <Tooltip title={!canExport ? 'Bạn không có quyền xuất file' : 'Xuất danh sách MAC ra Excel'}>
+                        <Button
+                            icon={<FileExcelOutlined />}
+                            disabled={!canExport}
+                        >
+                            Xuất Excel
+                        </Button>
+                    </Tooltip>
+                }
                 className="mb-2"
             >
                 <Table

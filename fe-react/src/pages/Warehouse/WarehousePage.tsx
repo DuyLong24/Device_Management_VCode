@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Typography, Space, Button, Input, Select, Checkbox } from 'antd';
+import { Card, Typography, Space, Button, Input, Select, Checkbox, Tooltip } from 'antd';
 import {
     ReloadOutlined,
     ScanOutlined,
@@ -16,10 +16,15 @@ import { ImportWizardModal } from '../../components/ImportWizard/ImportWizardMod
 import { type FieldDefinition } from '../../components/ImportWizard/steps/Step3_Mapping';
 import { useWarehouseData } from '../../hooks/useWarehouseData';
 import { WarehouseTable } from './components/WarehouseTable';
+import { useAuth } from '../../hooks/useAuth';
+import { PERMISSION_KEYS } from '../../constants/permissionKeys';
 
 const { Title, Text } = Typography;
 
 export default function WarehousePage() {
+    const { hasPermission } = useAuth();
+    const canExport = hasPermission(PERMISSION_KEYS.WAREHOUSE.EXPORT);
+
     const {
         code,
         currentWarehouse,
@@ -93,7 +98,14 @@ export default function WarehousePage() {
                     )}
 
                     <Button icon={<ReloadOutlined />} onClick={() => refetch()}>Làm mới</Button>
-                    <Button icon={<DownloadOutlined />}>Xuất Excel</Button>
+                    <Tooltip title={!canExport ? 'Bạn không có quyền xuất file' : 'Xuất danh sách thiết bị trong kho'}>
+                        <Button
+                            icon={<DownloadOutlined />}
+                            disabled={!canExport}
+                        >
+                            Xuất Excel
+                        </Button>
+                    </Tooltip>
                 </Space>
             </Card>
 

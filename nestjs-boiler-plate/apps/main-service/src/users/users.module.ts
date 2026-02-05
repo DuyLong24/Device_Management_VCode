@@ -16,7 +16,7 @@ import { FncRoleModule } from '../fnc-roles/fnc-roles.module';
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     ConfigModule,
     HttpModule,
-    forwardRef(() => FncRoleModule),
+    FncRoleModule
   ],
   controllers: [UserController, UserManagementController],
   providers: [

@@ -20,6 +20,7 @@ import DeviceDetailPage from './pages/Warehouse/DeviceDetailPage';
 import ExportProcessPage from './pages/Export/ExportProcessPage';
 import ExportCheckListPage from './pages/Export/ExportCheckListPage';
 import RoleManagementPage from './pages/RoleManagement/RoleManagementPage';
+import RolePermissionDetailPage from './pages/RoleManagement/RolePermissionDetailPage';
 import UserManagementPage from './pages/UserManagement/UserManagementPage';
 import SharedDataPage from './pages/SharedData/SharedDataPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
@@ -61,16 +62,16 @@ function App() {
                   {/* MODULE NHẬP KHO */}
                   <Route path="import">
                     {/* 1. Danh sách tổng: /import/list */}
-                    <Route path="list" element={<ImportListPage />} />
+                    <Route path="list" element={<PermissionRoute requiredPermission="import:VIEW"><ImportListPage /></PermissionRoute>} />
 
                     {/* 2. Tạo mới: /import/create */}
-                    <Route path="create" element={<CreateImportPage />} />
-                    <Route path="edit/:id" element={<CreateImportPage />} />
+                    <Route path="create" element={<PermissionRoute requiredPermission="import:CREATE"><CreateImportPage /></PermissionRoute>} />
+                    <Route path="edit/:id" element={<PermissionRoute requiredPermission="import:UPDATE"><CreateImportPage /></PermissionRoute>} />
 
                     {/* 3. Danh sách chọn kiểm kê: /import/inventory-list */}
-                    <Route path="inventory-list" element={<InventoryListPage />} />
+                    <Route path="inventory-list" element={<PermissionRoute requiredPermission="import.inventory:VIEW"><InventoryListPage /></PermissionRoute>} />
 
-                    <Route path="inventory-check/:importId" element={<InventoryCheckPage />} />
+                    <Route path="inventory-check/:importId" element={<PermissionRoute requiredPermission="import.inventory:CHECK"><InventoryCheckPage /></PermissionRoute>} />
 
                     {/* 4. Chi tiết: /import/:id */}
                     <Route path=":id" element={<ImportDetailPage />} />
@@ -78,24 +79,37 @@ function App() {
 
                   {/* MODULE XUẤT KHO */}
                   <Route path="export">
-                    <Route path="list" element={<ExportListPage />} />
-                    <Route path="create" element={<CreateExportPage />} />
-                    <Route path="edit/:id" element={<CreateExportPage />} />
-                    <Route path="check" element={<ExportCheckListPage />} />
+                    <Route path="list" element={<PermissionRoute requiredPermission="export:VIEW"><ExportListPage /></PermissionRoute>} />
+                    <Route path="create" element={<PermissionRoute requiredPermission="export:CREATE"><CreateExportPage /></PermissionRoute>} />
+                    <Route path="edit/:id" element={<PermissionRoute requiredPermission="export:UPDATE"><CreateExportPage /></PermissionRoute>} />
+                    <Route path="check" element={<PermissionRoute requiredPermission="export.check:VIEW"><ExportCheckListPage /></PermissionRoute>} />
                     <Route path=":id" element={<ExportDetailPage />} />
-                    <Route path=":id/check" element={<ExportProcessPage />} />
+                    <Route path=":id/check" element={<PermissionRoute requiredPermission="export.check:CHECK"><ExportProcessPage /></PermissionRoute>} />
                   </Route>
 
                   {/* --- CÁC MODULE KHÁC --- */}
-                  <Route path="all-devices" element={<DeviceListPage />} />
-                  <Route path="serial/:serial" element={<DeviceDetailPage />} />
-                  <Route path="warehouse/:code" element={<WarehousePage />} />
+                  <Route path="all-devices" element={
+                    <PermissionRoute requiredPermission="device:VIEW">
+                      <DeviceListPage />
+                    </PermissionRoute>
+                  } />
+                  <Route path="serial/:serial" element={
+                    <PermissionRoute requiredPermission="device:VIEW">
+                      <DeviceDetailPage />
+                    </PermissionRoute>
+                  } />
+                  <Route path="warehouse/:code" element={
+                    <PermissionRoute requiredPermission="warehouse:VIEW">
+                      <WarehousePage />
+                    </PermissionRoute>
+                  } />
 
 
                   {/* MODULE SYSTEM (Protected) */}
                   <Route path="system" element={<PermissionRoute requiredRole="Super admin" />}>
                     <Route path="users" element={<UserManagementPage />} />
                     <Route path="roles" element={<RoleManagementPage />} />
+                    <Route path="roles/:id" element={<RolePermissionDetailPage />} />
                     <Route path="shared-data" element={<SharedDataPage />} />
                   </Route>
                   <Route path="*" element={<div>404 Not Found</div>} />

@@ -207,6 +207,10 @@ export class UserService {
     return user;
   }
 
+  async findByKeycloakId(keycloakId: string) {
+    return this.userRepository.findByKeycloakId(keycloakId);
+  }
+
   async findAll() {
     return this.userRepository.findAll();
   }

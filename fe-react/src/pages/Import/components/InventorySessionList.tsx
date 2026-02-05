@@ -1,7 +1,12 @@
 import React from 'react';
-import { Card, Space, Typography, Tag, Button } from 'antd';
+import { Card, Space, Typography, Tag, Button, Tooltip } from 'antd';
 import { PlayCircleOutlined, FileExcelOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useSessionPermission } from '../../../hooks/useSessionPermission';
+import { SessionPermissionAlert } from '../../../components/permissions/SessionPermissionAlert';
+import { IMPORT_INVENTORY_CHECK } from '../../../constants/permissionKeys';
+import { useAuth } from '../../../hooks/useAuth';
+import { PERMISSION_KEYS } from '../../../constants/permissionKeys';
 
 const { Text } = Typography;
 
@@ -19,7 +24,7 @@ export interface InventorySession {
 interface InventorySessionListProps {
     sessions: InventorySession[];
     importStatus: string;
-    ticketStatus: string; // [NEW]
+    ticketStatus: string;
     onContinue: (sessionId: string) => void;
     onExport: (sessionId: string) => void;
     onViewInfo: (sessionId: string) => void;
@@ -35,6 +40,10 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
     onViewInfo,
     onCreateNew
 }) => {
+    const { canAccess: canManageSession } = useSessionPermission(IMPORT_INVENTORY_CHECK);
+    const { hasPermission } = useAuth();
+    const canExportSession = hasPermission(PERMISSION_KEYS.IMPORT.ROOT.EXPORT);
+
     const getStatusTag = (status: string) => {
         switch (status) {
             case 'completed': return <Tag color="success">Đã hoàn thành</Tag>;
@@ -44,6 +53,8 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
             default: return <Tag color="default">Chưa bắt đầu</Tag>;
         }
     };
+
+
 
     return (
         <Card title="Thao tác kiểm kê" className="mb-4 shadow-sm">
@@ -80,7 +91,7 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
 
                                         <div className="mt-2">
                                             <Space size="small" wrap>
-                                                {session.status !== 'completed' && (
+                                                {session.status !== 'completed' && canManageSession && (
                                                     <Button
                                                         size="small"
                                                         type="primary"
@@ -90,13 +101,16 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
                                                         Tiếp tục
                                                     </Button>
                                                 )}
-                                                <Button
-                                                    size="small"
-                                                    icon={<FileExcelOutlined />}
-                                                    onClick={() => onExport(session.id)}
-                                                >
-                                                    Xuất DS
-                                                </Button>
+                                                <Tooltip title={!canExportSession ? 'Bạn không có quyền xuất file' : 'Xuất danh sách thiết bị'}>
+                                                    <Button
+                                                        size="small"
+                                                        icon={<FileExcelOutlined />}
+                                                        onClick={() => onExport(session.id)}
+                                                        disabled={!canExportSession}
+                                                    >
+                                                        Xuất DS
+                                                    </Button>
+                                                </Tooltip>
                                                 <Button
                                                     size="small"
                                                     icon={<InfoCircleOutlined />}
@@ -117,8 +131,8 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
                     </div>
                 )}
 
-                {/* Button Tạo phiên mới */}
-                {importStatus !== 'completed' && ticketStatus === 'PUBLIC' && (
+                {/* Hiện thị nút tạo phiên khi: phiếu chưa hoàn thành, trạng thái PUBLIC, và có quyền */}
+                {importStatus !== 'completed' && ticketStatus === 'PUBLIC' && canManageSession && (
                     <Button
                         block
                         icon={<PlusOutlined />}
@@ -128,11 +142,17 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
                         Tạo phiên kiểm kê mới
                     </Button>
                 )}
+                {/* Thông báo khi phiếu ở trạng thái NHaacute;P */}
                 {ticketStatus === 'DRAFT' && (
                     <div className="text-center text-amber-600 mt-2 bg-amber-50 p-2 rounded border border-amber-200">
                         <InfoCircleOutlined className="mr-2" />
                         Phiếu đang ở trạng thái NHÁP. Không thể tạo phiên kiểm kê.
                     </div>
+                )}
+
+                {/* Hiện thị lỗi khi thiếu quyền */}
+                {!canManageSession && importStatus !== 'completed' && ticketStatus === 'PUBLIC' && (
+                    <SessionPermissionAlert sessionType="inventory" />
                 )}
             </Space>
         </Card>

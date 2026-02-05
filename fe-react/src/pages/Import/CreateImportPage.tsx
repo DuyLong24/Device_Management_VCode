@@ -11,15 +11,13 @@ import dayjs from 'dayjs';
 
 import { ImportWizardModal } from '../../components/ImportWizard/ImportWizardModal';
 
-// Imported Components
 import { ImportInfoForm } from './components/ImportInfoForm';
 import { ImportCreationTable } from './components/ImportCreationTable';
 import { DeviceSelectionModal } from './components/DeviceSelectionModal';
 
-// Hook
 import { useCreateImport } from '../../hooks/useCreateImport';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 export default function CreateImportPage() {
     const {
@@ -27,9 +25,7 @@ export default function CreateImportPage() {
         form,
         loading,
         deviceList,
-        categoryOptions,
         modelOptions,
-        originOptions,
         isMacModalOpen, setIsMacModalOpen,
         currentDeviceKey,
         tempMacs,
@@ -65,10 +61,7 @@ export default function CreateImportPage() {
                     onValuesChange={handleFormChange}
                     initialValues={{ importDate: dayjs(), origin: 'IMPORT' }}
                 >
-                    <ImportInfoForm
-                        categoryOptions={categoryOptions}
-                        originOptions={originOptions}
-                    />
+                    <ImportInfoForm />
                 </Form>
             </section>
 
@@ -112,7 +105,7 @@ export default function CreateImportPage() {
                     const dev = deviceList.find(p => p.key === currentDeviceKey);
                     if (!dev) return '';
                     const model = modelOptions.find(m => m.value === dev.deviceCode);
-                    return model?.name || model?.stockName || '';
+                    return model?.stockName || model?.value || '';
                 })()}
             />
 

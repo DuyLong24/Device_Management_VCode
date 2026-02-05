@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import { Form, App } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
+import { useQuery } from '@tanstack/react-query';
 
 import { importService } from '../services/import.service';
 import { sharedDataService } from '../services/shared-data.service';
-import { categoryService } from '../services/category.service';
-import { deviceService } from '../services/device.service';
 import { useAuth } from './useAuth';
 import type { DeviceEntry } from '../types/import.type';
 
@@ -22,16 +21,41 @@ export const useCreateImport = () => {
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [deviceList, setDeviceList] = useState<DeviceEntry[]>([]);
 
-    // Data States
-    const [categoryOptions, setCategoryOptions] = useState<{ label: string, value: string }[]>([]);
-    const [modelOptions, setModelOptions] = useState<any[]>([]);
-    const [originOptions, setOriginOptions] = useState<any[]>([]);
-
     // Modal States
     const [isMacModalOpen, setIsMacModalOpen] = useState(false);
     const [currentDeviceKey, setCurrentDeviceKey] = useState<string | null>(null);
     const [tempMacs, setTempMacs] = useState<string>('');
     const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
+
+    // --- React Query Fetching ---
+
+    // 1. Models (Used for Options & Lookup)
+    const { data: modelOptions = [] } = useQuery({
+        queryKey: ['models'],
+        queryFn: async () => {
+            const models = await sharedDataService.getDataByGroupCode('MODEL');
+            if (models && models.length > 0) {
+                return models.map((m: any) => ({
+                    label: m.code,
+                    value: m.code,
+                    stockName: m.name
+                }));
+            }
+            return [];
+        },
+        staleTime: 5 * 60 * 1000 // 5 minutes
+    });
+
+    // 2. Import Detail (Edit Mode)
+    useQuery({
+        queryKey: ['import-detail', id],
+        queryFn: () => importService.getImportDetail(id!),
+        enabled: isEditMode,
+        staleTime: 0,
+        gcTime: 0 // No caching for edit to ensure fresh data
+    });
+
+    // --- Effects ---
 
     const generateImportCode = () => {
         const today = dayjs();
@@ -40,105 +64,66 @@ export const useCreateImport = () => {
         return `PN-${dateStr}-${random}`;
     };
 
+    // Load Detail or Init New
     useEffect(() => {
-        const initData = async () => {
+        if (!isEditMode) {
+            form.setFieldValue('code', generateImportCode());
+            form.setFieldValue('importDate', dayjs()); // Default today
+            form.setFieldValue('origin', 'IMPORT'); // Default origin
+            if (user && user.username) {
+                form.setFieldValue('importedBy', user.username);
+            }
+            return;
+        }
+
+        const loadDetail = async () => {
+            if (!id) return;
             try {
-                const [categories, devices] = await Promise.all([
-                    categoryService.getAll(),
-                    deviceService.getAll()
-                ]);
+                setLoading(true);
+                const res = await importService.getImportDetail(id);
+                const data = res.data;
 
-                setCategoryOptions(categories.map((c: any) => ({ label: c.name, value: c.name })));
-
-                const models = await sharedDataService.getDataByGroupCode('MODEL');
-                if (models && models.length > 0) {
-                    setModelOptions(models.map(m => ({
-                        label: m.code,
-                        value: m.code,
-                        stockName: m.name
-                    })));
-                } else {
-                    const dl = (devices as any).docs || (devices as any).data || (Array.isArray(devices) ? devices : []);
-                    const fallbackModels = [...new Set(dl.map((d: any) => d.deviceModel))];
-                    if (fallbackModels.length > 0) {
-                        setModelOptions(fallbackModels.map(m => ({
-                            label: m as string,
-                            value: m as string,
-                            stockName: ''
-                        })));
-                    }
+                if (data.status !== 'DRAFT') {
+                    message.warning('Chỉ có thể sửa phiếu nhập ở trạng thái NHÁP');
+                    navigate('/import/list');
+                    return;
                 }
 
-                if (isEditMode) {
-                    const fetchImportDetail = async (importId: string) => {
-                        try {
-                            setLoading(true);
-                            const res = await importService.getImportDetail(importId);
-                            const data = res.data;
+                form.setFieldsValue({
+                    code: data.code,
+                    supplier: data.supplier,
+                    deviceType: data.deviceType,
+                    // origin: data.origin, // Check if this exists in response
+                    importDate: data.importDate ? dayjs(data.importDate) : undefined,
+                    notes: data.notes,
+                    status: data.status,
+                    origin: data.origin || 'IMPORT'
+                });
 
-                            if (data.status !== 'DRAFT') {
-                                message.warning('Chỉ có thể sửa phiếu nhập ở trạng thái NHÁP');
-                                navigate('/import/list');
-                                return;
-                            }
-
-                            form.setFieldsValue({
-                                code: data.code,
-                                supplier: data.supplier,
-                                deviceType: data.deviceType,
-                                totalQuantity: data.totalQuantity,
-                                importDate: dayjs(data.importDate),
-                                notes: data.notes,
-                                status: data.status
-                            });
-
-                            if (data.devices && data.devices.length > 0) {
-                                const mappedDevices: DeviceEntry[] = data.devices.map((device: any, index: number) => ({
-                                    key: device._id || `prod-${index}-${Date.now()}`,
-                                    deviceCode: device.deviceCode,
-                                    quantity: device.quantity || 0,
-                                    boxCount: device.boxCount || null,
-                                    itemsPerBox: device.itemsPerBox || null,
-                                    expectedSerials: device.expectedSerials || [],
-                                    serialImported: device.serialImported || 0,
-                                    expectedDetails: device.expectedDetails || []
-                                }));
-                                setDeviceList(mappedDevices);
-                            }
-
-                        } catch (error) {
-                            console.error('Failed to fetch import detail', { error });
-                            message.error('Không thể tải chi tiết phiếu nhập');
-                            navigate('/import/list');
-                        } finally {
-                            setLoading(false);
-                        }
-                    };
-                    fetchImportDetail(id!);
-                } else {
-                    form.setFieldValue('code', generateImportCode());
-                    if (user && user.username) {
-                        form.setFieldValue('importedBy', user.username);
-                    }
+                if (data.devices && data.devices.length > 0) {
+                    const mappedDevices: DeviceEntry[] = data.devices.map((device: any, index: number) => ({
+                        key: device._id || `prod-${index}-${Date.now()}`,
+                        deviceCode: device.deviceCode,
+                        quantity: device.quantity || 0,
+                        boxCount: device.boxCount || null,
+                        itemsPerBox: device.itemsPerBox || null,
+                        expectedSerials: device.expectedSerials || [],
+                        serialImported: device.serialImported || 0,
+                        expectedDetails: device.expectedDetails || []
+                    }));
+                    setDeviceList(mappedDevices);
                 }
-
-                const origins = await sharedDataService.getDataByGroupCode('ORIGIN');
-                if (origins && origins.length > 0) {
-                    setOriginOptions(origins.map((o: any) => ({
-                        label: o.name,
-                        value: o.code
-                    })));
-                }
-
-            } catch (error) {
-                console.error('Init data failed:', error);
-                message.error('Không thể tải dữ liệu');
+            } catch (err) {
+                message.error('Không thể tải chi tiết phiếu nhập');
+            } finally {
+                setLoading(false);
             }
         };
+        loadDetail();
+    }, [id, isEditMode, form, user]);
 
-        initData();
-    }, [id, isEditMode, form, navigate]);
 
+    // Prevent Unload
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             if (hasUnsavedChanges) {
@@ -149,6 +134,9 @@ export const useCreateImport = () => {
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [hasUnsavedChanges]);
+
+
+    // --- Handlers ---
 
     const handleFormChange = () => setHasUnsavedChanges(true);
 
@@ -163,7 +151,8 @@ export const useCreateImport = () => {
             serialImported: 0,
             expectedDetails: []
         };
-        setDeviceList([...deviceList, newDevice]);
+        // Add to TOP (UX Improvement)
+        setDeviceList([newDevice, ...deviceList]);
         setHasUnsavedChanges(true);
     };
 
@@ -173,7 +162,7 @@ export const useCreateImport = () => {
     };
 
     const handleDeviceChange = (key: string, field: string, value: any) => {
-        setDeviceList(deviceList.map(item => {
+        setDeviceList(prev => prev.map(item => {
             if (item.key === key) {
                 const newItem = { ...item, [field]: value };
                 if (field === 'deviceCode') {
@@ -195,7 +184,7 @@ export const useCreateImport = () => {
     const handleSaveMacs = (uniqueList: string[]) => {
         if (!currentDeviceKey) return;
 
-        setDeviceList(deviceList.map(p => {
+        setDeviceList(prev => prev.map(p => {
             if (p.key === currentDeviceKey) {
                 return { ...p, expectedSerials: uniqueList };
             }
@@ -230,7 +219,7 @@ export const useCreateImport = () => {
 
             const payload = {
                 code: values.code,
-                deviceType: values.deviceType || values.deviceType,
+                deviceType: values.deviceType,
                 origin: values.origin,
                 importDate: values.importDate.toISOString(),
                 importedBy: values.importedBy,
@@ -256,14 +245,14 @@ export const useCreateImport = () => {
             } else {
                 const res = await importService.createImport(payload as any);
                 message.success(targetStatus === 'DRAFT' ? 'Lưu nháp thành công' : 'Tạo phiếu thành công');
-                finalId = res?.data?.id || (res?.data as any)?._id;
+                finalId = res?.data?.id || (res?.data as any)?._id || (res as any)?._id;
             }
 
             setHasUnsavedChanges(false);
 
             if (targetStatus === 'DRAFT') {
                 if (isEditMode) {
-                    message.success('Cập nhật nháp thành công');
+                    // Stay
                 } else {
                     if (finalId) {
                         navigate(`/import/edit/${finalId}`);
@@ -281,14 +270,8 @@ export const useCreateImport = () => {
 
         } catch (error: any) {
             console.error('Submit Error:', error);
-            const msg = error.response?.data?.message;
-            if (Array.isArray(msg)) {
-                message.error(msg.join(', '));
-            } else if (msg) {
-                message.error(msg);
-            } else {
-                message.error('Có lỗi xảy ra khi xử lý phiếu');
-            }
+            const msg = error.response?.data?.message || 'Có lỗi xảy ra';
+            message.error(Array.isArray(msg) ? msg.join(', ') : msg);
         } finally {
             setLoading(false);
         }
@@ -320,7 +303,7 @@ export const useCreateImport = () => {
         }>();
 
         details.forEach((row: any) => {
-            const pCode = row.deviceCode || row.deviceCode;
+            const pCode = row.deviceCode; // Assumed mapped in wizard
             if (!pCode) return;
 
             const current = deviceMap.get(pCode) || {
@@ -344,7 +327,6 @@ export const useCreateImport = () => {
                     name: row.name || ''
                 });
             }
-
             if (!current.boxCount && row.boxCount) current.boxCount = row.boxCount;
             if (!current.itemsPerBox && row.itemsPerBox) current.itemsPerBox = row.itemsPerBox;
 
@@ -365,12 +347,12 @@ export const useCreateImport = () => {
             });
         });
 
-        setDeviceList([...deviceList, ...newDevices]);
+        // Add to TOP
+        setDeviceList([...newDevices, ...deviceList]);
         setHasUnsavedChanges(true);
         message.success(`Đã thêm ${newDevices.length} dòng thiết bị từ Excel`);
     };
 
-    // Field Definitions
     const IMPORT_TICKET_FIELDS: any[] = [
         { key: 'deviceCode', label: 'Mã Model', required: true, description: 'Mã Model thiết bị' },
         { key: 'mac', label: 'MAC Address', required: true, description: 'Địa chỉ MAC (Duy nhất)' },
@@ -386,10 +368,10 @@ export const useCreateImport = () => {
         isEditMode,
         form,
         loading,
-        deviceList, setDeviceList,
-        categoryOptions,
+        deviceList,
         modelOptions,
-        originOptions,
+        // categoryOptions, // Removed
+        // originOptions,   // Removed
         isMacModalOpen, setIsMacModalOpen,
         currentDeviceKey,
         tempMacs,

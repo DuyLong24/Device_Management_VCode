@@ -205,7 +205,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
 
     const userMenuItems: MenuProps['items'] = [
-        { key: MENU_KEYS.USER.PROFILE, icon: SECTION_ICONS.USER_PROFILE, label: MENU_LABELS.USER.PROFILE },
+        { key: MENU_KEYS.USER.PROFILE, icon: SECTION_ICONS.USER_PROFILE, label: MENU_LABELS.USER.PROFILE, onClick: () => navigate('/profile') },
         { key: MENU_KEYS.USER.CHANGE_PASS, icon: SECTION_ICONS.USER_LOCK, label: MENU_LABELS.USER.CHANGE_PASS },
         { type: 'divider' },
         { key: MENU_KEYS.USER.LOGOUT, icon: SECTION_ICONS.USER_LOGOUT, label: MENU_LABELS.USER.LOGOUT, danger: true, onClick: logout },

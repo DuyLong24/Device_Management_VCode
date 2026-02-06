@@ -24,6 +24,7 @@ import RolePermissionDetailPage from './pages/RoleManagement/RolePermissionDetai
 import UserManagementPage from './pages/UserManagement/UserManagementPage';
 import SharedDataPage from './pages/SharedData/SharedDataPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
+import ProfilePage from './pages/Profile/ProfilePage';
 // import LoginPage from './pages/Auth/LoginPage';
 
 const queryClient = new QueryClient({
@@ -58,6 +59,7 @@ function App() {
                 <Route path="/" element={<DashboardLayout />}>
                   <Route index element={<Navigate to="/dashboard" replace />} />
                   <Route path="dashboard" element={<DashboardPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
 
                   {/* MODULE NHẬP KHO */}
                   <Route path="import">

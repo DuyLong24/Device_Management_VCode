@@ -11,6 +11,7 @@ import {
   HttpCode,
   Patch,
   UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 import { Roles, AuthenticatedUser } from 'nest-keycloak-connect';
 import { UserService } from '../services/user.service';
@@ -19,6 +20,7 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { SetPasswordDto } from '../dto/set-password.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
+import { UpdateMyProfileDto } from '../dto/update-my-profile.dto';
 
 @Controller('users')
 export class UserController {
@@ -26,6 +28,37 @@ export class UserController {
     private readonly userService: UserService,
     private readonly fncRoleService: FncRoleService,
   ) { }
+
+  @Get('me')
+  async getMyProfile(@AuthenticatedUser() user: any) {
+    if (!user || !user.sub) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+
+    const keycloakId = user.sub;
+    const mongoUser = await this.userService.findByKeycloakId(keycloakId);
+
+    if (!mongoUser) {
+      throw new NotFoundException('Thông tin người dùng không tồn tại');
+    }
+
+    // Populate funcRoleId to get role details
+    await mongoUser.populate('funcRoleId');
+    const role = mongoUser.funcRoleId as any;
+
+    // Return profile data
+    return {
+      id: mongoUser._id || mongoUser.id,
+      username: mongoUser.username,
+      email: mongoUser.email,
+      name: mongoUser.name,
+      phoneNumber: mongoUser.phoneNumber || null,
+      dateOfBirth: mongoUser.dateOfBirth || null,
+      roles: role ? [role.code] : [],
+      permissions: role?.permissions || [],
+      createdAt: (mongoUser as any).createdAt,
+    };
+  }
 
   @Get('permissions/me')
   async getMyPermissions(@AuthenticatedUser() user: any) {
@@ -35,24 +68,71 @@ export class UserController {
 
     const keycloakId = user.sub;
 
-    // Lookup user in MongoDB by keycloakId
+    // Tìm user trong MongoDB theo keycloakId
     const mongoUser = await this.userService.findByKeycloakId(keycloakId);
     if (!mongoUser || !mongoUser.funcRoleId) {
       return { permissions: [] };
     }
 
-    // Get role by ID
+    // Lấy role theo ID
     const role = await this.fncRoleService.findById(mongoUser.funcRoleId);
     if (!role) {
       return { permissions: [] };
     }
 
-    // Super admin check
+    // Kiểm tra super admin
     if (role.code === 'super_admin' || role.code === 'SUPER_ADMIN') {
       return { permissions: ['*'] };
     }
 
     return { permissions: role.permissions || [] };
+  }
+
+  @Post('me/change-password')
+  @HttpCode(HttpStatus.OK)
+  async changeMyPassword(
+    @AuthenticatedUser() user: any,
+    @Body() changePasswordDto: Omit<ChangePasswordDto, 'userId'>
+  ) {
+    if (!user || !user.sub) {
+      throw new NotFoundException('Tài khoản không tồn tại');
+    }
+
+    const keycloakId = user.sub;
+    const mongoUser = await this.userService.findByKeycloakId(keycloakId);
+
+    if (!mongoUser) {
+      throw new NotFoundException('Thông tin tài khoản không tồn tại');
+    }
+
+    // Gọi service changePassword với userId từ user đã xác thực
+    const fullDto: ChangePasswordDto = {
+      ...changePasswordDto,
+      userId: mongoUser._id?.toString() || mongoUser.id,
+    };
+
+    return this.userService.changePassword(fullDto);
+  }
+
+  @Patch('me')
+  @HttpCode(HttpStatus.OK)
+  async updateMyProfile(
+    @AuthenticatedUser() user: any,
+    @Body() updateDto: UpdateMyProfileDto
+  ) {
+    if (!user || !user.sub) {
+      throw new NotFoundException('User not authenticated');
+    }
+
+    const keycloakId = user.sub;
+    const mongoUser = await this.userService.findByKeycloakId(keycloakId);
+
+    if (!mongoUser) {
+      throw new NotFoundException('User profile not found');
+    }
+
+    const userId = mongoUser._id?.toString() || mongoUser.id;
+    return this.userService.updateMyProfile(userId, updateDto);
   }
 
   @Post()

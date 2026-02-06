@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, UserModel } from '../entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UserRepository {
@@ -10,6 +11,11 @@ export class UserRepository {
 
   async create(createUserDto: CreateUserDto | Partial<User>, session?: any): Promise<User> {
     const userData: any = { ...createUserDto };
+
+    // Hash password trước khi lưu nếu có mật khẩu
+    if (userData.password) {
+      userData.password = await bcrypt.hash(userData.password, 10);
+    }
 
     // Chuyển đổi dateOfBirth từ string sang Date nếu cần
     if (userData.dateOfBirth && typeof userData.dateOfBirth === 'string') {

@@ -8,6 +8,8 @@ import { ChangePasswordDto } from '../dto/change-password.dto';
 import { UserKeycloakIntegrationService } from './user-keycloak-integration.service';
 import { Connection } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
+import * as bcrypt from 'bcryptjs';
+import { UpdateMyProfileDto } from '../dto/update-my-profile.dto';
 
 import { User } from '../entities/user.entity';
 
@@ -295,8 +297,22 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    // Kiểm tra password hiện tại (trong thực tế nên sử dụng bcrypt để so sánh hash)
-    if (user.password !== currentPassword) {
+    // Check if password is hashed (bcrypt hashes start with $2a$, $2b$, or $2y$)
+    const isPasswordHashed = user.password.startsWith('$2a$') ||
+      user.password.startsWith('$2b$') ||
+      user.password.startsWith('$2y$');
+
+    let isPasswordValid = false;
+
+    if (isPasswordHashed) {
+      // Password is hashed, use bcrypt.compare()
+      isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    } else {
+      // Password is plain text (legacy), compare directly
+      isPasswordValid = user.password === currentPassword;
+    }
+
+    if (!isPasswordValid) {
       throw new BadRequestException('Current password is incorrect');
     }
 
@@ -305,9 +321,12 @@ export class UserService {
       throw new BadRequestException('New password must be different from current password');
     }
 
+    // Hash new password before storing
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
     // Cập nhật password mới
     const updateData = {
-      password: newPassword,
+      password: hashedNewPassword,
       isPasswordChange: true,
       dayPasswordChange: new Date().toISOString()
     };
@@ -327,9 +346,10 @@ export class UserService {
       }
 
       // Sync user với Keycloak để cập nhật password
+      // IMPORTANT: Keycloak needs raw password, not hashed
       const keycloakUserId = await this.keycloakIntegrationService.syncUserToKeycloak({
         ...user.toObject(),
-        password: newPassword
+        password: newPassword // Raw password for Keycloak
       });
 
       if (!keycloakUserId) {
@@ -359,6 +379,55 @@ export class UserService {
       // Kết thúc session
       session.endSession();
     }
+  }
+
+  async updateMyProfile(userId: string, updateDto: UpdateMyProfileDto) {
+    if (!userId) {
+      throw new BadRequestException('User ID is required');
+    }
+
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    //Chuẩn bị dữ liệu update
+    const updateData: Partial<User> = {};
+
+    if (updateDto.name !== undefined) {
+      updateData.name = updateDto.name;
+    }
+
+    if (updateDto.phoneNumber !== undefined) {
+      updateData.phoneNumber = updateDto.phoneNumber;
+    }
+
+    if (updateDto.dateOfBirth !== undefined) {
+      updateData.dateOfBirth = new Date(updateDto.dateOfBirth);
+    }
+
+    // Update in MongoDB
+    const updatedUser = await this.userRepository.update(userId, updateData as any);
+
+    if (!updatedUser) {
+      throw new BadRequestException('Failed to update profile');
+    }
+
+    // Sync name to Keycloak if name was updated
+    if (updateDto.name) {
+      try {
+        await this.keycloakIntegrationService.syncUserToKeycloak({
+          ...updatedUser.toObject(),
+        });
+      } catch (error) {
+        // Log error but don't fail the request
+        console.error('Failed to sync name to Keycloak:', error);
+      }
+    }
+
+    // Return user without password
+    const { password, ...userWithoutPassword } = updatedUser.toObject();
+    return userWithoutPassword;
   }
 
 

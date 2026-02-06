@@ -8,6 +8,8 @@ import {
     DownloadOutlined,
     SearchOutlined
 } from '@ant-design/icons';
+import { message } from 'antd';
+import { deviceService } from '../../services/device.service';
 
 import { WAREHOUSE_LABELS } from '../../constants/warehouse.constants';
 import TransferModal from './components/TransferModal';
@@ -23,7 +25,7 @@ const { Title, Text } = Typography;
 
 export default function WarehousePage() {
     const { hasPermission } = useAuth();
-    const canExport = hasPermission(PERMISSION_KEYS.WAREHOUSE.EXPORT);
+    const canExport = hasPermission(PERMISSION_KEYS.DEVICE.EXPORT);
 
     const {
         code,
@@ -57,6 +59,41 @@ export default function WarehousePage() {
         { key: 'deviceModel', label: 'Mã Model', required: true, description: 'Mã thiết bị (SKU)' },
         { key: 'name', label: 'Tên thiết bị', description: 'Tên hiển thị (nếu trống sẽ dùng Model)' },
     ];
+
+    const handleExportExcel = async () => {
+        if (!canExport) {
+            message.warning('Bạn không có quyền xuất file');
+            return;
+        }
+        if (!currentWarehouse) return;
+        try {
+            message.loading({ content: 'Đang tạo file Excel...', key: 'export_excel' });
+
+            const params: any = {
+                warehouseId: currentWarehouse.id,
+                search: searchText,
+                deviceModel: selectedDeviceModel,
+                importCode: importCode,
+                exportCode: exportCode,
+            };
+
+            const blob = await deviceService.exportExcel(params);
+
+            // Tạo link tải file
+            const url = window.URL.createObjectURL(new Blob([blob]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Danh_sach_${currentWarehouse.code}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+
+            message.success({ content: 'Xuất file thành công!', key: 'export_excel' });
+        } catch (error) {
+            console.error(error);
+            message.error({ content: 'Lỗi khi xuất file', key: 'export_excel' });
+        }
+    };
 
     if (!code) return null;
 
@@ -102,6 +139,7 @@ export default function WarehousePage() {
                         <Button
                             icon={<DownloadOutlined />}
                             disabled={!canExport}
+                            onClick={handleExportExcel}
                         >
                             Xuất Excel
                         </Button>

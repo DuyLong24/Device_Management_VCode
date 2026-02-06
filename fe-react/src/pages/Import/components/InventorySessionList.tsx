@@ -1,12 +1,11 @@
 import React from 'react';
-import { Card, Space, Typography, Tag, Button, Tooltip } from 'antd';
-import { PlayCircleOutlined, FileExcelOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { Card, Space, Typography, Tag, Button } from 'antd';
+import { PlayCircleOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useSessionPermission } from '../../../hooks/useSessionPermission';
 import { SessionPermissionAlert } from '../../../components/permissions/SessionPermissionAlert';
 import { IMPORT_INVENTORY_CHECK } from '../../../constants/permissionKeys';
-import { useAuth } from '../../../hooks/useAuth';
-import { PERMISSION_KEYS } from '../../../constants/permissionKeys';
+
 
 const { Text } = Typography;
 
@@ -36,13 +35,9 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
     importStatus,
     ticketStatus,
     onContinue,
-    onExport,
-    onViewInfo,
     onCreateNew
 }) => {
     const { canAccess: canManageSession } = useSessionPermission(IMPORT_INVENTORY_CHECK);
-    const { hasPermission } = useAuth();
-    const canExportSession = hasPermission(PERMISSION_KEYS.IMPORT.ROOT.EXPORT);
 
     const getStatusTag = (status: string) => {
         switch (status) {
@@ -101,23 +96,6 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
                                                         Tiếp tục
                                                     </Button>
                                                 )}
-                                                <Tooltip title={!canExportSession ? 'Bạn không có quyền xuất file' : 'Xuất danh sách thiết bị'}>
-                                                    <Button
-                                                        size="small"
-                                                        icon={<FileExcelOutlined />}
-                                                        onClick={() => onExport(session.id)}
-                                                        disabled={!canExportSession}
-                                                    >
-                                                        Xuất DS
-                                                    </Button>
-                                                </Tooltip>
-                                                <Button
-                                                    size="small"
-                                                    icon={<InfoCircleOutlined />}
-                                                    onClick={() => onViewInfo(session.id)}
-                                                >
-                                                    Thông tin
-                                                </Button>
                                             </Space>
                                         </div>
                                     </Space>

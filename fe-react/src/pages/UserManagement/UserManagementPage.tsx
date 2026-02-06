@@ -19,7 +19,6 @@ import {
     LockOutlined,
     UnlockOutlined,
     KeyOutlined,
-    ExportOutlined,
     SearchOutlined,
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
@@ -55,7 +54,6 @@ export default function UserManagementPage() {
         loadUsers,
         handleLock,
         handleUnlock,
-        handleExport,
         createModalVisible,
         editModalVisible,
         resetPasswordModalVisible,
@@ -185,9 +183,6 @@ export default function UserManagementPage() {
                     </div>
 
                     <Space>
-                        <Button icon={<ExportOutlined />} onClick={handleExport}>
-                            Xuất Excel
-                        </Button>
                         <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
                             Thêm tài khoản
                         </Button>

@@ -41,8 +41,18 @@ export const exportService = {
         return axiosInstance.post<DeviceExport>(`/device-exports/${id}/approve`);
     },
 
+
+
+
     reject: async (id: string, reason: string) => {
         return axiosInstance.post<DeviceExport>(`/device-exports/${id}/reject`, { reason });
+    },
+
+    exportExcel: async (id: string) => {
+        const response = await axiosInstance.get(`/device-exports/${id}/export-excel`, {
+            responseType: 'blob'
+        });
+        return response.data;
     },
 
     delete: async (id: string) => {

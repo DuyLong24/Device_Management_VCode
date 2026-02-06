@@ -17,7 +17,7 @@ export interface SerialUI {
     mac: string;
     serial: string;
     deviceCode: string;
-    deviceModel?: string; // Added
+    deviceModel?: string;
     deviceName: string;
     warehouseId: string;
     warehouseName: string;

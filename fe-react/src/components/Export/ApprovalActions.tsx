@@ -15,6 +15,7 @@ interface ApprovalActionsProps {
     onSubmit: () => Promise<void>;
     onApprove: () => Promise<void>;
     onReject: () => Promise<void>;
+    onExport?: () => void;
     // onNavigateToScan: () => void;
     canApprove?: boolean;
 }
@@ -24,6 +25,7 @@ export const ApprovalActions = ({
     onSubmit,
     onApprove,
     onReject,
+    onExport,
     canApprove = false
 }: ApprovalActionsProps) => {
     const { hasPermission } = useAuth();
@@ -67,12 +69,13 @@ export const ApprovalActions = ({
 
 
             {status === EXPORT_STATUS.COMPLETED && (
-                <Tooltip title={!canExport ? 'Bạn không có quyền in phiếu' : 'In phiếu xuất kho'}>
+                <Tooltip title={!canExport ? 'Bạn không có quyền xuất file' : 'Xuất phiếu xuất kho (PDF)'}>
                     <Button
                         icon={<PrinterOutlined />}
                         disabled={!canExport}
+                        onClick={onExport}
                     >
-                        In phiếu
+                        Xuất PDF
                     </Button>
                 </Tooltip>
             )}

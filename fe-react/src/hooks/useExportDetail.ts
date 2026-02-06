@@ -133,6 +133,28 @@ export const useExportDetail = () => {
         navigate('/export/list');
     };
 
+    const handleExportClick = async () => {
+        if (!id || !exportInfo) return;
+        try {
+            message.loading({ content: 'Đang tạo file Excel...', key: 'export_excel' });
+            const blob = await exportService.exportExcel(id);
+
+            // Tạo link tải file
+            const url = window.URL.createObjectURL(new Blob([blob]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Phieu_Xuat_${exportInfo.code}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+
+            message.success({ content: 'Xuất file thành công', key: 'export_excel' });
+        } catch (error) {
+            console.error(error);
+            message.error({ content: 'Lỗi khi xuất file', key: 'export_excel' });
+        }
+    };
+
     return {
         // State
         exportInfo,
@@ -149,6 +171,7 @@ export const useExportDetail = () => {
         handleBackToList,
         handleEdit,
         handleDelete,
+        handleExportClick,
 
         // Navigation
         navigate,

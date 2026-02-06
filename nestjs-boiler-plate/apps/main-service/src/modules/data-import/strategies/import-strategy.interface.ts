@@ -11,7 +11,7 @@ export interface ValidationResult {
 export interface ImportResult {
     successCount: number;
     errorCount: number;
-    details?: any[]; // Added details for generic result payload
+    details?: any[];
     errors?: any[];
 }
 

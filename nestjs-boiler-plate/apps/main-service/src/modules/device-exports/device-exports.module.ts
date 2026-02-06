@@ -13,6 +13,7 @@ import { UsersModule } from '../../users/users.module';
 import { MailModule } from '../../common/mail/mail.module';
 import { ExportNotificationTask } from './tasks/export-notification.task';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ExcelModule } from '../../common/excel/excel.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { NotificationsModule } from '../notifications/notifications.module';
     WarehousesModule,
     UsersModule,
     MailModule,
-    NotificationsModule
+    NotificationsModule,
+    ExcelModule
   ],
   controllers: [DeviceExportController],
   providers: [DeviceExportService, ExportSessionService, DeviceExportRepository, ExportSessionRepository, ExportNotificationTask],

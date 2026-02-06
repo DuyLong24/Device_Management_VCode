@@ -1,5 +1,5 @@
 import { Card, Table, Button, Tag, Space, Tooltip, Empty, Spin, Typography } from 'antd';
-import { PlusOutlined, EyeOutlined, FileExcelOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EyeOutlined, FilePdfOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 import type { DeviceExport } from '../../types/export.type';
@@ -32,7 +32,7 @@ const ExportListPage = () => {
         handleReset,
         handleCreate,
         handleViewDetail,
-        handleExportExcel,
+        handleExportPDF,
         handleDelete,
     } = useExportList();
 
@@ -241,15 +241,15 @@ const ExportListPage = () => {
                         <Tooltip title={
                             !canExport
                                 ? 'Bạn không có quyền xuất file'
-                                : (!isCompleted ? 'Chỉ phiếu đã xuất mới được phép xuất file' : 'Xuất phiếu xuất kho')
+                                : (!isCompleted ? 'Chỉ phiếu đã xuất mới được phép xuất file' : 'Xuất phiếu xuất kho (PDF)')
                         }>
                             <Button
                                 size="small"
-                                icon={<FileExcelOutlined />}
+                                icon={<FilePdfOutlined />}
                                 disabled={!canExport || !isCompleted}
-                                onClick={() => handleExportExcel(record)}
+                                onClick={() => handleExportPDF(record)}
                             >
-                                Xuất
+                                Xuất PDF
                             </Button>
                         </Tooltip>
                     </Space>

@@ -47,6 +47,9 @@ export class ExportItem {
 
   @Prop()
   exportPrice: number;
+
+  @Prop()
+  mac?: string;
 }
 export const ExportItemSchema = SchemaFactory.createForClass(ExportItem);
 
@@ -131,6 +134,9 @@ export class DeviceExport extends Document {
 
   @Prop({ default: false })
   isResultNotified: boolean;
+
+  createdAt?: Date;
+  updatedAt?: Date;
 
   declare id?: string;
 }

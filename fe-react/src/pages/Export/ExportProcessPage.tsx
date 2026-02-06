@@ -1,16 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
-    Button, Typography, message, Tag, Space, Modal, Card, Descriptions, Row, Col, Statistic, Divider, Progress, Alert, Input, Table, Popconfirm, Tooltip
+    Button, Typography, message, Tag, Space, Modal, Card, Descriptions, Row, Col, Statistic, Divider, Progress, Alert, Input, Table, Popconfirm
 } from 'antd';
 import {
-    // ArrowLeftOutlined,
     CheckCircleOutlined,
-    // ExclamationCircleOutlined,
-    FileExcelOutlined,
     DeleteOutlined,
     ArrowLeftOutlined
 } from '@ant-design/icons';
-// import type { UploadFile } from 'antd/es/upload/interface';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 
@@ -19,22 +15,14 @@ import { exportSessionService } from '../../services/export-session.service';
 import { getExportStatusTag } from '../../utils/export-status.util';
 import { processScannerInput } from '../../utils/mac.util';
 import type { DeviceExport } from '../../types/export.type';
-import { useAuth } from '../../hooks/useAuth';
-import { PERMISSION_KEYS } from '../../constants/permissionKeys';
-// import { useScanSound } from '../../hooks/useScanSound';
 
 const { Text } = Typography;
-// const { Dragger } = Upload;
 
 export default function ExportProcessPage() {
-    const { hasPermission } = useAuth();
-    const canExport = hasPermission(PERMISSION_KEYS.EXPORT.ROOT.EXPORT);
-
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const sessionId = searchParams.get('sessionId');
-    // const { playSuccess, playError } = useScanSound();
     const [messageApi, contextHolder] = message.useMessage();
     const [modal, modalContextHolder] = Modal.useModal();
 
@@ -120,7 +108,6 @@ export default function ExportProcessPage() {
             const res = await exportSessionService.scanBulk(sessionId!, codes);
             messageApi.success(`Đã xử lý ${codes.length} mã.`);
             if (res.data?.errors?.length) {
-                // messageApi.warning(`Có ${res.data.errors.length} mã lỗi`);
                 const errorList = res.data.errors.map((e: any) =>
                     `<li><b>${e.serial}</b>: ${e.error}</li>`
                 ).join('');
@@ -410,16 +397,6 @@ export default function ExportProcessPage() {
             {/* List */}
             <Card
                 title="Danh sách MAC"
-                extra={
-                    <Tooltip title={!canExport ? 'Bạn không có quyền xuất file' : 'Xuất danh sách MAC ra Excel'}>
-                        <Button
-                            icon={<FileExcelOutlined />}
-                            disabled={!canExport}
-                        >
-                            Xuất Excel
-                        </Button>
-                    </Tooltip>
-                }
                 className="mb-2"
             >
                 <Table

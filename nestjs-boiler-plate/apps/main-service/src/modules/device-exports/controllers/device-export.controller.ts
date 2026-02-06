@@ -10,8 +10,10 @@ import {
   HttpStatus,
   HttpCode,
   Request,
-  UnauthorizedException
+  UnauthorizedException,
+  Res
 } from '@nestjs/common';
+import { Response } from 'express';
 import { Roles } from 'nest-keycloak-connect';
 import { DeviceExportService } from '../services/device-export.service';
 import { ExportSessionService } from '../services/export-session.service';
@@ -133,6 +135,19 @@ export class DeviceExportController {
   }
 
 
+
+  @Get(':id/export-excel')
+  async exportExcel(@Param('id') id: string, @Res() res: Response) {
+    const buffer = await this.deviceExportService.exportTicketExcel(id);
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename=Phieu_Xuat_${id}.xlsx`,
+      'Content-Length': buffer.length,
+    });
+
+    res.end(buffer);
+  }
 
   // === EXPORT SESSIONS ===
 

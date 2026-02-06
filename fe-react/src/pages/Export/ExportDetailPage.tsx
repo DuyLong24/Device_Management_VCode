@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Button, Typography, Space, Spin, Alert, Tooltip, Card, Table } from 'antd';
+import { Button, Typography, Space, Spin, Alert, Tooltip } from 'antd';
 import { ArrowLeftOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 import { useExportDetail } from '../../hooks/useExportDetail';
 import { ExportInfoCard } from '../../components/Export/ExportInfoCard';
@@ -10,8 +11,8 @@ import { ActualItemsTable } from '../../components/Export/ActualItemsTable';
 import { ApprovalActions } from '../../components/Export/ApprovalActions';
 import { useAuth } from '../../hooks/useAuth';
 import { sharedDataService } from '../../services/shared-data.service';
-
-import dayjs from 'dayjs';
+import { exportExportTicketPDF } from '../../utils/export-ticket-pdf';
+import { PERMISSION_KEYS } from '../../constants/permissionKeys';
 
 const { Title, Text } = Typography;
 
@@ -29,7 +30,7 @@ export default function ExportDetailPage() {
         handleDelete,
     } = useExportDetail();
 
-    const { hasRole, user } = useAuth();
+    const { hasRole, user, hasPermission } = useAuth();
     const { sessions, createSession } = useExportSession(id);
     const [projects, setProjects] = useState<any[]>([]);
 
@@ -97,6 +98,16 @@ export default function ExportDetailPage() {
         handleNavigateToScan(sessionId);
     };
 
+    const handleExportPDF = () => {
+        if (!hasPermission(PERMISSION_KEYS.EXPORT.ROOT.EXPORT)) {
+            // Optional: Message could be added here, but button is disabled anyway
+            return;
+        }
+        if (exportInfo) {
+            exportExportTicketPDF(exportInfo, projectName);
+        }
+    };
+
     if (loading || !exportInfo) {
         return (
             <div className="text-center py-24">
@@ -156,7 +167,7 @@ export default function ExportDetailPage() {
                         onSubmit={handleSubmit}
                         onApprove={handleApprove}
                         onReject={handleReject}
-                        // onNavigateToScan={handleNavigateToScan}
+                        onExport={handleExportPDF}
                         canApprove={canApprove}
                     />
                 </Space>
@@ -206,40 +217,6 @@ export default function ExportDetailPage() {
 
             {/* Thông tin phiếu xuất */}
             <ExportInfoCard exportInfo={exportInfo} projectName={projectName} />
-
-            {/* Bảng yêu cầu */}
-            <Card title="Yêu cầu thiết bị" className="mb-4">
-                <Table
-                    dataSource={exportInfo.requirements?.map((req: any) => ({
-                        key: req.deviceCode || req._id,
-                        deviceCode: req.deviceCode,
-                        deviceName: req.deviceName,
-                        quantity: req.quantity
-                    })) || []}
-                    columns={[
-                        {
-                            title: 'Mã Model',
-                            dataIndex: 'deviceCode',
-                            key: 'deviceCode',
-                            render: (t: string) => <Text strong className="font-mono">{t}</Text>
-                        },
-                        {
-                            title: 'Tên thiết bị',
-                            dataIndex: 'deviceName',
-                            key: 'deviceName'
-                        },
-                        {
-                            title: 'Số lượng yêu cầu',
-                            dataIndex: 'quantity',
-                            key: 'quantity',
-                            align: 'center' as const
-                        }
-                    ]}
-                    pagination={false}
-                    size="small"
-                    locale={{ emptyText: 'Chưa có yêu cầu thiết bị' }}
-                />
-            </Card>
 
             {/* Bảng thiết bị */}
             <ActualItemsTable items={exportInfo.items || []} />

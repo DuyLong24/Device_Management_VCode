@@ -9,6 +9,7 @@ interface ExportItem {
     deviceModel?: string;
     scannedAt?: string;
     scannedBy?: string;
+    mac?: string;
 }
 
 interface ActualItemsTableProps {
@@ -18,10 +19,10 @@ interface ActualItemsTableProps {
 export const ActualItemsTable = ({ items = [] }: ActualItemsTableProps) => {
     const columns = [
         {
-            title: 'Serial',
-            dataIndex: 'serial',
-            key: 'serial',
-            render: (text: string) => <Text strong>{text}</Text>,
+            title: 'Mac Address',
+            dataIndex: 'mac',
+            key: 'mac',
+            render: (text: string) => <Text strong>{text || '-'}</Text>,
         },
         {
             title: 'Mã thiết bị',

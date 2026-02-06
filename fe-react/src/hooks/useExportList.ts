@@ -134,13 +134,20 @@ export const useExportList = () => {
         });
     };
 
-    // xuất Excel
-    const handleExportExcel = (record: DeviceExport) => {
-        if (record.status !== EXPORT_STATUS.COMPLETED) {
-            message.warning('Chỉ export Excel được cho phiếu đã hoàn tất');
+    // Xuất PDF
+    const handleExportPDF = async (record: DeviceExport) => {
+        if (!record || record.status !== EXPORT_STATUS.COMPLETED) {
+            message.warning('Chỉ xuất PDF được cho phiếu đã hoàn tất');
             return;
         }
-        message.info('Chức năng export Excel đang phát triển...');
+        try {
+            const { exportExportTicketPDF } = await import('../utils/export-ticket-pdf');
+            exportExportTicketPDF(record);
+            message.success('Đã tải xuống file PDF');
+        } catch (error) {
+            console.error('Export PDF error:', error);
+            message.error('Không thể xuất file PDF');
+        }
     };
 
     return {
@@ -157,8 +164,8 @@ export const useExportList = () => {
         handleReset,
         handleCreate,
         handleViewDetail,
-        handleDelete, // Added
-        handleExportExcel,
+        handleDelete,
+        handleExportPDF,
 
         // Navigation
         navigate,

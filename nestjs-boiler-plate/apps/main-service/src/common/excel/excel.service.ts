@@ -65,6 +65,69 @@ export class ExcelService {
         return (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
     }
 
+    /**
+     * Xuất báo cáo dạng Master-Detail (Thông tin chung ở trên, Bảng dữ liệu ở dưới)
+     */
+    async exportMasterDetail<T>(
+        info: { label: string; value: any }[],
+        data: T[],
+        columns: ExcelColumn[],
+        sheetName: string = 'Report'
+    ): Promise<Buffer> {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet(sheetName);
+
+        // 1. Info Section
+        let currentRow = 1;
+        info.forEach(item => {
+            const row = worksheet.getRow(currentRow);
+            row.getCell(1).value = item.label;
+            row.getCell(1).font = { bold: true, name: 'Times New Roman' };
+            row.getCell(2).value = item.value;
+            row.getCell(2).font = { name: 'Times New Roman' };
+            currentRow++;
+        });
+
+        currentRow++; // Space
+
+        // 2. Table Header
+        const headerRow = worksheet.getRow(currentRow);
+        columns.forEach((col, index) => {
+            const cell = headerRow.getCell(index + 1);
+            cell.value = col.header;
+            cell.font = { bold: true, color: { argb: 'FFFFFF' }, name: 'Times New Roman' };
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF4472C4' } // Blue header
+            };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+
+            // Set width
+            worksheet.getColumn(index + 1).width = col.width || 20;
+        });
+        currentRow++;
+
+        // 3. Table Data
+        data.forEach((item: any, index) => {
+            const row = worksheet.getRow(currentRow);
+            columns.forEach((col, colIndex) => {
+                let value = this.getValueByPath(item, col.key);
+                if (col.format) value = col.format(value, item, index + 1);
+
+                const cell = row.getCell(colIndex + 1);
+                cell.value = value;
+                cell.font = { name: 'Times New Roman' };
+                cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+                cell.alignment = { vertical: 'middle', wrapText: true, horizontal: col.alignment || 'left' };
+            });
+            currentRow++;
+        });
+
+        return (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
+    }
+
     // --- PRIVATE HELPERS ---
 
     private getValueByPath(obj: any, path: string): any {

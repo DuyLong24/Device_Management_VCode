@@ -1,4 +1,4 @@
-import { Card, Descriptions, Progress, Typography, Statistic, Row, Col, Tag } from 'antd';
+import { Card, Descriptions, Progress, Typography, Statistic, Row, Col, Tag, Table } from 'antd';
 import dayjs from 'dayjs';
 import { getExportStatusTag } from '../../utils/export-status.util';
 import type { DeviceExport } from '../../types/export.type';
@@ -55,18 +55,74 @@ export const ExportInfoCard = ({ exportInfo, projectName }: ExportInfoCardProps)
                             </Descriptions.Item>
                         </>
                     )}
-                    <Descriptions.Item label="Dự án" span={2}>
+                    <Descriptions.Item label="Dự án">
                         {projectName || exportInfo.project || <Text type="secondary">-</Text>}
                     </Descriptions.Item>
-                    <Descriptions.Item label="Khách hàng" span={2}>
+                    <Descriptions.Item label="Khách hàng">
                         {exportInfo.customer || <Text type="secondary">-</Text>}
                     </Descriptions.Item>
-                    <Descriptions.Item label="Địa chỉ giao hàng" span={2}>
+                    <Descriptions.Item label="Địa chỉ giao hàng">
                         {exportInfo.deliveryAddress || <Text type="secondary">-</Text>}
                     </Descriptions.Item>
-                    <Descriptions.Item label="Ghi chú" span={2}>
+                    <Descriptions.Item
+                        label={<Text strong>Yêu cầu thiết bị</Text>}
+                        span={2}
+                        className="requirements-row"
+                    >
+                        <div className="requirements-wrapper">
+                            <div className="flex justify-end mb-2">
+                                <Text type="secondary">
+                                    Tổng SL:{' '}
+                                    {exportInfo.requirements?.reduce(
+                                        (s: number, r: any) => s + r.quantity,
+                                        0
+                                    ) || 0}
+                                </Text>
+                            </div>
+
+                            <Table
+                                dataSource={exportInfo.requirements?.map((req: any) => ({
+                                    key: req.deviceCode || req._id,
+                                    deviceCode: req.deviceCode,
+                                    deviceName: req.deviceName,
+                                    quantity: req.quantity
+                                })) || []}
+                                columns={[
+                                    {
+                                        title: 'Model',
+                                        dataIndex: 'deviceCode',
+                                        render: (t: string) => (
+                                            <Text strong className="font-mono text-blue-600">
+                                                {t}
+                                            </Text>
+                                        )
+                                    },
+                                    {
+                                        title: 'Thiết bị',
+                                        dataIndex: 'deviceName'
+                                    },
+                                    {
+                                        title: 'SL',
+                                        dataIndex: 'quantity',
+                                        align: 'center',
+                                        width: 80,
+                                        render: (q: number) => <Text strong>{q}</Text>
+                                    }
+                                ]}
+                                pagination={false}
+                                bordered={false}
+                                size="small"
+                                locale={{ emptyText: 'Chưa có yêu cầu thiết bị' }}
+                            />
+                        </div>
+                    </Descriptions.Item>
+
+
+
+                    <Descriptions.Item label="Ghi chú">
                         {exportInfo.notes || <Text type="secondary">Không có ghi chú</Text>}
                     </Descriptions.Item>
+
                 </Descriptions>
             </Card>
 

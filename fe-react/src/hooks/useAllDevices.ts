@@ -34,7 +34,7 @@ const STATUS_TO_WAREHOUSE_MAP: Record<string, string> = {
     'WARRANTY': 'IN_WARRANTY',
 };
 
-export const useAllSerials = () => {
+export const useAllDevices = () => {
     // --- STATE QUẢN LÝ PARAMS ---
     const [pagination, setPagination] = useState({ page: 1, limit: 10 });
     const [searchText, setSearchText] = useState('');

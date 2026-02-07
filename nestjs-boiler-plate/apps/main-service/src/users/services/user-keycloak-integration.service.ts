@@ -395,12 +395,21 @@ export class UserKeycloakIntegrationService {
       );
     } catch (error: any) {
       const errorDetail = error.response?.data || error.message;
-      this.logger.error(`[KeycloakSync] Failed to assign role '${roleName}':`, errorDetail);
+      const status = error.response?.status;
 
-      // error message
-      if (error.response?.status === 404) {
-        throw new Error(`Quyền '${roleName}' không tồn tại trong Keycloak`);
+      // 404: Role không tồn tại trong Keycloak → Skip (custom roles chỉ lưu trong MongoDB)
+      if (status === 404) {
+        this.logger.warn(`[KeycloakSync] Quyền '${roleName}' không tồn tại trong Keycloak - Bỏ qua (role chỉ lưu trong MongoDB)`);
+        return; // Skip instead of throw
       }
+
+      // 409: Role đã được gán cho user → OK, không cần báo lỗi
+      if (status === 409) {
+        this.logger.log(`[KeycloakSync] Quyền '${roleName}' đã được gán cho user - OK`);
+        return; // Already assigned, not an error
+      }
+
+      this.logger.error(`[KeycloakSync] Failed to assign role '${roleName}' (status: ${status}):`, errorDetail);
       throw new Error(`Failed to assign role: ${JSON.stringify(errorDetail)}`);
     }
   }

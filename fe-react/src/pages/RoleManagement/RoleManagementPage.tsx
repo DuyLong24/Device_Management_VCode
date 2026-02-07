@@ -10,6 +10,11 @@ import {
     Spin,
     Alert,
     Tooltip,
+    Modal,
+    Form,
+    Input,
+    message,
+    Popconfirm,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -17,10 +22,13 @@ import {
     EyeOutlined,
     SafetyOutlined,
     InfoCircleOutlined,
+    PlusOutlined,
+    DeleteOutlined,
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import { roleService } from '../../services/role.service';
 import type { RoleDTO } from '../../services/role.service';
+import { useAuth } from '../../hooks/useAuth';
 
 const { Title, Text } = Typography;
 
@@ -33,9 +41,13 @@ const roleConfig: Record<string, { color: string; label: string }> = {
 
 export default function RoleManagementPage() {
     const navigate = useNavigate();
+    const { hasPermission } = useAuth();
     const [roles, setRoles] = useState<RoleDTO[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [createModalVisible, setCreateModalVisible] = useState(false);
+    const [creating, setCreating] = useState(false);
+    const [form] = Form.useForm();
 
     useEffect(() => {
         loadRoles();
@@ -56,6 +68,39 @@ export default function RoleManagementPage() {
 
     const handleViewPermission = (role: RoleDTO) => {
         navigate(`/system/roles/${role.id}`);
+    };
+
+    const handleCreateRole = async (values: { name: string; code: string; description?: string }) => {
+        setCreating(true);
+        try {
+            await roleService.create({
+                name: values.name,
+                code: values.code.toLowerCase().replace(/\s+/g, '_'),
+                description: values.description,
+                permissions: [],
+            });
+            message.success('Tạo vai trò thành công!');
+            setCreateModalVisible(false);
+            form.resetFields();
+            loadRoles();
+        } catch (err: any) {
+            message.error(err.response?.data?.message || 'Lỗi khi tạo vai trò');
+        } finally {
+            setCreating(false);
+        }
+    };
+
+    // 3 roles hệ thống không được xóa
+    const SYSTEM_ROLES = ['super_admin', 'admin', 'user'];
+
+    const handleDeleteRole = async (role: RoleDTO) => {
+        try {
+            await roleService.delete(role.id);
+            message.success(`Đã xóa vai trò "${role.name}"`);
+            loadRoles();
+        } catch (err: any) {
+            message.error(err.response?.data?.message || 'Lỗi khi xóa vai trò');
+        }
     };
 
     const columns: TableColumnsType<RoleDTO> = [
@@ -109,18 +154,38 @@ export default function RoleManagementPage() {
         {
             title: 'Thao tác',
             key: 'action',
-            width: 150,
+            width: 200,
             align: 'center',
             render: (_, record) => (
-                <Tooltip title="Xem chi tiết phân quyền">
-                    <Button
-                        type="link"
-                        icon={<EyeOutlined />}
-                        onClick={() => handleViewPermission(record)}
-                    >
-                        Xem phân quyền
-                    </Button>
-                </Tooltip>
+                <Space>
+                    <Tooltip title="Xem chi tiết phân quyền">
+                        <Button
+                            type="link"
+                            icon={<EyeOutlined />}
+                            onClick={() => handleViewPermission(record)}
+                        >
+                            Xem phân quyền
+                        </Button>
+                    </Tooltip>
+                    {!SYSTEM_ROLES.includes(record.code) && hasPermission('system.role:UPDATE') && (
+                        <Popconfirm
+                            title="Xóa vai trò"
+                            description={`Bạn có chắc muốn xóa vai trò "${record.name}"?`}
+                            onConfirm={() => handleDeleteRole(record)}
+                            okText="Xóa"
+                            cancelText="Hủy"
+                            okButtonProps={{ danger: true }}
+                        >
+                            <Tooltip title="Xóa vai trò">
+                                <Button
+                                    type="link"
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                />
+                            </Tooltip>
+                        </Popconfirm>
+                    )}
+                </Space>
             ),
         },
     ];
@@ -153,6 +218,15 @@ export default function RoleManagementPage() {
                     </div>
 
                     <Space>
+                        {hasPermission('system.role:UPDATE') && (
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={() => setCreateModalVisible(true)}
+                            >
+                                Tạo vai trò mới
+                            </Button>
+                        )}
                         <Button icon={<ReloadOutlined />} onClick={loadRoles} loading={loading}>
                             Làm mới
                         </Button>
@@ -200,6 +274,67 @@ export default function RoleManagementPage() {
                     />
                 )}
             </Card>
+
+            {/* Create Role Modal */}
+            <Modal
+                title="Tạo vai trò mới"
+                open={createModalVisible}
+                onCancel={() => {
+                    setCreateModalVisible(false);
+                    form.resetFields();
+                }}
+                footer={null}
+                destroyOnClose
+            >
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleCreateRole}
+                >
+                    <Form.Item
+                        name="name"
+                        label="Tên vai trò"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập tên vai trò' },
+                            { min: 2, message: 'Tên vai trò phải có ít nhất 2 ký tự' }
+                        ]}
+                    >
+                        <Input placeholder="VD: Quản lý kho" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="code"
+                        label="Mã vai trò"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập mã vai trò' },
+                            {
+                                pattern: /^[a-z0-9_]+$/,
+                                message: 'Chỉ chấp nhận chữ thường, số và gạch dưới'
+                            }
+                        ]}
+                    >
+                        <Input placeholder="VD: warehouse_manager" />
+                    </Form.Item>
+
+                    <Form.Item name="description" label="Mô tả">
+                        <Input.TextArea rows={3} />
+                    </Form.Item>
+
+                    <Form.Item className="mb-0 text-right">
+                        <Space>
+                            <Button onClick={() => {
+                                setCreateModalVisible(false);
+                                form.resetFields();
+                            }}>
+                                Hủy
+                            </Button>
+                            <Button type="primary" htmlType="submit" loading={creating}>
+                                Tạo vai trò
+                            </Button>
+                        </Space>
+                    </Form.Item>
+                </Form>
+            </Modal>
         </div>
     );
 }

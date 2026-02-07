@@ -12,6 +12,9 @@ export class FncRole extends Document {
   @Prop({ required: true })
   code!: string;
 
+  @Prop()
+  description?: string;
+
   @Prop({ required: true })
   permissions!: string[];
 

@@ -21,10 +21,13 @@ import {
     KeyOutlined,
     SearchOutlined,
 } from '@ant-design/icons';
+import { useState, useEffect } from 'react';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
 import type { UserDTO } from '../../services/user-management.service';
 import { useUserManagement } from '../../hooks/useUserManagement';
+import { roleService } from '../../services/role.service';
+import type { RoleDTO } from '../../services/role.service';
 import CreateUserModal from './CreateUserModal';
 import EditUserModal from './EditUserModal';
 import ResetPasswordModal from './ResetPasswordModal';
@@ -68,6 +71,21 @@ export default function UserManagementPage() {
         closeEditModal,
         closeResetPasswordModal,
     } = useUserManagement();
+
+    const [roles, setRoles] = useState<RoleDTO[]>([]);
+
+    useEffect(() => {
+        loadRoles();
+    }, []);
+
+    const loadRoles = async () => {
+        try {
+            const result = await roleService.getAll();
+            setRoles(result.data);
+        } catch (error) {
+            console.error('Failed to load roles', error);
+        }
+    };
 
     const columns: TableColumnsType<UserDTO> = [
         {
@@ -210,9 +228,11 @@ export default function UserManagementPage() {
                             setFilters({ ...filters, roleCode: value, page: 1 })
                         }
                     >
-                        <Select.Option value="super_admin">Super Admin</Select.Option>
-                        <Select.Option value="admin">Admin</Select.Option>
-                        <Select.Option value="user">User</Select.Option>
+                        {roles.map(role => (
+                            <Select.Option key={role.id} value={role.code}>
+                                {role.name}
+                            </Select.Option>
+                        ))}
                     </Select>
 
                     <Select

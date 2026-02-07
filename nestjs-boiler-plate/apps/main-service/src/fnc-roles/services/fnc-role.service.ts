@@ -1,16 +1,33 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { FncRoleRepository } from '../repositories/fnc-role.repository';
 import { CreateFncRoleDto } from '../dto/create-fnc-role.dto';
 import { UpdateFncRoleDto } from '../dto/update-fnc-role.dto';
 import { PaginateResult } from '../interfaces/pagination-result.interface';
 import { FncRole } from '../entities/fnc-role.entity';
+import { KeycloakAdminService } from '../../policy-admin/keycloak-admin.service';
 
 @Injectable()
 export class FncRoleService {
-  constructor(private readonly fncRoleRepository: FncRoleRepository) { }
+  constructor(
+    private readonly fncRoleRepository: FncRoleRepository,
+    @Inject(forwardRef(() => KeycloakAdminService))
+    private readonly keycloakAdminService: KeycloakAdminService,
+  ) { }
 
   async create(createFncRoleDto: CreateFncRoleDto): Promise<FncRole> {
-    return this.fncRoleRepository.create(createFncRoleDto);
+    // 1. Create in MongoDB
+    const role = await this.fncRoleRepository.create(createFncRoleDto);
+
+    // 2. Sync to Keycloak (non-blocking, log warning on failure)
+    try {
+      await this.keycloakAdminService.createRealmRole(role.code);
+      console.log(`[FncRoleService] Role '${role.code}' synced to Keycloak`);
+    } catch (error) {
+      console.warn(`[FncRoleService] Failed to sync role '${role.code}' to Keycloak:`, error.message);
+      // Don't throw - MongoDB role is created, Keycloak sync is optional
+    }
+
+    return role;
   }
 
   async findAll(filter: any = {}): Promise<FncRole[]> {

@@ -99,16 +99,16 @@ export class KeycloakAdminService {
       const response = await this.kcClient.get('/clients', {
         params: { clientId: this.clientId },
       });
-      
+
       if (response.data.length === 0) {
         console.warn(`Client ${this.clientId} not found in realm ${this.realm}`);
         console.warn('Available clients:', response.data.map((c: any) => c.clientId));
-        
+
         // Try to create the client
         console.log(`Attempting to create client ${this.clientId}...`);
         return await this.createClient();
       }
-      
+
       return response.data[0].id;
     } catch (error) {
       console.error('Get client ID error details:', {
@@ -118,7 +118,7 @@ export class KeycloakAdminService {
         clientId: this.clientId,
         realm: this.realm
       });
-      
+
       throw new HttpException(
         `Failed to get client ID: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -142,16 +142,16 @@ export class KeycloakAdminService {
       };
 
       const response = await this.kcClient.post('/clients', clientConfig);
-      
+
       // Get the created client ID
       const clientResponse = await this.kcClient.get('/clients', {
         params: { clientId: this.clientId },
       });
-      
+
       if (clientResponse.data.length === 0) {
         throw new Error('Failed to retrieve created client');
       }
-      
+
       console.log(`Successfully created client ${this.clientId} with ID: ${clientResponse.data[0].id}`);
       return clientResponse.data[0].id;
     } catch (error) {
@@ -165,13 +165,13 @@ export class KeycloakAdminService {
       // Try to get existing role
       const response = await this.kcClient.get(`/clients/${clientId}/roles/${roleName}`);
       const existingRole = response.data;
-      
+
       // Update existing role with description if permission is provided
       if (permission && !existingRole.description) {
         existingRole.description = `Permission: ${permission}`;
         await this.kcClient.put(`/clients/${clientId}/roles/${roleName}`, existingRole);
       }
-      
+
       return existingRole;
     } catch (error) {
       if (error.response?.status === 404) {
@@ -182,7 +182,7 @@ export class KeycloakAdminService {
           clientRole: true,
           containerId: clientId,
         };
-        
+
         const response = await this.kcClient.post(`/clients/${clientId}/roles`, newRole);
         return response.data;
       }
@@ -195,7 +195,7 @@ export class KeycloakAdminService {
       // Try to get existing role
       const response = await this.kcClient.get(`/roles/${roleName}`);
       const existingRole = response.data;
-      
+
       // Update existing role
       await this.kcClient.put(`/roles/${roleName}`, existingRole);
       return existingRole;
@@ -206,7 +206,7 @@ export class KeycloakAdminService {
           name: roleName,
           clientRole: false,
         };
-        
+
         const response = await this.kcClient.post('/roles', newRole);
         return response.data;
       }
@@ -216,16 +216,16 @@ export class KeycloakAdminService {
 
   private async setRealmRoleComposites(roleName: string, clientRoles: string[]): Promise<void> {
     const clientId = await this.getClientId();
-    
+
     try {
       // First, get the client role details to get their IDs
       const compositeRoles = [];
-      
+
       for (const clientRoleName of clientRoles) {
         try {
           const response = await this.kcClient.get(`/clients/${clientId}/roles/${clientRoleName}`);
           const clientRole = response.data;
-          
+
           compositeRoles.push({
             id: clientRole.id,
             name: clientRole.name,
@@ -238,9 +238,9 @@ export class KeycloakAdminService {
       }
 
       if (compositeRoles.length > 0) {
-        console.log(`Setting ${compositeRoles.length} composite roles for realm role ${roleName}:`, 
+        console.log(`Setting ${compositeRoles.length} composite roles for realm role ${roleName}:`,
           compositeRoles.map(r => r.name));
-        
+
         await this.kcClient.post(`/roles/${roleName}/composites`, compositeRoles);
         console.log(`Successfully set composites for realm role ${roleName}`);
       } else {
@@ -257,8 +257,8 @@ export class KeycloakAdminService {
       // Check if mapper already exists
       const response = await this.kcClient.get(`/clients/${clientId}/protocol-mappers`);
       const existingMappers = response.data;
-      
-      const mapperExists = existingMappers.some((mapper: any) => 
+
+      const mapperExists = existingMappers.some((mapper: any) =>
         mapper.name === 'perms' && mapper.protocolMapper === 'oidc-usermodel-client-role-mapper'
       );
 
@@ -285,14 +285,14 @@ export class KeycloakAdminService {
         status: error.response?.status,
         url: error.config?.url
       });
-      
+
       // If it's a 404, the client might not exist or the endpoint is wrong
       if (error.response?.status === 404) {
         console.warn(`Client ${this.clientId} (ID: ${clientId}) not found or protocol mapper endpoint not available`);
         // Continue without protocol mapper for now
         return;
       }
-      
+
       throw new HttpException(
         `Failed to ensure protocol mapper: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -302,7 +302,7 @@ export class KeycloakAdminService {
 
   async syncRoles(roles: Array<{ code: string; permissions: string[] }>): Promise<SyncResult> {
     const result: SyncResult = { created: 0, updated: 0, skipped: 0 };
-    
+
     try {
       const clientId = await this.getClientId();
 
@@ -316,14 +316,14 @@ export class KeycloakAdminService {
       for (const role of roles) {
         try {
           console.log(`Syncing role: ${role.code} with permissions:`, role.permissions);
-          
+
           // Create/update client roles for each permission
           const clientRoles: string[] = [];
           for (const permission of role.permissions) {
             // Keep the same format as database (colon format)
             const clientRoleName = permission;
             console.log(`Creating client role: ${clientRoleName} for permission: ${permission}`);
-            
+
             // Create client role with description containing the original permission
             await this.createOrUpdateClientRole(clientRoleName, clientId, permission);
             clientRoles.push(clientRoleName);
@@ -350,6 +350,21 @@ export class KeycloakAdminService {
     }
 
     return result;
+  }
+
+  /**
+   * Public method to create a realm role in Keycloak
+   * Used when creating new roles from FncRoleService
+   */
+  async createRealmRole(roleName: string): Promise<void> {
+    try {
+      console.log(`[KeycloakAdmin] Creating realm role: ${roleName}`);
+      await this.createOrUpdateRealmRole(roleName);
+      console.log(`[KeycloakAdmin] Successfully created realm role: ${roleName}`);
+    } catch (error) {
+      console.error(`[KeycloakAdmin] Failed to create realm role ${roleName}:`, error.message);
+      throw error;
+    }
   }
 
   async getUserPermissions(userId: string): Promise<{
@@ -393,15 +408,15 @@ export class KeycloakAdminService {
   }> {
     try {
       const clientId = await this.getClientId();
-      
+
       // Get realm role details
       const realmRoleResponse = await this.kcClient.get(`/roles/${roleCode}`);
       const realmRole = realmRoleResponse.data;
-      
+
       // Get composite roles
       const compositesResponse = await this.kcClient.get(`/roles/${roleCode}/composites`);
       const composites = compositesResponse.data || [];
-      
+
       // Get client roles details
       const clientRoles = [];
       for (const composite of composites) {
@@ -414,7 +429,7 @@ export class KeycloakAdminService {
           }
         }
       }
-      
+
       return {
         realmRole,
         clientRoles,

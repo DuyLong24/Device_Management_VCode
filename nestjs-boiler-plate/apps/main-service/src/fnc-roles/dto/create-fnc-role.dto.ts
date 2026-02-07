@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsArray, IsOptional, IsEnum } from 'class-validator';
+import { IsNotEmpty, IsArray, IsOptional, IsString } from 'class-validator';
 
 export class CreateFncRoleDto {
   @IsNotEmpty()
@@ -7,6 +7,11 @@ export class CreateFncRoleDto {
   @IsNotEmpty()
   code!: string;
 
+  @IsOptional()
+  @IsString()
+  description?: string;
+
   @IsArray()
   permissions!: string[];
 }
+

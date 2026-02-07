@@ -49,4 +49,16 @@ export const roleService = {
         const response = await axiosInstance.put<RoleDTO>(`/fnc-roles/${id}`, data);
         return response.data;
     },
+
+    // Tạo role mới
+    create: async (data: Omit<RoleDTO, 'id'>) => {
+        const response = await axiosInstance.post<RoleDTO>('/fnc-roles', data);
+        return response.data;
+    },
+
+    // Xóa role
+    delete: async (id: string) => {
+        const response = await axiosInstance.delete(`/fnc-roles/${id}`);
+        return response.data;
+    },
 };

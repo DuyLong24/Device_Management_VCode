@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Typography, Card, Segmented } from 'antd';
-import { useAllSerials } from '../../hooks/useAllSerials';
+import { useAllDevices } from '../../hooks/useAllDevices';
 import { DeviceStatsOverview, type DeviceStatistics } from './components/DeviceStatsOverview';
 import { DeviceFilterBar } from './components/DeviceFilterBar';
 import { DeviceListTable, type DeviceUI } from './components/DeviceListTable';
@@ -24,7 +24,7 @@ export default function DeviceListPage() {
         dateRange, setDateRange,
         handleReset,
         handleExport
-    } = useAllSerials();
+    } = useAllDevices();
 
     return (
         <div className="p-3 max-w-400 mx-auto">

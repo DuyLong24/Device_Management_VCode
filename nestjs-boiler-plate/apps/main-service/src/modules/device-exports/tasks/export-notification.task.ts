@@ -29,15 +29,6 @@ export class ExportNotificationTask {
         this.baseUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:5173';
     }
 
-    // Chạy hàng ngày vào 00:00
-    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-    async handleDailyNotifications() {
-        this.logger.log('Standard daily email notification check started...');
-        // await this.processApprovalRequests();
-        // await this.processExportResults();
-        this.logger.log('Daily notification check skipped (Switched to Real-time).');
-    }
-
     // Kích hoạt thủ công
     async processAllNotifications() {
         this.logger.log('Manual trigger email notification check started...');

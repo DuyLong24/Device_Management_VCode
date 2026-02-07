@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Modal, Form, Input, Select, message } from 'antd';
 import type { UserDTO } from '../../services/user-management.service';
+import { roleService } from '../../services/role.service';
+import type { RoleDTO } from '../../services/role.service';
 
 interface EditUserModalProps {
     visible: boolean;
@@ -13,6 +15,14 @@ interface EditUserModalProps {
 export default function EditUserModal({ visible, user, onSuccess, onCancel, onUpdate }: EditUserModalProps) {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const [roles, setRoles] = useState<RoleDTO[]>([]);
+    const [loadingRoles, setLoadingRoles] = useState(false);
+
+    useEffect(() => {
+        if (visible) {
+            loadRoles();
+        }
+    }, [visible]);
 
     useEffect(() => {
         if (user) {
@@ -24,6 +34,18 @@ export default function EditUserModal({ visible, user, onSuccess, onCancel, onUp
             });
         }
     }, [user, form]);
+
+    const loadRoles = async () => {
+        setLoadingRoles(true);
+        try {
+            const result = await roleService.getAll();
+            setRoles(result.data);
+        } catch (error) {
+            console.error('Failed to load roles', error);
+        } finally {
+            setLoadingRoles(false);
+        }
+    };
 
     const handleSubmit = async () => {
         if (!user) return;
@@ -80,13 +102,16 @@ export default function EditUserModal({ visible, user, onSuccess, onCancel, onUp
                     label="Vai trò"
                     name="roleCode"
                 >
-                    <Select placeholder="Chọn vai trò">
-                        <Select.Option value="super_admin">Super Admin</Select.Option>
-                        <Select.Option value="admin">Admin</Select.Option>
-                        <Select.Option value="user">User</Select.Option>
+                    <Select placeholder="Chọn vai trò" loading={loadingRoles}>
+                        {roles.map(role => (
+                            <Select.Option key={role.id} value={role.code}>
+                                {role.name}
+                            </Select.Option>
+                        ))}
                     </Select>
                 </Form.Item>
             </Form>
         </Modal>
     );
 }
+

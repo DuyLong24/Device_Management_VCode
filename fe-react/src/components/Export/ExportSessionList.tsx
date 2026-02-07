@@ -47,8 +47,8 @@ export const ExportSessionList = ({ sessions, onCreateSession, onContinueSession
         },
         {
             title: 'Đã quét',
-            dataIndex: 'serialChecked',
-            key: 'serialChecked',
+            dataIndex: 'totalScanned',
+            key: 'totalScanned',
             align: 'center' as const,
             render: (value: number) => <Text strong>{value}</Text>
         },

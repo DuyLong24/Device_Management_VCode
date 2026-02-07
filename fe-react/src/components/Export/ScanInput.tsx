@@ -35,8 +35,8 @@ export const ScanInput = ({ onScan, onBulkScan, loading = false, disabled = fals
         }
     };
 
-    const handleBulkOk = (serials: string[]) => {
-        onBulkScan(serials);
+    const handleBulkOk = (macs: string[]) => {
+        onBulkScan(macs);
         setIsModalOpen(false);
     };
 

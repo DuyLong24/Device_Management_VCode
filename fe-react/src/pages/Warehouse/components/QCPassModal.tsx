@@ -22,7 +22,7 @@ import {
     CloseCircleOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
-import type { QCPendingItem, ScannedSerial, ValidationStatus } from '../../../types/qc.type';
+import type { QCPendingItem, ScannedMac, ValidationStatus } from '../../../types/qc.type';
 
 const { Text } = Typography;
 
@@ -34,34 +34,34 @@ interface QCPassModalProps {
 }
 
 export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: QCPassModalProps) {
-    const [serialInput, setSerialInput] = useState('');
-    const [scannedPassList, setScannedPassList] = useState<ScannedSerial[]>([]);
-    const serialInputRef = useRef<any>(null);
+    const [macInput, setMacInput] = useState('');
+    const [scannedPassList, setScannedPassList] = useState<ScannedMac[]>([]);
+    const macInputRef = useRef<any>(null);
 
-    // Validate serial
-    const validateSerial = (serial: string, currentList: ScannedSerial[]): { isValid: boolean; message?: string; item?: QCPendingItem } => {
-        if (!serial.trim()) return { isValid: false, message: 'MAC không được để trống' };
-        if (currentList.find(s => s.serial === serial)) return { isValid: false, message: 'MAC đã có trong danh sách' };
+    // Validate mac
+    const validateMac = (mac: string, currentList: ScannedMac[]): { isValid: boolean; message?: string; item?: QCPendingItem } => {
+        if (!mac.trim()) return { isValid: false, message: 'MAC không được để trống' };
+        if (currentList.find(s => s.mac === mac)) return { isValid: false, message: 'MAC đã có trong danh sách' };
 
-        const item = dataSource.find(d => d.serial === serial);
+        const item = dataSource.find(d => d.mac === mac);
         if (!item) return { isValid: false, message: 'MAC không tồn tại trong danh sách chờ QC' };
 
         return { isValid: true, item };
     };
 
-    const handleAddPassSerial = () => {
-        const serial = serialInput.trim();
-        if (!serial) {
+    const handleAddPassMac = () => {
+        const mac = macInput.trim();
+        if (!mac) {
             message.warning('Vui lòng nhập MAC');
             return;
         }
 
-        const validation = validateSerial(serial, scannedPassList);
+        const validation = validateMac(mac, scannedPassList);
 
         if (!validation.isValid) {
             message.error(validation.message);
-            setSerialInput('');
-            setTimeout(() => serialInputRef.current?.focus(), 100);
+            setMacInput('');
+            setTimeout(() => macInputRef.current?.focus(), 100);
             return;
         }
 
@@ -70,16 +70,16 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
             {
                 ...validation.item!,
                 validationStatus: 'valid',
-            } as ScannedSerial,
+            } as ScannedMac,
         ]);
 
-        setSerialInput('');
-        message.success(`Thêm MAC ${serial} thành công`);
-        setTimeout(() => serialInputRef.current?.focus(), 100);
+        setMacInput('');
+        message.success(`Thêm MAC ${mac} thành công`);
+        setTimeout(() => macInputRef.current?.focus(), 100);
     };
 
-    const scannedColumns: TableColumnsType<ScannedSerial> = [
-        { title: 'MAC', dataIndex: 'serial', key: 'serial', width: 200 },
+    const scannedColumns: TableColumnsType<ScannedMac> = [
+        { title: 'MAC', dataIndex: 'mac', key: 'mac', width: 200 },
         { title: 'Mã thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 130 },
         {
             title: 'Trạng thái',
@@ -99,7 +99,7 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
             render: (_, record) => (
                 <Button
                     type="link" danger size="small" icon={<DeleteOutlined />}
-                    onClick={() => setScannedPassList(prev => prev.filter(s => s.serial !== record.serial))}
+                    onClick={() => setScannedPassList(prev => prev.filter(s => s.mac !== record.mac))}
                 />
             ),
         },
@@ -147,15 +147,15 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
                 <Card size="small" title="Nhập/Quét MAC">
                     <Space.Compact className="w-full">
                         <Input
-                            ref={serialInputRef}
-                            placeholder="Nhập MAC..."
-                            value={serialInput}
-                            onChange={(e) => setSerialInput(e.target.value)}
-                            onPressEnter={handleAddPassSerial}
+                            ref={macInputRef}
+                            placeholder="Nhập MAC"
+                            value={macInput}
+                            onChange={(e) => setMacInput(e.target.value)}
+                            onPressEnter={handleAddPassMac}
                             prefix={<ScanOutlined />}
                             autoFocus
                         />
-                        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddPassSerial}>Thêm</Button>
+                        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddPassMac}>Thêm</Button>
                     </Space.Compact>
                 </Card>
 
@@ -165,7 +165,7 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
                     pagination={false}
                     scroll={{ y: 300 }}
                     size="small"
-                    rowKey="serial"
+                    rowKey="mac"
                 />
 
                 {scannedPassList.length > 0 && (

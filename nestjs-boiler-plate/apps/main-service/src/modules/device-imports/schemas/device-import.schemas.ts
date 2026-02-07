@@ -37,8 +37,8 @@ export class DeviceImport extends Document {
       quantity: Number,
       boxCount: Number,
       itemsPerBox: Number,
-      serialImported: { type: Number, default: 0 },
-      expectedSerials: { type: [String], default: [] },
+      macImported: { type: Number, default: 0 },
+      expectedMacs: { type: [String], default: [] },
       expectedDetails: {
         type: [{
           mac: String,
@@ -56,9 +56,8 @@ export class DeviceImport extends Document {
     quantity: number;
     boxCount: number;
     itemsPerBox: number;
-    serialImported: number;
-
-    expectedSerials: string[];
+    macImported: number;
+    expectedMacs: string[];
     expectedDetails: Array<{
       mac: string;
       serial: string;
@@ -68,7 +67,7 @@ export class DeviceImport extends Document {
   }>;
 
   @Prop({ default: 0 })
-  serialImported: number;
+  macImported: number;
 
   @Prop({ default: 'pending', enum: ['pending', 'in-progress', 'completed'] })
   inventoryStatus: string;

@@ -49,7 +49,7 @@ const ImportDetailPage = () => {
         handoverPerson,
         notes,
         totalQuantity,
-        serialImported,
+        macImported,
         totalItem
     } = importData;
 
@@ -95,7 +95,7 @@ const ImportDetailPage = () => {
                 <ImportOverviewCard
                     totalItem={totalItem || devicesUI.length}
                     totalQuantity={totalQuantity || 0}
-                    serialImported={serialImported || 0}
+                    serialImported={macImported || 0}
                 />
 
                 {/* 3. Danh sách thiết bị */}

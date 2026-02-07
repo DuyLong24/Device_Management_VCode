@@ -31,7 +31,7 @@ const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 export default function DeviceDetailPage() {
-    const { serial: mac } = useParams(); // URL params might still be named 'serial' if defined in router
+    const { mac } = useParams();
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [transferModalVisible, setTransferModalVisible] = useState(false);

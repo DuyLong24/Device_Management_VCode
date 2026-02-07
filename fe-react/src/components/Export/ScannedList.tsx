@@ -5,7 +5,7 @@ import { useState } from 'react';
 const { Text } = Typography;
 
 interface ScannedItem {
-    serial: string;
+    mac: string;
     deviceModel: string;
     deviceCode: string;
     scannedAt?: string;
@@ -22,7 +22,7 @@ export const ScannedList = ({ items, loading }: ScannedListProps) => {
     const [searchText, setSearchText] = useState('');
 
     const filteredItems = items.filter(i =>
-        i.serial.toLowerCase().includes(searchText.toLowerCase()) ||
+        i.mac.toLowerCase().includes(searchText.toLowerCase()) ||
         i.deviceCode?.toLowerCase().includes(searchText.toLowerCase())
     );
 
@@ -35,8 +35,8 @@ export const ScannedList = ({ items, loading }: ScannedListProps) => {
         },
         {
             title: 'Mac',
-            dataIndex: 'serial',
-            key: 'serial',
+            dataIndex: 'mac',
+            key: 'mac',
             render: (t: string, r: ScannedItem) => (
                 <Space>
                     <Text strong className="text-blue-600 font-mono">{t}</Text>
@@ -90,7 +90,7 @@ export const ScannedList = ({ items, loading }: ScannedListProps) => {
             <Table
                 dataSource={sortedItems}
                 columns={columns}
-                rowKey="serial"
+                rowKey="mac"
                 size="small"
                 pagination={{ pageSize: 15, showSizeChanger: true }}
                 scroll={{ y: 'calc(100vh - 450px)' }}

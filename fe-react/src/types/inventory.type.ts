@@ -10,14 +10,14 @@ export interface ImportRecord {
     importedBy: string;
     supplier: string;
     totalQuantity: number;
-    totalSerials: number;
+    totalMacs: number;
     inventoryStatus: InventoryStatus;
 }
-export interface SerialItem {
+export interface MacItem {
     id: string;
     deviceCode: string;
     deviceName: string;
-    serial: string;
+    mac: string;
     checkResult: CheckResult;
     note?: string;
 }

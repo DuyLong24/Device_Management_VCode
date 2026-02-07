@@ -25,9 +25,9 @@ interface DeviceItem {
     packaging: string;
     boxCount?: number;
     itemsPerBox?: number;
-    serialImported: number;
-    serialExpected: number;
-    serialStatus: 'complete' | 'missing' | 'excess';
+    macImported: number;
+    macExpected: number;
+    macStatus: 'complete' | 'missing' | 'excess';
 }
 
 interface ImportRecord {
@@ -40,8 +40,8 @@ interface ImportRecord {
     handoverPerson: string;
     totalDeviceCodes: number;
     totalQuantity: number;
-    serialImported: number;
-    serialExpected: number;
+    macImported: number;
+    macExpected: number;
     inventoryStatus: 'pending' | 'in-progress' | 'completed';
     status: 'DRAFT' | 'PUBLIC';
     origin?: string;
@@ -63,12 +63,12 @@ export default function ImportListPage() {
         if (!Array.isArray(apiData)) return [];
         return apiData.map((item) => {
             const devices: DeviceItem[] = item.devices.map((dev: any, index) => {
-                const serialImported = dev.serialImported || 0;
-                const serialExpected = dev.quantity || 0;
+                const macImported = dev.macImported || 0;
+                const macExpected = dev.quantity || 0;
 
-                let serialStatus: 'complete' | 'missing' | 'excess' = 'complete';
-                if (serialImported < serialExpected) serialStatus = 'missing';
-                if (serialImported > serialExpected) serialStatus = 'excess';
+                let macStatus: 'complete' | 'missing' | 'excess' = 'complete';
+                if (macImported < macExpected) macStatus = 'missing';
+                if (macImported > macExpected) macStatus = 'excess';
 
                 return {
                     key: dev._id || `${item.id}-${index}`,
@@ -78,9 +78,9 @@ export default function ImportListPage() {
                     packaging: `${dev.boxCount || 0} hộp × ${dev.itemsPerBox || 0} sp/hộp`,
                     boxCount: dev.boxCount,
                     itemsPerBox: dev.itemsPerBox,
-                    serialImported,
-                    serialExpected,
-                    serialStatus,
+                    macImported,
+                    macExpected,
+                    macStatus,
                 };
             });
 
@@ -103,8 +103,8 @@ export default function ImportListPage() {
                 handoverPerson: item.handoverPerson || '---',
                 totalDeviceCodes: item.totalItem,
                 totalQuantity: item.totalQuantity,
-                serialImported: item.serialImported,
-                serialExpected: item.totalQuantity,
+                macImported: item.macImported,
+                macExpected: item.totalQuantity,
                 inventoryStatus: (item.inventoryStatus || 'pending') as any,
                 status: inferredStatus as any,
                 origin: (item as any).origin || 'IMPORT',
@@ -192,13 +192,13 @@ export default function ImportListPage() {
                 notes: record.notes,
                 totalItem: record.totalDeviceCodes,
                 totalQuantity: record.totalQuantity,
-                serialImported: record.serialImported,
+                macImported: record.macImported,
                 devices: record.devices.map(p => ({
                     deviceCode: p.deviceCode,
                     quantity: p.quantity,
                     boxCount: p.boxCount || 0,
                     itemsPerBox: p.itemsPerBox || 0,
-                    serialImported: p.serialImported,
+                    macImported: p.macImported,
                 }))
             };
 

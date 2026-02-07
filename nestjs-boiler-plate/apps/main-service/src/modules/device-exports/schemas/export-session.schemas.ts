@@ -27,21 +27,21 @@ export class ExportSession extends Document {
     note: string;
 
     @Prop({ default: 0 })
-    serialTotal: number; // Tổng số lượng cần quét trong phiên này
+    macTotal: number; // Tổng số lượng cần quét trong phiên này
 
     @Prop({ default: 0 })
-    serialChecked: number; // Số lượng đã quét thành công
+    macChecked: number; // Số lượng đã quét thành công
 
     @Prop({
         type: [{
-            serial: { type: String, required: true },
+            mac: { type: String, required: true },
             deviceCode: { type: String, required: true },
             deviceModel: { type: String },
             scannedAt: { type: Date, default: Date.now }
         }], default: []
     })
     items: {
-        serial: string;
+        mac: string;
         deviceCode: string;
         deviceModel: string;
         scannedAt: Date;

@@ -22,7 +22,7 @@ export const ERROR_MESSAGES = {
         DRAFT_ONLY_EDIT: 'Chỉ được sửa các phiếu ở trạng thái DRAFT (nháp)',
         DRAFT_ONLY_DELETE: 'Chỉ được xóa các phiếu ở trạng thái DRAFT (nháp)',
         SERIAL_QUANTITY_MISMATCH: 'Thiết bị {device}: Trạng thái MAC khai báo ({serials}) không khớp với số lượng nhập ({quantity})',
-        SERIAL_DUPLICATE: 'Thiết bị {device}: Danh sách MAC có chứa mã trùng lặp'
+        MAC_DUPLICATE: 'Thiết bị {device}: Danh sách MAC có chứa mã trùng lặp'
     },
     DEVICE_EXPORT: {
         NOT_FOUND: 'Không tìm thấy phiếu xuất',

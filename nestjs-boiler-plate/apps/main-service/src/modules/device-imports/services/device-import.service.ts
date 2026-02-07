@@ -25,14 +25,14 @@ export class DeviceImportService {
       const devices = createDto.devices || [];
       for (const device of devices) {
         const d: any = device;
-        const serials = d.expectedSerials || [];
+        const macs = d.expectedMacs || [];
 
         // 2. Check trùng lặp nội bộ
-        if (serials.length > 0) {
-          const unique = new Set(serials);
-          if (unique.size !== serials.length) {
+        if (macs.length > 0) {
+          const unique = new Set(macs);
+          if (unique.size !== macs.length) {
             throw new BadRequestException(
-              ERROR_MESSAGES.DEVICE_IMPORT.SERIAL_DUPLICATE
+              ERROR_MESSAGES.DEVICE_IMPORT.MAC_DUPLICATE
                 .replace('{device}', d.deviceCode)
             );
           }
@@ -52,7 +52,7 @@ export class DeviceImportService {
 
     // 2. Tính toán tổng & Process Devices
     const devicesDto = createDto.devices || [];
-    const { devices, totalItem, totalQuantity, totalSerialImported } = this.processDevices(devicesDto);
+    const { devices, totalItem, totalQuantity, totalMacImported } = this.processDevices(devicesDto);
 
     const details = createDto.details || [];
     const status = createDto.status || 'DRAFT';
@@ -61,11 +61,11 @@ export class DeviceImportService {
     const payload = {
       ...createDto,
       code,
-      devices, // Use processed devices with serialImported set
+      devices, // Use processed devices with macImported set
       details,
       totalItem,
       totalQuantity,
-      serialImported: totalSerialImported, // Set root serialImported
+      macImported: totalMacImported, // Set root macImported
       status,
       createdBy: userId ? userId : null
     };
@@ -106,11 +106,11 @@ export class DeviceImportService {
 
     // Tính lại tổng nếu sửa devices
     if (updateDto.devices) {
-      const { devices, totalItem, totalQuantity, totalSerialImported } = this.processDevices(updateDto.devices);
+      const { devices, totalItem, totalQuantity, totalMacImported } = this.processDevices(updateDto.devices);
       updateData.devices = devices; // Save processed devices
       updateData.totalItem = totalItem;
       updateData.totalQuantity = totalQuantity;
-      updateData.serialImported = totalSerialImported; // Update root serialImported
+      updateData.macImported = totalMacImported; // Update root macImported
     }
 
     const updated = await this.deviceImportRepository.update(id, updateData);
@@ -144,26 +144,26 @@ export class DeviceImportService {
         devices: [],
         totalItem: 0,
         totalQuantity: 0,
-        totalSerialImported: 0
+        totalMacImported: 0
       };
     }
 
     const processedDevices = devicesDto.map(d => {
       return {
         ...d,
-        serialImported: 0
+        macImported: 0
       };
     });
 
     const totalItem = processedDevices.length;
     const totalQuantity = processedDevices.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    const totalSerialImported = 0;
+    const totalMacImported = 0;
 
     return {
       devices: processedDevices,
       totalItem,
       totalQuantity,
-      totalSerialImported
+      totalMacImported
     };
   }
 

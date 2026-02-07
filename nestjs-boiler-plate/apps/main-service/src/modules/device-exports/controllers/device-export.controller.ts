@@ -68,18 +68,6 @@ export class DeviceExportController {
     return this.deviceExportService.findAll(filter);
   }
 
-  @Get('paginated')
-  async findAllPaginated(@Query() query: DeviceExportPaginationDto) {
-    const { filter, options } = createFilterAndOptions(
-      query,
-      ['totalItems', 'totalQuantity'], // Filter keys for exact match
-      ['exportName', 'type', 'receiver', 'status'], // Search keys for regex search
-      ['sortBy', 'limit', 'page', 'populate']
-    );
-
-    return this.deviceExportService.findAllWithPagination(filter, options);
-  }
-
   @Get('inventory-status')
   async getInventoryStatus(@Query('model') model: string) {
     if (!model) {
@@ -102,8 +90,6 @@ export class DeviceExportController {
   async delete(@Param('id') id: string) {
     return this.deviceExportService.delete(id);
   }
-
-
 
   @Post(':id/submit')
   async submitForApproval(@Param('id') id: string) {
@@ -173,18 +159,18 @@ export class DeviceExportController {
   }
 
   @Post('sessions/:id/scan')
-  async scanSerial(@Param('id') id: string, @Body() body: { serial: string }) {
-    return this.exportSessionService.scanSerial(id, body.serial);
+  async scanMac(@Param('id') id: string, @Body() body: { mac: string }) {
+    return this.exportSessionService.scanMac(id, body.mac);
   }
 
   @Post('sessions/:id/scan-bulk')
-  async scanBulk(@Param('id') id: string, @Body() body: { serials: string[] }) {
-    return this.exportSessionService.scanBulk(id, body.serials);
+  async scanBulk(@Param('id') id: string, @Body() body: { macs: string[] }) {
+    return this.exportSessionService.scanBulk(id, body.macs);
   }
 
-  @Delete('sessions/:id/items/:serial')
-  async removeSerial(@Param('id') id: string, @Param('serial') serial: string) {
-    return this.exportSessionService.removeSerial(id, serial);
+  @Delete('sessions/:id/items/:mac')
+  async removeMac(@Param('id') id: string, @Param('mac') mac: string) {
+    return this.exportSessionService.removeMac(id, mac);
   }
 
   @Post('sessions/:id/complete')

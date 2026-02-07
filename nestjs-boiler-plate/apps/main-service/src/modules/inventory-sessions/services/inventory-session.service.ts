@@ -60,9 +60,9 @@ export class InventorySessionService {
         }
 
         if (updateDto.scannedItems && updateDto.scannedItems.length > 0) {
-            const newSerials = updateDto.scannedItems.map(i => i.serial);
-            const existingSerials = session.details.map(d => d.serial);
-            const duplicates = newSerials.filter(s => existingSerials.includes(s));
+            const newMacs = updateDto.scannedItems.map(i => i.mac);
+            const existingMacs = session.details.map(d => d.serial);
+            const duplicates = newMacs.filter(s => existingMacs.includes(s));
 
             if (duplicates.length > 0) {
                 throw new ConflictException(
@@ -71,7 +71,7 @@ export class InventorySessionService {
             }
 
             const itemsToPush = updateDto.scannedItems.map(item => ({
-                serial: item.serial,
+                serial: item.mac,
                 deviceModel: item.deviceModel,
                 deviceCode: item.deviceCode || 'Unknown',
                 scannedAt: new Date()
@@ -167,7 +167,7 @@ export class InventorySessionService {
                 await this.historyRepo.insertMany(historiesToCreate, { session: mongoSession });
             }
 
-            const currentImported = importTicket.serialImported || 0;
+            const currentImported = importTicket.macImported || 0;
             const newTotal = currentImported + session.totalScanned;
 
             const deviceCounts: Record<string, number> = {};
@@ -189,7 +189,7 @@ export class InventorySessionService {
 
             await this.coordinatorService.updateProgressAndAutoComplete(
                 importIdStr,
-                { serialImported: newTotal, deviceCounts },
+                { macImported: newTotal, deviceCounts },
                 String(session._id),
                 userId
             );
@@ -213,16 +213,16 @@ export class InventorySessionService {
         return this.sessionRepo.findById(id);
     }
 
-    async removeItem(sessionId: string, serial: string): Promise<InventorySession> {
+    async removeItem(sessionId: string, mac: string): Promise<InventorySession> {
         const session = await this.sessionRepo.findById(sessionId);
         if (!session) throw new NotFoundException(ERROR_MESSAGES.INVENTORY.SESSION_NOT_FOUND);
         if (session.status === 'completed') throw new BadRequestException(ERROR_MESSAGES.INVENTORY.ALREADY_COMPLETED);
 
         const initialCount = session.details.length;
-        session.details = session.details.filter(item => item.serial !== serial);
+        session.details = session.details.filter(item => item.serial !== mac);
 
         if (session.details.length === initialCount) {
-            throw new NotFoundException(`Serial ${serial} not found in session.`);
+            throw new NotFoundException(`MAC ${mac} not found in session.`);
         }
 
         session.totalScanned = session.details.length;

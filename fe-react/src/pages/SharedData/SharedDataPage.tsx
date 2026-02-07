@@ -22,7 +22,7 @@ export default function SharedDataPage() {
         setSelectedGroup,
         setIsGroupModalOpen,
         setIsDataModalOpen,
-        openCreateGroup,
+        // openCreateGroup,
         openEditGroup,
         handleDeleteGroup,
         openCreateData,
@@ -92,16 +92,16 @@ export default function SharedDataPage() {
                 className="w-1/3 h-full overflow-hidden flex flex-col shadow-sm"
                 bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', height: '100%' }}
                 title={<span className="text-gray-700 font-semibold"><FolderOutlined /> Danh mục</span>}
-                extra={
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        size="small"
-                        onClick={openCreateGroup}
-                    >
-                        Tạo nhóm
-                    </Button>
-                }
+            // extra={
+            //     <Button
+            //         type="primary"
+            //         icon={<PlusOutlined />}
+            //         size="small"
+            //         onClick={openCreateGroup}
+            //     >    
+            //         Tạo nhóm
+            //     </Button>
+            // }
             >
                 <div className="flex-1 overflow-y-auto p-2">
                     <List

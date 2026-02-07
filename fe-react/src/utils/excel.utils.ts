@@ -7,7 +7,7 @@ import { message } from 'antd';
  * @param options Các tùy chọn cấu hình
  * @returns Mảng các chuỗi MAC
  */
-export async function parseExcelSerials(
+export async function parseExcelMacs(
     file: File,
     options?: {
         skipFirstRow?: boolean;
@@ -29,21 +29,21 @@ export async function parseExcelSerials(
                 // Chuyển đổi sang mảng 2 chiều (2D array)
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
 
-                const serials: string[] = [];
+                const macs: string[] = [];
                 const startRow = skipFirstRow ? 1 : 0;
 
                 for (let i = startRow; i < jsonData.length; i++) {
                     const row = jsonData[i];
                     if (row && row[columnIndex]) {
-                        const serial = String(row[columnIndex]).trim();
-                        if (serial) {
-                            serials.push(serial);
+                        const mac = String(row[columnIndex]).trim();
+                        if (mac) {
+                            macs.push(mac);
                         }
                     }
                 }
 
-                message.success(`Đã đọc được ${serials.length} MAC từ file Excel`);
-                resolve(serials);
+                message.success(`Đã đọc được ${macs.length} MAC từ file Excel`);
+                resolve(macs);
             } catch (err) {
                 console.error('Excel parsing error:', err);
                 message.error('Lỗi đọc file Excel. Vui lòng kiểm tra định dạng.');
@@ -63,11 +63,11 @@ export async function parseExcelSerials(
 /**
  * Merge hai mảng MAC và loại bỏ các phần tử trùng lặp (duplicate)
  * @param existing Các MAC hiện có
- * @param newSerials Các MAC mới cần merge
+ * @param newMacs Các MAC mới cần merge
  * @returns Mảng các MAC duy nhất (unique)
  */
-export function mergeSerials(existing: string[], newSerials: string[]): string[] {
-    return [...new Set([...existing, ...newSerials])];
+export function mergeMacs(existing: string[], newMacs: string[]): string[] {
+    return [...new Set([...existing, ...newMacs])];
 }
 
 /**
@@ -75,8 +75,8 @@ export function mergeSerials(existing: string[], newSerials: string[]): string[]
  * @param serial MAC cần validate
  * @returns true nếu định dạng hợp lệ
  */
-export function isValidSerial(serial: string): boolean {
-    if (!serial || serial.length === 0) return false;
+export function isValidMac(mac: string): boolean {
+    if (!mac || mac.length === 0) return false;
     // Cho phép các ký tự chữ số (alphanumeric) và dấu gạch nối
-    return /^[A-Z0-9-]+$/i.test(serial);
+    return /^[A-Z0-9-]+$/i.test(mac);
 }

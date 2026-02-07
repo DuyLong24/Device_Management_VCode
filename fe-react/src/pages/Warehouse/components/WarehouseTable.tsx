@@ -57,7 +57,7 @@ export const WarehouseTable = ({
             return {
                 ...base,
                 render: (text: string) => (
-                    <Button type="link" className="p-0" onClick={() => navigate(`/serial/${text}`)}>
+                    <Button type="link" className="p-0" onClick={() => navigate(`/device/${text}`)}>
                         {text}
                     </Button>
                 )
@@ -76,7 +76,7 @@ export const WarehouseTable = ({
                         type="text"
                         icon={<EyeOutlined />}
                         size="small"
-                        onClick={() => navigate(`/serial/${record.mac}`)}
+                        onClick={() => navigate(`/device/${record.mac}`)}
                     >
                         Chi tiết
                     </Button>

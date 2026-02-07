@@ -20,9 +20,9 @@ export interface ImportDevice {
     quantity: number;
     boxCount?: number;
     itemsPerBox?: number;
-    serialImported?: number;
+    macImported?: number;
     deviceName?: string;
-    expectedSerials?: string[];
+    expectedMacs?: string[];
     expectedDetails?: ImportDeviceDetail[];
 }
 
@@ -41,7 +41,7 @@ export interface DeviceImport {
     devices: ImportDevice[];
     totalItem: number;
     totalQuantity: number;
-    serialImported: number;
+    macImported: number;
     createdBy?: {
         _id: string;
         name: string;
@@ -54,7 +54,7 @@ export interface CreateImportDto {
     notes?: string;
     importDate: string;
     supplier: string;
-    devices: Omit<ImportDevice, '_id' | 'serialImported' | 'deviceName'>[];
+    devices: Omit<ImportDevice, '_id' | 'macImported' | 'deviceName'>[];
 }
 
 export interface DeviceEntry extends Omit<ImportDevice, '_id' | 'boxCount' | 'itemsPerBox'> {

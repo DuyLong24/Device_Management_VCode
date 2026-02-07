@@ -34,15 +34,15 @@ export const useImportDetail = () => {
 
     // 3. Chuẩn bị dữ liệu thiết bị
     const devicesUI: ImportDeviceUI[] = (importData?.devices || []).map((device) => {
-        const importedCount = device.serialImported || device.expectedSerials?.length || 0;
+        const importedCount = device.macImported || device.expectedMacs?.length || 0;
 
         return {
             ...device,
-            serialImported: importedCount,
+            macImported: importedCount,
             key: device.deviceCode,
             packaging: `${device.boxCount || 0} hộp × ${device.itemsPerBox || 0} sp/hộp`,
-            serialStatus: importedCount === device.quantity ? 'complete' : importedCount > (device.quantity || 0) ? 'excess' : 'missing',
-            serialExpected: device.quantity,
+            macStatus: importedCount === device.quantity ? 'complete' : importedCount > (device.quantity || 0) ? 'excess' : 'missing',
+            macExpected: device.quantity,
         };
     });
 

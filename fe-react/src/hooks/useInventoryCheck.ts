@@ -33,7 +33,7 @@ export const useInventoryCheck = () => {
     const [localItems, setLocalItems] = useState<LocalScannedItem[]>([]);
 
     const [scannedInput, setScannedInput] = useState('');
-    const [manualSerials, setManualSerials] = useState('');
+    const [manualMacs, setManualMacs] = useState('');
     const [otherCompletedCount, setOtherCompletedCount] = useState(0);
     const [otherCompletedItemsByModel, setOtherCompletedItemsByModel] = useState<Record<string, number>>({});
 
@@ -130,13 +130,13 @@ export const useInventoryCheck = () => {
         }
     };
 
-    const removeServerItem = async (serial: string) => {
+    const removeServerItem = async (mac: string) => {
         if (!session) return;
         try {
-            await inventorySessionService.removeItem(session.id, serial);
-            setServerItems(prev => prev.filter(i => i.serial !== serial));
-            setDuplicateSerials(prev => prev.filter(s => s !== serial)); // Xóa khỏi danh sách trùng nếu có
-            message.success(`Đã xóa mac ${serial}`);
+            await inventorySessionService.removeItem(session.id, mac);
+            setServerItems(prev => prev.filter(i => i.mac !== mac));
+            setDuplicateMacs(prev => prev.filter(s => s !== mac)); // Xóa khỏi danh sách trùng nếu có
+            message.success(`Đã xóa mac ${mac}`);
         } catch (e) {
             message.error('Không thể xóa thiết bị đã lưu');
         }
@@ -159,7 +159,7 @@ export const useInventoryCheck = () => {
         }
     };
 
-    const handleScanSerial = async () => {
+    const handleScanMac = async () => {
         const code = scannedInput.trim();
         if (!code) return;
 
@@ -170,7 +170,7 @@ export const useInventoryCheck = () => {
         }
 
         // Check trùng
-        const isDup = serverItems.some(i => i.serial === code);
+        const isDup = serverItems.some(i => i.mac === code);
         if (isDup) {
             playError();
             message.warning(`Mac ${code} đã tồn tại!`);
@@ -183,7 +183,7 @@ export const useInventoryCheck = () => {
             setIsSaving(true);
             const payload = {
                 scannedItems: [{
-                    serial: code,
+                    mac: code,
                     deviceModel: selectedDeviceCode,
                     deviceCode: selectedDeviceCode
                 }]
@@ -206,22 +206,22 @@ export const useInventoryCheck = () => {
     };
 
     const handleManualImport = async () => {
-        if (!manualSerials.trim() || !selectedDeviceCode) {
+        if (!manualMacs.trim() || !selectedDeviceCode) {
             message.warning('Vui lòng chọn thiết bị và nhập danh sách mac');
             return;
         }
 
-        const codes = manualSerials.split('\n').map(s => s.trim()).filter(Boolean);
+        const codes = manualMacs.split('\n').map(s => s.trim()).filter(Boolean);
         if (codes.length === 0) return;
 
         const dups: string[] = [];
         const validItems: any[] = [];
 
         codes.forEach(code => {
-            const isDup = serverItems.some(i => i.serial === code) || validItems.some(i => i.serial === code);
+            const isDup = serverItems.some(i => i.mac === code) || validItems.some(i => i.mac === code);
             if (isDup) dups.push(code);
             else validItems.push({
-                serial: code,
+                mac: code,
                 deviceModel: selectedDeviceCode,
                 deviceCode: selectedDeviceCode
             });
@@ -245,17 +245,17 @@ export const useInventoryCheck = () => {
         if (dups.length > 0) {
             message.warning(`${dups.length} mac trùng lặp đã bị bỏ qua.`);
         }
-        setManualSerials('');
+        setManualMacs('');
     };
 
-    const [duplicateSerials, setDuplicateSerials] = useState<string[]>([]);
+    const [duplicateMacs, setDuplicateMacs] = useState<string[]>([]);
 
     const handleCompleteInventory = () => {
         if (localItems.length > 0) {
             message.warning('Vui lòng bấm LƯU các mac mới trước khi hoàn tất!');
             return;
         }
-        setDuplicateSerials([]);
+        setDuplicateMacs([]);
         setCompleteModalVisible(true);
     };
 
@@ -263,7 +263,7 @@ export const useInventoryCheck = () => {
         if (!session) return;
         try {
             setIsSaving(true);
-            setDuplicateSerials([]);
+            setDuplicateMacs([]);
             await inventorySessionService.update(session.id, { status: 'completed' });
             message.success('Hoàn tất kiểm kê thành công!');
             setSessionStatus('completed');
@@ -274,7 +274,7 @@ export const useInventoryCheck = () => {
             const msg = data?.message || 'Lỗi hoàn tất phiên';
 
             if (data?.duplicates && Array.isArray(data.duplicates)) {
-                setDuplicateSerials(data.duplicates);
+                setDuplicateMacs(data.duplicates);
                 message.error(`Có ${data.duplicates.length} mac bị trùng lặp!`);
             } else {
                 message.error(msg);
@@ -282,22 +282,22 @@ export const useInventoryCheck = () => {
         } finally { setIsSaving(false); }
     };
 
-    const handleRemoveLocalItem = (serial: string) => {
-        setLocalItems(prev => prev.filter(i => i.serial !== serial));
+    const handleRemoveLocalItem = (mac: string) => {
+        setLocalItems(prev => prev.filter(i => (i as any).mac !== mac));
         inputRef.current?.focus();
     };
 
     return {
         loading, isSaving, session, importInfo, serverItems, localItems, sessionStatus,
-        scannedInput, setScannedInput, manualSerials, setManualSerials,
+        scannedInput, setScannedInput, manualMacs, setManualMacs,
         selectedDeviceCode, setSelectedDeviceCode, inputRef,
         completeModalVisible, setCompleteModalVisible,
-        handleStartSession, handleScanSerial, handleManualImport,
+        handleStartSession, handleScanMac, handleManualImport,
         handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
         navigate,
         removeServerItem,
         setLocalItems,
-        duplicateSerials,
+        duplicateMacs,
         otherCompletedCount,
         otherCompletedItemsByModel,
         deviceModels

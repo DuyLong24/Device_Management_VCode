@@ -8,7 +8,7 @@ export type WarrantyRecheckType = 'REPLACE' | 'REPAIR' | null; // Loại QC lạ
 export interface QCPendingItem {
     key: string;
     id: string;
-    serial: string;
+    mac: string;
     deviceCode: string;
     deviceName: string;
     deviceType: DeviceType;
@@ -21,7 +21,7 @@ export interface QCPendingItem {
     qcDate?: string;
 }
 
-export interface ScannedSerial extends QCPendingItem {
+export interface ScannedMac extends QCPendingItem {
     validationStatus: ValidationStatus;
     validationMessage?: string;
 }

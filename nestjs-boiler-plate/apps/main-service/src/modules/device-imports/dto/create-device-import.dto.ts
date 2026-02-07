@@ -14,7 +14,7 @@ class ImportDeviceDto {
   @IsArray()
   @IsOptional()
   @IsString({ each: true })
-  expectedSerials?: string[];
+  expectedMacs?: string[];
 
   @IsNumber()
   @IsOptional()

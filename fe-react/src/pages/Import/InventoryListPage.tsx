@@ -165,7 +165,7 @@ export default function InventoryListPage() {
             key: 'progress',
             align: 'center',
             render: (_, record) => {
-                const current = record.serialImported || 0;
+                const current = record.macImported || 0;
                 const total = record.totalQuantity || 0;
                 const colorClass = current < total ? 'text-red-500' : 'text-green-500';
                 return <span className={`${colorClass} whitespace-nowrap`}>{current}/{total}</span>;
@@ -279,7 +279,7 @@ export default function InventoryListPage() {
                                 <div>Tổng số lượng: <b>{selectedImport.totalQuantity}</b></div>
                                 <div className="mt-1">
                                     <Text className="text-blue-500">{getInventoryStatusConfig(selectedImport.inventoryStatus).text}</Text>
-                                    <Text type="secondary"> - MAC đã quét: <b>{selectedImport.serialImported || 0}</b></Text>
+                                    <Text type="secondary"> - MAC đã quét: <b>{selectedImport.macImported || 0}</b></Text>
                                 </div>
                             </div>
                         </div>

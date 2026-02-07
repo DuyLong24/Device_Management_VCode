@@ -94,7 +94,7 @@ export const ImportCreationTable: React.FC<ImportCreationTableProps> = ({
             width: '20%',
             align: 'center',
             render: (_, record) => {
-                const count = record.expectedSerials?.length || 0;
+                const count = record.expectedMacs?.length || 0;
                 const isMatch = count === record.quantity;
                 const isEmpty = count === 0;
 
@@ -118,8 +118,8 @@ export const ImportCreationTable: React.FC<ImportCreationTableProps> = ({
             width: '15%',
             align: 'center',
             render: (_, record) => {
-                const serialMatch = (record.expectedSerials?.length || 0) === record.quantity;
-                const serialEmpty = (record.expectedSerials?.length || 0) === 0;
+                const serialMatch = (record.expectedMacs?.length || 0) === record.quantity;
+                const serialEmpty = (record.expectedMacs?.length || 0) === 0;
 
                 return (
                     <Space direction="vertical" size="small">

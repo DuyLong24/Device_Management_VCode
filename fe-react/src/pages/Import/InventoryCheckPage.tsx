@@ -38,15 +38,15 @@ import { processScannerInput } from '../../utils/mac.util';
 const { Text } = Typography;
 
 
-const getSerialStatus = (serial: string, deviceCode: string | undefined, importDevices: any[]) => {
+const getMacStatus = (mac: string, deviceCode: string | undefined, importDevices: any[]) => {
   if (!importDevices || !deviceCode) return 'UNKNOWN';
   const device = importDevices.find(p => p.deviceCode === deviceCode);
   if (!device) return 'UNKNOWN';
 
-  // Nếu không có expectedSerials -> Mặc định Match
-  if (!device.expectedSerials || device.expectedSerials.length === 0) return 'MATCHED';
+  // Nếu không có expectedMacs -> Mặc định Match
+  if (!device.expectedMacs || device.expectedMacs.length === 0) return 'MATCHED';
 
-  return device.expectedSerials.includes(serial) ? 'MATCHED' : 'EXCESS';
+  return device.expectedMacs.includes(mac) ? 'MATCHED' : 'EXCESS';
 };
 
 export default function InventoryCheckPage() {
@@ -59,8 +59,8 @@ export default function InventoryCheckPage() {
     handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
     navigate,
     removeServerItem,
-    duplicateSerials,
-    manualSerials, setManualSerials,
+    duplicateMacs,
+    manualMacs, setManualMacs,
     otherCompletedCount,
     otherCompletedItemsByModel,
     deviceModels
@@ -72,8 +72,8 @@ export default function InventoryCheckPage() {
   const processedItems = useMemo(() => {
     if (!importInfo) return [];
     return allItems.map(item => {
-      let status = getSerialStatus(item.serial, (item as any).deviceCode || (item as any).deviceModel, importInfo.devices);
-      if (duplicateSerials.includes(item.serial)) {
+      let status = getMacStatus(item.mac, (item as any).deviceCode || (item as any).deviceModel, importInfo.devices);
+      if (duplicateMacs.includes(item.mac)) {
         status = 'DUPLICATE';
       }
       return {
@@ -81,7 +81,7 @@ export default function InventoryCheckPage() {
         status
       };
     });
-  }, [allItems, importInfo, duplicateSerials]);
+  }, [allItems, importInfo, duplicateMacs]);
 
   const stats = useMemo(() => {
     // Tổng cần kiểm = Tổng Import - Đã kiểm ở các phiên DONE
@@ -119,8 +119,8 @@ export default function InventoryCheckPage() {
   };
 
   // Columns
-  const serialColumns: TableColumnsType<any> = [
-    { title: 'Mac', dataIndex: 'serial', key: 'serial', render: (t) => <Text strong className="text-blue-600 font-mono">{t}</Text> },
+  const macColumns: TableColumnsType<any> = [
+    { title: 'Mac', dataIndex: 'mac', key: 'mac', render: (t) => <Text strong className="text-blue-600 font-mono">{t}</Text> },
     { title: 'Tên thiết bị', dataIndex: 'deviceCode', key: 'deviceCode' },
     { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t) => dayjs(t).format('HH:mm:ss') },
     {
@@ -139,9 +139,9 @@ export default function InventoryCheckPage() {
       key: 'action',
       render: (_, r) => {
         if (r._id) {
-          return <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeServerItem && removeServerItem(r.serial)} />;
+          return <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeServerItem && removeServerItem(r.mac)} />;
         }
-        return <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleRemoveLocalItem(r.serial)} />;
+        return <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleRemoveLocalItem(r.mac)} />;
       }
     }
   ];
@@ -291,10 +291,10 @@ export default function InventoryCheckPage() {
                       placeholder={selectedDeviceCode ? "Nhập từng mã mac trên một dòng" : "Vui lòng chọn thiết bị trước"}
                       disabled={!selectedDeviceCode || isSaving}
                       rows={5}
-                      value={manualSerials}
+                      value={manualMacs}
                       onChange={(e) => {
                         const cleanVal = processScannerInput(e.target.value);
-                        setManualSerials(cleanVal);
+                        setManualMacs(cleanVal);
                       }}
                     />
                     <Button block icon={<CheckCircleOutlined />} onClick={handleManualImport}>
@@ -314,12 +314,12 @@ export default function InventoryCheckPage() {
                     label: `Danh sách quét (${stats.scannedCount})`,
                     children: (
                       <Table
-                        columns={serialColumns}
+                        columns={macColumns}
                         dataSource={[...processedItems].reverse()}
                         pagination={{ pageSize: 20 }}
                         size="small"
                         bordered
-                        rowKey={(r) => r.serial + r.scannedAt}
+                        rowKey={(r) => r.mac + r.scannedAt}
                         scroll={{ x: 1000, y: 500 }}
                         rowClassName={(record) => record.status === 'DUPLICATE' ? 'bg-red-50' : ''}
                       />
@@ -336,8 +336,8 @@ export default function InventoryCheckPage() {
                         <div className="mt-2 flex flex-wrap gap-2">
                           {importInfo?.devices
                             .find(p => p.deviceCode === selectedDeviceCode)
-                            ?.expectedSerials?.map(s => {
-                              const isScanned = processedItems.some(i => i.serial === s);
+                            ?.expectedMacs?.map(s => {
+                              const isScanned = processedItems.some(i => i.mac === s);
                               return (
                                 <Tag key={s} color={isScanned ? 'green' : 'default'}>
                                   {s} {isScanned && <CheckCircleOutlined />}
@@ -404,14 +404,14 @@ export default function InventoryCheckPage() {
             className="mb-4"
           />
         )}
-        {duplicateSerials.length > 0 ? (
+        {duplicateMacs.length > 0 ? (
           <Alert
             message="Lỗi hoàn tất phiên"
             description={
               <div>
-                <Text type="danger">Phát hiện {duplicateSerials.length} mã mac đã tồn tại trong hệ thống:</Text>
+                <Text type="danger">Phát hiện {duplicateMacs.length} mã mac đã tồn tại trong hệ thống:</Text>
                 <div className="max-h-32 overflow-y-auto mt-2 bg-white p-2 border rounded">
-                  {duplicateSerials.map(s => <Tag color="red" key={s}>{s}</Tag>)}
+                  {duplicateMacs.map(s => <Tag color="red" key={s}>{s}</Tag>)}
                 </div>
                 <div className="mt-2">Vui lòng xóa các mã mac này khỏi danh sách quét trước khi thử lại.</div>
               </div>

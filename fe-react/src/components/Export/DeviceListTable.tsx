@@ -20,8 +20,8 @@ export const DeviceListTable = ({ exportInfo }: DeviceListTableProps) => {
             deviceCode: req.deviceCode,
             deviceName: req.deviceName || 'Không xác định',
             quantity: req.quantity,
-            serialExported: exportedCount,
-            serialExpected: req.quantity,
+            totalExported: exportedCount,
+            totalExpected: req.quantity,
             packaging: `${Math.ceil(req.quantity / 10)} hộp`,
         };
     });
@@ -55,25 +55,25 @@ export const DeviceListTable = ({ exportInfo }: DeviceListTableProps) => {
         },
         {
             title: 'Mac đã chọn',
-            key: 'serialExport',
+            key: 'totalExported',
             width: 200,
             align: 'center' as const,
             render: (_: any, item: any) => (
                 <Space direction="vertical" size={0} className="w-full">
                     <div className="flex justify-between text-xs mb-1">
                         <Text strong>
-                            {item.serialExported}/{item.serialExpected}
+                            {item.totalExported}/{item.totalExpected}
                         </Text>
                         <Text type="secondary">
-                            {Math.round((item.serialExported / item.serialExpected) * 100)}%
+                            {Math.round((item.totalExported / item.totalExpected) * 100)}%
                         </Text>
                     </div>
                     <Progress
-                        percent={Math.round((item.serialExported / item.serialExpected) * 100)}
+                        percent={Math.round((item.totalExported / item.totalExpected) * 100)}
                         size="small"
-                        status={item.serialExported >= item.serialExpected ? 'success' : 'active'}
+                        status={item.totalExported >= item.totalExpected ? 'success' : 'active'}
                         showInfo={false}
-                        strokeColor={item.serialExported > item.serialExpected ? '#faad14' : undefined}
+                        strokeColor={item.totalExported > item.totalExpected ? '#faad14' : undefined}
                     />
                 </Space>
             ),
@@ -84,11 +84,11 @@ export const DeviceListTable = ({ exportInfo }: DeviceListTableProps) => {
             width: 150,
             align: 'center' as const,
             render: (_: any, item: any) => {
-                if (item.serialExported === item.serialExpected) {
+                if (item.totalExported === item.totalExpected) {
                     return <Tag color="success" icon={<CheckCircleOutlined />}>Đủ mac</Tag>;
-                } else if (item.serialExported < item.serialExpected) {
+                } else if (item.totalExported < item.totalExpected) {
                     return (
-                        <Tooltip title={`Thiếu ${item.serialExpected - item.serialExported} mac`}>
+                        <Tooltip title={`Thiếu ${item.totalExpected - item.totalExported} mac`}>
                             <Tag color="error" icon={<WarningOutlined />}>
                                 Thiếu mac
                             </Tag>
@@ -96,7 +96,7 @@ export const DeviceListTable = ({ exportInfo }: DeviceListTableProps) => {
                     );
                 } else {
                     return (
-                        <Tooltip title={`Thừa ${item.serialExported - item.serialExpected} mac`}>
+                        <Tooltip title={`Thừa ${item.totalExported - item.totalExpected} mac`}>
                             <Tag color="warning" icon={<WarningOutlined />}>
                                 Thừa mac
                             </Tag>

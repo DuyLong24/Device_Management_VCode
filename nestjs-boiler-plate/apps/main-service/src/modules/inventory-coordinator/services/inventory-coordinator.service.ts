@@ -20,7 +20,7 @@ export class InventoryCoordinatorService {
      */
     async updateProgressAndAutoComplete(
         importId: string,
-        data: { serialImported: number; deviceCounts?: Record<string, number> },
+        data: { macImported: number; deviceCounts?: Record<string, number> },
         completingSessionId: string,
         userId: string
     ): Promise<void> {
@@ -34,14 +34,14 @@ export class InventoryCoordinatorService {
             }
 
             let newStatus = ticket.inventoryStatus;
-            if (data.serialImported >= ticket.totalQuantity) {
+            if (data.macImported >= ticket.totalQuantity) {
                 newStatus = 'completed';
-            } else if (data.serialImported > 0) {
+            } else if (data.macImported > 0) {
                 newStatus = 'in-progress';
             }
 
             const updatePayload: any = {
-                serialImported: data.serialImported,
+                macImported: data.macImported,
                 inventoryStatus: newStatus
             };
 
@@ -53,7 +53,7 @@ export class InventoryCoordinatorService {
                     if (additional > 0) {
                         return {
                             ...deviceObj,
-                            serialImported: (deviceObj.serialImported || 0) + additional
+                            macImported: (deviceObj.macImported || 0) + additional
                         };
                     }
                     return deviceObj;
@@ -62,7 +62,7 @@ export class InventoryCoordinatorService {
 
             await this.importRepo.updateWithSession(importId, updatePayload, mongoSession);
 
-            if (data.serialImported >= ticket.totalQuantity) {
+            if (data.macImported >= ticket.totalQuantity) {
                 const allSessions = await this.sessionRepo.findAll({ importId });
 
                 const allCompleted = allSessions.every(s =>
@@ -104,9 +104,9 @@ export class InventoryCoordinatorService {
             throw new BadRequestException('Phiếu nhập đã hoàn tất');
         }
 
-        if (ticket.serialImported < ticket.totalQuantity) {
+        if (ticket.macImported < ticket.totalQuantity) {
             throw new BadRequestException(
-                `Chưa đủ số lượng (${ticket.serialImported}/${ticket.totalQuantity})`
+                `Chưa đủ số lượng (${ticket.macImported}/${ticket.totalQuantity})`
             );
         }
 

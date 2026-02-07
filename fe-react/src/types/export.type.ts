@@ -17,7 +17,7 @@ export interface ExportRequirement {
 }
 
 export interface ExportItem {
-    serial: string;
+    mac: string;
     deviceModel: string;
     deviceCode: string;
     exportPrice?: number;

@@ -2,27 +2,55 @@ import { axiosInstance } from '../configs/axios.config';
 
 export interface ScanResult {
     success: string[];
-    errors: { serial: string; error: string }[];
-    warnings: { serial: string; warning: string }[];
+    errors: { mac: string; error: string }[];
+    warnings: { mac: string; warning: string }[];
 }
 
+const transformSession = (session: any) => {
+    if (!session) return session;
+    const transformed = { ...session };
+
+    // Map macChecked to totalScanned for frontend consistency
+    if (session.macChecked !== undefined) {
+        transformed.totalScanned = session.macChecked;
+    }
+
+    return transformed;
+};
+
 export const exportSessionService = {
-    getSessions: (exportId: string) => axiosInstance.get(`/device-exports/${exportId}/sessions`),
+    getSessions: async (exportId: string) => {
+        const res = await axiosInstance.get(`/device-exports/${exportId}/sessions`);
+        if (Array.isArray(res.data)) {
+            res.data = res.data.map(transformSession);
+        }
+        return res;
+    },
 
     create: (data: { exportId: string; sessionName?: string; note?: string }) =>
         axiosInstance.post('/device-exports/sessions', data),
 
-    getDetail: (id: string) => axiosInstance.get(`/device-exports/sessions/${id}`),
+    getDetail: async (id: string) => {
+        const res = await axiosInstance.get(`/device-exports/sessions/${id}`);
+        res.data = transformSession(res.data);
+        return res;
+    },
 
-    scanSerial: (id: string, serial: string) =>
-        axiosInstance.post(`/device-exports/sessions/${id}/scan`, { serial }),
+    scanMac: async (id: string, mac: string) => {
+        const res = await axiosInstance.post(`/device-exports/sessions/${id}/scan`, { mac });
+        res.data = transformSession(res.data);
+        return res;
+    },
 
-    scanBulk: (id: string, serials: string[]) =>
-        axiosInstance.post<ScanResult>(`/device-exports/sessions/${id}/scan-bulk`, { serials }),
+    scanBulk: (id: string, macs: string[]) =>
+        axiosInstance.post<ScanResult>(`/device-exports/sessions/${id}/scan-bulk`, { macs }),
 
     complete: (id: string) =>
         axiosInstance.post(`/device-exports/sessions/${id}/complete`),
 
-    removeSerial: (id: string, serial: string) =>
-        axiosInstance.delete(`/device-exports/sessions/${id}/items/${serial}`),
+    removeMac: async (id: string, mac: string) => {
+        const res = await axiosInstance.delete(`/device-exports/sessions/${id}/items/${mac}`);
+        res.data = transformSession(res.data);
+        return res;
+    },
 };

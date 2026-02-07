@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 
 class ScannedDetailDto {
     @IsString()
-    serial: string;
+    mac: string;
 
     @IsString()
     deviceModel: string;

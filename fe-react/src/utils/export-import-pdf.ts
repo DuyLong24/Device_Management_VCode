@@ -99,7 +99,7 @@ export const exportImportPDF = async (data: DeviceImport) => {
             p.deviceCode,
             p.quantity,
             p.boxCount ? `${p.boxCount} thùng x ${p.itemsPerBox} cái` : '---',
-            `${p.serialImported || 0} / ${p.quantity}`
+            `${p.macImported || 0} / ${p.quantity}`
         ]),
         headStyles: {
             fillColor: [22, 119, 255],

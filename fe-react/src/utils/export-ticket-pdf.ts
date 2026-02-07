@@ -125,12 +125,11 @@ export const exportExportTicketPDF = async (data: DeviceExport, projectName?: st
     let tableHead: string[][] = [];
 
     if (data.items && data.items.length > 0) {
-        tableHead = [['STT', 'Mã thiết bị (Model)', 'Tên thiết bị', 'Serial', 'MAC Address']];
+        tableHead = [['STT', 'Mã thiết bị (Model)', 'Tên thiết bị', 'MAC Address']];
         tableBody = data.items.map((item: any, index: number) => [
             String(index + 1),
             item.deviceModel || item.deviceCode || '---',
             item.deviceName || '---',
-            item.serial || '---',
             item.mac || '---'
         ]);
     } else if (data.requirements && data.requirements.length > 0) {

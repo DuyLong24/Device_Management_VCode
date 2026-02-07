@@ -107,8 +107,8 @@ export const useCreateImport = () => {
                         quantity: device.quantity || 0,
                         boxCount: device.boxCount || null,
                         itemsPerBox: device.itemsPerBox || null,
-                        expectedSerials: device.expectedSerials || [],
-                        serialImported: device.serialImported || 0,
+                        expectedMacs: device.expectedMacs || [],
+                        macImported: device.macImported || 0,
                         expectedDetails: device.expectedDetails || []
                     }));
                     setDeviceList(mappedDevices);
@@ -147,8 +147,8 @@ export const useCreateImport = () => {
             quantity: 1,
             boxCount: null,
             itemsPerBox: null,
-            expectedSerials: [],
-            serialImported: 0,
+            expectedMacs: [],
+            macImported: 0,
             expectedDetails: []
         };
         // Add to TOP (UX Improvement)
@@ -166,7 +166,7 @@ export const useCreateImport = () => {
             if (item.key === key) {
                 const newItem = { ...item, [field]: value };
                 if (field === 'deviceCode') {
-                    newItem.expectedSerials = [];
+                    newItem.expectedMacs = [];
                 }
                 return newItem;
             }
@@ -177,7 +177,7 @@ export const useCreateImport = () => {
 
     const openMacModal = (record: DeviceEntry) => {
         setCurrentDeviceKey(record.key);
-        setTempMacs((record.expectedSerials || []).join('\n'));
+        setTempMacs((record.expectedMacs || []).join('\n'));
         setIsMacModalOpen(true);
     };
 
@@ -186,7 +186,7 @@ export const useCreateImport = () => {
 
         setDeviceList(prev => prev.map(p => {
             if (p.key === currentDeviceKey) {
-                return { ...p, expectedSerials: uniqueList };
+                return { ...p, expectedMacs: uniqueList };
             }
             return p;
         }));
@@ -232,7 +232,7 @@ export const useCreateImport = () => {
                     quantity: p.quantity,
                     boxCount: p.boxCount || undefined,
                     itemsPerBox: p.itemsPerBox || undefined,
-                    expectedSerials: p.expectedSerials,
+                    expectedMacs: p.expectedMacs,
                     expectedDetails: p.expectedDetails?.map(({ _id, ...rest }: any) => rest)
                 })),
             };
@@ -341,8 +341,8 @@ export const useCreateImport = () => {
                 quantity: val.quantity,
                 boxCount: val.boxCount,
                 itemsPerBox: val.itemsPerBox,
-                serialImported: 0,
-                expectedSerials: val.serials,
+                macImported: 0,
+                expectedMacs: val.serials,
                 expectedDetails: val.details
             });
         });
@@ -359,9 +359,9 @@ export const useCreateImport = () => {
         { key: 'name', label: 'Tên thiết bị', required: false, description: 'Tên hiển thị' },
         { key: 'p2p', label: 'P2P', required: false, description: 'Mã P2P (Cloud)' },
         { key: 'serial', label: 'Serial Number', required: false, description: 'Số Serial' },
-        { key: 'quantity', label: 'Số lượng', required: false, description: 'Mặc định là 1 nếu có MAC' },
-        { key: 'boxCount', label: 'Số hộp', required: false },
-        { key: 'itemsPerBox', label: 'Số SP/Hộp', required: false },
+        // { key: 'quantity', label: 'Số lượng', required: false, description: 'Mặc định là 1 nếu có MAC' },
+        // { key: 'boxCount', label: 'Số hộp', required: false },
+        // { key: 'itemsPerBox', label: 'Số SP/Hộp', required: false },
     ];
 
     return {

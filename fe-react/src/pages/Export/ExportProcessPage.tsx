@@ -74,18 +74,18 @@ export default function ExportProcessPage() {
         fetchDetail();
     }, [id, sessionId]);
 
-    const handleRemoveSerial = async (serial: string) => {
+    const handleRemoveMac = async (mac: string) => {
         if (!sessionId) return;
         try {
-            await exportSessionService.removeSerial(sessionId, serial);
-            messageApi.success(`Đã xóa MAC ${serial}`);
+            await exportSessionService.removeMac(sessionId, mac);
+            messageApi.success(`Đã xóa MAC ${mac}`);
 
             // Remove 
-            setSessionItems(prev => prev.filter(item => item.serial !== serial));
+            setSessionItems(prev => prev.filter(item => item.mac !== mac));
 
             // Update count
-            const newCount = Math.max(0, (sessionData?.serialChecked || 0) - 1);
-            setSessionData({ ...sessionData, serialChecked: newCount });
+            const newCount = Math.max(0, (sessionData?.totalScanned || 0) - 1);
+            setSessionData({ ...sessionData, totalScanned: newCount });
 
         } catch (error: any) {
             messageApi.error(error.response?.data?.message || 'Lỗi khi xóa MAC');
@@ -109,7 +109,7 @@ export default function ExportProcessPage() {
             messageApi.success(`Đã xử lý ${codes.length} mã.`);
             if (res.data?.errors?.length) {
                 const errorList = res.data.errors.map((e: any) =>
-                    `<li><b>${e.serial}</b>: ${e.error}</li>`
+                    `<li><b>${e.mac}</b>: ${e.error}</li>`
                 ).join('');
 
                 Modal.warning({
@@ -196,7 +196,7 @@ export default function ExportProcessPage() {
                     if (!sessionId) return;
                     await exportSessionService.complete(sessionId);
                     messageApi.success('Hoàn tất phiên thành công!');
-                    navigate('/export/list');
+                    navigate('/export/check');
                 } catch (error: any) {
                     messageApi.error(error.response?.data?.message || 'Lỗi khi hoàn tất phiên');
                 }
@@ -215,7 +215,7 @@ export default function ExportProcessPage() {
 
     // Items đã quét ở CÁC PHIÊN KHÁC (không bao gồm phiên hiện tại)
     const otherSessionsItems = allScannedItems.filter(
-        item => !currentSessionItems.some(currentItem => currentItem.serial === item.serial)
+        item => !currentSessionItems.some(currentItem => currentItem.mac === item.mac)
     );
 
     // Tổng yêu cầu ban đầu
@@ -233,10 +233,32 @@ export default function ExportProcessPage() {
     // Số còn thiếu
     const missingCount = Math.max(0, totalRequired - matchCount);
 
+    // === PER-MODEL STATS ===
+    const perModelStats = (exportInfo.requirements || []).map((req: any) => {
+        const totalScanned = allScannedItems.filter(item => item.deviceCode === req.deviceCode).length;
+        const required = req.quantity || 0;
+        const excess = Math.max(0, totalScanned - required);
+        const missing = Math.max(0, required - totalScanned);
+        return {
+            deviceCode: req.deviceCode,
+            deviceName: req.deviceName,
+            totalScanned,
+            required,
+            excess,
+            missing,
+            isComplete: totalScanned >= required,
+            isExcess: totalScanned > required
+        };
+    });
+
+    // Có model nào bị thừa không?
+    const excessModels = perModelStats.filter(m => m.isExcess);
+    const hasExcess = excessModels.length > 0;
+
     // Cột MAC List
     const macColumns = [
         { title: 'Thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 'auto' },
-        { title: 'MAC Address', dataIndex: 'serial', key: 'serial', width: 'auto', render: (t: string) => <b>{t}</b> },
+        { title: 'MAC Address', dataIndex: 'mac', key: 'mac', width: 'auto', render: (t: string) => <b>{t}</b> },
         { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t: string) => t ? dayjs(t).format('HH:mm:ss DD/MM') : '' },
         { title: 'Trạng thái', key: 'status', render: () => <Tag color="blue">Mới quét</Tag> },
         {
@@ -246,7 +268,7 @@ export default function ExportProcessPage() {
                 <Popconfirm
                     title="Xóa MAC này?"
                     description="Bạn có chắc chắn muốn xóa MAC này khỏi phiên?"
-                    onConfirm={() => handleRemoveSerial(record.serial)}
+                    onConfirm={() => handleRemoveMac(record.mac)}
                     okText="Xóa"
                     cancelText="Hủy"
                 >
@@ -281,24 +303,16 @@ export default function ExportProcessPage() {
                 <Col span={16}>
                     <Card title="Yêu cầu thiết bị" className="h-full">
                         <Table
-                            dataSource={exportInfo.requirements?.map((req: any) => {
-                                // Tổng đã quét cho model này (TẤT CẢ các phiên)
-                                const totalScanned = allScannedItems.filter(item => item.deviceCode === req.deviceCode).length;
-
-                                return {
-                                    key: req.deviceCode,
-                                    deviceCode: req.deviceCode,
-                                    deviceName: req.deviceName,
-                                    totalScanned: totalScanned,
-                                    totalRequired: req.quantity
-                                };
-                            }) || []}
+                            dataSource={perModelStats}
+                            rowKey="deviceCode"
                             columns={[
                                 {
                                     title: 'Mã Model',
                                     dataIndex: 'deviceCode',
                                     key: 'deviceCode',
-                                    render: (t: string) => <Text strong className="font-mono">{t}</Text>
+                                    render: (t: string, record: any) => (
+                                        <Text strong className={`font-mono ${record.isExcess ? 'text-red-600' : ''}`}>{t}</Text>
+                                    )
                                 },
                                 {
                                     title: 'Tên thiết bị',
@@ -309,23 +323,21 @@ export default function ExportProcessPage() {
                                     title: 'Tiến độ',
                                     key: 'progress',
                                     align: 'center' as const,
-                                    render: (_: any, record: any) => {
-                                        const isComplete = record.totalScanned >= record.totalRequired;
-                                        const isInProgress = record.totalScanned > 0 && record.totalScanned < record.totalRequired;
-                                        return (
-                                            <Text
-                                                strong
-                                                type={isComplete ? "success" : isInProgress ? "warning" : undefined}
-                                            >
-                                                ({record.totalScanned}/{record.totalRequired})
-                                            </Text>
-                                        );
-                                    }
+                                    render: (_: any, record: any) => (
+                                        <Text
+                                            strong
+                                            type={record.isExcess ? 'danger' : record.isComplete ? 'success' : record.totalScanned > 0 ? 'warning' : undefined}
+                                        >
+                                            {record.totalScanned}/{record.required}
+                                            {record.isExcess && ` (+${record.excess} thừa)`}
+                                        </Text>
+                                    )
                                 }
                             ]}
                             pagination={false}
                             size="small"
                             locale={{ emptyText: 'Chưa có yêu cầu thiết bị' }}
+                            rowClassName={(record: any) => record.isExcess ? 'bg-red-50' : ''}
                         />
                     </Card>
                 </Col>
@@ -405,7 +417,7 @@ export default function ExportProcessPage() {
                         return true;
                     })}
                     dataSource={sessionItems}
-                    rowKey="serial"
+                    rowKey="mac"
                     size="small"
                     pagination={{ pageSize: 10 }}
                 />
@@ -414,10 +426,18 @@ export default function ExportProcessPage() {
             {/* Complete */}
             {sessionData?.status !== 'COMPLETED' && (
                 <Card>
-                    {matchCount > totalRequired && (
+                    {hasExcess && (
                         <Alert
-                            message="Cảnh báo: Số lượng quét vượt quá yêu cầu"
-                            description={`Bạn đã quét ${matchCount}/${totalRequired} thiết bị. Vui lòng xóa bớt thiết bị thừa trước khi hoàn tất.`}
+                            message="Lỗi: Có model quét vượt quá yêu cầu"
+                            description={
+                                <ul className="mb-0 pl-4">
+                                    {excessModels.map(m => (
+                                        <li key={m.deviceCode}>
+                                            <b>{m.deviceCode}</b>: Đã quét {m.totalScanned}/{m.required} (+{m.excess} thừa)
+                                        </li>
+                                    ))}
+                                </ul>
+                            }
                             type="error"
                             showIcon
                             className="mb-4"
@@ -428,7 +448,10 @@ export default function ExportProcessPage() {
                         <div>
                             <Text strong className="text-lg">Hoàn thành phiên xuất kho</Text>
                             <div className="text-gray-500">
-                                Lưu các MAC đã quét vào hệ thống.
+                                {hasExcess
+                                    ? 'Vui lòng xóa bớt thiết bị thừa trước khi hoàn tất.'
+                                    : 'Lưu các MAC đã quét vào hệ thống.'
+                                }
                             </div>
                         </div>
                         <Button
@@ -436,9 +459,9 @@ export default function ExportProcessPage() {
                             size="large"
                             icon={<CheckCircleOutlined />}
                             onClick={handleCompleteExport}
-                            disabled={matchCount > totalRequired}
-                            danger={matchCount > totalRequired}
-                            title={matchCount > totalRequired ? 'Vui lòng bỏ bớt thiết bị thừa' : 'Hoàn tất phiên'}
+                            disabled={hasExcess || matchCount === 0}
+                            danger={hasExcess}
+                            title={hasExcess ? 'Vui lòng xóa thiết bị thừa' : matchCount === 0 ? 'Chưa quét thiết bị nào' : 'Hoàn tất phiên'}
                         >
                             Hoàn thành phiên xuất kho
                         </Button>

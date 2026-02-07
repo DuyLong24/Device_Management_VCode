@@ -11,9 +11,9 @@ interface ExportInfoCardProps {
 }
 
 export const ExportInfoCard = ({ exportInfo, projectName }: ExportInfoCardProps) => {
-    const serialExported = exportInfo.items?.length || 0;
-    const serialExpected = exportInfo.totalQuantity || 0;
-    const progress = serialExpected > 0 ? Math.round((serialExported / serialExpected) * 100) : 0;
+    const totalExported = exportInfo.items?.length || 0;
+    const totalExpected = exportInfo.totalQuantity || 0;
+    const progress = totalExpected > 0 ? Math.round((totalExported / totalExpected) * 100) : 0;
 
     return (
         <>
@@ -138,10 +138,10 @@ export const ExportInfoCard = ({ exportInfo, projectName }: ExportInfoCardProps)
                     <Col xs={24} sm={8}>
                         <Statistic
                             title="Mac đã chọn"
-                            value={serialExported}
-                            suffix={`/ ${serialExpected}`}
+                            value={totalExported}
+                            suffix={`/ ${totalExpected}`}
                             valueStyle={{
-                                color: serialExported === serialExpected ? '#52c41a' : '#ff4d4f',
+                                color: totalExported === totalExpected ? '#52c41a' : '#ff4d4f',
                             }}
                         />
                     </Col>
@@ -149,8 +149,8 @@ export const ExportInfoCard = ({ exportInfo, projectName }: ExportInfoCardProps)
                 <div className="my-4 h-px bg-gray-100" />
                 <Progress
                     percent={progress}
-                    status={serialExported < serialExpected ? 'active' : 'success'}
-                    strokeColor={serialExported < serialExpected ? undefined : '#52c41a'}
+                    status={totalExported < totalExpected ? 'active' : 'success'}
+                    strokeColor={totalExported < totalExpected ? undefined : '#52c41a'}
                 />
             </Card>
         </>

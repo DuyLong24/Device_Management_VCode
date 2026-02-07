@@ -37,7 +37,7 @@ export const ExportRequirementSchema = SchemaFactory.createForClass(ExportRequir
 @Schema()
 export class ExportItem {
   @Prop({ required: true })
-  serial: string;
+  mac: string;
 
   @Prop()
   deviceModel: string;
@@ -47,9 +47,6 @@ export class ExportItem {
 
   @Prop()
   exportPrice: number;
-
-  @Prop()
-  mac?: string;
 }
 export const ExportItemSchema = SchemaFactory.createForClass(ExportItem);
 

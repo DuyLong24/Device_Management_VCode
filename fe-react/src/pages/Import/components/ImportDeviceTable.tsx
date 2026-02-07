@@ -9,8 +9,8 @@ const { Text } = Typography;
 export interface ImportDeviceUI extends ImportDevice {
     key: string;
     packaging?: string;
-    serialStatus?: 'complete' | 'missing' | 'excess';
-    serialExpected?: number;
+    macStatus?: 'complete' | 'missing' | 'excess';
+    macExpected?: number;
 }
 
 interface ImportDeviceTableProps {
@@ -63,11 +63,11 @@ export const ImportDeviceTable: React.FC<ImportDeviceTableProps> = ({
         },
         {
             title: 'Mac đã import',
-            key: 'serialImport',
+            key: 'macImport',
             width: 200,
             align: 'center',
             render: (_, item) => {
-                const imported = item.serialImported || 0;
+                const imported = item.macImported || 0;
                 const expected = item.quantity || 0;
                 const percent = expected > 0 ? Math.round((imported / expected) * 100) : 0;
 
@@ -91,11 +91,11 @@ export const ImportDeviceTable: React.FC<ImportDeviceTableProps> = ({
         },
         {
             title: 'Trạng thái mac',
-            key: 'serialStatus',
+            key: 'macStatus',
             width: 150,
             align: 'center',
             render: (_, item) => {
-                const imported = item.serialImported || 0;
+                const imported = item.macImported || 0;
                 const expected = item.quantity || 0;
 
                 if (imported === expected) {

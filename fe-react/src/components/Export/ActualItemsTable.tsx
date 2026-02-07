@@ -4,12 +4,11 @@ import dayjs from 'dayjs';
 const { Text } = Typography;
 
 interface ExportItem {
-    serial: string;
+    mac: string;
     deviceCode: string;
     deviceModel?: string;
     scannedAt?: string;
     scannedBy?: string;
-    mac?: string;
 }
 
 interface ActualItemsTableProps {
@@ -57,7 +56,7 @@ export const ActualItemsTable = ({ items = [] }: ActualItemsTableProps) => {
                 <Table
                     columns={columns}
                     dataSource={items}
-                    rowKey={(record, index) => record.serial || `item-${index}`}
+                    rowKey={(record, index) => record.mac || `item-${index}`}
                     pagination={{ pageSize: 10 }}
                     size="small"
                     bordered

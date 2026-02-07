@@ -30,7 +30,7 @@ export const DEVICE_EXCEL_COLUMNS: ExcelColumn[] = [
         alignment: 'center',
         format: (val, row, index) => index || 0
     },
-    { header: 'Serial', key: 'serial', width: 20 },
+    { header: 'Mac', key: 'mac', width: 20 },
     { header: 'Tên thiết bị', key: 'name', width: 30 },
     { header: 'Model', key: 'deviceModel', width: 20 },
     {

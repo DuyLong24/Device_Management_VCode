@@ -95,7 +95,7 @@ function App() {
                       <DeviceListPage />
                     </PermissionRoute>
                   } />
-                  <Route path="serial/:serial" element={
+                  <Route path="device/:mac" element={
                     <PermissionRoute requiredPermission="device:VIEW">
                       <DeviceDetailPage />
                     </PermissionRoute>

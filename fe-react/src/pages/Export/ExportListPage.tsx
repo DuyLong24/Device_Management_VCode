@@ -177,7 +177,7 @@ const ExportListPage = () => {
         },
         {
             title: 'MAC đã xuất',
-            key: 'serialProgress',
+            key: 'exportProgress',
             width: 120,
             align: 'center' as const,
             render: (_: any, record: DeviceExport) => {

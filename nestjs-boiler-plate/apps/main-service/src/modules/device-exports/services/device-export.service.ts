@@ -81,7 +81,7 @@ export class DeviceExportService {
       }
 
       if (deviceexport.items && deviceexport.items.length > 0) {
-        const scanValues = deviceexport.items.map(i => i.serial);
+        const scanValues = deviceexport.items.map(i => i.mac);
 
         const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
 
@@ -102,10 +102,10 @@ export class DeviceExportService {
 
         const deviceExportObj = deviceexport.toObject();
         deviceExportObj.items = deviceExportObj.items.map(item => {
-          const isMacFormat = macRegex.test(item.serial);
+          const isMacFormat = macRegex.test(item.mac);
           const device = isMacFormat
-            ? deviceMapByMac.get(item.serial)
-            : deviceMapBySerial.get(item.serial);
+            ? deviceMapByMac.get(item.mac)
+            : deviceMapBySerial.get(item.mac);
 
           return {
             ...item,
@@ -309,15 +309,13 @@ export class DeviceExportService {
     let columns: any[] = [];
 
     if (exportRecord.items && exportRecord.items.length > 0) {
-      // Lấy danh sách serial
-      const serials = exportRecord.items.map(i => i.serial);
+      // Lấy danh sách MAC
+      const macs = exportRecord.items.map(i => i.mac);
 
       // Fetch thông tin chi tiết từ Device
-      const devices = await this.deviceService.findAll({
-        serial: { $in: serials }
-      } as any);
+      const devices = await this.deviceService.findByMacs(macs);
 
-      const deviceMap = new Map(devices.map(d => [d.serial, d]));
+      const deviceMap = new Map(devices.map(d => [d.mac, d]));
 
       // Xuất danh sách thiết bị thực tế
       columns = [
@@ -329,15 +327,13 @@ export class DeviceExportService {
       ];
 
       tableData = exportRecord.items.map((item, index) => {
-        const device = deviceMap.get(item.serial);
-        // Ưu tiên lấy từ Device, nếu không có thì lấy items (nếu schema có), nếu không có thì trống
-        const mac = device?.mac || '--';
+        const device = deviceMap.get(item.mac);
         const name = device?.name || '--';
 
         return {
           stt: index + 1,
-          mac: mac,
-          serial: item.serial,
+          mac: item.mac,
+          serial: device?.serial || '--',
           deviceModel: item.deviceModel || device?.deviceModel,
           deviceName: name
         };

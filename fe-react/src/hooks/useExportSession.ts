@@ -16,7 +16,7 @@ export interface ExportSession {
     sessionCode: string;
     sessionName: string;
     status: ExportSessionStatus;
-    serialChecked: number;
+    totalScanned: number;
     createdAt: string;
 }
 

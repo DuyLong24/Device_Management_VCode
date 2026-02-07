@@ -96,19 +96,10 @@ export const useCreateExport = () => {
         staleTime: 60 * 1000
     });
 
-    // 3. Export Detail (Edit Mode)
-    useQuery({
-        queryKey: ['export', id],
-        queryFn: () => exportService.getDetail(id!),
-        enabled: isEditMode,
-        staleTime: 0,
-        gcTime: 0,
-    });
-
     useEffect(() => {
         if (!isEditMode || !id) {
             const today = dayjs();
-            const code = `PX-${today.format('YYYY-MM')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+            const code = `PX-${today.format('YYYY-MM')}-${String(Math.floor(Math.random() * 5000)).padStart(3, '0')}`;
             form.setFieldValue('code', code);
             return;
         }

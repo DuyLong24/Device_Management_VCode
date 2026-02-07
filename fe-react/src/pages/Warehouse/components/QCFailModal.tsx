@@ -19,7 +19,7 @@ import {
     CheckCircleOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
-import type { QCPendingItem, ScannedSerial, ValidationStatus } from '../../../types/qc.type';
+import type { QCPendingItem, ScannedMac, ValidationStatus } from '../../../types/qc.type';
 
 const { Text } = Typography;
 
@@ -31,34 +31,34 @@ interface QCFailModalProps {
 }
 
 export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: QCFailModalProps) {
-    const [serialInput, setSerialInput] = useState('');
-    const [scannedFailList, setScannedFailList] = useState<ScannedSerial[]>([]);
+    const [macInput, setMacInput] = useState('');
+    const [scannedFailList, setScannedFailList] = useState<ScannedMac[]>([]);
     const [failNote, setFailNote] = useState('');
-    const serialInputRef = useRef<any>(null);
+    const macInputRef = useRef<any>(null);
 
-    const validateSerial = (serial: string, currentList: ScannedSerial[]): { isValid: boolean; message?: string; item?: QCPendingItem } => {
-        if (!serial.trim()) return { isValid: false, message: 'MAC không được để trống' };
-        if (currentList.find(s => s.serial === serial)) return { isValid: false, message: 'MAC đã có trong danh sách' };
+    const validateMac = (mac: string, currentList: ScannedMac[]): { isValid: boolean; message?: string; item?: QCPendingItem } => {
+        if (!mac.trim()) return { isValid: false, message: 'MAC không được để trống' };
+        if (currentList.find(s => s.mac === mac)) return { isValid: false, message: 'MAC đã có trong danh sách' };
 
-        const item = dataSource.find(d => d.serial === serial);
+        const item = dataSource.find(d => d.mac === mac);
         if (!item) return { isValid: false, message: 'MAC không tồn tại trong danh sách chờ QC' };
 
         return { isValid: true, item };
     };
 
-    const handleAddFailSerial = () => {
-        const serial = serialInput.trim();
-        if (!serial) {
+    const handleAddFailMac = () => {
+        const mac = macInput.trim();
+        if (!mac) {
             message.warning('Vui lòng nhập MAC');
             return;
         }
 
-        const validation = validateSerial(serial, scannedFailList);
+        const validation = validateMac(mac, scannedFailList);
 
         if (!validation.isValid) {
             message.error(validation.message);
-            setSerialInput('');
-            setTimeout(() => serialInputRef.current?.focus(), 100);
+            setMacInput('');
+            setTimeout(() => macInputRef.current?.focus(), 100);
             return;
         }
 
@@ -67,16 +67,16 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
             {
                 ...validation.item!,
                 validationStatus: 'valid',
-            } as ScannedSerial,
+            } as ScannedMac,
         ]);
 
-        setSerialInput('');
-        message.success(`Thêm serial ${serial} thành công`);
-        setTimeout(() => serialInputRef.current?.focus(), 100);
+        setMacInput('');
+        message.success(`Thêm MAC ${mac} thành công`);
+        setTimeout(() => macInputRef.current?.focus(), 100);
     };
 
-    const scannedColumns: TableColumnsType<ScannedSerial> = [
-        { title: 'Serial', dataIndex: 'serial', key: 'serial', width: 200 },
+    const scannedColumns: TableColumnsType<ScannedMac> = [
+        { title: 'MAC', dataIndex: 'mac', key: 'mac', width: 200 },
         { title: 'Mã thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 130 },
         {
             title: 'Trạng thái',
@@ -96,7 +96,7 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
             render: (_, record) => (
                 <Button
                     type="link" danger size="small" icon={<DeleteOutlined />}
-                    onClick={() => setScannedFailList(prev => prev.filter(s => s.serial !== record.serial))}
+                    onClick={() => setScannedFailList(prev => prev.filter(s => s.mac !== record.mac))}
                 />
             ),
         },
@@ -151,15 +151,15 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
                 <Card size="small" title="Nhập/Quét MAC">
                     <Space.Compact className="w-full">
                         <Input
-                            ref={serialInputRef}
+                            ref={macInputRef}
                             placeholder="Nhập MAC..."
-                            value={serialInput}
-                            onChange={(e) => setSerialInput(e.target.value)}
-                            onPressEnter={handleAddFailSerial}
+                            value={macInput}
+                            onChange={(e) => setMacInput(e.target.value)}
+                            onPressEnter={handleAddFailMac}
                             prefix={<ScanOutlined />}
                             autoFocus
                         />
-                        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddFailSerial}>Thêm</Button>
+                        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddFailMac}>Thêm</Button>
                     </Space.Compact>
                 </Card>
 
@@ -169,7 +169,7 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
                     pagination={false}
                     scroll={{ y: 300 }}
                     size="small"
-                    rowKey="serial"
+                    rowKey="mac"
                 />
 
                 <Card size="small" title={<Text type="danger">Nội dung lỗi (Bắt buộc) *</Text>}>

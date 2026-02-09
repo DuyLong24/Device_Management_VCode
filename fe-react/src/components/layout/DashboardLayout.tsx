@@ -40,7 +40,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const [selectedKey, setSelectedKey] = useState<string>(MENU_KEYS.DASHBOARD);
     const [openKeys, setOpenKeys] = useState<string[]>([]);
 
-    const { user, logout, hasRole } = useAuth();
+    const { user, logout, hasRole, isAuthenticated, login } = useAuth();
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            login();
+        }
+    }, [isAuthenticated, login]);
+
     const { notifications, unreadCount, markAsRead, markAllRead } = useNotification();
 
     // Logic lấy dữ liệu kho từ API

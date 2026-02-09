@@ -23,6 +23,8 @@ import { InventorySessionModule } from '../inventory-sessions/inventory-sessions
 import { DeviceImportModule } from '../device-imports/device-imports.module';
 import { DeviceExportModule } from '../device-exports/device-exports.module';
 
+import { PublicDeviceController } from './controllers/public-device.controller';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -40,7 +42,7 @@ import { DeviceExportModule } from '../device-exports/device-exports.module';
     UsersModule,
     ExcelModule,
   ],
-  controllers: [DeviceController],
+  controllers: [DeviceController, PublicDeviceController],
   providers: [DeviceService, DeviceStatsService, DeviceTransferService, DeviceValidationService, DeviceRepository, WarrantyActivationTask, WarrantyExpirationTask],
   exports: [DeviceService, DeviceStatsService, DeviceTransferService, DeviceValidationService, DevicesModule],
 })

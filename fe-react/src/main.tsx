@@ -39,23 +39,24 @@ function initKeycloak() {
   console.log(`Keycloak init attempt ${initAttempts}/${MAX_INIT_ATTEMPTS}`);
 
   keycloak.init({
-    onLoad: 'login-required',
+    onLoad: 'check-sso',
     pkceMethod: 'S256',
     checkLoginIframe: false,
-    enableLogging: true, // Enable Keycloak debug logs
+    // enableLogging: true, // Disable Keycloak debug logs
+    silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
   }).then((authenticated) => {
     if (authenticated) {
       console.log('✅ Authenticated with Keycloak');
-      // console.log('Token:', keycloak.token?.substring(0, 20) + '...');
-      root.render(
-        <StrictMode>
-          <App />
-        </StrictMode>,
-      )
     } else {
-      console.warn('⚠️ Not authenticated, redirecting to login...');
-      keycloak.login();
+      console.warn('⚠️ Not authenticated, proceeding as Guest...');
     }
+
+    // Always render the app. Protected routes will enforce login.
+    root.render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
   }).catch((error) => {
     console.error('❌ Keycloak init failed:', error);
     console.error('Error details:', {

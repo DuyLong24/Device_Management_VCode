@@ -25,6 +25,7 @@ import UserManagementPage from './pages/UserManagement/UserManagementPage';
 import SharedDataPage from './pages/SharedData/SharedDataPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import ProfilePage from './pages/Profile/ProfilePage';
+import WarrantyLookupPage from './pages/Public/WarrantyLookupPage';
 // import LoginPage from './pages/Auth/LoginPage';
 
 const queryClient = new QueryClient({
@@ -55,6 +56,9 @@ function App() {
             <BrowserRouter>
               <Routes>
                 {/* <Route path="/login" element={<LoginPage />} /> */}
+
+                {/* Public Route */}
+                <Route path="/warranty-check" element={<WarrantyLookupPage />} />
 
                 <Route path="/" element={<DashboardLayout />}>
                   <Route index element={<Navigate to="/dashboard" replace />} />

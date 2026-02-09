@@ -68,7 +68,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const markAsRead = async (id: string) => {
         await notificationService.markAsRead(id);
         setNotifications(prev =>
-            prev.map(n => n._id === id ? { ...n, isRead: true } : n)
+            prev.map(n => (n._id === id || (n as any).id === id) ? { ...n, isRead: true } : n)
         );
     };
 

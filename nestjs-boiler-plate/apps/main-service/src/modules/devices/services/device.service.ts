@@ -402,4 +402,34 @@ export class DeviceService implements OnModuleInit {
 
     return { processedCount: serials.length };
   }
+
+  async getStockSummary(): Promise<any[]> {
+    const readyWarehouse = await this.warehouseService.findByCode('READY_TO_EXPORT');
+    if (!readyWarehouse) {
+      return [];
+    }
+
+    const result = await this.deviceModel.aggregate([
+      {
+        $match: {
+          warehouseId: readyWarehouse._id
+        }
+      },
+      {
+        $group: {
+          _id: '$deviceModel',
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          deviceModel: '$_id',
+          count: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    return result;
+  }
 }

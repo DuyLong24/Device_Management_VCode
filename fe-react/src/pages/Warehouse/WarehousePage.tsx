@@ -103,7 +103,7 @@ export default function WarehousePage() {
             <div className="mb-1">
                 <div className="flex justify-between items-center">
                     <div>
-                        <Title level={3} className="!m-0">
+                        <Title level={3} className="m-0!">
                             {currentWarehouse ? currentWarehouse.name : code}
                             <span className="text-base text-gray-400 ml-3 font-normal">
                                 {totalResults || 0} thiết bị
@@ -155,26 +155,26 @@ export default function WarehousePage() {
                         prefix={<SearchOutlined />}
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
-                        className="w-[200px]"
+                        className="w-50"
                         allowClear
                     />
                     <Input
                         placeholder="Mã phiếu nhập"
                         value={importCode}
                         onChange={(e) => setImportCode(e.target.value)}
-                        className="w-[150px]"
+                        className="w-37.5"
                         allowClear
                     />
                     <Input
                         placeholder="Mã phiếu xuất"
                         value={exportCode}
                         onChange={(e) => setExportCode(e.target.value)}
-                        className="w-[150px]"
+                        className="w-37.5"
                         allowClear
                     />
                     <Select
                         placeholder="Lọc theo mã model"
-                        className="w-[200px]"
+                        className="w-50"
                         value={selectedDeviceModel}
                         onChange={setSelectedDeviceModel}
                         allowClear

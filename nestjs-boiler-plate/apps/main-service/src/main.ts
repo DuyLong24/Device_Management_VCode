@@ -14,6 +14,8 @@ async function bootstrap() {
 
   // Cấu hình CORS
   const corsOrigin = process.env.CORS_ORIGIN;
+  console.log('CORS Origin Configured:', corsOrigin);
+
   app.enableCors({
     origin: corsOrigin === '*' ? true : (corsOrigin ? corsOrigin.split(',') : true),
     credentials: true,

@@ -67,18 +67,14 @@ export const useCreateExport = () => {
             let stockCounts: Record<string, number> = {};
 
             if (readyWarehouse) {
-                const response = await axiosInstance.get('/devices', {
-                    params: {
-                        warehouseId: readyWarehouse.id,
-                        limit: 2000,
-                        sortBy: 'deviceModel:asc',
-                    }
-                });
-                const devices = response.data?.results || response.data || [];
-                if (Array.isArray(devices)) {
-                    stockCounts = devices.reduce((acc: any, device: any) => {
-                        const m = device.deviceModel;
-                        if (m) acc[m] = (acc[m] || 0) + 1;
+                // Use optimized stock summary endpoint instead of fetching all devices
+                const response = await axiosInstance.get('/devices/stock-summary');
+                const summary = response.data || [];
+
+                if (Array.isArray(summary)) {
+                    stockCounts = summary.reduce((acc: any, item: any) => {
+                        const m = item.deviceModel;
+                        if (m) acc[m] = item.count || 0;
                         return acc;
                     }, {});
                 }

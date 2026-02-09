@@ -233,8 +233,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             label: (
                 <div
                     className={`py-2 max-w-[300px] ${!noti.isRead ? 'bg-blue-50 -mx-3 px-3' : ''}`}
-                    onClick={() => {
-                        markAsRead(noti._id);
+                    onClick={async (e) => {
+                        e.preventDefault();
+                        const notiId = noti._id || (noti as any).id;
+                        if (notiId) {
+                            await markAsRead(notiId);
+                        }
                         if (noti.metadata?.link) {
                             navigate(noti.metadata.link);
                         }
@@ -320,10 +324,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </Sider>
 
             <Layout
-                className={`transition-all duration-200 ease-in-out ${collapsed ? 'ml-[80px]' : 'ml-[280px]'}`}
+                className={`transition-all duration-200 ease-in-out ${collapsed ? 'ml-20' : 'ml-70'}`}
             >
                 <Header
-                    className="px-6 !bg-white flex items-center justify-between shadow-sm sticky top-0 z-[99] h-16 w-full"
+                    className="px-6 bg-white! flex items-center justify-between shadow-sm sticky top-0 z-99 h-16 w-full"
                 >
                     <Breadcrumb items={breadcrumbItems} />
 

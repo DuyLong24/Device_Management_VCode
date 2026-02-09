@@ -110,6 +110,11 @@ export class DeviceController {
     return this.deviceStatsService.getStatistics(filter);
   }
 
+  @Get('stock-summary')
+  async getStockSummary() {
+    return this.deviceService.getStockSummary();
+  }
+
   @Get('mac/:mac/detail')
   async findByMacWithDetail(@Param('mac') mac: string) {
     return this.deviceService.findByMacWithDetail(mac);

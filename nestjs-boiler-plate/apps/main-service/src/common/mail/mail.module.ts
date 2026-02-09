@@ -22,7 +22,7 @@ import { join } from 'path';
                     from: `"${config.get('MAIL_FROM_NAME') || 'Device Management'}" <${config.get('MAIL_USER')}>`,
                 },
                 template: {
-                    dir: join(process.cwd(), 'dist/apps/main-service/src/common/mail/templates'),
+                    dir: join(process.cwd(), 'dist/apps/main-service/common/mail/templates'),
                     adapter: new HandlebarsAdapter(
                         {
                             inc: (v) => parseInt(v) + 1,

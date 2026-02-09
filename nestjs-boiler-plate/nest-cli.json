@@ -17,13 +17,8 @@
       "sourceRoot": "apps/main-service/src",
       "compilerOptions": {
         "tsConfigPath": "apps/main-service/tsconfig.app.json",
-        "assets": [
-          {
-            "include": "**/*.hbs",
-            "outDir": "dist/apps/main-service/src",
-            "watchAssets": true
-          }
-        ]
+        "assets": ["**/*.hbs"],
+        "watchAssets": true
       }
     },
     "upload-service": {

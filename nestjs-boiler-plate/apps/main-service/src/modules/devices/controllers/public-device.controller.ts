@@ -10,15 +10,14 @@ export class PublicDeviceController {
     constructor(private readonly deviceService: DeviceService) { }
 
     @Get('warranty-check')
-    @ApiOperation({ summary: 'Check warranty status by Serial or MAC' })
-    @ApiResponse({ status: 200, description: 'Warranty information returned.' })
-    @ApiResponse({ status: 404, description: 'Device not found.' })
+    @ApiOperation({ summary: 'Kiểm tra bảo hành thiết bị theo Serial hoặc MAC' })
+    @ApiResponse({ status: 200, description: 'Thông tin bảo hành được trả về.' })
+    @ApiResponse({ status: 404, description: 'Thiết bị không tìm thấy.' })
     async checkWarranty(@Query('serial') input: string) {
         if (!input) {
             throw new NotFoundException('Vui lòng nhập Serial hoặc MAC address (Please provide Serial or MAC)');
         }
 
-        // Chia input thành các mã theo các ký tự: \n, , ;
         const searchTerms = input.split(/[\n,;]+/).map(s => s.trim()).filter(s => s.length > 0);
 
         if (searchTerms.length === 0) {
@@ -30,21 +29,26 @@ export class PublicDeviceController {
         for (const term of searchTerms) {
             let device: any = null;
 
-            // 1. Find by MAC
-            device = await this.deviceService.findByMac(term);
+            const cleanTerm = term.replace(/[:.\s-]/g, '');
+            const isHex = /^[a-fA-F0-9]+$/.test(cleanTerm);
 
-            // 2. Find by Serial
-            if (!device) {
-                const devices = await this.deviceService.findAll({ serial: term });
-                if (devices && devices.length > 0) device = devices[0];
+            const conditions: any[] = [
+                { serial: term },
+                { mac: term }
+            ];
+
+            if (isHex && cleanTerm.length > 0) {
+                // Tạo regex để tìm kiếm MAC theo nhiều định dạng khác nhau
+                // Matches: AA:BB, AA-BB, AA.BB, AABB
+                const fuzzyRegex = cleanTerm.split('').join('[:\\.-]?');
+                conditions.push({ mac: { $regex: new RegExp(`^${fuzzyRegex}$`, 'i') } });
             }
 
-            // 3. Find by Clean MAC
-            if (!device) {
-                const cleanMac = term.replace(/[:.-]/g, '');
-                if (cleanMac !== term) {
-                    device = await this.deviceService.findByMac(cleanMac);
-                }
+            // Execute Search
+            const devices = await this.deviceService.findAll({ $or: conditions });
+
+            if (devices && devices.length > 0) {
+                device = devices[0];
             }
 
             if (device) {

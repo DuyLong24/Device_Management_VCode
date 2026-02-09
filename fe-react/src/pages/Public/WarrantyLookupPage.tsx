@@ -3,6 +3,7 @@ import { Input, Button, Card, Typography, Alert, Tag } from 'antd';
 import { SearchOutlined, SafetyCertificateOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { publicService } from '../../services/public.service';
 import dayjs from 'dayjs';
+import logoImage from '../../assets/logo_alvar.png';
 
 const { Title, Text } = Typography;
 
@@ -35,16 +36,17 @@ export default function WarrantyLookupPage() {
         <div className="min-h-screen bg-gray-50 flex flex-col items-center pt-10 px-4 pb-20">
             <div className="w-full max-w-4xl">
                 <div className="text-center mb-8">
-                    <SafetyCertificateOutlined className="text-6xl text-blue-600 mb-4" />
+                    {/* <SafetyCertificateOutlined className="text-6xl text-blue-600 mb-4" /> */}
+                    <img src={logoImage} alt="Logo" className="w-20 h-auto mx-auto mb-4" />
                     <Title level={2}>Tra cứu bảo hành</Title>
-                    <Text type="secondary">Nhập danh sách Số Serial hoặc MAC Address (mỗi dòng một mã) để kiểm tra</Text>
+                    <Text type="secondary">Nhập danh sách MAC Address (mỗi dòng một mã) để kiểm tra</Text>
                 </div>
 
                 <Card className="shadow-lg mb-8">
                     <div className="flex flex-col gap-4">
                         <Input.TextArea
                             size="large"
-                            placeholder="Nhập Serial Number / MAC Address... (Xuống dòng để tra nhiều mã)"
+                            placeholder="Nhập MAC Address... (Xuống dòng để tra nhiều mã)"
                             rows={4}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}

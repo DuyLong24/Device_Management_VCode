@@ -27,7 +27,10 @@ const ImportDetailPage = () => {
         handleDelete,
         handleCreateSession,
         handleContinueSession,
-        navigate
+        navigate,
+        resolvedOrigin,
+        resolvedDeviceType,
+        calculatedTotalMacImported
     } = useImportDetail();
 
     if (loading || !importData) {
@@ -50,7 +53,7 @@ const ImportDetailPage = () => {
         notes,
         totalQuantity,
         macImported,
-        totalItem
+        totalItem,
     } = importData;
 
     // Info Card Items
@@ -60,6 +63,8 @@ const ImportDetailPage = () => {
         { label: 'Ngày nhập', value: dayjs(importDate).format('DD/MM/YYYY') },
         { label: 'Người nhập', value: createdBy?.name || createdBy?.username || importedBy || '---' },
         { label: 'Người bàn giao', value: handoverPerson },
+        { label: 'Nguồn gốc', value: resolvedOrigin },
+        { label: 'Loại hàng hóa', value: resolvedDeviceType },
         {
             label: 'Trạng thái kiểm kê',
             value: (
@@ -95,7 +100,7 @@ const ImportDetailPage = () => {
                 <ImportOverviewCard
                     totalItem={totalItem || devicesUI.length}
                     totalQuantity={totalQuantity || 0}
-                    serialImported={macImported || 0}
+                    serialImported={calculatedTotalMacImported || macImported || 0}
                 />
 
                 {/* 3. Danh sách thiết bị */}

@@ -6,7 +6,7 @@ import type { DeviceImport } from '../types/import.type';
 // URL font hỗ trợ tiếng Việt (Roboto)
 const ROBOTO_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf';
 
-export const exportImportPDF = async (data: DeviceImport) => {
+export const exportImportPDF = async (data: DeviceImport, extraData?: { originName?: string, deviceTypeName?: string }) => {
     const doc = new jsPDF();
 
     // 1. Load Font (Async)
@@ -69,7 +69,7 @@ export const exportImportPDF = async (data: DeviceImport) => {
     doc.text(dayjs(data.importDate).format('DD/MM/YYYY'), valueX, y);
 
     doc.text('Loại hàng:', col2X, y);
-    doc.text(data.deviceType, col2ValueX, y);
+    doc.text(extraData?.deviceTypeName || data.deviceType, col2ValueX, y);
 
     y += 8;
     // Row 2
@@ -77,7 +77,7 @@ export const exportImportPDF = async (data: DeviceImport) => {
     doc.text(data.supplier || '---', valueX, y);
 
     doc.text('Nguồn gốc:', col2X, y);
-    doc.text(data.origin === 'IMPORT' ? 'Nhập khẩu' : data.origin === 'DOMESTIC' ? 'Nội địa' : data.origin, col2ValueX, y);
+    doc.text(extraData?.originName || (data.origin === 'IMPORT' ? 'Nhập khẩu' : data.origin === 'DOMESTIC' ? 'Nội địa' : data.origin), col2ValueX, y);
 
     y += 8;
     // Row 3 (Full width)
@@ -93,7 +93,7 @@ export const exportImportPDF = async (data: DeviceImport) => {
     // 5. Device Table
     autoTable(doc, {
         startY: y,
-        head: [['STT', 'Mã thiết bị (Model)', 'Số lượng', 'Quy cách', 'MAC đã nhập']],
+        head: [['STT', 'Mã thiết bị (Model)', 'Số lượng', 'Quy cách', 'MAC đã kiểm']],
         body: data.devices.map((p, index) => [
             index + 1,
             p.deviceCode,

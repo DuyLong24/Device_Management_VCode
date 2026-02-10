@@ -3,6 +3,7 @@ import { App } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { importService } from '../services/import.service';
 import { inventorySessionService } from '../services/inventory-session.service';
+import { sharedDataService } from '../services/shared-data.service';
 import type { ImportDeviceUI } from '../pages/Import/components/ImportDeviceTable';
 import { exportImportPDF } from '../utils/export-import-pdf';
 
@@ -32,19 +33,43 @@ export const useImportDetail = () => {
         totalRequired: importData?.totalQuantity || 0
     }));
 
+    const { data: modelList = [] } = useQuery({
+        queryKey: ['shared-data-models'],
+        queryFn: () => sharedDataService.getDataByGroupCode('MODEL'),
+        staleTime: 5 * 60 * 1000
+    });
+
+    const { data: originList = [] } = useQuery({
+        queryKey: ['shared-data-origins'],
+        queryFn: () => sharedDataService.getDataByGroupCode('ORIGIN'),
+        staleTime: 5 * 60 * 1000
+    });
+
+    const resolveOrigin = (code?: string) => {
+        if (!code) return '';
+        const found = originList.find((g: any) => g.code === code);
+        return found ? found.name : code;
+    };
+
     // 3. Chuẩn bị dữ liệu thiết bị
     const devicesUI: ImportDeviceUI[] = (importData?.devices || []).map((device) => {
-        const importedCount = device.macImported || device.expectedMacs?.length || 0;
+        const importedCount = device.macImported || 0;
+        const modelInfo = modelList?.find((m: any) => m.code === device.deviceCode);
+        const resolvedName = modelInfo?.name || device.deviceName || device.deviceCode;
 
         return {
             ...device,
             macImported: importedCount,
             key: device.deviceCode,
+            name: resolvedName,
+            deviceName: resolvedName,
             packaging: `${device.boxCount || 0} hộp × ${device.itemsPerBox || 0} sp/hộp`,
             macStatus: importedCount === device.quantity ? 'complete' : importedCount > (device.quantity || 0) ? 'excess' : 'missing',
             macExpected: device.quantity,
         };
     });
+
+    const calculatedTotalMacImported = devicesUI.reduce((acc, curr) => acc + (curr.macImported || 0), 0);
 
     const handlePrint = async () => {
         if (!importData) {
@@ -53,7 +78,14 @@ export const useImportDetail = () => {
         }
         try {
             message.loading({ content: 'Đang tạo file PDF...', key: 'pdf_export' });
-            await exportImportPDF(importData);
+
+            const originName = resolveOrigin(importData.origin);
+            const extraData = {
+                originName,
+                deviceTypeName: importData.deviceType
+            };
+
+            await exportImportPDF(importData, extraData);
             message.success({ content: 'Đã xuất file PDF thành công!', key: 'pdf_export' });
         } catch (error) {
             console.error(error);
@@ -98,6 +130,12 @@ export const useImportDetail = () => {
         navigate(`/import/inventory-check/${id}?sessionId=${sessionId}`);
     };
 
+    // Calculate resolved names for UI
+    const resolvedOrigin = resolveOrigin(importData?.origin);
+    const resolvedDeviceType = importData?.deviceType; // Assuming name is OK, or map if needed
+
+    const isFullyImported = importData?.totalQuantity === calculatedTotalMacImported;
+
     return {
         importData,
         loading: isLoadingImport || isLoadingSessions,
@@ -108,6 +146,10 @@ export const useImportDetail = () => {
         handleDelete,
         handleCreateSession,
         handleContinueSession,
-        navigate
+        navigate,
+        resolvedOrigin,
+        resolvedDeviceType,
+        calculatedTotalMacImported,
+        isFullyImported
     };
 };

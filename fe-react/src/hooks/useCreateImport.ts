@@ -211,6 +211,23 @@ export const useCreateImport = () => {
                 return;
             }
 
+            // Kiểm tra số lượng thiết bị và số lượng MAC đã khớp chưa
+            if (targetStatus === 'PUBLIC') {
+                const mismatchedDevice = deviceList.find(d => {
+                    const macCount = d.expectedMacs?.length || 0;
+                    return d.quantity !== macCount;
+                });
+
+                if (mismatchedDevice) {
+                    modal.error({
+                        title: 'Dữ liệu chưa khớp',
+                        content: `Thiết bị "${mismatchedDevice.deviceName || mismatchedDevice.deviceCode}" có số lượng khai báo (${mismatchedDevice.quantity}) không khớp với số lượng MAC đã nhập (${mismatchedDevice.expectedMacs?.length || 0}). Vui lòng cập nhật lại hoặc chọn "Lưu nháp".`,
+                        okText: 'Đã hiểu',
+                    });
+                    return;
+                }
+            }
+
             setLoading(true);
 
             const payload = {

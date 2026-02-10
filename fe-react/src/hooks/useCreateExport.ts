@@ -18,7 +18,7 @@ export interface DeviceItem {
     name: string;
     quantity: number;
     inStock?: number;
-    expectedSerials?: string[];
+    expectedMacs?: string[];
 }
 
 export const useCreateExport = () => {
@@ -124,7 +124,7 @@ export const useCreateExport = () => {
                         name: req.deviceName || '',
                         quantity: req.quantity,
                         inStock: 0,
-                        expectedSerials: req.expectedSerials || []
+                        expectedMacs: req.expectedMacs || []
                     }));
                     setDeviceList(mappedDevices);
                 }
@@ -237,7 +237,7 @@ export const useCreateExport = () => {
                     deviceCode: d.deviceModel,
                     deviceName: d.name,
                     quantity: d.quantity,
-                    // expectedSerials?
+                    // expectedMacs?
                 }))
             };
 

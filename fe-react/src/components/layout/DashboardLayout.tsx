@@ -270,7 +270,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     if (selectedKey === MENU_KEYS.EXPORT.LIST && !location.pathname.endsWith('/list') && location.pathname.includes('/export/')) {
         breadcrumbItems.push({ title: 'Chi tiết phiếu xuất' });
     }
-    if (!selectedKey.startsWith('warehouse-') && location.pathname.includes('/serial/')) {
+    if (!selectedKey.startsWith('warehouse-') && location.pathname.includes('/device/')) {
         if (selectedKey === MENU_KEYS.ALL_DEVICES) {
             breadcrumbItems.push({ title: 'Chi tiết thiết bị' });
         }

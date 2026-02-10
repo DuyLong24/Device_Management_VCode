@@ -49,7 +49,7 @@ export class ExportSessionService {
             note: dto.note,
             createdBy: userId,
             macTotal: exportRecord.totalQuantity,
-            macChecked: 0 // TODO: tracking count of scanned items
+            macChecked: 0
         });
 
         // Update Export status -> IN_PROGRESS nếu là APPROVED

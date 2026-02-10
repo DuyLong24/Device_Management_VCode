@@ -120,9 +120,9 @@ export default function WarehousePage() {
                     {currentWarehouse?.config?.actions?.includes('scan') && (
                         <Button type="primary" icon={<ScanOutlined />} onClick={() => setScanModalVisible(true)}>Quét mã</Button>
                     )}
-                    {currentWarehouse?.config?.actions?.includes('import_excel') && (
+                    {/* {currentWarehouse?.config?.actions?.includes('import_excel') && (
                         <Button icon={<ImportOutlined />} onClick={() => setImportModalVisible(true)}>Import Excel</Button>
-                    )}
+                    )} */}
 
                     {currentWarehouse?.config?.actions?.includes('transfer') && (
                         <Button

@@ -156,7 +156,6 @@ import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activat
       provide: APP_GUARD,
       useClass: CustomRoleGuard,
     },
-
   ],
 })
 

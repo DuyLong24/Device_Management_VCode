@@ -14,14 +14,14 @@ export const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
     async (config) => {
-        // Update token if it's about to expire (within 5 seconds)
         try {
-            if (keycloak.isTokenExpired(30)) {
-                await keycloak.updateToken(30);
-                // localStorage.setItem('accessToken', keycloak.token || '');
+            if (keycloak.isTokenExpired(70)) {
+                await keycloak.updateToken(70);
             }
         } catch (error) {
             console.error('Failed to update token', error);
+            await keycloak.login();
+            return Promise.reject(error);
         }
 
         const token = keycloak.token;
@@ -38,14 +38,24 @@ axiosInstance.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
             originalRequest._retry = true;
 
             try {
-                // Try to login again
+                if (keycloak.isTokenExpired(0)) {
+                    await keycloak.updateToken(0);
+                    originalRequest.headers.Authorization = `Bearer ${keycloak.token}`;
+                    return axiosInstance(originalRequest);
+                } else {
+                    if (error.response?.status === 403) {
+                        return Promise.reject(error);
+                    }
+                }
+
                 await keycloak.login();
             } catch (loginError) {
-                console.error('Re-login failed', loginError);
+                console.error('Re-login / Token update failed', loginError);
+                await keycloak.login();
             }
         }
         return Promise.reject(error);

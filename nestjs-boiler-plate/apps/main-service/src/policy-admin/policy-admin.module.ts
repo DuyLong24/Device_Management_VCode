@@ -9,7 +9,6 @@ import { KeycloakAdminService } from './keycloak-admin.service';
 import { ResourceTemplate, ResourceTemplateSchema } from './schemas/resource-template.schema';
 import { PermissionConfig, PermissionConfigSchema } from './schemas/permission-config.schema';
 import { Version, VersionSchema } from './schemas/version.schema';
-// TODO: Import FncRole from existing project
 import { FncRole, FncRoleSchema } from '../fnc-roles/entities/fnc-role.entity';
 
 @Module({
@@ -31,4 +30,4 @@ import { FncRole, FncRoleSchema } from '../fnc-roles/entities/fnc-role.entity';
   ],
   exports: [PolicyService, SyncService, RouteScannerService, OpaService, KeycloakAdminService],
 })
-export class PolicyAdminModule {}
+export class PolicyAdminModule { }

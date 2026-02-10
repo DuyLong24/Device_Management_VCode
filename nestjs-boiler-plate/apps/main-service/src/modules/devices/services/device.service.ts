@@ -247,7 +247,7 @@ export class DeviceService implements OnModuleInit {
 
     // Lấy danh sách thiết bị cần di chuyển để tạo lịch sử sau khi cập nhật
     const devicesToMove = await this.deviceModel.find({
-      $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }]
+      mac: { $in: macs }
     }).exec();
 
 
@@ -279,7 +279,7 @@ export class DeviceService implements OnModuleInit {
     }
 
     const result = await this.deviceModel.updateMany(
-      { $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }] },
+      { mac: { $in: macs } },
       {
         $set: updatePayload
       }
@@ -360,13 +360,13 @@ export class DeviceService implements OnModuleInit {
       return { processedCount: 0 };
     }
 
-    const serials = devicesToActivate.map(d => d.mac);
-    this.logger.warn(`Found ${serials.length} devices to activate warranty: ${serials.join(', ')}`);
+    const macs = devicesToActivate.map(d => d.mac);
+    this.logger.warn(`Found ${macs.length} devices to activate warranty: ${macs.join(', ')}`);
 
     // Chuyển tới kho Đang bảo hành
-    await this.moveDevicesToWarehouse(serials, 'SOLD', 'AUTO-WARRANTY-ACTIVATION', 'SYSTEM');
+    await this.moveDevicesToWarehouse(macs, 'SOLD', 'AUTO-WARRANTY-ACTIVATION', 'SYSTEM');
 
-    return { processedCount: serials.length };
+    return { processedCount: macs.length };
   }
 
   async processWarrantyExpirationCheck(): Promise<{ processedCount: number }> {
@@ -389,18 +389,18 @@ export class DeviceService implements OnModuleInit {
       return { processedCount: 0 };
     }
 
-    const serials = devicesToExpire.map(d => d.mac);
-    this.logger.warn(`Found ${serials.length} devices to expire warranty: ${serials.join(', ')}`);
+    const macs = devicesToExpire.map(d => d.mac);
+    this.logger.warn(`Found ${macs.length} devices to expire warranty: ${macs.join(', ')}`);
 
     // 2. Chuyển sang kho Hết hạn bảo hành (SOLD_WARRANTY)
     await this.moveDevicesToWarehouse(
-      serials,
+      macs,
       'SOLD_WARRANTY',
       'AUTO-WARRANTY-EXPIRATION',
       'SYSTEM_EXPIRATION'
     );
 
-    return { processedCount: serials.length };
+    return { processedCount: macs.length };
   }
 
   async getStockSummary(): Promise<any[]> {

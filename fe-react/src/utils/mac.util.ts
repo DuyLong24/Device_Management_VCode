@@ -53,23 +53,24 @@ export const processScannerInput = (currentValue: string): string => {
         if (!trimmed) return line;
 
         // Nếu là dòng cuối cùng (Đang nhập dở) -> Giữ nguyên để user typing/scanning tiếp
-        // (Scanner bắn từng ký tự rất nhanh, ta không được xóa khi chưa xong)
         if (isLastLine) return line;
 
         // Nếu là dòng đã hoàn thành (đã có enter):
-        // Chỉ giữ lại nếu đúng định dạng MAC
+        // 1. Nếu đúng định dạng MAC -> Giữ lại
         if (isValidMac(trimmed)) {
-            return trimmed; // Giữ lại (có thể format lại uppercase nếu muốn)
+            return trimmed;
+        }
+        // 2. Nếu dòng chứa MAC lẫn rác (ví dụ "MAC123 - Serial456") -> Trích xuất MAC
+        const extracted = extractValidMacs(trimmed);
+        if (extracted.length > 0) {
+            return extracted.join('\n'); // Trả về các MAC hợp lệ, xuống dòng
         }
 
-        // Nếu không đúng MAC (ví dụ Serial Number) -> Xóa bỏ (trả về null để filter sau)
+        // 3. Nếu không có MAC nào -> Xóa bỏ (trả về null)
         return null;
     });
 
     // Lọc bỏ các dòng null (Dòng rác đã bị xóa) & Join lại
     const result = processedLines.filter(l => l !== null).join('\n');
-
-    // [UX Improvement]: Nếu kết quả thay đổi (nghĩa là có dòng rác bị xóa),
-    // con trỏ cursor có thể bị nhảy. Component gọi hàm này cần xử lý cẩn thận hoặc chấp nhận nhảy về cuối.
     return result;
 };

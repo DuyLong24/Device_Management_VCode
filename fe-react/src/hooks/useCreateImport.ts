@@ -29,7 +29,7 @@ export const useCreateImport = () => {
 
     // --- React Query Fetching ---
 
-    // 1. Models (Used for Options & Lookup)
+    // 1. Models
     const { data: modelOptions = [] } = useQuery({
         queryKey: ['models'],
         queryFn: async () => {
@@ -52,10 +52,8 @@ export const useCreateImport = () => {
         queryFn: () => importService.getImportDetail(id!),
         enabled: isEditMode,
         staleTime: 0,
-        gcTime: 0 // No caching for edit to ensure fresh data
+        gcTime: 0
     });
-
-    // --- Effects ---
 
     const generateImportCode = () => {
         const today = dayjs();
@@ -64,12 +62,11 @@ export const useCreateImport = () => {
         return `PN-${dateStr}-${random}`;
     };
 
-    // Load Detail or Init New
     useEffect(() => {
         if (!isEditMode) {
             form.setFieldValue('code', generateImportCode());
-            form.setFieldValue('importDate', dayjs()); // Default today
-            form.setFieldValue('origin', 'IMPORT'); // Default origin
+            form.setFieldValue('importDate', dayjs());
+            form.setFieldValue('origin', 'IMPORT');
             if (user && user.username) {
                 form.setFieldValue('importedBy', user.username);
             }
@@ -93,7 +90,7 @@ export const useCreateImport = () => {
                     code: data.code,
                     supplier: data.supplier,
                     deviceType: data.deviceType,
-                    // origin: data.origin, // Check if this exists in response
+                    // origin: data.origin,
                     importDate: data.importDate ? dayjs(data.importDate) : undefined,
                     notes: data.notes,
                     status: data.status,
@@ -151,7 +148,6 @@ export const useCreateImport = () => {
             macImported: 0,
             expectedDetails: []
         };
-        // Add to TOP (UX Improvement)
         setDeviceList([newDevice, ...deviceList]);
         setHasUnsavedChanges(true);
     };
@@ -298,19 +294,19 @@ export const useCreateImport = () => {
             quantity: number;
             boxCount: number | null;
             itemsPerBox: number | null;
-            serials: string[];
+            macs: string[];
             details: any[];
         }>();
 
         details.forEach((row: any) => {
-            const pCode = row.deviceCode; // Assumed mapped in wizard
+            const pCode = row.deviceCode;
             if (!pCode) return;
 
             const current = deviceMap.get(pCode) || {
                 quantity: 0,
                 boxCount: row.boxCount || null,
                 itemsPerBox: row.itemsPerBox || null,
-                serials: [] as string[],
+                macs: [] as string[],
                 details: [] as any[]
             };
 
@@ -319,7 +315,7 @@ export const useCreateImport = () => {
 
             current.quantity += qty;
             if (row.mac) {
-                current.serials.push(row.mac);
+                current.macs.push(row.mac);
                 current.details.push({
                     mac: row.mac,
                     serial: row.serial || '',
@@ -342,7 +338,7 @@ export const useCreateImport = () => {
                 boxCount: val.boxCount,
                 itemsPerBox: val.itemsPerBox,
                 macImported: 0,
-                expectedMacs: val.serials,
+                expectedMacs: val.macs,
                 expectedDetails: val.details
             });
         });
@@ -370,8 +366,6 @@ export const useCreateImport = () => {
         loading,
         deviceList,
         modelOptions,
-        // categoryOptions, // Removed
-        // originOptions,   // Removed
         isMacModalOpen, setIsMacModalOpen,
         currentDeviceKey,
         tempMacs,

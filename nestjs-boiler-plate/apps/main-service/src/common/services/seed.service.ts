@@ -258,6 +258,12 @@ export class SeedService implements OnModuleInit {
                             label: 'Lỗi - Chờ BH NCC',
                             description: 'NCC trả về vẫn lỗi, cần gửi lại',
                             style: 'danger'
+                        },
+                        {
+                            to: WarehouseCode.REMOVED,
+                            label: 'Lỗi - Loại bỏ',
+                            description: 'Không thể sửa chữa, loại bỏ',
+                            style: 'danger'
                         }
                     ]
                 }
@@ -307,8 +313,21 @@ export class SeedService implements OnModuleInit {
                         { key: 'warrantyExpiredDate', title: 'Hết hạn BH', type: 'date' },
                         { key: 'action', title: 'Thao tác', type: 'action' }
                     ],
-                    actions: [],
-                    quickTransfers: []
+                    actions: [ActionType.TRANSFER], // Enabled Transfer
+                    quickTransfers: [
+                        {
+                            to: WarehouseCode.PENDING_QC,
+                            label: 'Khách trả hàng',
+                            description: 'Khách trả lại hàng, nhập về kho chờ QC',
+                            style: 'warning'
+                        },
+                        {
+                            to: WarehouseCode.SOLD_WARRANTY,
+                            label: 'Hết hạn BH',
+                            description: 'Chuyển sang trạng thái hết hạn bảo hành',
+                            style: 'default'
+                        }
+                    ]
                 }
             },
             // 7. Đã xuất - Hết BH
@@ -328,8 +347,15 @@ export class SeedService implements OnModuleInit {
                         { key: 'warrantyExpiredDate', title: 'Ngày hết BH', type: 'date' },
                         { key: 'action', title: 'Thao tác', type: 'action' }
                     ],
-                    actions: [],
-                    quickTransfers: []
+                    actions: [ActionType.TRANSFER], // Enabled Transfer
+                    quickTransfers: [
+                        {
+                            to: WarehouseCode.REMOVED,
+                            label: 'Lỗi - Loại bỏ',
+                            description: 'Thiết bị hỏng, loại bỏ',
+                            style: 'danger'
+                        }
+                    ]
                 }
             },
             // 8. Lỗi - Loại bỏ
@@ -407,6 +433,15 @@ export class SeedService implements OnModuleInit {
 
             // Not Activated -> Sold (Kích hoạt bảo hành)
             { from: WarehouseCode.NOT_ACTIVATED, to: WarehouseCode.SOLD, type: TransitionType.ACTIVATE_WARRANTY },
+
+            // Ready -> Defect
+            { from: WarehouseCode.READY_TO_EXPORT, to: WarehouseCode.DEFECT, type: TransitionType.QC_FAIL },
+
+            // Sold -> Sold Warranty
+            { from: WarehouseCode.SOLD, to: WarehouseCode.SOLD_WARRANTY, type: TransitionType.WARRANTY_EXPIRED },
+
+            // Sold Warranty -> Removed
+            { from: WarehouseCode.SOLD_WARRANTY, to: WarehouseCode.REMOVED, type: TransitionType.SCRAP },
 
         ];
 

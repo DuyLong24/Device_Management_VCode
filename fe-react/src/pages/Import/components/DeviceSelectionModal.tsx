@@ -52,16 +52,16 @@ export const DeviceSelectionModal: React.FC<DeviceSelectionModalProps> = ({
                 const sheet = workbook.Sheets[sheetName];
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
 
-                const extractedSerials: string[] = [];
+                const extractedMacs: string[] = [];
                 jsonData.slice(1).forEach(row => {
-                    if (row[0]) extractedSerials.push(String(row[0]).trim());
+                    if (row[0]) extractedMacs.push(String(row[0]).trim());
                 });
 
                 const current = tempMacs ? tempMacs.split('\n') : [];
-                const merged = [...current, ...extractedSerials].filter(s => s.trim() !== '');
+                const merged = [...current, ...extractedMacs].filter(s => s.trim() !== '');
                 setTempMacs(merged.join('\n'));
 
-                message.success(`Đã đọc được ${extractedSerials.length} MAC từ file Excel`);
+                message.success(`Đã đọc được ${extractedMacs.length} MAC từ file Excel`);
                 setActiveTab('manual');
             } catch (err) {
                 message.error('Lỗi đọc file Excel. Vui lòng kiểm tra định dạng.');

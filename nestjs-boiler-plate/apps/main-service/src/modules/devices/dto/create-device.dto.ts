@@ -1,12 +1,14 @@
 import { IsNotEmpty, IsOptional, IsString, IsObject, IsDateString, IsMongoId } from 'class-validator';
 
 export class CreateDeviceDto {
+  @IsOptional()
+  serial?: string;
+
   @IsNotEmpty()
-  serial!: string;
+  mac!: string;
 
-  mac: string;
-
-  p2p: string;
+  @IsOptional()
+  p2p?: string;
 
   @IsNotEmpty()
   name!: string;

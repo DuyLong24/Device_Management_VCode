@@ -49,14 +49,14 @@ export class DeviceExportService {
             await this.notificationService.sendApprovalRequest(fullExport);
           }
         } catch (err) {
-          this.logger.error(`Failed to trigger approval notification for ${newExport.code}`, err);
+          this.logger.error(`Không gửi được mail yêu cầu duyệt phiếu xuất ${newExport.code}`, err);
         }
       }
 
       return newExport;
 
     } catch (error) {
-      this.logger.errorWithContext('Failed to create device export', error, {
+      this.logger.errorWithContext('Không tạo được phiếu xuất', error, {
         dto: createDeviceExportDto,
         method: 'create'
       });
@@ -76,41 +76,34 @@ export class DeviceExportService {
     try {
       const deviceexport = await this.deviceExportRepository.findById(id);
       if (!deviceexport) {
-        this.logger.warn('Device export not found', { id, method: 'findById' });
+        this.logger.warn('Không tìm thấy phiếu xuất', { id, method: 'findById' });
         throw new NotFoundException(ERROR_MESSAGES.DEVICE_EXPORT.NOT_FOUND);
       }
 
       if (deviceexport.items && deviceexport.items.length > 0) {
-        const scanValues = deviceexport.items.map(i => i.mac);
+        const rawMacs = deviceexport.items.map(i => i.mac);
 
+        // Lọc đúng định dạng Mac
         const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+        const macs = rawMacs.filter(mac => macRegex.test(mac));
 
-        const potentialMacs = scanValues.filter(val => macRegex.test(val));
-        const regularSerials = scanValues.filter(val => !macRegex.test(val));
-
-        const conditions: any[] = [];
-        if (potentialMacs.length > 0) conditions.push({ mac: { $in: potentialMacs } });
-        if (regularSerials.length > 0) conditions.push({ serial: { $in: regularSerials } });
-
-        let devices: any[] = [];
-        if (conditions.length > 0) {
-          devices = await this.deviceService.findAll({ $or: conditions } as any);
+        if (rawMacs.length > macs.length) {
+          this.logger.warn(`Lọc ${rawMacs.length - macs.length} MAC không hợp lệ`);
         }
 
-        const deviceMapBySerial = new Map(devices.map(d => [d.serial, d]));
-        const deviceMapByMac = new Map(devices.map(d => [d.mac, d]));
+        // Lấy thông tin thiết bị theo MAC
+        const devices = await this.deviceService.findByMacs(macs);
+        const deviceMap = new Map(devices.map(d => [d.mac, d]));
 
         const deviceExportObj = deviceexport.toObject();
         deviceExportObj.items = deviceExportObj.items.map(item => {
-          const isMacFormat = macRegex.test(item.mac);
-          const device = isMacFormat
-            ? deviceMapByMac.get(item.mac)
-            : deviceMapBySerial.get(item.mac);
+          const device = deviceMap.get(item.mac);
 
           return {
             ...item,
-            mac: item.mac || device?.mac,
-            deviceName: device?.name
+            mac: item.mac,
+            deviceName: device?.name,
+            serial: device?.serial
           };
         });
 
@@ -120,7 +113,7 @@ export class DeviceExportService {
       return deviceexport;
     } catch (error) {
       if (error.name === 'CastError') {
-        this.logger.warn('Invalid device export ID format', {
+        this.logger.warn('Định dạng ID phiếu xuất không hợp lệ', {
           id,
           errorName: error.name,
           method: 'findById'
@@ -180,7 +173,7 @@ export class DeviceExportService {
         await this.notificationService.sendApprovalRequest(fullExport);
       }
     } catch (err) {
-      this.logger.error(`Failed to trigger approval notification for ${id}`, err);
+      this.logger.error(`Không gửi được mail yêu cầu duyệt phiếu xuất ${id}`, err);
     }
 
     return updatedExport;
@@ -230,7 +223,7 @@ export class DeviceExportService {
         await this.notificationService.sendExportResult(fullExport);
       }
     } catch (err) {
-      this.logger.error(`Failed to trigger result notification for ${id}`, err);
+      this.logger.error(`Không gửi được mail kết quả phiếu xuất ${id}`, err);
     }
 
     return updatedExport;
@@ -254,7 +247,7 @@ export class DeviceExportService {
         await this.notificationService.sendExportResult(fullExport);
       }
     } catch (err) {
-      this.logger.error(`Failed to trigger result notification for ${id}`, err);
+      this.logger.error(`Không gửi được mail kết quả phiếu xuất ${id}`, err);
     }
 
     return updatedExport;

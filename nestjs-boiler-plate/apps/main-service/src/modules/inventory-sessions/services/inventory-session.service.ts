@@ -61,7 +61,7 @@ export class InventorySessionService {
 
         if (updateDto.scannedItems && updateDto.scannedItems.length > 0) {
             const newMacs = updateDto.scannedItems.map(i => i.mac);
-            const existingMacs = session.details.map(d => d.serial);
+            const existingMacs = session.details.map(d => d.mac);
             const duplicates = newMacs.filter(s => existingMacs.includes(s));
 
             if (duplicates.length > 0) {
@@ -71,7 +71,7 @@ export class InventorySessionService {
             }
 
             const itemsToPush = updateDto.scannedItems.map(item => ({
-                serial: item.mac,
+                mac: item.mac,
                 deviceModel: item.deviceModel,
                 deviceCode: item.deviceCode || 'Unknown',
                 scannedAt: new Date()
@@ -85,14 +85,14 @@ export class InventorySessionService {
     }
 
     private async completeSession(session: InventorySession, userId: string): Promise<InventorySession> {
-        const macsToCheck = session.details.map(d => d.serial);
+        const macsToCheck = session.details.map(d => d.mac);
         if (macsToCheck.length > 0) {
             const existingDevices = await this.deviceService.findByMacs(macsToCheck);
             if (existingDevices.length > 0) {
                 const duplicateMacs = existingDevices.map(d => d.mac);
                 throw new ConflictException({
-                    message: `Phát hiện ${duplicateMacs.length} serial đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.`,
-                    error: 'DUPLICATE_SERIALS',
+                    message: `Phát hiện ${duplicateMacs.length} MAC đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.`,
+                    error: 'DUPLICATE_MACS',
                     duplicates: duplicateMacs
                 });
             }
@@ -122,7 +122,7 @@ export class InventorySessionService {
 
                 if (importTicket && importTicket.devices) {
                     for (const dev of importTicket.devices) {
-                        const found = dev.expectedDetails?.find(d => d.mac === item.serial);
+                        const found = dev.expectedDetails?.find(d => d.mac === item.mac);
                         if (found) {
                             foundDetail = found;
                             detailedName = found.name || modelName;
@@ -133,8 +133,9 @@ export class InventorySessionService {
                 }
 
                 return {
-                    code: item.serial,
-                    serial: (foundDetail && foundDetail.serial) ? foundDetail.serial : item.serial,
+                    code: item.deviceCode,
+                    mac: item.mac,
+                    serial: (foundDetail && foundDetail.serial) ? foundDetail.serial : '',
                     name: detailedName,
                     deviceModel: item.deviceCode || modelName,
                     unit: 'Cái',
@@ -145,7 +146,6 @@ export class InventorySessionService {
                     supplierId: importTicket.supplier || 'Unknown',
                     importDate: importTicket.importDate,
                     history: [],
-                    mac: item.serial,
                     p2p: detailedP2P,
                     currentExportId: null
                 };
@@ -219,7 +219,7 @@ export class InventorySessionService {
         if (session.status === 'completed') throw new BadRequestException(ERROR_MESSAGES.INVENTORY.ALREADY_COMPLETED);
 
         const initialCount = session.details.length;
-        session.details = session.details.filter(item => item.serial !== mac);
+        session.details = session.details.filter(item => item.mac !== mac);
 
         if (session.details.length === initialCount) {
             throw new NotFoundException(`MAC ${mac} not found in session.`);

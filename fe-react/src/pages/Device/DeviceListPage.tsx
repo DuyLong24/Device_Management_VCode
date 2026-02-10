@@ -71,7 +71,7 @@ export default function DeviceListPage() {
                 pagination={paginationConfig}
                 onChange={handleTableChange}
                 onExport={handleExport}
-                onViewDetail={(mac) => navigate(`/serial/${mac}`)}
+                onViewDetail={(mac) => navigate(`/device/${mac}`)}
             />
         </div>
     );

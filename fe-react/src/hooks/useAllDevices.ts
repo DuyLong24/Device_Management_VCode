@@ -12,7 +12,7 @@ import { categoryService } from '../services/category.service';
 import type { Category } from '../services/category.service';
 
 
-export interface SerialUI {
+export interface DeviceUI {
     key: string;
     mac: string;
     serial: string;
@@ -24,7 +24,7 @@ export interface SerialUI {
     warehouseColor: string;
     importDate: string;
     status: string;
-    createdAt?: string;
+    createdAt?: string; // Add createdAt to interface
 }
 
 const STATUS_TO_WAREHOUSE_MAP: Record<string, string> = {
@@ -97,7 +97,7 @@ export const useAllDevices = () => {
     const devicesList = deviceResponse?.results || [];
     const totalResults = deviceResponse?.totalResults || 0;
 
-    const allSerials: SerialUI[] = devicesList.map((d: Device) => {
+    const allDevices: DeviceUI[] = devicesList.map((d: Device) => {
         let rawWhId = d.warehouseId;
         if (typeof rawWhId === 'object' && rawWhId !== null) rawWhId = (rawWhId as any).id || (rawWhId as any)._id;
         const rawWhIdString = String(rawWhId);
@@ -222,7 +222,7 @@ export const useAllDevices = () => {
 
     return {
         loading: loadingDevices || isFetching,
-        dataSource: allSerials,
+        dataSource: allDevices,
 
         paginationConfig: {
             current: pagination.page,

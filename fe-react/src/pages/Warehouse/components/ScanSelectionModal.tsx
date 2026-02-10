@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Input, message, Typography, Space, Alert, Button } from 'antd';
 import { deviceService } from '../../../services/device.service';
+import { extractValidMacs } from '../../../utils/mac.util';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -31,7 +32,8 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
     }, [visible]);
 
     const handleProcess = async () => {
-        const macs = payload.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
+        // Sử dụng utils để trích xuất MAC hợp lệ, bỏ qua rác
+        const macs = extractValidMacs(payload);
         if (macs.length === 0) {
             message.warning('Vui lòng nhập ít nhất 1 mã MAC');
             return;

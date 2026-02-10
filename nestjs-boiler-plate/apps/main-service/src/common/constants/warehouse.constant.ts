@@ -30,6 +30,7 @@ export enum TransitionType {
     SCRAP = 'SCRAP',                       // Thanh lý/Hủy (-> REMOVED)
     CUSTOMER_RETURN = 'CUSTOMER_RETURN',   // Khách trả hàng (-> PENDING_QC)
     PENDING_QC_TO_UNDER_REPAIR = 'PENDING_QC_TO_UNDER_REPAIR', // QC -> Sửa chữa
+    WARRANTY_EXPIRED = 'WARRANTY_EXPIRED', // Hết hạn BH (SOLD -> SOLD_WARRANTY)
 }
 
 export enum ActionType {

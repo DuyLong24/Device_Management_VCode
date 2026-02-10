@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import type { QCPendingItem, ScannedMac, ValidationStatus } from '../../../types/qc.type';
+import { extractValidMacs } from '../../../utils/mac.util';
 
 const { Text } = Typography;
 
@@ -50,31 +51,44 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
     };
 
     const handleAddPassMac = () => {
-        const mac = macInput.trim();
-        if (!mac) {
+        const rawInput = macInput;
+        let macsToProcess = extractValidMacs(rawInput);
+        if (macsToProcess.length === 0) {
+            const raw = rawInput.trim();
+            if (raw) macsToProcess = [raw];
+        }
+
+        if (macsToProcess.length === 0) {
             message.warning('Vui lòng nhập MAC');
             return;
         }
 
-        const validation = validateMac(mac, scannedPassList);
+        let addedCount = 0;
+        const currentList = [...scannedPassList];
 
-        if (!validation.isValid) {
-            message.error(validation.message);
-            setMacInput('');
-            setTimeout(() => macInputRef.current?.focus(), 100);
-            return;
+        macsToProcess.forEach(mac => {
+            const validation = validateMac(mac, currentList);
+
+            if (validation.isValid) {
+                const newItem: ScannedMac = {
+                    ...validation.item!,
+                    validationStatus: 'valid',
+                };
+                currentList.push(newItem);
+                addedCount++;
+            } else {
+                if (macsToProcess.length === 1) {
+                    message.error(validation.message);
+                }
+            }
+        });
+
+        if (addedCount > 0) {
+            setScannedPassList(currentList);
+            message.success(`Đã thêm ${addedCount} thiết bị`);
         }
 
-        setScannedPassList([
-            ...scannedPassList,
-            {
-                ...validation.item!,
-                validationStatus: 'valid',
-            } as ScannedMac,
-        ]);
-
         setMacInput('');
-        message.success(`Thêm MAC ${mac} thành công`);
         setTimeout(() => macInputRef.current?.focus(), 100);
     };
 

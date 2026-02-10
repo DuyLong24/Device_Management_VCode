@@ -29,13 +29,13 @@ export default function DeviceListPage() {
     return (
         <div className="p-3 max-w-400 mx-auto">
             {/* Header */}
-            <div className="mb-6">
+            <div className="mb-2">
                 <Title level={3} className="mb-1!"> Danh sách thiết bị</Title>
-                <Text type="secondary">Quản lý toàn bộ thiết bị (Device) trong hệ thống</Text>
+                {/* <Text type="secondary">Quản lý toàn bộ thiết bị (Device) trong hệ thống</Text> */}
             </div>
 
             {/* Category Filter */}
-            <Card size="small" className="mb-4 bg-transparent border-0 shadow-none" styles={{ body: { padding: '0' } }}>
+            <Card size="small" className="mb-2 bg-transparent border-0 shadow-none" styles={{ body: { padding: '0' } }}>
                 <Segmented
                     options={[
                         { label: 'Tất cả', value: 'ALL' },

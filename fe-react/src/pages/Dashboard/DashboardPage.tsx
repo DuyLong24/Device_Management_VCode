@@ -16,7 +16,7 @@ const DashboardPage: React.FC = () => {
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <Title level={2} className="mb-0">Dashboard</Title>
-                    <span className="text-gray-500">Tổng quan hoạt động kho & thiết bị</span>
+                    {/* <span className="text-gray-500">Tổng quan hoạt động kho & thiết bị</span> */}
                 </div>
                 <Space>
                     <Button

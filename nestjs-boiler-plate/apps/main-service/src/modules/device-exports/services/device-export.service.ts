@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { DeviceExportRepository } from '../repositories/device-export.repository';
 import { CreateDeviceExportDto } from '../dto/create-device-export.dto';
 import { UpdateDeviceExportDto } from '../dto/update-device-export.dto';
@@ -20,6 +20,7 @@ export class DeviceExportService {
 
   constructor(
     private readonly deviceExportRepository: DeviceExportRepository,
+    @Inject(forwardRef(() => DeviceService))
     private readonly deviceService: DeviceService,
     private readonly notificationService: NotificationService,
     private readonly excelService: ExcelService,
@@ -37,6 +38,11 @@ export class DeviceExportService {
       // Tính tổng số lượng từ danh sách yêu cầu
       if (createDeviceExportDto.requirements) {
         createDeviceExportDto.totalQuantity = createDeviceExportDto.requirements.reduce((sum, req) => sum + req.quantity, 0);
+      }
+
+      // Validate Stock before creation
+      if (createDeviceExportDto.requirements) {
+        await this.validateStockAvailability(createDeviceExportDto.requirements);
       }
 
       const newExport = await this.deviceExportRepository.create(createDeviceExportDto);
@@ -60,6 +66,10 @@ export class DeviceExportService {
         dto: createDeviceExportDto,
         method: 'create'
       });
+      // Trả về lỗi nếu là BadRequestException hoặc NotFoundException hoặc status === 400
+      if (error instanceof BadRequestException || error instanceof NotFoundException || error.status === 400) {
+        throw error;
+      }
       throw new BadRequestException(ERROR_MESSAGES.DEVICE_EXPORT.CREATE_FAILED);
     }
   }
@@ -208,16 +218,7 @@ export class DeviceExportService {
     }
 
     // Validate Stock Availability
-    if (exportRecord.requirements && exportRecord.requirements.length > 0) {
-      for (const req of exportRecord.requirements) {
-        const stockStatus = await this.getInventoryStatus(req.deviceCode);
-        if (stockStatus.available < req.quantity) {
-          throw new BadRequestException(
-            `Không đủ tồn kho khả dụng cho ${req.deviceCode}. Cần: ${req.quantity}, Khả dụng: ${stockStatus.available}`
-          );
-        }
-      }
-    }
+    await this.validateStockAvailability(exportRecord.requirements);
 
     const updatedExport = await this.update(id, {
       status: ExportStatusEnum.APPROVED as any,
@@ -236,6 +237,27 @@ export class DeviceExportService {
     }
 
     return updatedExport;
+  }
+
+  private async validateStockAvailability(requirements: any[]) {
+    if (requirements && requirements.length > 0) {
+      // 1. Tính tổng số lượng yêu cầu cho từng model
+      const requirementsMap = new Map<string, number>();
+      for (const req of requirements) {
+        const currentQty = requirementsMap.get(req.deviceCode) || 0;
+        requirementsMap.set(req.deviceCode, currentQty + req.quantity);
+      }
+
+      // 2. Kiểm tra tồn kho
+      for (const [model, totalQuantity] of requirementsMap.entries()) {
+        const stockStatus = await this.getInventoryStatus(model);
+        if (stockStatus.available < totalQuantity) {
+          throw new BadRequestException(
+            `Không đủ tồn kho khả dụng cho ${model}. Cần: ${totalQuantity}, Khả dụng: ${stockStatus.available}`
+          );
+        }
+      }
+    }
   }
 
   async reject(id: string, reason: string): Promise<DeviceExport> {
@@ -277,10 +299,10 @@ export class DeviceExportService {
     let reserved = 0;
     for (const exportRecord of activeExports) {
       if (exportRecord.requirements) {
-        const req = exportRecord.requirements.find(r => r.deviceCode === model);
-        if (req) {
-          reserved += req.quantity;
-        }
+        // Tính tổng số lượng yêu cầu cho model này trong phiếu xuất
+        const reqs = exportRecord.requirements.filter(r => r.deviceCode === model);
+        const totalReservedForRecord = reqs.reduce((sum, r) => sum + r.quantity, 0);
+        reserved += totalReservedForRecord;
       }
     }
 
@@ -289,6 +311,30 @@ export class DeviceExportService {
       reserved,
       available: Math.max(0, inStock - reserved)
     };
+  }
+
+  async getAllReservedQuantity(): Promise<Map<string, number>> {
+    const activeExports = await this.deviceExportRepository.findAll({
+      status: {
+        $in: [
+          ExportStatusEnum.APPROVED,
+          ExportStatusEnum.IN_PROGRESS
+        ]
+      }
+    });
+
+    const reservedMap = new Map<string, number>();
+
+    for (const exportRecord of activeExports) {
+      if (exportRecord.requirements) {
+        for (const req of exportRecord.requirements) {
+          const current = reservedMap.get(req.deviceCode) || 0;
+          reservedMap.set(req.deviceCode, current + req.quantity);
+        }
+      }
+    }
+
+    return reservedMap;
   }
 
   async exportTicketExcel(id: string): Promise<Buffer> {

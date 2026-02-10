@@ -67,14 +67,15 @@ export const useCreateExport = () => {
             let stockCounts: Record<string, number> = {};
 
             if (readyWarehouse) {
-                // Use optimized stock summary endpoint instead of fetching all devices
+                // Lấy endpoint tóm tắt tồn kho tối ưu thay vì lấy tất cả thiết bị
                 const response = await axiosInstance.get('/devices/stock-summary');
                 const summary = response.data || [];
 
                 if (Array.isArray(summary)) {
                     stockCounts = summary.reduce((acc: any, item: any) => {
                         const m = item.deviceModel;
-                        if (m) acc[m] = item.count || 0;
+                        // Ưu tiên 'available' nếu có , fallback sang 'count'
+                        if (m) acc[m] = (item.available !== undefined) ? item.available : (item.count || 0);
                         return acc;
                     }, {});
                 }

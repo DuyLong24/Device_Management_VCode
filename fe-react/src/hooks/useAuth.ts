@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import keycloak from '../configs/auth.config';
-import axios from 'axios';
+import { axiosInstance } from '../configs/axios.config';
 
 export interface UserProfile {
     id: string;
@@ -32,9 +32,7 @@ export const useAuth = () => {
 
             try {
                 // Lấy permission từ BE
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/permissions/me`, {
-                    headers: { Authorization: `Bearer ${keycloak.token}` }
-                });
+                const response = await axiosInstance.get('/users/permissions/me');
                 initialUser.permissions = response.data.permissions || [];
             } catch (error) {
                 console.error("Failed to fetch permissions", error);

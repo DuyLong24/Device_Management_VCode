@@ -29,6 +29,7 @@ import { DevicePaginationDto } from '../dto/device-pagination.dto';
 import { ValidateMacsDto, ValidateMacsResponse } from '../dto/validate-serials.dto';
 import { DeviceImportRepository } from '../../device-imports/repositories/device-import.repository';
 import { DeviceExportRepository } from '../../device-exports/repositories/device-export.repository';
+import { DeviceExportService } from '../../device-exports/services/device-export.service';
 
 @Controller('devices')
 export class DeviceController {
@@ -42,6 +43,8 @@ export class DeviceController {
     private readonly deviceImportRepository: DeviceImportRepository,
     @Inject(forwardRef(() => DeviceExportRepository))
     private readonly deviceExportRepository: DeviceExportRepository,
+    @Inject(forwardRef(() => DeviceExportService))
+    private readonly deviceExportService: DeviceExportService,
   ) { }
 
   onModuleInit() {
@@ -109,10 +112,24 @@ export class DeviceController {
     const filter = await DeviceQueryBuilder.build(query, this.deviceImportRepository, this.deviceExportRepository);
     return this.deviceStatsService.getStatistics(filter);
   }
-
   @Get('stock-summary')
   async getStockSummary() {
-    return this.deviceService.getStockSummary();
+    // 1. Lấy tổng số lượng thực tế trong kho
+    const rawStock = await this.deviceService.getStockSummary();
+
+    // 2. Lấy số lượng đã được giữ lại từ các phiếu xuất đang chờ xử lý
+    const reservedMap = await this.deviceExportService.getAllReservedQuantity();
+
+    // 3. Gộp và tính toán số lượng khả dụng
+    return rawStock.map(item => {
+      const reserved = reservedMap.get(item.deviceModel) || 0;
+      return {
+        ...item,
+        total: item.count,
+        reserved: reserved,
+        available: Math.max(0, item.count - reserved)
+      };
+    });
   }
 
   @Get('mac/:mac/detail')

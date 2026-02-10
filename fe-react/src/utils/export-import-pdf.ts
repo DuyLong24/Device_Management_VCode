@@ -77,7 +77,7 @@ export const exportImportPDF = async (data: DeviceImport, extraData?: { originNa
     doc.text(data.supplier || '---', valueX, y);
 
     doc.text('Nguồn gốc:', col2X, y);
-    doc.text(extraData?.originName || (data.origin === 'IMPORT' ? 'Nhập khẩu' : data.origin === 'DOMESTIC' ? 'Nội địa' : data.origin), col2ValueX, y);
+    doc.text(extraData?.originName || data.origin, col2ValueX, y);
 
     y += 8;
     // Row 3 (Full width)

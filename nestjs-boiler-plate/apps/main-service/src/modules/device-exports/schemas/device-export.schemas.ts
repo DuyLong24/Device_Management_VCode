@@ -47,6 +47,12 @@ export class ExportItem {
 
   @Prop()
   exportPrice: number;
+
+  @Prop()
+  scannedAt: Date;
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
+  scannedBy: User;
 }
 export const ExportItemSchema = SchemaFactory.createForClass(ExportItem);
 

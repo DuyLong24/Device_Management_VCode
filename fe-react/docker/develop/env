@@ -1,4 +1,4 @@
 VITE_API_URL=https://api.wms.alvar.quytb.com
-VITE_KEYCLOAK_URL=https://keycloak.glorin.vn
-VITE_KEYCLOAK_REALM=WMS
-VITE_KEYCLOAK_CLIENT_ID=device-management
+VITE_KEYCLOAK_URL=https://kc.quytb.com
+VITE_KEYCLOAK_REALM=WarehouseManagementSystem
+VITE_KEYCLOAK_CLIENT_ID=warehouse-management

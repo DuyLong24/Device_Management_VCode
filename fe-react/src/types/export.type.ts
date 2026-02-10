@@ -21,6 +21,8 @@ export interface ExportItem {
     deviceModel: string;
     deviceCode: string;
     exportPrice?: number;
+    scannedAt?: string;
+    scannedBy?: string;
 }
 
 export interface DeviceExport {

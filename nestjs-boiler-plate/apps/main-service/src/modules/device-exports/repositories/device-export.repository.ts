@@ -17,9 +17,9 @@ export class DeviceExportRepository {
 
   async findAll(filter: any = {}): Promise<DeviceExport[]> {
     return this.deviceexportModel.find(filter)
-      .populate('createdBy', 'username name email')
-      .populate('approvedBy', 'username name email')
-      .populate('assignedApprover', 'username name email')
+      .populate('createdBy', 'name username email')
+      .populate('approvedBy', 'name username email')
+      .populate('assignedApprover', 'name username email')
       .exec();
   }
 
@@ -32,9 +32,9 @@ export class DeviceExportRepository {
       limit: Number(limit),
       sortBy: sortBy || 'createdAt:desc',
       populate: populate || [
-        { path: 'approvedBy', select: 'username name' },
-        { path: 'createdBy', select: 'username name' },
-        { path: 'assignedApprover', select: 'username name email' }
+        { path: 'approvedBy', select: 'name username email' },
+        { path: 'createdBy', select: 'name username email' },
+        { path: 'assignedApprover', select: 'name username email' }
       ]
     };
 
@@ -42,20 +42,27 @@ export class DeviceExportRepository {
     return this.deviceexportModel.paginate(filter, paginateOptions);
   }
 
-  async findById(id: string): Promise<DeviceExport | null> {
-    return this.deviceexportModel.findById(id)
-      .populate('createdBy', 'username name email')
-      .populate('approvedBy', 'username name email')
-      .populate('confirmedBy', 'username name email')
-      .populate('assignedApprover', 'username name email')
-      .exec();
+  async findById(id: string, populates: any[] = []): Promise<DeviceExport | null> {
+    let query = this.deviceexportModel.findById(id)
+      .populate('createdBy', 'name username email')
+      .populate('approvedBy', 'name username email')
+      .populate('confirmedBy', 'name username email')
+      .populate('assignedApprover', 'name username email');
+
+    if (populates.length > 0) {
+      populates.forEach(p => {
+        (query as any) = query.populate(p);
+      });
+    }
+
+    return query.exec();
   }
 
   async update(id: string, updateDeviceExportDto: UpdateDeviceExportDto): Promise<DeviceExport | null> {
     const updateData: any = { ...updateDeviceExportDto };
     updateData.updatedAt = new Date();
 
-    return this.deviceexportModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    return this.deviceexportModel.findByIdAndUpdate(id, updateData, { new: true }).exec() as Promise<DeviceExport | null>;
   }
 
   async delete(id: string): Promise<DeviceExport | null> {

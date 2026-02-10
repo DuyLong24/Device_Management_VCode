@@ -29,13 +29,13 @@ JWT_REFRESH_EXPIRATION=7d
 # KEYCLOAK_INTROSPECTION_URL=${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token/introspect
 # KEYCLOAK_AUTH_SERVER_URL=${KEYCLOAK_BASE_URL}
 
-KEYCLOAK_BASE_URL=https://keycloak.glorin.vn
-KEYCLOAK_REALM=WMS
-KEYCLOAK_CLIENT_ID=device-management
+KEYCLOAK_BASE_URL=https://kc.quytb.com
+KEYCLOAK_REALM=WarehouseManagementSystem
+KEYCLOAK_CLIENT_ID=warehouse-management
 KEYCLOAK_CLIENT_SECRET=pZupzBblP6tidZp2QadFApNCCUAPXTgd
 KEYCLOAK_ADMIN_USERNAME=admin
-KEYCLOAK_ADMIN_PASSWORD=ddJf6ANY26PQswX2
-KEYCLOAK_PUBLIC_KEY_URL=https://keycloak.glorin.vn/realms/WMS/protocol/openid-connect/certs
+KEYCLOAK_ADMIN_PASSWORD=X7mQ2vL9aN4pR8tK6cD1hJ3s
+KEYCLOAK_PUBLIC_KEY_URL=https://kc.quytb.com/realms/WarehouseManagementSystem/protocol/openid-connect/certs
 
 KEYCLOAK_ADMIN=admin
 # KEYCLOAK_ADMIN_PASSWORD=a792ae5d-bf9e-44fb-b7f4-62d8183d6ba0

@@ -74,7 +74,10 @@ export class DeviceExportService {
 
   async findById(id: string): Promise<DeviceExport> {
     try {
-      const deviceexport = await this.deviceExportRepository.findById(id);
+      const deviceexport = await this.deviceExportRepository.findById(id, [
+        { path: 'items.scannedBy', select: 'name username fullName' }
+      ]);
+
       if (!deviceexport) {
         this.logger.warn('Không tìm thấy phiếu xuất', { id, method: 'findById' });
         throw new NotFoundException(ERROR_MESSAGES.DEVICE_EXPORT.NOT_FOUND);
@@ -98,12 +101,18 @@ export class DeviceExportService {
         const deviceExportObj = deviceexport.toObject();
         deviceExportObj.items = deviceExportObj.items.map(item => {
           const device = deviceMap.get(item.mac);
+          let scannerName = item.scannedBy;
+          if (item.scannedBy && typeof item.scannedBy === 'object') {
+            const u = item.scannedBy as any;
+            scannerName = u.name || u.fullName || u.username || u._id?.toString();
+          }
 
           return {
             ...item,
             mac: item.mac,
             deviceName: device?.name,
-            serial: device?.serial
+            serial: device?.serial,
+            scannedBy: scannerName
           };
         });
 

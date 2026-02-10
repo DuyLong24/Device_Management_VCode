@@ -8,6 +8,7 @@ import { DeviceService } from '../../devices/services/device.service';
 import { ExportStatus } from '../schemas/device-export.schemas';
 import { WarehouseRepository } from '../../warehouses/repositories/warehouse.repository';
 
+
 @Injectable()
 export class ExportSessionService {
     constructor(
@@ -79,10 +80,10 @@ export class ExportSessionService {
         if (!exportRecord) throw new NotFoundException('Phiếu xuất không tồn tại');
 
         // Validation
-        await this.validateScan(mac, session, exportRecord); // Changed serial -> mac
+        await this.validateScan(mac, session, exportRecord);
 
         // Add
-        const device = await this.deviceService.findByMac(mac); // Re-fetch to be safe/simple or optimize if needed
+        const device = await this.deviceService.findByMac(mac);
         const newItem = {
             mac: device.mac,
             deviceCode: device.deviceModel,
@@ -216,22 +217,18 @@ export class ExportSessionService {
     }
 
     private async validateScan(mac: string, session: ExportSession, exportRecord: any): Promise<void> {
-        // 1. Check Duplicate Local
         if (session.items.some(i => i.mac === mac)) {
             throw new BadRequestException(`MAC ${mac} đã quét rồi`);
         }
 
-        // 2. Check Device Existence
         const device = await this.deviceService.findByMac(mac);
         if (!device) throw new BadRequestException(`MAC ${mac} không tồn tại`);
 
-        // 3. Check Warehouse Status
         const readyWarehouse = await this.warehouseRepository.findOne({ code: 'READY_TO_EXPORT' });
         if (readyWarehouse && String(device.warehouseId) !== String(readyWarehouse._id)) {
             throw new BadRequestException(`Thiết bị đang ở kho khác, chưa sẵn sàng xuất`);
         }
 
-        // 4. Check Duplicate Global (Locked in another session)
         const otherSession = await this.exportSessionRepository.findOne({
             status: ExportSessionStatus.IN_PROGRESS,
             'items.mac': mac,
@@ -242,7 +239,6 @@ export class ExportSessionService {
             throw new BadRequestException(`MAC ${mac} đang được quét ở phiên ${otherSession.sessionCode} (${otherSession.sessionName})`);
         }
 
-        // 5. Check Model Requirement
         const requirements = new Set(exportRecord.requirements.map(r => r.deviceCode));
         if (!requirements.has(device.deviceModel)) {
             throw new BadRequestException(`Loại thiết bị ${device.deviceModel} không nằm trong phiếu xuất này`);
@@ -259,7 +255,7 @@ export class ExportSessionService {
         }
 
         const macs = session.items.map(i => i.mac);
-        const exportRecord = await this.deviceExportRepository.findById(session.exportId as any); // Populate might be needed if exportId is object
+        const exportRecord = await this.deviceExportRepository.findById(session.exportId as any);
 
         // Xác định kho đích dựa trên loại xuất
         let targetWarehouseCode = 'SOLD'; // Default
@@ -286,7 +282,9 @@ export class ExportSessionService {
             mac: i.mac,
             deviceModel: i.deviceModel,
             deviceCode: i.deviceCode,
-            exportPrice: 0
+            exportPrice: 0,
+            scannedAt: i.scannedAt || new Date(),
+            scannedBy: userId
         }));
 
         await this.deviceExportRepository.update(session.exportId as any, {

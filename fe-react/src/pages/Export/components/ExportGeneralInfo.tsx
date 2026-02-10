@@ -5,6 +5,8 @@ import { sharedDataService } from '../../../services/shared-data.service';
 import { categoryService } from '../../../services/category.service';
 import { userManagementService } from '../../../services/user-management.service';
 
+import { useAuth } from '../../../hooks/useAuth';
+
 const { TextArea } = Input;
 
 interface ExportGeneralInfoProps {
@@ -18,6 +20,7 @@ export const ExportGeneralInfo = ({
     onProjectBlur,
     onProjectKeyDown
 }: ExportGeneralInfoProps) => {
+    const { isAuthenticated } = useAuth();
 
     // 1. Projects
     const { data: projects = [] } = useQuery({
@@ -43,6 +46,7 @@ export const ExportGeneralInfo = ({
         queryKey: ['admins'],
         queryFn: () => userManagementService.getAll({ limit: 100 }),
         staleTime: 5 * 60 * 1000,
+        enabled: isAuthenticated,
         select: (res: any) => {
             const users = res.data || [];
             return users

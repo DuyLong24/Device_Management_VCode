@@ -15,7 +15,7 @@ import { CreateCategoryDto } from '../dto/create-categories.dto';
 import { UpdateCategoryDto } from '../dto/update-categories.dto';
 import { CategoryPaginationDto } from '../dto/categories-pagination.dto';
 import { createFilterAndOptions } from '../../../utils/pick.util';
-import { Roles } from 'nest-keycloak-connect';
+import { Roles, Unprotected } from 'nest-keycloak-connect';
 
 @Controller('categories')
 export class CategoryController {
@@ -35,6 +35,7 @@ export class CategoryController {
   }
 
   @Get()
+  @Unprotected()
   async findAll(@Query() query: CategoryPaginationDto) {
     const { filter, options } = createFilterAndOptions(
       query,
@@ -52,6 +53,7 @@ export class CategoryController {
   }
 
   @Get('paginated')
+  @Unprotected()
   async findAllPaginated(@Query() query: CategoryPaginationDto) {
     const { filter, options } = createFilterAndOptions(
       query,
@@ -64,6 +66,7 @@ export class CategoryController {
   }
 
   @Get(':id')
+  @Unprotected()
   async findById(@Param('id') id: string) {
     return this.categoryService.findById(id);
   }

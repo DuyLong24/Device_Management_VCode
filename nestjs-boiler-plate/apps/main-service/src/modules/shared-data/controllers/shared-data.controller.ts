@@ -3,6 +3,7 @@ import { Controller, Get, Post, Put, Delete, Body, Query, Param } from '@nestjs/
 import { SharedDataService } from '../services/shared-data.service';
 import { CreateSharedDataDto, CreateSharedDataGroupDto } from '../dto/create-shared-data.dto';
 import { UpdateSharedDataDto, UpdateSharedDataGroupDto } from '../dto/update-shared-data.dto';
+import { Unprotected } from 'nest-keycloak-connect';
 
 @Controller('shared-data')
 export class SharedDataController {
@@ -14,6 +15,7 @@ export class SharedDataController {
     }
 
     @Get('groups')
+    @Unprotected()
     getGroups() {
         return this.service.getGroups();
     }
@@ -24,6 +26,7 @@ export class SharedDataController {
     }
 
     @Get('data')
+    @Unprotected()
     getData(@Query('groupCode') groupCode: string, @Query('groupId') groupId: string) {
         if (groupCode) return this.service.getDataByGroupCode(groupCode);
         if (groupId) return this.service.getDataByGroupId(groupId);

@@ -476,7 +476,7 @@ export default function RolePermissionDetailPage() {
         }));
     };
 
-    const findTreeNodeTitle = (nodes: DataNode[], key: string): string => {
+    const findTreeNodeTitle = (nodes: DataNode[], key: string): string | null => {
         for (const node of nodes) {
             if (node.key === key) return node.title as string;
             if (node.children) {
@@ -484,7 +484,7 @@ export default function RolePermissionDetailPage() {
                 if (found) return found;
             }
         }
-        return key;
+        return null;
     };
 
     if (loading) return <Spin className="block m-10 text-center" size="large" />;
@@ -547,7 +547,7 @@ export default function RolePermissionDetailPage() {
 
                 {/* Right: Permission Matrix */}
                 <Card
-                    title={`Phân quyền - ${findTreeNodeTitle(moduleTreeData, selectedModule)}`}
+                    title={`Phân quyền - ${findTreeNodeTitle(moduleTreeData, selectedModule) || selectedModule}`}
                     size="small"
                     className="w-3/4 h-full flex flex-col shadow-sm"
                     bodyStyle={{ flex: 1, overflow: 'hidden', padding: 0 }}

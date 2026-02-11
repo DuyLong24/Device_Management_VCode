@@ -14,7 +14,6 @@ import {
   Res
 } from '@nestjs/common';
 import { Response } from 'express';
-import { Roles } from 'nest-keycloak-connect';
 import { DeviceExportService } from '../services/device-export.service';
 import { ExportSessionService } from '../services/export-session.service';
 import { ExportNotificationTask } from '../tasks/export-notification.task';
@@ -97,27 +96,21 @@ export class DeviceExportController {
   }
 
   @Post(':id/approve')
-  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
   async approve(@Param('id') id: string, @Request() req: any) {
     if (!req.user) {
       throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
     }
     const user = await this.userService.syncFromKeycloak(req.user);
-    const userId = user._id.toString();
-    const username = user.username || user.name;
-
-    const userObj = {
-      _id: userId,
-      username: username,
-      role: req.user?.realm_access?.roles?.some((r: string) => ['admin', 'super_admin'].includes(r.toLowerCase())) ? 'ADMIN' : 'USER'
-    };
-    return this.deviceExportService.approve(id, userObj);
+    return this.deviceExportService.approve(id, user);
   }
 
   @Post(':id/reject')
-  @Roles({ roles: ['admin', 'Admin', 'super_admin', 'superadmin', 'Super admin'] })
-  async reject(@Param('id') id: string, @Body() body: { reason: string }) {
-    return this.deviceExportService.reject(id, body.reason);
+  async reject(@Param('id') id: string, @Body() body: { reason: string }, @Request() req: any) {
+    if (!req.user) {
+      throw new UnauthorizedException('Yêu cầu thông tin người dùng (User context required)');
+    }
+    const user = await this.userService.syncFromKeycloak(req.user);
+    return this.deviceExportService.reject(id, body.reason, user);
   }
 
 

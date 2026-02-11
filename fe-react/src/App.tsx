@@ -5,6 +5,7 @@ import enUS from 'antd/locale/en_US';
 import DashboardLayout from './components/layout/DashboardLayout';
 import { PermissionRoute } from './components/routes/PermissionRoute';
 import { NotificationProvider } from './contexts/NotificationProvider';
+import { PERMISSION_KEYS } from './constants/permissionKeys';
 
 import ImportListPage from './pages/Import/ImportListPage';
 import CreateImportPage from './pages/Import/CreateImportPage';
@@ -68,16 +69,16 @@ function App() {
                   {/* MODULE NHẬP KHO */}
                   <Route path="import">
                     {/* 1. Danh sách tổng: /import/list */}
-                    <Route path="list" element={<PermissionRoute requiredPermission="import:VIEW"><ImportListPage /></PermissionRoute>} />
+                    <Route path="list" element={<PermissionRoute requiredPermission={PERMISSION_KEYS.IMPORT.LIST.VIEW}><ImportListPage /></PermissionRoute>} />
 
                     {/* 2. Tạo mới: /import/create */}
-                    <Route path="create" element={<PermissionRoute requiredPermission="import:CREATE"><CreateImportPage /></PermissionRoute>} />
-                    <Route path="edit/:id" element={<PermissionRoute requiredPermission="import:UPDATE"><CreateImportPage /></PermissionRoute>} />
+                    <Route path="create" element={<PermissionRoute requiredPermission={PERMISSION_KEYS.IMPORT.CREATE.VIEW}><CreateImportPage /></PermissionRoute>} />
+                    <Route path="edit/:id" element={<PermissionRoute requiredPermission={PERMISSION_KEYS.IMPORT.CREATE.VIEW}><CreateImportPage /></PermissionRoute>} />
 
                     {/* 3. Danh sách chọn kiểm kê: /import/inventory-list */}
-                    <Route path="inventory-list" element={<PermissionRoute requiredPermission="import.inventory:VIEW"><InventoryListPage /></PermissionRoute>} />
+                    <Route path="inventory-list" element={<PermissionRoute requiredPermission={PERMISSION_KEYS.IMPORT.INVENTORY.VIEW}><InventoryListPage /></PermissionRoute>} />
 
-                    <Route path="inventory-check/:importId" element={<PermissionRoute requiredPermission="import.inventory:CHECK"><InventoryCheckPage /></PermissionRoute>} />
+                    <Route path="inventory-check/:importId" element={<PermissionRoute requiredPermission={PERMISSION_KEYS.IMPORT.INVENTORY.CHECK}><InventoryCheckPage /></PermissionRoute>} />
 
                     {/* 4. Chi tiết: /import/:id */}
                     <Route path=":id" element={<ImportDetailPage />} />
@@ -85,27 +86,27 @@ function App() {
 
                   {/* MODULE XUẤT KHO */}
                   <Route path="export">
-                    <Route path="list" element={<PermissionRoute requiredPermission="export:VIEW"><ExportListPage /></PermissionRoute>} />
-                    <Route path="create" element={<PermissionRoute requiredPermission="export:CREATE"><CreateExportPage /></PermissionRoute>} />
-                    <Route path="edit/:id" element={<PermissionRoute requiredPermission="export:UPDATE"><CreateExportPage /></PermissionRoute>} />
-                    <Route path="check" element={<PermissionRoute requiredPermission="export.check:VIEW"><ExportCheckListPage /></PermissionRoute>} />
+                    <Route path="list" element={<PermissionRoute requiredPermission={PERMISSION_KEYS.EXPORT.LIST.VIEW}><ExportListPage /></PermissionRoute>} />
+                    <Route path="create" element={<PermissionRoute requiredPermission={PERMISSION_KEYS.EXPORT.CREATE.VIEW}><CreateExportPage /></PermissionRoute>} />
+                    <Route path="edit/:id" element={<PermissionRoute requiredPermission={PERMISSION_KEYS.EXPORT.CREATE.VIEW}><CreateExportPage /></PermissionRoute>} />
+                    <Route path="check" element={<PermissionRoute requiredPermission={PERMISSION_KEYS.EXPORT.CHECK.VIEW}><ExportCheckListPage /></PermissionRoute>} />
                     <Route path=":id" element={<ExportDetailPage />} />
-                    <Route path=":id/check" element={<PermissionRoute requiredPermission="export.check:CHECK"><ExportProcessPage /></PermissionRoute>} />
+                    <Route path=":id/check" element={<PermissionRoute requiredPermission={PERMISSION_KEYS.EXPORT.CHECK.SCAN}><ExportProcessPage /></PermissionRoute>} />
                   </Route>
 
                   {/* --- CÁC MODULE KHÁC --- */}
                   <Route path="all-devices" element={
-                    <PermissionRoute requiredPermission="device:VIEW">
+                    <PermissionRoute requiredPermission={PERMISSION_KEYS.DEVICE.LIST.VIEW}>
                       <DeviceListPage />
                     </PermissionRoute>
                   } />
                   <Route path="device/:mac" element={
-                    <PermissionRoute requiredPermission="device:VIEW">
+                    <PermissionRoute requiredPermission={PERMISSION_KEYS.DEVICE.LIST.DETAIL}>
                       <DeviceDetailPage />
                     </PermissionRoute>
                   } />
                   <Route path="warehouse/:code" element={
-                    <PermissionRoute requiredPermission="warehouse:VIEW">
+                    <PermissionRoute requiredPermission={PERMISSION_KEYS.WAREHOUSE.ROOT.VIEW}>
                       <WarehousePage />
                     </PermissionRoute>
                   } />

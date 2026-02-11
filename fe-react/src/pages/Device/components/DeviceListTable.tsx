@@ -37,7 +37,7 @@ export const DeviceListTable: React.FC<DeviceListTableProps> = ({
     onViewDetail
 }) => {
     const { hasPermission } = useAuth();
-    const canExport = hasPermission(PERMISSION_KEYS.DEVICE.EXPORT);
+    const canExport = hasPermission(PERMISSION_KEYS.DEVICE.LIST.EXPORT);
     const columns: ColumnsType<DeviceUI> = [
         {
             title: 'MAC Address',

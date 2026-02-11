@@ -5,6 +5,9 @@ import { useCreateExport, type DeviceItem } from '../../hooks/useCreateExport';
 import { ProjectCreationModal } from './components/ProjectCreationModal';
 import { ExportGeneralInfo } from './components/ExportGeneralInfo';
 
+import { useAuth } from '../../hooks/useAuth';
+import { PERMISSION_KEYS } from '../../constants/permissionKeys';
+
 const { Title, Text } = Typography;
 
 export default function CreateExportPage() {
@@ -122,6 +125,10 @@ export default function CreateExportPage() {
         },
     ];
 
+    const { hasPermission } = useAuth();
+    const canSaveDraft = hasPermission(PERMISSION_KEYS.EXPORT.CREATE.SAVE_DRAFT);
+    const canSubmit = hasPermission(PERMISSION_KEYS.EXPORT.CREATE.SUBMIT);
+
     return (
         <div className="p-3 max-w-full mx-auto">
             {/* Header */}
@@ -199,10 +206,23 @@ export default function CreateExportPage() {
             {/* Footer */}
             <div className="sticky bottom-0 bg-white py-4 mt-3 border-t border-gray-200 z-10">
                 <div className="flex justify-end gap-2 pr-6">
-                    <Button icon={<SaveOutlined />} onClick={handleSaveDraft} loading={loading} size="large">
+                    <Button
+                        icon={<SaveOutlined />}
+                        onClick={handleSaveDraft}
+                        loading={loading}
+                        size="large"
+                        disabled={!canSaveDraft}
+                    >
                         {isEditMode ? 'Cập nhật nháp' : 'Lưu nháp'}
                     </Button>
-                    <Button type="primary" icon={<SendOutlined />} onClick={handleSaveAndSubmit} loading={loading} size="large">
+                    <Button
+                        type="primary"
+                        icon={<SendOutlined />}
+                        onClick={handleSaveAndSubmit}
+                        loading={loading}
+                        size="large"
+                        disabled={!canSubmit}
+                    >
                         {isEditMode ? 'Cập nhật & Gửi duyệt' : 'Lưu & Gửi duyệt'}
                     </Button>
                     <Button danger icon={<CloseOutlined />} onClick={handleCancel} size="large">

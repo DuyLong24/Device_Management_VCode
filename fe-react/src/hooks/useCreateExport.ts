@@ -68,7 +68,7 @@ export const useCreateExport = () => {
 
             if (readyWarehouse) {
                 // Lấy endpoint tóm tắt tồn kho tối ưu thay vì lấy tất cả thiết bị
-                const response = await axiosInstance.get('/devices/stock-summary');
+                const response = await axiosInstance.get('/inventory/stock-summary');
                 const summary = response.data || [];
 
                 if (Array.isArray(summary)) {

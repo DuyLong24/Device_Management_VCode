@@ -15,6 +15,7 @@ export const useAuth = () => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!keycloak.authenticated);
     const [token, setToken] = useState<string | undefined>(keycloak.token);
     const [user, setUser] = useState<UserProfile | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(!!keycloak.authenticated); // Start loading if authenticated
 
     const loadUserProfile = useCallback(async () => {
         if (keycloak.tokenParsed) {
@@ -36,11 +37,14 @@ export const useAuth = () => {
                 initialUser.permissions = response.data.permissions || [];
             } catch (error) {
                 console.error("Failed to fetch permissions", error);
+            } finally {
+                setUser(initialUser);
+                setIsLoading(false);
             }
 
-            setUser(initialUser);
         } else {
             setUser(null);
+            setIsLoading(false);
         }
     }, []);
 
@@ -79,6 +83,7 @@ export const useAuth = () => {
         login,
         logout,
         hasRole: (role: string) => user?.roles.some(r => r.toLowerCase() === role.toLowerCase()) || false,
-        hasPermission
+        hasPermission,
+        isLoading
     };
 };

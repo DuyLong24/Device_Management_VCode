@@ -21,7 +21,10 @@ const { Text } = Typography;
 
 const ExportListPage = () => {
     const { hasPermission } = useAuth();
-    const canExport = hasPermission(PERMISSION_KEYS.EXPORT.ROOT.EXPORT);
+    const canExport = hasPermission(PERMISSION_KEYS.EXPORT.LIST.EXPORT);
+    const canCreate = hasPermission(PERMISSION_KEYS.EXPORT.CREATE.VIEW);
+    const canDelete = hasPermission(PERMISSION_KEYS.EXPORT.LIST.DELETE);
+    const canViewDetail = hasPermission(PERMISSION_KEYS.EXPORT.LIST.DETAIL);
 
     const {
         filteredData,
@@ -90,6 +93,7 @@ const ExportListPage = () => {
                     type="link"
                     className="whitespace-nowrap p-0"
                     onClick={() => handleViewDetail(record.id || record._id || '', record.status === 'DRAFT')}
+                    disabled={!canViewDetail}
                 >
                     {text}
                 </Button>
@@ -225,10 +229,11 @@ const ExportListPage = () => {
                             size="small"
                             icon={<EyeOutlined />}
                             onClick={() => handleViewDetail(record.id || record._id || '', isDraft)}
+                            disabled={!canViewDetail}
                         >
                             {isDraft ? 'Sửa' : 'Chi tiết'}
                         </Button>
-                        {isDraft && (
+                        {isDraft && canDelete && (
                             <Button
                                 danger
                                 size="small"
@@ -264,9 +269,11 @@ const ExportListPage = () => {
                 title="Danh sách phiếu xuất kho"
                 subtitle="Quản lý các phiếu xuất kho thiết bị"
                 extra={
-                    <Button type="primary" icon={<PlusOutlined />} size="large" onClick={handleCreate}>
-                        Tạo phiếu xuất
-                    </Button>
+                    canCreate && (
+                        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={handleCreate}>
+                            Tạo phiếu xuất
+                        </Button>
+                    )
                 }
             />
 
@@ -290,9 +297,11 @@ const ExportListPage = () => {
                     </div>
                 ) : filteredData.length === 0 ? (
                     <Empty description="Chưa có phiếu xuất nào">
-                        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-                            Tạo phiếu xuất đầu tiên
-                        </Button>
+                        {canCreate && (
+                            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                                Tạo phiếu xuất đầu tiên
+                            </Button>
+                        )}
                     </Empty>
                 ) : (
                     <Table

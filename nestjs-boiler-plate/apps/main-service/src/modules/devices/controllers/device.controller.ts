@@ -13,8 +13,6 @@ import {
   Patch,
   Request,
   UnauthorizedException,
-  Inject,
-  forwardRef
 } from '@nestjs/common';
 import { Response } from 'express';
 import { DeviceQueryBuilder } from '../utils/device-query.builder';
@@ -27,9 +25,6 @@ import { CreateDeviceDto } from '../dto/create-device.dto';
 import { UpdateDeviceDto } from '../dto/update-device.dto';
 import { DevicePaginationDto } from '../dto/device-pagination.dto';
 import { ValidateMacsDto, ValidateMacsResponse } from '../dto/validate-serials.dto';
-import { DeviceImportRepository } from '../../device-imports/repositories/device-import.repository';
-import { DeviceExportRepository } from '../../device-exports/repositories/device-export.repository';
-import { DeviceExportService } from '../../device-exports/services/device-export.service';
 
 @Controller('devices')
 export class DeviceController {
@@ -39,12 +34,6 @@ export class DeviceController {
     private readonly deviceTransferService: DeviceTransferService,
     private readonly deviceValidationService: DeviceValidationService,
     private readonly userService: UserService,
-    @Inject(forwardRef(() => DeviceImportRepository))
-    private readonly deviceImportRepository: DeviceImportRepository,
-    @Inject(forwardRef(() => DeviceExportRepository))
-    private readonly deviceExportRepository: DeviceExportRepository,
-    @Inject(forwardRef(() => DeviceExportService))
-    private readonly deviceExportService: DeviceExportService,
   ) { }
 
   onModuleInit() {
@@ -72,7 +61,7 @@ export class DeviceController {
 
   @Get('export')
   async exportExcel(@Query() query: DevicePaginationDto, @Res() res: Response) {
-    const filter = await DeviceQueryBuilder.build(query, this.deviceImportRepository, this.deviceExportRepository);
+    const filter = DeviceQueryBuilder.build(query);
 
     const buffer = await this.deviceService.exportExcel(filter);
 
@@ -87,7 +76,7 @@ export class DeviceController {
 
   @Get()
   async findAll(@Query() query: DevicePaginationDto) {
-    const filter = await DeviceQueryBuilder.build(query, this.deviceImportRepository, this.deviceExportRepository);
+    const filter = DeviceQueryBuilder.build(query);
 
     const options = {
       page: query.page || 1,
@@ -109,27 +98,8 @@ export class DeviceController {
 
   @Get('stats')
   async getStatistics(@Query() query: DevicePaginationDto) {
-    const filter = await DeviceQueryBuilder.build(query, this.deviceImportRepository, this.deviceExportRepository);
+    const filter = DeviceQueryBuilder.build(query);
     return this.deviceStatsService.getStatistics(filter);
-  }
-  @Get('stock-summary')
-  async getStockSummary() {
-    // 1. Lấy tổng số lượng thực tế trong kho
-    const rawStock = await this.deviceService.getStockSummary();
-
-    // 2. Lấy số lượng đã được giữ lại từ các phiếu xuất đang chờ xử lý
-    const reservedMap = await this.deviceExportService.getAllReservedQuantity();
-
-    // 3. Gộp và tính toán số lượng khả dụng
-    return rawStock.map(item => {
-      const reserved = reservedMap.get(item.deviceModel) || 0;
-      return {
-        ...item,
-        total: item.count,
-        reserved: reserved,
-        available: Math.max(0, item.count - reserved)
-      };
-    });
   }
 
   @Get('mac/:mac/detail')

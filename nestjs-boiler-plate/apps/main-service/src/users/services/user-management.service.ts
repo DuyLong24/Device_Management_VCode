@@ -280,6 +280,36 @@ export class UserManagementService {
         }
     }
 
+    async findUsersByPermission(permission: string) {
+        // 1. Tìm tất cả các role có quyền này
+        const allRoles = await this.fncRoleService.findAll({});
+        const matchingRoleIds = allRoles
+            .filter((r: any) => {
+                if (r.code === 'super_admin') return true; // Super admin có tất cả quyền
+                return r.permissions?.includes(permission);
+            })
+            .map((r: any) => r._id);
+
+        if (matchingRoleIds.length === 0) return [];
+
+        // 2. Tìm user active có role đó
+        const users = await this.userModel
+            .find({
+                funcRoleId: { $in: matchingRoleIds },
+                status: 'ACTIVE',
+            })
+            .populate('funcRoleId')
+            .exec();
+
+        return users.map((u: any) => ({
+            id: u._id.toString(),
+            name: u.name,
+            username: u.username,
+            email: u.email,
+            role: (u.funcRoleId as any)?.code || '',
+        }));
+    }
+
     private transformToResponse(user: any): UserManagementResponseDto {
         const funcRole = user.funcRoleId;
 

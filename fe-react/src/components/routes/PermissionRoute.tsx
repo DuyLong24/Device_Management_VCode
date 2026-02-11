@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Result, Button } from 'antd';
+import { Result, Button, Spin } from 'antd';
 
 interface PermissionRouteProps {
     requiredRole?: string;
@@ -9,7 +9,15 @@ interface PermissionRouteProps {
 }
 
 export const PermissionRoute = ({ requiredRole, requiredPermission, children }: PermissionRouteProps) => {
-    const { hasRole, hasPermission } = useAuth();
+    const { hasRole, hasPermission, isLoading } = useAuth();
+
+    if (isLoading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <Spin size="large" />
+            </div>
+        );
+    }
 
     let canAccess = true;
 

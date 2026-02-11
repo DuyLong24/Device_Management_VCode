@@ -41,24 +41,17 @@ export const ExportGeneralInfo = ({
         select: (data: any[]) => data.map(c => ({ label: c.name, value: c.name }))
     });
 
-    // 3. Admins
-    const { data: admins = [] } = useQuery({
-        queryKey: ['admins'],
-        queryFn: () => userManagementService.getAll({ limit: 100 }),
+    // 3. Approvers
+    const { data: approvers = [] } = useQuery({
+        queryKey: ['approvers', 'export.list.approve'],
+        queryFn: () => userManagementService.getByPermission('export.list.approve'),
         staleTime: 5 * 60 * 1000,
         enabled: isAuthenticated,
-        select: (res: any) => {
-            const users = res.data || [];
-            return users
-                .filter((u: any) => {
-                    const roleCode = u.role?.code || u.role;
-                    return /admin/i.test(String(roleCode));
-                })
-                .map((u: any) => ({
-                    label: `${u.name} (${u.username || u.email})`,
-                    value: u.id || u._id
-                }));
-        }
+        select: (users: any[]) =>
+            users.map((u: any) => ({
+                label: `${u.name} (${u.username || u.email})`,
+                value: u.id,
+            })),
     });
 
     return (
@@ -125,7 +118,7 @@ export const ExportGeneralInfo = ({
                         <Select
                             allowClear
                             placeholder="Chọn người duyệt"
-                            options={admins}
+                            options={approvers}
                             showSearch
                             filterOption={(input, option) =>
                                 String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())

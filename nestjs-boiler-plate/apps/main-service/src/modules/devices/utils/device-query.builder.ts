@@ -1,21 +1,23 @@
 import { DevicePaginationDto } from '../dto/device-pagination.dto';
-import { DeviceImportRepository } from '../../device-imports/repositories/device-import.repository';
-import { DeviceExportRepository } from '../../device-exports/repositories/device-export.repository';
 
 export class DeviceQueryBuilder {
-    static async build(
-        query: DevicePaginationDto,
-        deviceImportRepository?: DeviceImportRepository,
-        deviceExportRepository?: DeviceExportRepository
-    ): Promise<any> {
+    static build(query: DevicePaginationDto): any {
         const filter: any = {};
 
         // 1. Lọc theo kho
         if (query.warehouseId) filter.warehouseId = query.warehouseId;
         if (query.categoryId) filter.categoryId = query.categoryId;
-        if (query.importId) filter.importId = query.importId;
 
-        // 2. Lọc theo mã serial, mã MAC, tên thiết bị, model
+        // 2. Lọc theo mã phiếu nhập/xuất
+        if (query.importId) {
+            filter.importId = query.importId;
+        }
+
+        if (query.exportId) {
+            filter.currentExportId = query.exportId;
+        }
+
+        // 3. Lọc theo mã serial, mã MAC, tên thiết bị, model
         if (query.serial) filter.serial = { $regex: query.serial, $options: 'i' };
         if (query.mac) {
             const macQuery = query.mac.trim();
@@ -29,26 +31,6 @@ export class DeviceQueryBuilder {
         }
         if (query.name) filter.name = { $regex: query.name, $options: 'i' };
         if (query.model) filter.deviceModel = { $regex: query.model, $options: 'i' };
-
-        // 3. Lọc theo mã phiếu nhập/xuất
-        if (query.importCode && deviceImportRepository) {
-            // Tìm import theo code
-            const imports = await deviceImportRepository.findAll({ code: { $regex: query.importCode, $options: 'i' } });
-            if (imports.length > 0) {
-                filter.importId = { $in: imports.map(i => i._id) };
-            } else {
-                filter.importId = '000000000000000000000000'; // Force empty
-            }
-        }
-
-        if (query.exportCode && deviceExportRepository) {
-            const exports = await deviceExportRepository.findAll({ code: { $regex: query.exportCode, $options: 'i' } });
-            if (exports.length > 0) {
-                filter.currentExportId = { $in: exports.map(e => e._id) };
-            } else {
-                filter.currentExportId = '000000000000000000000000'; // Force empty
-            }
-        }
 
         // 4. Lọc theo từ khóa (Global Search)
         if (query.search) {

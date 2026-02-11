@@ -2,7 +2,7 @@ import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { JwtModule } from '@nestjs/jwt';
 
@@ -41,6 +41,8 @@ import { ExcelModule } from './common/excel/excel.module';
 import { DataImportModule } from './modules/data-import/data-import.module';
 import { SharedDataModule } from './modules/shared-data/shared-data.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { DeviceQueryInterceptor } from './common/interceptors/device-query.interceptor';
 
 import { FncRole, FncRoleSchema } from './fnc-roles/entities/fnc-role.entity';
 import { User, UserSchema } from './users/entities/user.entity';
@@ -139,6 +141,7 @@ import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activat
     DataImportModule,
     SharedDataModule,
     NotificationsModule,
+    InventoryModule,
   ],
   controllers: [HealthController, AppController],
   providers: [
@@ -155,6 +158,10 @@ import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activat
     {
       provide: APP_GUARD,
       useClass: CustomRoleGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: DeviceQueryInterceptor,
     },
   ],
 })

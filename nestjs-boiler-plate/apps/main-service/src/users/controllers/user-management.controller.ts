@@ -24,9 +24,6 @@ export class UserManagementController {
     /**
      * GET /users/management - Lấy danh sách users
      */
-    /**
-     * GET /users/management - Lấy danh sách users
-     */
     @Get()
     async getUsers(@Query() filters: UserManagementFilterDto) {
         return this.userManagementService.findAllForManagement(filters);
@@ -35,6 +32,17 @@ export class UserManagementController {
     @Get('test')
     async test() {
         return { message: 'User Management Controller is working' };
+    }
+
+    /**
+     * GET /user-management/by-permission?permission=export.list.approve
+     */
+    @Get('by-permission')
+    async getUsersByPermission(@Query('permission') permission: string) {
+        if (!permission) {
+            return [];
+        }
+        return this.userManagementService.findUsersByPermission(permission);
     }
 
     /**

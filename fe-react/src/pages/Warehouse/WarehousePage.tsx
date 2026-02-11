@@ -24,7 +24,7 @@ const { Title, Text } = Typography;
 
 export default function WarehousePage() {
     const { hasPermission } = useAuth();
-    const canExport = hasPermission(PERMISSION_KEYS.DEVICE.EXPORT);
+    const canExport = hasPermission(PERMISSION_KEYS.DEVICE.LIST.EXPORT);
 
     const {
         code,

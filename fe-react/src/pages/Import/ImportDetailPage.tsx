@@ -15,7 +15,9 @@ import { IMPORT_STATUS_CONFIG } from '../../constants/import.constants';
 
 const ImportDetailPage = () => {
     const { hasPermission } = useAuth();
-    const canExport = hasPermission(PERMISSION_KEYS.IMPORT.ROOT.EXPORT);
+    const canExport = hasPermission(PERMISSION_KEYS.IMPORT.LIST.EXPORT);
+    const canEdit = hasPermission(PERMISSION_KEYS.IMPORT.LIST.UPDATE);
+    const canDelete = hasPermission(PERMISSION_KEYS.IMPORT.LIST.DELETE);
 
     const {
         importData,
@@ -84,8 +86,8 @@ const ImportDetailPage = () => {
                 status={status}
                 onBack={() => navigate('/import/list')}
                 onPrint={handlePrint}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
+                onEdit={canEdit ? handleEdit : undefined}
+                onDelete={canDelete ? handleDelete : undefined}
             />
 
             <Space direction="vertical" size="large" className="w-full">

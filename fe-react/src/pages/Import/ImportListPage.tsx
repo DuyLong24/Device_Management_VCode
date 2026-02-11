@@ -53,7 +53,9 @@ export default function ImportListPage() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const { hasPermission } = useAuth();
-    const canExport = hasPermission(PERMISSION_KEYS.IMPORT.ROOT.EXPORT);
+    const canExport = hasPermission(PERMISSION_KEYS.IMPORT.LIST.EXPORT);
+    const canCreate = hasPermission(PERMISSION_KEYS.IMPORT.CREATE.VIEW);
+    const canViewDetail = hasPermission(PERMISSION_KEYS.IMPORT.LIST.DETAIL);
 
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<ImportRecord[]>([]);
@@ -256,7 +258,9 @@ export default function ImportListPage() {
                 <Button
                     type="link"
                     onClick={() => handleViewDetail(record.key)}
-                    className="p-0 whitespace-nowrap">
+                    className="p-0 whitespace-nowrap"
+                    disabled={!canViewDetail}
+                >
                     {text}
                 </Button>
             ),
@@ -345,7 +349,7 @@ export default function ImportListPage() {
             align: 'center',
             render: (_, record) => (
                 <Space size="small">
-                    <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.key)}>
+                    <Button type="primary" size="small" icon={<EyeOutlined />} onClick={() => handleViewDetail(record.key)} disabled={!canViewDetail}>
                         {IMPORT_LABELS.BTN_DETAIL}
                     </Button>
                     <Tooltip title={!canExport ? 'Bạn không có quyền xuất file' : 'Xuất phiếu nhập kho ra PDF'}>
@@ -368,9 +372,11 @@ export default function ImportListPage() {
             <PageHeader
                 title={IMPORT_LABELS.PAGE_TITLE}
                 extra={
-                    <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => navigate('/import/create')}>
-                        {IMPORT_LABELS.BTN_CREATE}
-                    </Button>
+                    canCreate && (
+                        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => navigate('/import/create')}>
+                            {IMPORT_LABELS.BTN_CREATE}
+                        </Button>
+                    )
                 }
             />
 
@@ -401,9 +407,11 @@ export default function ImportListPage() {
                     </div>
                 ) : filteredData.length === 0 ? (
                     <Empty description={IMPORT_LABELS.NOT_FOUND} image={Empty.PRESENTED_IMAGE_SIMPLE} className="p-10">
-                        <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/import/create')}>
-                            {IMPORT_LABELS.CREATE_NOW}
-                        </Button>
+                        {canCreate && (
+                            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/import/create')}>
+                                {IMPORT_LABELS.CREATE_NOW}
+                            </Button>
+                        )}
                     </Empty>
                 ) : (
                     <Table

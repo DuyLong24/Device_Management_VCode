@@ -18,8 +18,8 @@ interface ImportHeaderProps {
     status?: string;
     onBack: () => void;
     onPrint: () => void;
-    onEdit: () => void;
-    onDelete: () => void;
+    onEdit?: () => void;
+    onDelete?: () => void;
 }
 
 export const ImportHeader: React.FC<ImportHeaderProps> = ({
@@ -32,7 +32,7 @@ export const ImportHeader: React.FC<ImportHeaderProps> = ({
     onDelete
 }) => {
     const { hasPermission } = useAuth();
-    const canExport = hasPermission(PERMISSION_KEYS.IMPORT.ROOT.EXPORT);
+    const canExport = hasPermission(PERMISSION_KEYS.IMPORT.LIST.EXPORT);
 
     const statusConfig = IMPORT_STATUS_CONFIG[inventoryStatus as keyof typeof IMPORT_STATUS_CONFIG]
         || { color: 'default', text: inventoryStatus };
@@ -79,8 +79,8 @@ export const ImportHeader: React.FC<ImportHeaderProps> = ({
                             In phiếu
                         </Button>
                     </Tooltip>
-                    <Button icon={<EditOutlined />} onClick={onEdit}>Sửa</Button>
-                    <Button danger icon={<DeleteOutlined />} onClick={onDelete}>Xóa</Button>
+                    {onEdit && <Button icon={<EditOutlined />} onClick={onEdit}>Sửa</Button>}
+                    {onDelete && <Button danger icon={<DeleteOutlined />} onClick={onDelete}>Xóa</Button>}
                 </Space>
             </div>
         </div>

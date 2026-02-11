@@ -20,8 +20,6 @@ import { WarrantyActivationTask } from './tasks/warranty-activation.task';
 import { WarrantyExpirationTask } from './tasks/warranty-expiration.task';
 import { DeviceHistoryModule } from '../device-histories/device-histories.module';
 import { InventorySessionModule } from '../inventory-sessions/inventory-sessions.module';
-import { DeviceImportModule } from '../device-imports/device-imports.module';
-import { DeviceExportModule } from '../device-exports/device-exports.module';
 
 import { PublicDeviceController } from './controllers/public-device.controller';
 
@@ -35,8 +33,6 @@ import { PublicDeviceController } from './controllers/public-device.controller';
     ]),
     WarehousesModule,
     SharedDataModule,
-    forwardRef(() => DeviceImportModule),
-    forwardRef(() => DeviceExportModule),
     forwardRef(() => DeviceHistoryModule),
     forwardRef(() => InventorySessionModule),
     UsersModule,

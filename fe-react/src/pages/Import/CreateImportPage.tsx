@@ -17,6 +17,9 @@ import { DeviceSelectionModal } from './components/DeviceSelectionModal';
 
 import { useCreateImport } from '../../hooks/useCreateImport';
 
+import { useAuth } from '../../hooks/useAuth';
+import { PERMISSION_KEYS } from '../../constants/permissionKeys';
+
 const { Title } = Typography;
 
 export default function CreateImportPage() {
@@ -41,6 +44,10 @@ export default function CreateImportPage() {
         handleWizardSuccess,
         IMPORT_TICKET_FIELDS
     } = useCreateImport();
+
+    const { hasPermission } = useAuth();
+    const canSaveDraft = hasPermission(PERMISSION_KEYS.IMPORT.CREATE.SAVE_DRAFT);
+    const canSubmit = hasPermission(PERMISSION_KEYS.IMPORT.CREATE.SUBMIT);
 
     return (
         <main className="p-3 pb-24 max-w-none mx-auto">
@@ -81,10 +88,25 @@ export default function CreateImportPage() {
             {/* Sticky Footer */}
             <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50">
                 <div className="max-w-full mx-auto flex justify-end gap-3">
-                    <Button icon={<SaveOutlined />} onClick={() => submitImport('DRAFT')} loading={loading} size="large" className="min-w-30">
+                    <Button
+                        icon={<SaveOutlined />}
+                        onClick={() => submitImport('DRAFT')}
+                        loading={loading}
+                        size="large"
+                        className="min-w-30"
+                        disabled={!canSaveDraft}
+                    >
                         Lưu nháp
                     </Button>
-                    <Button type="primary" icon={<SaveOutlined />} onClick={() => submitImport('PUBLIC')} loading={loading} size="large" className="bg-blue-600 hover:bg-blue-700 min-w-50">
+                    <Button
+                        type="primary"
+                        icon={<SaveOutlined />}
+                        onClick={() => submitImport('PUBLIC')}
+                        loading={loading}
+                        size="large"
+                        className="bg-blue-600 hover:bg-blue-700 min-w-50"
+                        disabled={!canSubmit}
+                    >
                         Hoàn thiện & đóng
                     </Button>
                     <Button danger icon={<CloseOutlined />} onClick={handleCancel} size="large" className="min-w-25">

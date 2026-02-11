@@ -30,7 +30,7 @@ export default function ExportDetailPage() {
         handleDelete,
     } = useExportDetail();
 
-    const { hasRole, user, hasPermission } = useAuth();
+    const { user, hasPermission } = useAuth();
     const { sessions, createSession } = useExportSession(id);
     const [projects, setProjects] = useState<any[]>([]);
 
@@ -86,9 +86,12 @@ export default function ExportDetailPage() {
         return false;
     })();
 
-    // Allow if Admin AND Assigned
-    const isAdmin = hasRole('admin') || hasRole('super admin') || hasRole('super_admin');
-    const canApprove = isAdmin && isAssigned;
+    const canApprovePermission = hasPermission(PERMISSION_KEYS.EXPORT.LIST.APPROVE);
+    const canApprove = canApprovePermission && isAssigned;
+
+    const canEdit = hasPermission(PERMISSION_KEYS.EXPORT.LIST.UPDATE);
+    const canDelete = hasPermission(PERMISSION_KEYS.EXPORT.LIST.DELETE);
+    const canExport = hasPermission(PERMISSION_KEYS.EXPORT.LIST.EXPORT);
 
     const handleCreateSession = () => {
         createSession(undefined);
@@ -99,7 +102,7 @@ export default function ExportDetailPage() {
     };
 
     const handleExportPDF = () => {
-        if (!hasPermission(PERMISSION_KEYS.EXPORT.ROOT.EXPORT)) {
+        if (!canExport) {
             // Optional: Message could be added here, but button is disabled anyway
             return;
         }
@@ -126,13 +129,13 @@ export default function ExportDetailPage() {
                         title={
                             exportInfo.status !== 'PENDING_APPROVAL' && exportInfo.status !== 'DRAFT'
                                 ? "Không thể chỉnh sửa phiếu đã duyệt"
-                                : undefined
+                                : !canEdit ? "Bạn không có quyền chỉnh sửa" : undefined
                         }
                     >
                         <Button
                             icon={<EditOutlined />}
                             onClick={handleEdit}
-                            disabled={exportInfo.status !== 'PENDING_APPROVAL' && exportInfo.status !== 'DRAFT'}
+                            disabled={!canEdit || (exportInfo.status !== 'PENDING_APPROVAL' && exportInfo.status !== 'DRAFT')}
                         >
                             Sửa
                         </Button>
@@ -141,14 +144,14 @@ export default function ExportDetailPage() {
                         title={
                             exportInfo.items && exportInfo.items.length > 0
                                 ? "Không thể xóa phiếu xuất đã có thiết bị được quét"
-                                : undefined
+                                : !canDelete ? "Bạn không có quyền xóa" : undefined
                         }
                     >
                         <Button
                             danger
                             icon={<DeleteOutlined />}
                             onClick={handleDelete}
-                            disabled={exportInfo.items && exportInfo.items.length > 0}
+                            disabled={!canDelete || (exportInfo.items && exportInfo.items.length > 0)}
                         >
                             Xóa
                         </Button>

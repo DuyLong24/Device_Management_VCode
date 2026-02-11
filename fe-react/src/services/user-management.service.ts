@@ -54,6 +54,14 @@ export const userManagementService = {
         };
     },
 
+    // Lấy danh sách users có permission cụ thể (dùng cho dropdown người duyệt)
+    getByPermission: async (permission: string) => {
+        const response = await axiosInstance.get<any[]>('/user-management/by-permission', {
+            params: { permission },
+        });
+        return response.data || [];
+    },
+
     // Tạo user mới
     create: async (data: CreateUserData) => {
         const response = await axiosInstance.post<UserDTO>('/user-management', data);
@@ -85,11 +93,5 @@ export const userManagementService = {
             mustChange,
         });
         return response.data;
-    },
-
-    // Export Excel (TODO)
-    exportExcel: async (filters: UserFilters = {}) => {
-        // TODO: Implement Excel export
-        console.log('Export with filters:', filters);
     },
 };

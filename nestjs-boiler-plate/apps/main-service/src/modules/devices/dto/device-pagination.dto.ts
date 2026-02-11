@@ -65,6 +65,10 @@ export class DevicePaginationDto {
   @IsString()
   exportCode?: string;
 
+  @IsOptional()
+  @IsMongoId()
+  exportId?: string;
+
   // --- Date Range ---
   @IsOptional()
   @IsDateString()

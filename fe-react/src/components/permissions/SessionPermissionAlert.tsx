@@ -20,6 +20,7 @@ export function SessionPermissionAlert({ sessionType = 'inventory' }: SessionPer
             type="error"
             showIcon
             icon={<InfoCircleOutlined />}
+            style={{ textAlign: 'left' }}
         />
     );
 }

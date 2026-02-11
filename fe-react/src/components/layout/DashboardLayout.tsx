@@ -15,6 +15,7 @@ import {
     DASHBOARD_COLORS, COLOR_MAP, ICON_MAP,
     MENU_KEYS, MENU_LABELS, SECTION_ICONS
 } from '../../constants/dashboard.constants';
+import { PERMISSION_KEYS } from '../../constants/permissionKeys';
 import { findMenuItemLabel, getActiveKeysFromPath } from '../../utils/navigation.utils';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotification } from '../../contexts/useNotification';
@@ -40,7 +41,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const [selectedKey, setSelectedKey] = useState<string>(MENU_KEYS.DASHBOARD);
     const [openKeys, setOpenKeys] = useState<string[]>([]);
 
-    const { user, logout, hasRole, isAuthenticated, login } = useAuth();
+    const { user, logout, hasRole, isAuthenticated, login, hasPermission } = useAuth();
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -101,18 +102,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
                 // Logic phân nhóm kho theo code
                 if (group.code === 'INTERNAL' || group.name === 'Kho nội bộ') {
-                    // console.log(`  -> Added to INTERNAL`);
                     internalItems.push(item);
                 } else if (group.code === 'EXPORTED' || group.name === 'Đã xuất') {
-                    // console.log(`  -> Added to EXPORTED`);
                     exportedItems.push(item);
-                } else {
-                    // console.log(`  -> NOT MATCHED - group.code: ${group.code}, group.name: ${group.name}`);
                 }
             });
         }
 
-        return [
+        const items: MenuProps['items'] = [
             {
                 key: MENU_KEYS.DASHBOARD,
                 icon: SECTION_ICONS.DASHBOARD,
@@ -120,58 +117,123 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 onClick: () => navigate('/dashboard'),
             },
             { type: 'divider' },
-            {
+        ];
+
+        // --- DEVICE & WAREHOUSE ---
+        if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(PERMISSION_KEYS.DEVICE.ROOT.VIEW)) {
+            items.push({
                 key: MENU_KEYS.ALL_DEVICES,
                 icon: SECTION_ICONS.ALL_DEVICES,
                 label: renderBadgeLabel(MENU_LABELS.ALL_DEVICES),
                 onClick: () => navigate('/all-devices'),
-            },
-            {
-                key: MENU_KEYS.IMPORT.ROOT,
-                icon: SECTION_ICONS.IMPORT,
-                label: MENU_LABELS.IMPORT.ROOT,
-                children: [
-                    { key: MENU_KEYS.IMPORT.LIST, icon: SECTION_ICONS.IMPORT_LIST, label: MENU_LABELS.IMPORT.LIST, onClick: () => navigate('/import/list') },
-                    { key: MENU_KEYS.IMPORT.CREATE, icon: SECTION_ICONS.IMPORT_CREATE, label: MENU_LABELS.IMPORT.CREATE, onClick: () => navigate('/import/create') },
-                    { key: MENU_KEYS.IMPORT.INVENTORY, icon: SECTION_ICONS.IMPORT_INVENTORY, label: MENU_LABELS.IMPORT.INVENTORY, onClick: () => navigate('/import/inventory-list') },
-                ],
-            },
-            { type: 'divider' },
-            {
-                key: MENU_KEYS.EXPORT.ROOT,
-                icon: SECTION_ICONS.EXPORT,
-                label: MENU_LABELS.EXPORT.ROOT,
-                children: [
-                    { key: MENU_KEYS.EXPORT.LIST, icon: SECTION_ICONS.EXPORT_LIST, label: MENU_LABELS.EXPORT.LIST, onClick: () => navigate('/export/list') },
-                    { key: MENU_KEYS.EXPORT.CREATE, icon: SECTION_ICONS.EXPORT_CREATE, label: MENU_LABELS.EXPORT.CREATE, onClick: () => navigate('/export/create') },
-                    { key: MENU_KEYS.EXPORT.CHECK, icon: SECTION_ICONS.EXPORT_CHECK, label: MENU_LABELS.EXPORT.CHECK, onClick: () => navigate('/export/check') },
-                ],
-            },
-            { type: 'divider' },
-            {
+            });
+        }
+
+        // --- IMPORT ---
+        if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(PERMISSION_KEYS.IMPORT.ROOT.VIEW)) {
+            const children = [];
+            if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(PERMISSION_KEYS.IMPORT.LIST.VIEW)) {
+                children.push({ key: MENU_KEYS.IMPORT.LIST, icon: SECTION_ICONS.IMPORT_LIST, label: MENU_LABELS.IMPORT.LIST, onClick: () => navigate('/import/list') });
+            }
+            if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(PERMISSION_KEYS.IMPORT.CREATE.VIEW)) {
+                children.push({ key: MENU_KEYS.IMPORT.CREATE, icon: SECTION_ICONS.IMPORT_CREATE, label: MENU_LABELS.IMPORT.CREATE, onClick: () => navigate('/import/create') });
+            }
+            if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(PERMISSION_KEYS.IMPORT.INVENTORY.VIEW)) {
+                children.push({ key: MENU_KEYS.IMPORT.INVENTORY, icon: SECTION_ICONS.IMPORT_INVENTORY, label: MENU_LABELS.IMPORT.INVENTORY, onClick: () => navigate('/import/inventory-list') });
+            }
+
+            if (children.length > 0) {
+                items.push({
+                    key: MENU_KEYS.IMPORT.ROOT,
+                    icon: SECTION_ICONS.IMPORT,
+                    label: MENU_LABELS.IMPORT.ROOT,
+                    children: children,
+                });
+            }
+        }
+
+        items.push({ type: 'divider' });
+
+        // --- EXPORT ---
+        if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(PERMISSION_KEYS.EXPORT.ROOT.VIEW)) {
+            const children = [];
+            if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(PERMISSION_KEYS.EXPORT.LIST.VIEW)) {
+                children.push({ key: MENU_KEYS.EXPORT.LIST, icon: SECTION_ICONS.EXPORT_LIST, label: MENU_LABELS.EXPORT.LIST, onClick: () => navigate('/export/list') });
+            }
+            if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(PERMISSION_KEYS.EXPORT.CREATE.VIEW)) {
+                children.push({ key: MENU_KEYS.EXPORT.CREATE, icon: SECTION_ICONS.EXPORT_CREATE, label: MENU_LABELS.EXPORT.CREATE, onClick: () => navigate('/export/create') });
+            }
+            if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(PERMISSION_KEYS.EXPORT.CHECK.VIEW)) {
+                children.push({ key: MENU_KEYS.EXPORT.CHECK, icon: SECTION_ICONS.EXPORT_CHECK, label: MENU_LABELS.EXPORT.CHECK, onClick: () => navigate('/export/check') });
+            }
+            if (children.length > 0) {
+                items.push({
+                    key: MENU_KEYS.EXPORT.ROOT,
+                    icon: SECTION_ICONS.EXPORT,
+                    label: MENU_LABELS.EXPORT.ROOT,
+                    children: children,
+                });
+            }
+        }
+
+        items.push({ type: 'divider' });
+
+        // --- WAREHOUSES ---
+        // TODO: Filter internalItems and exportedItems based on permissions if strict mode is needed
+        // For now, assuming if they can see module, they can see lists, but individual access is checked on click?
+        // Or filter here based on `warehouse.{code}.view`
+
+        const filteredInternal = internalItems?.filter(item =>
+            hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(`warehouse.${(item as any).key.replace('warehouse-', '')}.view`)
+        );
+        const filteredExported = exportedItems?.filter(item =>
+            hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(`warehouse.${(item as any).key.replace('warehouse-', '')}.view`)
+        );
+
+        if (filteredInternal && filteredInternal.length > 0) {
+            items.push({
                 key: MENU_KEYS.INTERNAL_GROUP,
                 icon: SECTION_ICONS.INTERNAL,
                 label: MENU_LABELS.INTERNAL_GROUP,
-                children: internalItems.length > 0 ? internalItems : undefined,
-            },
-            {
+                children: filteredInternal,
+            });
+        }
+
+        if (filteredExported && filteredExported.length > 0) {
+            items.push({
                 key: MENU_KEYS.EXPORTED_GROUP,
                 icon: SECTION_ICONS.EXPORTED,
                 label: MENU_LABELS.EXPORTED_GROUP,
-                children: exportedItems.length > 0 ? exportedItems : undefined,
-            },
-            { type: 'divider' },
-            {
-                key: MENU_KEYS.SYSTEM.ROOT,
-                icon: SECTION_ICONS.SYSTEM,
-                label: MENU_LABELS.SYSTEM.ROOT,
-                children: [
-                    { key: MENU_KEYS.SYSTEM.USERS, icon: SECTION_ICONS.SYSTEM_USERS, label: MENU_LABELS.SYSTEM.USERS, onClick: () => navigate('/system/users') },
-                    { key: MENU_KEYS.SYSTEM.ROLES, icon: SECTION_ICONS.SYSTEM_ROLES, label: MENU_LABELS.SYSTEM.ROLES, onClick: () => navigate('/system/roles') },
-                    { key: MENU_KEYS.SYSTEM.SHARED_DATA, icon: <AppstoreOutlined />, label: MENU_LABELS.SYSTEM.SHARED_DATA, onClick: () => navigate('/system/shared-data') },
-                ],
-            },
-        ];
+                children: filteredExported,
+            });
+        }
+
+        items.push({ type: 'divider' });
+
+        // --- SYSTEM ---
+        if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || (hasPermission(PERMISSION_KEYS.SYSTEM.ROOT.VIEW))) {
+            const children = [];
+            if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(PERMISSION_KEYS.SYSTEM.USER.VIEW)) {
+                children.push({ key: MENU_KEYS.SYSTEM.USERS, icon: SECTION_ICONS.SYSTEM_USERS, label: MENU_LABELS.SYSTEM.USERS, onClick: () => navigate('/system/users') });
+            }
+            if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(PERMISSION_KEYS.SYSTEM.ROLE.VIEW)) {
+                children.push({ key: MENU_KEYS.SYSTEM.ROLES, icon: SECTION_ICONS.SYSTEM_ROLES, label: MENU_LABELS.SYSTEM.ROLES, onClick: () => navigate('/system/roles') });
+            }
+            if (hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(PERMISSION_KEYS.SYSTEM.SHARED_DATA.VIEW)) {
+                children.push({ key: MENU_KEYS.SYSTEM.SHARED_DATA, icon: <AppstoreOutlined />, label: MENU_LABELS.SYSTEM.SHARED_DATA, onClick: () => navigate('/system/shared-data') });
+            }
+
+            if (children.length > 0) {
+                items.push({
+                    key: MENU_KEYS.SYSTEM.ROOT,
+                    icon: SECTION_ICONS.SYSTEM,
+                    label: MENU_LABELS.SYSTEM.ROOT,
+                    children: children,
+                });
+            }
+        }
+
+        return items;
     }, [warehouses, navigate, groups, hasRole, user]);
 
     // Lọc menu items để ẩn System cho người dùng không có quyền super_admin

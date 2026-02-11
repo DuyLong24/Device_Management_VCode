@@ -29,7 +29,7 @@ export const ApprovalActions = ({
     canApprove = false
 }: ApprovalActionsProps) => {
     const { hasPermission } = useAuth();
-    const canExport = hasPermission(PERMISSION_KEYS.EXPORT.ROOT.EXPORT);
+    const canExport = hasPermission(PERMISSION_KEYS.EXPORT.LIST.EXPORT);
 
     const handleRejectClick = () => {
         onReject();
@@ -67,18 +67,19 @@ export const ApprovalActions = ({
                 </>
             )}
 
-
-            {status === EXPORT_STATUS.COMPLETED && (
-                <Tooltip title={!canExport ? 'Bạn không có quyền xuất file' : 'Xuất phiếu xuất kho (PDF)'}>
-                    <Button
-                        icon={<PrinterOutlined />}
-                        disabled={!canExport}
-                        onClick={onExport}
-                    >
-                        Xuất PDF
-                    </Button>
-                </Tooltip>
-            )}
+            {(status === EXPORT_STATUS.APPROVED ||
+                status === EXPORT_STATUS.IN_PROGRESS ||
+                status === EXPORT_STATUS.COMPLETED) && (
+                    <Tooltip title={!canExport ? 'Bạn không có quyền xuất file' : 'Xuất phiếu xuất kho (PDF)'}>
+                        <Button
+                            icon={<PrinterOutlined />}
+                            disabled={!canExport}
+                            onClick={onExport}
+                        >
+                            Xuất PDF
+                        </Button>
+                    </Tooltip>
+                )}
         </Space>
     );
 };

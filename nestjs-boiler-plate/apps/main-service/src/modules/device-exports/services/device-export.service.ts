@@ -199,6 +199,9 @@ export class DeviceExportService {
   }
 
   async approve(id: string, user: any): Promise<DeviceExport> {
+    // Check permission
+    await this.checkUserPermission(user, 'export.list.approve', 'Bạn không có quyền duyệt phiếu xuất.');
+
     const exportRecord = await this.findById(id);
     if (exportRecord.status !== ExportStatusEnum.PENDING_APPROVAL) {
       throw new BadRequestException('Chỉ có thể duyệt phiếu đang Chờ duyệt (PENDING_APPROVAL).');
@@ -260,7 +263,12 @@ export class DeviceExportService {
     }
   }
 
-  async reject(id: string, reason: string): Promise<DeviceExport> {
+  async reject(id: string, reason: string, user?: any): Promise<DeviceExport> {
+    // Check permission if user is provided
+    if (user) {
+      await this.checkUserPermission(user, 'export.list.approve', 'Bạn không có quyền từ chối phiếu xuất.');
+    }
+
     const exportRecord = await this.findById(id);
     if (exportRecord.status !== ExportStatusEnum.PENDING_APPROVAL) {
       throw new BadRequestException('Chỉ có thể từ chối phiếu đang Chờ duyệt (PENDING_APPROVAL).');
@@ -282,6 +290,33 @@ export class DeviceExportService {
     }
 
     return updatedExport;
+  }
+
+  /**
+   * Kiểm tra quyền của user
+   */
+  private async checkUserPermission(user: any, permission: string, errorMessage: string) {
+    if (!user || !user.funcRoleId) {
+      throw new ForbiddenException(errorMessage);
+    }
+
+    // Populate funcRoleId nếu chưa được populate
+    const populatedUser = user.populated?.('funcRoleId')
+      ? user
+      : await user.populate('funcRoleId');
+
+    const role = populatedUser.funcRoleId;
+    if (!role) {
+      throw new ForbiddenException(errorMessage);
+    }
+
+    // Super admin bypass
+    if (role.code === 'super_admin') return;
+
+    // Check permission
+    if (!role.permissions?.includes(permission)) {
+      throw new ForbiddenException(errorMessage);
+    }
   }
 
   async getInventoryStatus(model: string): Promise<{ inStock: number; reserved: number; available: number }> {

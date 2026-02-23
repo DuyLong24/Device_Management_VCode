@@ -13,6 +13,10 @@ import { DeviceService } from '../../devices/services/device.service';
 import { NotificationService } from '../../notifications/services/notification.service';
 
 import { ExcelService } from '../../../common/excel/excel.service';
+import { DeviceExportPaginationDto } from '../dto/device-export-pagination.dto';
+import { createFilterAndOptions } from '../../../utils/pick.util';
+import { DeviceExportTransformer } from '../transformers/device-export.transformer';
+import { DeviceExportExcelUtil } from '../utils/device-export.excel.util';
 
 @Injectable()
 export class DeviceExportService {
@@ -78,7 +82,13 @@ export class DeviceExportService {
     return this.deviceExportRepository.findAll(filter);
   }
 
-  async findAllWithPagination(filter: FilterQuery<DeviceExport> = {}, options: any = {}): Promise<PaginateResult<DeviceExport>> {
+  async findAllWithPagination(query: DeviceExportPaginationDto): Promise<PaginateResult<DeviceExport>> {
+    const { filter, options } = createFilterAndOptions(
+      query,
+      ['totalItems', 'totalQuantity'],
+      ['exportName', 'type', 'receiver', 'status'],
+      ['sortBy', 'limit', 'page', 'populate']
+    );
     return this.deviceExportRepository.findAllWithPagination(filter, options);
   }
 
@@ -108,25 +118,7 @@ export class DeviceExportService {
         const devices = await this.deviceService.findByMacs(macs);
         const deviceMap = new Map(devices.map(d => [d.mac, d]));
 
-        const deviceExportObj = deviceexport.toObject();
-        deviceExportObj.items = deviceExportObj.items.map(item => {
-          const device = deviceMap.get(item.mac);
-          let scannerName = item.scannedBy;
-          if (item.scannedBy && typeof item.scannedBy === 'object') {
-            const u = item.scannedBy as any;
-            scannerName = u.name || u.fullName || u.username || u._id?.toString();
-          }
-
-          return {
-            ...item,
-            mac: item.mac,
-            deviceName: device?.name,
-            serial: device?.serial,
-            scannedBy: scannerName
-          };
-        });
-
-        return deviceExportObj as any;
+        return DeviceExportTransformer.transformDetail(deviceexport, deviceMap);
       }
 
       return deviceexport;
@@ -375,67 +367,21 @@ export class DeviceExportService {
   async exportTicketExcel(id: string): Promise<Buffer> {
     const exportRecord = await this.findById(id);
 
-    // 1. Prepare Info Header
-    const info = [
-      { label: 'MÃ PHIẾU', value: exportRecord.code },
-      { label: 'TÊN PHIẾU', value: exportRecord.exportName || '--' },
-      { label: 'LOẠI XUẤT', value: exportRecord.type },
-      { label: 'TRẠNG THÁI', value: exportRecord.status },
-      { label: 'NGÀY TẠO', value: exportRecord.createdAt ? new Date(exportRecord.createdAt).toLocaleDateString('vi-VN') : '--' },
-      { label: 'NGƯỜI NHẬN', value: exportRecord.receiver || exportRecord.receiverPerson || '--' },
-      { label: 'DỰ ÁN / KH', value: exportRecord.project || exportRecord.customer || '--' },
-      { label: 'GHI CHÚ', value: exportRecord.notes || '--' },
-    ];
-
-    // 2. Prepare Data Table
-    let tableData: any[] = [];
-    let columns: any[] = [];
-
+    // Lấy danh sách MAC nếu có ít nhất một item
+    let macs: string[] = [];
     if (exportRecord.items && exportRecord.items.length > 0) {
-      // Lấy danh sách MAC
-      const macs = exportRecord.items.map(i => i.mac);
-
-      // Fetch thông tin chi tiết từ Device
-      const devices = await this.deviceService.findByMacs(macs);
-
-      const deviceMap = new Map(devices.map(d => [d.mac, d]));
-
-      // Xuất danh sách thiết bị thực tế
-      columns = [
-        { header: 'STT', key: 'stt', width: 10, alignment: 'center' },
-        { header: 'MAC Address', key: 'mac', width: 25 },
-        { header: 'Serial', key: 'serial', width: 25 },
-        { header: 'Model', key: 'deviceModel', width: 25 },
-        { header: 'Tên thiết bị', key: 'deviceName', width: 35 },
-      ];
-
-      tableData = exportRecord.items.map((item, index) => {
-        const device = deviceMap.get(item.mac);
-        const name = device?.name || '--';
-
-        return {
-          stt: index + 1,
-          mac: item.mac,
-          serial: device?.serial || '--',
-          deviceModel: item.deviceModel || device?.deviceModel,
-          deviceName: name
-        };
-      });
-    } else {
-      // Xuất danh sách yêu cầu
-      columns = [
-        { header: 'STT', key: 'stt', width: 10, alignment: 'center' },
-        { header: 'Mã Model', key: 'deviceModel', width: 25 },
-        { header: 'Số lượng yêu cầu', key: 'quantity', width: 20, alignment: 'center' },
-      ];
-
-      tableData = (exportRecord.requirements || []).map((req, index) => ({
-        stt: index + 1,
-        deviceModel: req.deviceCode,
-        quantity: req.quantity
-      }));
+      macs = exportRecord.items.map(i => i.mac);
     }
 
+    // Fetch thông tin chi tiết từ Device (nếu có macs)
+    let deviceMap = new Map();
+    if (macs.length > 0) {
+      const devices = await this.deviceService.findByMacs(macs);
+      deviceMap = new Map(devices.map(d => [d.mac, d]));
+    }
+
+    const { info, tableData, columns } = DeviceExportExcelUtil.prepareExcelData(exportRecord, deviceMap);
     return this.excelService.exportMasterDetail(info, tableData, columns, `Export_${exportRecord.code}`);
   }
 }
+

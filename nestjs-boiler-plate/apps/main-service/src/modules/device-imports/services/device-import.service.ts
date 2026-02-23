@@ -20,26 +20,6 @@ export class DeviceImportService {
   ) { }
 
   async create(createDto: CreateDeviceImportDto, userId: string): Promise<DeviceImport> {
-    // Kiểm tra Serial trước khi tạo mới -> Chỉ check kỹ khi trạng thái là PUBLIC (Lưu chính thức)
-    if (createDto.status === 'PUBLIC') {
-      const devices = createDto.devices || [];
-      for (const device of devices) {
-        const d: any = device;
-        const macs = d.expectedMacs || [];
-
-        // 2. Check trùng lặp nội bộ
-        if (macs.length > 0) {
-          const unique = new Set(macs);
-          if (unique.size !== macs.length) {
-            throw new BadRequestException(
-              ERROR_MESSAGES.DEVICE_IMPORT.MAC_DUPLICATE
-                .replace('{device}', d.deviceCode)
-            );
-          }
-        }
-      }
-    }
-
     // 1. Tự sinh mã phiếu nếu FE không gửi
     let code = createDto.code;
     if (!code) {

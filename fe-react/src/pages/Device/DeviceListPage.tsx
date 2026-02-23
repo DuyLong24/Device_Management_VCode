@@ -5,7 +5,7 @@ import { DeviceStatsOverview, type DeviceStatistics } from './components/DeviceS
 import { DeviceFilterBar } from './components/DeviceFilterBar';
 import { DeviceListTable, type DeviceUI } from './components/DeviceListTable';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 export default function DeviceListPage() {
     const navigate = useNavigate();

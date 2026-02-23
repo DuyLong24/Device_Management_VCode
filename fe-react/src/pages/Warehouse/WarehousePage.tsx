@@ -19,6 +19,7 @@ import { useWarehouseData } from '../../hooks/useWarehouseData';
 import { WarehouseTable } from './components/WarehouseTable';
 import { useAuth } from '../../hooks/useAuth';
 import { PERMISSION_KEYS } from '../../constants/permissionKeys';
+import { downloadBlob } from '../../utils/file.utils';
 
 const { Title, Text } = Typography;
 
@@ -78,14 +79,8 @@ export default function WarehousePage() {
 
             const blob = await deviceService.exportExcel(params);
 
-            // Tạo link tải file
-            const url = window.URL.createObjectURL(new Blob([blob]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `Danh_sach_${currentWarehouse.code}_${new Date().toISOString().slice(0, 10)}.xlsx`);
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode?.removeChild(link);
+            const filename = `Danh_sach_${currentWarehouse.code}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            downloadBlob(blob, filename);
 
             message.success({ content: 'Xuất file thành công!', key: 'export_excel' });
         } catch (error) {

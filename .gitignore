@@ -41,6 +41,6 @@ tmp/
 coverage/
 
 operations-and-design/
-# .agent/
+.agent/
 
 curl.txt

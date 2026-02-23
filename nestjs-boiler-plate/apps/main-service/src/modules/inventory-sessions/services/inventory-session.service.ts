@@ -85,18 +85,8 @@ export class InventorySessionService {
     }
 
     private async completeSession(session: InventorySession, userId: string): Promise<InventorySession> {
-        const macsToCheck = session.details.map(d => d.mac);
-        if (macsToCheck.length > 0) {
-            const existingDevices = await this.deviceService.findByMacs(macsToCheck);
-            if (existingDevices.length > 0) {
-                const duplicateMacs = existingDevices.map(d => d.mac);
-                throw new ConflictException({
-                    message: `Phát hiện ${duplicateMacs.length} MAC đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.`,
-                    error: 'DUPLICATE_MACS',
-                    duplicates: duplicateMacs
-                });
-            }
-        }
+        // 1. Kiểm tra trùng lặp MAC
+        await this.checkDuplicateMacs(session.details.map(d => d.mac));
 
         const mongoSession = await this.connection.startSession();
         mongoSession.startTransaction();
@@ -104,79 +94,16 @@ export class InventorySessionService {
         try {
             this.logger.log(`Bắt đầu hoàn tất phiên ${session.code}`);
 
-            const warehouse = await this.warehouseRepo.findOne({ code: 'PENDING_QC' });
-            if (!warehouse) throw new Error(ERROR_MESSAGES.INVENTORY.CONFIG_ERROR.replace('{warehouse}', 'PENDING_QC'));
+            // 2. Chuẩn bị dữ liệu
+            const { warehouse, importTicket, category } = await this.fetchCompletionDependencies(session);
+            const devicesToCreate = this.prepareDevicesToCreate(session, importTicket, warehouse, category);
 
-            const importIdStr = String(session.importId);
-            const importTicket = await this.importRepo.findById(importIdStr);
-            if (!importTicket) throw new Error(ERROR_MESSAGES.INVENTORY.IMPORT_NOT_FOUND);
-
-            const category = await this.categoryRepo.findOne({ name: importTicket.deviceType });
-
-            const devicesToCreate = session.details.map(item => {
-                const modelName = item.deviceModel || item.model || 'Unknown Device';
-
-                let detailedName = modelName;
-                let detailedP2P = '';
-                let foundDetail: any = null;
-
-                if (importTicket && importTicket.devices) {
-                    for (const dev of importTicket.devices) {
-                        const found = dev.expectedDetails?.find(d => d.mac === item.mac);
-                        if (found) {
-                            foundDetail = found;
-                            detailedName = found.name || modelName;
-                            detailedP2P = found.p2p || '';
-                            break;
-                        }
-                    }
-                }
-
-                return {
-                    code: item.deviceCode,
-                    mac: item.mac,
-                    serial: (foundDetail && foundDetail.serial) ? foundDetail.serial : '',
-                    name: detailedName,
-                    deviceModel: item.deviceCode || modelName,
-                    unit: 'Cái',
-                    qcStatus: 'PENDING',
-                    warehouseId: String(warehouse._id),
-                    categoryId: category ? String(category._id) : null,
-                    importId: String(importTicket._id),
-                    supplierId: importTicket.supplier || 'Unknown',
-                    importDate: importTicket.importDate,
-                    history: [],
-                    p2p: detailedP2P,
-                    currentExportId: null
-                };
-            });
-
+            // 3. Thực hiện trong Transaction
             if (devicesToCreate.length > 0) {
                 const insertedDevices = await this.deviceService.insertMany(devicesToCreate, { session: mongoSession });
-
-                const historiesToCreate = insertedDevices.map(device => ({
-                    deviceId: device._id,
-                    action: 'IMPORT',
-                    fromWarehouseId: warehouse._id,
-                    toWarehouseId: warehouse._id,
-                    actorId: userId,
-                    note: 'Nhập kho từ kiểm kê',
-                    createdAt: device.createdAt
-                }));
-
+                const historiesToCreate = this.prepareHistories(insertedDevices, warehouse._id, userId);
                 await this.historyRepo.insertMany(historiesToCreate, { session: mongoSession });
             }
-
-            const currentImported = importTicket.macImported || 0;
-            const newTotal = currentImported + session.totalScanned;
-
-            const deviceCounts: Record<string, number> = {};
-            session.details.forEach(item => {
-                const dCode = item.deviceCode || item.deviceModel;
-                if (dCode) {
-                    deviceCounts[dCode] = (deviceCounts[dCode] || 0) + 1;
-                }
-            });
 
             await this.sessionRepo.sessionModel.findByIdAndUpdate(
                 String(session._id),
@@ -187,12 +114,8 @@ export class InventorySessionService {
             await mongoSession.commitTransaction();
             this.logger.log(`Hoàn tất phiên ${session.code} thành công. Đã tạo ${devicesToCreate.length} thiết bị.`);
 
-            await this.coordinatorService.updateProgressAndAutoComplete(
-                importIdStr,
-                { macImported: newTotal, deviceCounts },
-                String(session._id),
-                userId
-            );
+            // 4. Cập nhật tiến độ
+            await this.updateCoordinatorProgress(String(session._id), userId, String(session.importId), session.totalScanned, session.details, importTicket.macImported || 0);
 
             return await this.sessionRepo.findById(String(session._id)) as InventorySession;
 
@@ -203,6 +126,101 @@ export class InventorySessionService {
         } finally {
             await mongoSession.endSession();
         }
+    }
+
+    private async checkDuplicateMacs(macs: string[]) {
+        if (macs.length > 0) {
+            const existingDevices = await this.deviceService.findByMacs(macs);
+            if (existingDevices.length > 0) {
+                const duplicateMacs = existingDevices.map(d => d.mac);
+                throw new ConflictException({
+                    message: `Phát hiện ${duplicateMacs.length} MAC đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.`,
+                    error: 'DUPLICATE_MACS',
+                    duplicates: duplicateMacs
+                });
+            }
+        }
+    }
+
+    private async fetchCompletionDependencies(session: InventorySession) {
+        const warehouse = await this.warehouseRepo.findOne({ code: 'PENDING_QC' });
+        if (!warehouse) throw new Error(ERROR_MESSAGES.INVENTORY.CONFIG_ERROR.replace('{warehouse}', 'PENDING_QC'));
+
+        const importTicket = await this.importRepo.findById(String(session.importId));
+        if (!importTicket) throw new Error(ERROR_MESSAGES.INVENTORY.IMPORT_NOT_FOUND);
+
+        const category = await this.categoryRepo.findOne({ name: importTicket.deviceType });
+
+        return { warehouse, importTicket, category };
+    }
+
+    private prepareDevicesToCreate(session: InventorySession, importTicket: any, warehouse: any, category: any) {
+        return session.details.map(item => {
+            const modelName = item.deviceModel || item.model || 'Unknown Device';
+            let detailedName = modelName;
+            let detailedP2P = '';
+            let foundDetail: any = null;
+
+            if (importTicket && importTicket.devices) {
+                for (const dev of importTicket.devices) {
+                    const found = dev.expectedDetails?.find((d: any) => d.mac === item.mac);
+                    if (found) {
+                        foundDetail = found;
+                        detailedName = found.name || modelName;
+                        detailedP2P = found.p2p || '';
+                        break;
+                    }
+                }
+            }
+
+            return {
+                code: item.deviceCode,
+                mac: item.mac,
+                serial: (foundDetail && foundDetail.serial) ? foundDetail.serial : '',
+                name: detailedName,
+                deviceModel: item.deviceCode || modelName,
+                unit: 'Cái',
+                qcStatus: 'PENDING',
+                warehouseId: String(warehouse._id),
+                categoryId: category ? String(category._id) : null,
+                importId: String(importTicket._id),
+                supplierId: importTicket.supplier || 'Unknown',
+                importDate: importTicket.importDate,
+                history: [],
+                p2p: detailedP2P,
+                currentExportId: null
+            };
+        });
+    }
+
+    private prepareHistories(devices: any[], warehouseId: any, userId: string) {
+        return devices.map(device => ({
+            deviceId: device._id,
+            action: 'IMPORT',
+            fromWarehouseId: warehouseId,
+            toWarehouseId: warehouseId,
+            actorId: userId,
+            note: 'Nhập kho từ kiểm kê',
+            createdAt: device.createdAt
+        }));
+    }
+
+    private async updateCoordinatorProgress(sessionId: string, userId: string, importId: string, totalScanned: number, details: any[], currentImported: number) {
+        const newTotal = currentImported + totalScanned;
+        const deviceCounts: Record<string, number> = {};
+        details.forEach(item => {
+            const dCode = item.deviceCode || item.deviceModel;
+            if (dCode) {
+                deviceCounts[dCode] = (deviceCounts[dCode] || 0) + 1;
+            }
+        });
+
+        await this.coordinatorService.updateProgressAndAutoComplete(
+            importId,
+            { macImported: newTotal, deviceCounts },
+            sessionId,
+            userId
+        );
     }
 
     async findAll(filter: FilterQuery<InventorySession> = {}): Promise<InventorySession[]> {

@@ -52,19 +52,7 @@ export class DeviceExportController {
 
   @Get()
   async findAll(@Query() query: DeviceExportPaginationDto) {
-    const { filter, options } = createFilterAndOptions(
-      query,
-      ['totalItems', 'totalQuantity'],
-      ['exportName', 'type', 'receiver', 'status'],
-      ['sortBy', 'limit', 'page', 'populate']
-    );
-
-    // Nếu có tham số phân trang, sử dụng phân trang
-    if (query.page || query.limit) {
-      return this.deviceExportService.findAllWithPagination(filter, options);
-    }
-    // Nếu không, trả về tất cả với filter
-    return this.deviceExportService.findAll(filter);
+    return this.deviceExportService.findAllWithPagination(query);
   }
 
   @Get('inventory-status')

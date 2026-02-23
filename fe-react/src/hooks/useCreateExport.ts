@@ -7,9 +7,8 @@ import { useQuery } from '@tanstack/react-query';
 import { logger } from '../utils/logger';
 import { EXPORT_STATUS } from '../constants/export-status.constant';
 import { exportService } from '../services/export.service';
+import { deviceService } from '../services/device.service';
 import { sharedDataService } from '../services/shared-data.service';
-import { axiosInstance } from '../configs/axios.config';
-import { DEVICE_STATUS } from '../constants/dashboard.constants';
 
 // Interfaces
 export interface DeviceItem {
@@ -56,40 +55,7 @@ export const useCreateExport = () => {
     // 2. Models & Stock
     const { data: deviceOptions = [], isLoading: loadingDevices } = useQuery({
         queryKey: ['device-stock-options'],
-        queryFn: async () => {
-            // Parallel fetch
-            const [models, warehousesRes] = await Promise.all([
-                sharedDataService.getDataByGroupCode('MODEL'),
-                axiosInstance.get('/warehouses')
-            ]);
-
-            const readyWarehouse = warehousesRes.data?.find((w: any) => w.code === DEVICE_STATUS.READY_TO_EXPORT);
-            let stockCounts: Record<string, number> = {};
-
-            if (readyWarehouse) {
-                // Lấy endpoint tóm tắt tồn kho tối ưu thay vì lấy tất cả thiết bị
-                const response = await axiosInstance.get('/inventory/stock-summary');
-                const summary = response.data || [];
-
-                if (Array.isArray(summary)) {
-                    stockCounts = summary.reduce((acc: any, item: any) => {
-                        const m = item.deviceModel;
-                        // Ưu tiên 'available' nếu có , fallback sang 'count'
-                        if (m) acc[m] = (item.available !== undefined) ? item.available : (item.count || 0);
-                        return acc;
-                    }, {});
-                }
-            }
-
-            if (!models) return [];
-
-            return models.map((m: any) => ({
-                value: m.code,
-                label: m.code,
-                stockName: m.name,
-                inStock: stockCounts[m.code] || 0
-            })).sort((a: any, b: any) => a.value.localeCompare(b.value));
-        },
+        queryFn: () => deviceService.getStockOptions(),
         staleTime: 60 * 1000
     });
 

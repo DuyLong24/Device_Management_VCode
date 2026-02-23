@@ -123,5 +123,38 @@ export const deviceService = {
     getStatistics: async (params: any = {}) => {
         const response = await axiosInstance.get<any>('/devices/stats', { params });
         return response.data;
+    },
+
+    getStockOptions: async () => {
+        const { sharedDataService } = await import('./shared-data.service');
+        const [models, warehousesRes] = await Promise.all([
+            sharedDataService.getDataByGroupCode('MODEL'),
+            axiosInstance.get('/warehouses')
+        ]);
+
+        const readyWarehouse = warehousesRes.data?.find((w: any) => w.code === 'READY_TO_EXPORT');
+        let stockCounts: Record<string, number> = {};
+
+        if (readyWarehouse) {
+            const response = await axiosInstance.get('/inventory/stock-summary');
+            const summary = response.data || [];
+
+            if (Array.isArray(summary)) {
+                stockCounts = summary.reduce((acc: any, item: any) => {
+                    const m = item.deviceModel;
+                    if (m) acc[m] = (item.available !== undefined) ? item.available : (item.count || 0);
+                    return acc;
+                }, {});
+            }
+        }
+
+        if (!models) return [];
+
+        return models.map((m: any) => ({
+            value: m.code,
+            label: m.code,
+            stockName: m.name,
+            inStock: stockCounts[m.code] || 0
+        })).sort((a: any, b: any) => a.value.localeCompare(b.value));
     }
 };

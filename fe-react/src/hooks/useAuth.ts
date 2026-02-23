@@ -1,20 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import keycloak from '../configs/auth.config';
-import { axiosInstance } from '../configs/axios.config';
-
-export interface UserProfile {
-    id: string;
-    username: string;
-    email: string;
-    name: string;
-    roles: string[];
-    permissions?: string[];
-}
+import { userService } from '../services/user.service';
+import type { User } from '../types/user.type';
 
 export const useAuth = () => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!keycloak.authenticated);
     const [token, setToken] = useState<string | undefined>(keycloak.token);
-    const [user, setUser] = useState<UserProfile | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(!!keycloak.authenticated); // Start loading if authenticated
 
     const loadUserProfile = useCallback(async () => {
@@ -28,13 +20,13 @@ export const useAuth = () => {
                 email: parsed.email || '',
                 name: parsed.name || parsed.preferred_username || '',
                 roles: roles,
-                permissions: []
+                permissions: [] as string[]
             };
 
             try {
                 // Lấy permission từ BE
-                const response = await axiosInstance.get('/users/permissions/me');
-                initialUser.permissions = response.data.permissions || [];
+                const data = await userService.getMyPermissions();
+                initialUser.permissions = data.permissions || [];
             } catch (error) {
                 console.error("Failed to fetch permissions", error);
             } finally {
@@ -82,7 +74,7 @@ export const useAuth = () => {
         user,
         login,
         logout,
-        hasRole: (role: string) => user?.roles.some(r => r.toLowerCase() === role.toLowerCase()) || false,
+        hasRole: (role: string) => user?.roles?.some(r => r.toLowerCase() === role.toLowerCase()) || false,
         hasPermission,
         isLoading
     };

@@ -112,10 +112,12 @@ export const useWarehouseData = () => {
             if (uniqueTargets.has(target.code)) return null;
             uniqueTargets.add(target.code);
 
+            const quickConfig = currentWarehouse?.config?.quickTransfers?.find((qt: any) => qt.to === target.code);
+
             return {
                 to: target.code,
-                label: `Chuyển sang ${target.name}`,
-                description: t.requiresApproval ? '(Cần duyệt)' : undefined,
+                label: quickConfig?.label || `Chuyển sang ${target.name}`,
+                description: quickConfig?.description || (t.requiresApproval ? '(Cần duyệt)' : undefined),
             };
         }).filter(Boolean) as any[];
     }, [transitions, warehouses]);

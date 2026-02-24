@@ -15,31 +15,46 @@ export const useDashboard = () => {
 
     const stats = {
         total: data?.total || 0,
-        imported: data?.READY_TO_EXPORT || 0, // "Trong kho" (Sẵn sàng xuất)
-        exported: (data?.SOLD || 0) + (data?.REMOVED || 0), // "Đã xuất"
-        pending: data?.PENDING_QC || 0,
+        pendingQc: data?.PENDING_QC || 0,
+        underRepair: data?.UNDER_REPAIR || 0,
+        readyToExport: data?.READY_TO_EXPORT || 0,
         defect: data?.DEFECT || 0,
+        inWarranty: data?.IN_WARRANTY || 0,
+        notActivated: data?.NOT_ACTIVATED || 0,
+        sold: data?.SOLD || 0,
+        soldWarranty: data?.SOLD_WARRANTY || 0,
+        removed: data?.REMOVED || 0,
     };
 
     // Tạo mảng sản phẩm
-    const productBreakdown: ProductSummary[] = (data?.categoryBreakdown || []).map((item: ProductSummary) => ({
+    const productBreakdown: ProductSummary[] = (data?.categoryBreakdown || []).map((item: any) => ({
         key: item.key,
         productType: item.productType,
         totalPurchased: item.totalPurchased,
-        pending: item.pending,
-        imported: item.imported,
-        exported: item.exported,
+        pendingQc: item.pendingQc,
+        underRepair: item.underRepair,
+        readyToExport: item.readyToExport,
         defect: item.defect,
+        inWarranty: item.inWarranty,
+        notActivated: item.notActivated,
+        sold: item.sold,
+        soldWarranty: item.soldWarranty,
+        removed: item.removed,
         defectRate: item.defectRate
     }));
 
     // Tạo mảng cho biểu đồ
     const chartData = productBreakdown.map(item => ({
         name: item.productType,
-        pending: item.pending,
-        imported: item.imported,
-        exported: item.exported,
-        defect: item.defect
+        pendingQc: item.pendingQc,
+        underRepair: item.underRepair,
+        readyToExport: item.readyToExport,
+        defect: item.defect,
+        inWarranty: item.inWarranty,
+        notActivated: item.notActivated,
+        sold: item.sold,
+        soldWarranty: item.soldWarranty,
+        removed: item.removed
     }));
 
     return {

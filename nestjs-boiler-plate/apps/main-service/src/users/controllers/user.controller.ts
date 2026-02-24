@@ -35,12 +35,8 @@ export class UserController {
       throw new NotFoundException('Người dùng không tồn tại');
     }
 
-    const keycloakId = user.sub;
-    const mongoUser = await this.userService.findByKeycloakId(keycloakId);
-
-    if (!mongoUser) {
-      throw new NotFoundException('Thông tin người dùng không tồn tại');
-    }
+    // Tự động đồng bộ từ Keycloak sang MongoDB
+    const mongoUser = await this.userService.syncFromKeycloak(user);
 
     // Populate funcRoleId to get role details
     await mongoUser.populate('funcRoleId');
@@ -66,10 +62,8 @@ export class UserController {
       return { permissions: [] };
     }
 
-    const keycloakId = user.sub;
-
-    // Tìm user trong MongoDB theo keycloakId
-    const mongoUser = await this.userService.findByKeycloakId(keycloakId);
+    // Tự động đồng bộ từ Keycloak sang MongoDB
+    const mongoUser = await this.userService.syncFromKeycloak(user);
     if (!mongoUser || !mongoUser.funcRoleId) {
       return { permissions: [] };
     }

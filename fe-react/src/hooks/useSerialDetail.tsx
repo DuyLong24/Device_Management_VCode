@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import dayjs from 'dayjs';
 import { message } from 'antd';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { deviceService } from '../services/device.service';
@@ -23,7 +24,7 @@ const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
             date: device.importDate || device.createdAt,
             type: 'IMPORT',
             description: 'Nhập kho',
-            actor: device.importId?.createdBy?.name || 'N/A',
+            actor: device.importId?.createdBy?.name || device.importId?.importedBy || 'N/A',
             note: device.importId?.note,
         });
     }
@@ -44,7 +45,7 @@ const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
     rawHistory.forEach(h => {
         const item: any = {
             date: h.createdAt,
-            actor: h.actorId?.name || 'Unknown',
+            actor: h.actorId?.name || (h.actorId === '000000000000000000000000' ? 'Hệ thống tự động' : 'Unknown'),
             note: h.note,
             rawAction: h.action,
             fromWarehouse: h.fromWarehouseId,
@@ -78,7 +79,7 @@ const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
         }
     });
 
-    return timeline.sort((a, b) => new Date(a.date).valueOf() - new Date(b.date).valueOf());
+    return timeline.sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf());
 };
 
 export const getTimelineIcon = (event: any) => {

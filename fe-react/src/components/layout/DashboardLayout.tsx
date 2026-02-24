@@ -250,7 +250,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     // Xử lý trạng thái active menu
     useEffect(() => {
-        const { selectedKey: newKey, parentKey } = getActiveKeysFromPath(location.pathname);
+        const { selectedKey: newKey, parentKey } = getActiveKeysFromPath(location.pathname, location.state);
         setSelectedKey(newKey);
 
         if (parentKey && !collapsed) {

@@ -199,7 +199,7 @@ export default function ExportDetailPage() {
                     message="Phiếu xuất đã được duyệt"
                     description={
                         <div>
-                            Phiếu đã được duyệt bởi <Text strong>{exportInfo.approvedBy?.username || exportInfo.approvedBy?.name || exportInfo.approvedBy?.fullName || (typeof exportInfo.approvedBy === 'string' ? exportInfo.approvedBy : '')}</Text> vào lúc{' '}
+                            Phiếu đã được duyệt bởi <Text strong>{exportInfo.approvedBy?.name || exportInfo.approvedBy?.username || exportInfo.approvedBy?.fullName || (typeof exportInfo.approvedBy === 'string' ? exportInfo.approvedBy : '')}</Text> vào lúc{' '}
                             <Text strong>{exportInfo.approvedDate ? dayjs(exportInfo.approvedDate).format('DD/MM/YYYY HH:mm') : ''}</Text>. Có thể tiến hành chọn
                             MAC và xuất kho.
                         </div>

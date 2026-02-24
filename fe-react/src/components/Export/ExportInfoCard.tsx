@@ -36,7 +36,7 @@ export const ExportInfoCard = ({ exportInfo, projectName }: ExportInfoCardProps)
                         {exportInfo.createdAt ? dayjs(exportInfo.createdAt).format('DD/MM/YYYY') : '-'}
                     </Descriptions.Item>
                     <Descriptions.Item label="Người tạo phiếu">
-                        {exportInfo.createdBy?.username || exportInfo.createdBy?.name || exportInfo.createdBy || '-'}
+                        {exportInfo.createdBy?.name || exportInfo.createdBy?.username || exportInfo.createdBy || '-'}
                     </Descriptions.Item>
                     <Descriptions.Item label="Đơn vị nhận">{exportInfo.receiver || '-'}</Descriptions.Item>
                     <Descriptions.Item label="Người nhận">
@@ -48,7 +48,7 @@ export const ExportInfoCard = ({ exportInfo, projectName }: ExportInfoCardProps)
                     {exportInfo.approvedBy && (
                         <>
                             <Descriptions.Item label="Người duyệt">
-                                {exportInfo.approvedBy?.username || exportInfo.approvedBy?.name || exportInfo.approvedBy}
+                                {exportInfo.approvedBy?.name || exportInfo.approvedBy?.username || exportInfo.approvedBy}
                             </Descriptions.Item>
                             <Descriptions.Item label="Ngày duyệt">
                                 {exportInfo.approvedDate ? dayjs(exportInfo.approvedDate).format('DD/MM/YYYY HH:mm') : '-'}

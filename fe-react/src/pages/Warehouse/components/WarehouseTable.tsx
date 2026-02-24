@@ -57,7 +57,7 @@ export const WarehouseTable = ({
             return {
                 ...base,
                 render: (text: string) => (
-                    <Button type="link" className="p-0" onClick={() => navigate(`/device/${text}`)}>
+                    <Button type="link" className="p-0" onClick={() => navigate(`/device/${text}`, { state: { activeMenuKey: currentWarehouse?.code ? `warehouse-${currentWarehouse.code}` : undefined } })}>
                         {text}
                     </Button>
                 )
@@ -76,7 +76,7 @@ export const WarehouseTable = ({
                         type="text"
                         icon={<EyeOutlined />}
                         size="small"
-                        onClick={() => navigate(`/device/${record.mac}`)}
+                        onClick={() => navigate(`/device/${record.mac}`, { state: { activeMenuKey: currentWarehouse?.code ? `warehouse-${currentWarehouse.code}` : undefined } })}
                     >
                         Chi tiết
                     </Button>

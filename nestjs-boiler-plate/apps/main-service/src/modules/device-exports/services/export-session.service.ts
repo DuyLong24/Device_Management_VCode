@@ -262,20 +262,19 @@ export class ExportSessionService {
         let activationDate: Date | null = null;
 
         const reason = (exportRecord?.exportReason || exportRecord?.type) as string;
-        if (reason === 'WARRANTY') {
+
+        // Luôn ưu tiên kiểm tra cài đặt "Kích hoạt sau"
+        if (exportRecord?.activationDays > 0) {
+            targetWarehouseCode = 'NOT_ACTIVATED';
+            const today = new Date();
+            activationDate = new Date(today.setDate(today.getDate() + exportRecord.activationDays));
+        } else if (reason === 'WARRANTY') {
             targetWarehouseCode = 'IN_WARRANTY'; // Trong bảo hành
-        } else if (reason === 'SALE') {
-            targetWarehouseCode = 'SOLD'; // Đã bán
-            // Kiểm tra ngày kích hoạt
-            if (exportRecord.activationDays > 0) {
-                targetWarehouseCode = 'NOT_ACTIVATED';
-                const today = new Date();
-                activationDate = new Date(today.setDate(today.getDate() + exportRecord.activationDays));
-            } else {
-                activationDate = new Date();
-            }
         } else if (reason === 'TRANSFER') {
             targetWarehouseCode = 'TRANSFERRED'; // Chuyển kho
+        } else {
+            // Mặc định xuất bán thông thường, kích hoạt ngay hôm nay
+            activationDate = new Date();
         }
 
         const exportItems = session.items.map(i => ({

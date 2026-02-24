@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
 import type { DeviceExport } from '../types/export.type';
+import { EXPORT_STATUS_LABELS, EXPORT_TYPE_LABELS } from '../constants/export-status.constant';
 
 // URL font hỗ trợ tiếng Việt (Roboto)
 const ROBOTO_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf';
@@ -74,10 +75,10 @@ export const exportExportTicketPDF = async (data: DeviceExport, projectName?: st
     y += 8;
     // Row 2
     doc.text('Loại xuất:', infoX, y);
-    doc.text(data.type || '---', valueX, y);
+    doc.text(data.type ? (EXPORT_TYPE_LABELS[data.type as keyof typeof EXPORT_TYPE_LABELS] || data.type) : '---', valueX, y);
 
     doc.text('Trạng thái:', col2X, y);
-    doc.text(data.status || '---', col2ValueX, y);
+    doc.text(data.status ? (EXPORT_STATUS_LABELS[data.status as keyof typeof EXPORT_STATUS_LABELS] || data.status) : '---', col2ValueX, y);
 
     y += 8;
     // Row 3

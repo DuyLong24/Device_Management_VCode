@@ -295,7 +295,7 @@ export default function ExportProcessPage() {
                             <Descriptions.Item label="Mã phiên">{sessionData?.sessionCode}</Descriptions.Item>
                             <Descriptions.Item label="Mã phiếu xuất">{exportInfo.code}</Descriptions.Item>
                             <Descriptions.Item label="Ngày xuất">{dayjs(exportInfo.exportDate).format('DD/MM/YYYY')}</Descriptions.Item>
-                            <Descriptions.Item label="Người tạo">{sessionData?.createdBy?.username || sessionData?.createdBy?.name || 'N/A'}</Descriptions.Item>
+                            <Descriptions.Item label="Người tạo">{sessionData?.createdBy?.name || sessionData?.createdBy?.username || 'N/A'}</Descriptions.Item>
                             <Descriptions.Item label="Trạng thái">{getExportStatusTag(exportInfo.status)}</Descriptions.Item>
                         </Descriptions>
                     </Card>

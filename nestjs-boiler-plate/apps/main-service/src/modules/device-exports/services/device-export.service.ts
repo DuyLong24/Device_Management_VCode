@@ -325,6 +325,7 @@ export class DeviceExportService {
     const activeExports = await this.deviceExportRepository.findAll({
       status: {
         $in: [
+          ExportStatusEnum.PENDING_APPROVAL,
           ExportStatusEnum.APPROVED,
           ExportStatusEnum.IN_PROGRESS
         ]
@@ -352,6 +353,7 @@ export class DeviceExportService {
     const activeExports = await this.deviceExportRepository.findAll({
       status: {
         $in: [
+          ExportStatusEnum.PENDING_APPROVAL,
           ExportStatusEnum.APPROVED,
           ExportStatusEnum.IN_PROGRESS
         ]

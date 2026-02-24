@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { message } from 'antd';
@@ -36,11 +36,45 @@ const STATUS_TO_WAREHOUSE_MAP: Record<string, string> = {
 
 export const useAllDevices = () => {
     // --- STATE QUẢN LÝ PARAMS ---
-    const [pagination, setPagination] = useState({ page: 1, limit: 10 });
-    const [searchText, setSearchText] = useState('');
-    const [selectedWarehouseId, setSelectedWarehouseId] = useState<string | null>(null);
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // Helper functions to get/set params
+    const getParam = (key: string, defaultValue: string = '') => searchParams.get(key) || defaultValue;
+    const getNumParam = (key: string, defaultValue: number) => {
+        const val = searchParams.get(key);
+        return val ? parseInt(val, 10) : defaultValue;
+    };
+
+    const pagination = {
+        page: getNumParam('page', 1),
+        limit: getNumParam('limit', 10)
+    };
+
+    const searchText = getParam('search');
+    const selectedWarehouseId = searchParams.get('warehouseId');
+    const selectedCategory = searchParams.get('categoryId');
+
+    // Parse dateRange
+    const startDateStr = searchParams.get('startDate');
+    const endDateStr = searchParams.get('endDate');
+    const dateRange: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null =
+        (startDateStr && endDateStr)
+            ? [dayjs(startDateStr), dayjs(endDateStr)]
+            : null;
+
+    // Helper to update specific params without losing others
+    const updateParams = (updates: Record<string, string | number | null>) => {
+        const newParams = new URLSearchParams(searchParams);
+        Object.keys(updates).forEach(key => {
+            const val = updates[key];
+            if (val === null || val === undefined || val === '') {
+                newParams.delete(key);
+            } else {
+                newParams.set(key, String(val));
+            }
+        });
+        setSearchParams(newParams, { replace: true });
+    };
 
     // --- 1. DEVICES QUERY ---
     const {
@@ -131,33 +165,46 @@ export const useAllDevices = () => {
 
     // --- HANDLERS ---
     const handleTableChange = (newPagination: TablePaginationConfig) => {
-        setPagination({
+        updateParams({
             page: newPagination.current || 1,
             limit: newPagination.pageSize || 10
         });
     };
 
     const handleSearch = (val: string) => {
-        setSearchText(val);
-        setPagination(prev => ({ ...prev, page: 1 }));
+        updateParams({ search: val, page: 1 });
     };
 
     const handleFilterWarehouse = (val: string | null) => {
-        setSelectedWarehouseId(val);
-        setPagination(prev => ({ ...prev, page: 1 }));
+        updateParams({ warehouseId: val, page: 1 });
     };
 
     const handleFilterCategory = (val: string | null) => {
-        setSelectedCategory(val);
-        setPagination(prev => ({ ...prev, page: 1 }));
+        updateParams({ categoryId: val, page: 1 });
+    };
+
+    const setDateRange = (range: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null) => {
+        if (range && range[0] && range[1]) {
+            updateParams({
+                startDate: range[0].toISOString(),
+                endDate: range[1].toISOString(),
+                page: 1
+            });
+        } else {
+            updateParams({ startDate: null, endDate: null, page: 1 });
+        }
     };
 
     const handleReset = () => {
-        setSearchText('');
-        setSelectedWarehouseId(null);
-        setSelectedCategory(null);
-        setDateRange(null);
-        setPagination({ page: 1, limit: 10 });
+        updateParams({
+            search: null,
+            warehouseId: null,
+            categoryId: null,
+            startDate: null,
+            endDate: null,
+            page: 1,
+            limit: 10
+        });
     };
 
     const handleExport = async () => {

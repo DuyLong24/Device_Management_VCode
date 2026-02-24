@@ -46,6 +46,9 @@ export class DeviceStatsService {
             IN_WARRANTY: 0,
             SOLD: 0,
             REMOVED: 0,
+            UNDER_REPAIR: 0,
+            NOT_ACTIVATED: 0,
+            SOLD_WARRANTY: 0,
             categoryBreakdown: [] as any[]
         };
 
@@ -62,7 +65,7 @@ export class DeviceStatsService {
         statusAggregate.forEach((item) => {
             stats.total += item.count;
             const whId = item._id ? item._id.toString() : 'UNKNOWN';
-            const code = whMap.get(whId);
+            const code = whMap.get(whId) || '';
 
             if (code === 'PENDING_QC') stats.PENDING_QC += item.count;
             else if (code === 'READY_TO_EXPORT') stats.READY_TO_EXPORT += item.count;
@@ -70,6 +73,9 @@ export class DeviceStatsService {
             else if (code === 'IN_WARRANTY' || code === 'WARRANTY') stats.IN_WARRANTY += item.count;
             else if (code === 'SOLD') stats.SOLD += item.count;
             else if (code === 'REMOVED') stats.REMOVED += item.count;
+            else if (code === 'UNDER_REPAIR') stats.UNDER_REPAIR += item.count;
+            else if (code === 'NOT_ACTIVATED') stats.NOT_ACTIVATED += item.count;
+            else if (code === 'SOLD_WARRANTY') stats.SOLD_WARRANTY += item.count;
         });
 
         // 3. Aggregate Stats theo Category (Loại sản phẩm)
@@ -108,17 +114,22 @@ export class DeviceStatsService {
             const catId = item._id.category ? item._id.category.toString() : 'UNKNOWN_CAT';
             const catName = item.categoryInfo ? item.categoryInfo.name : 'Chưa phân loại';
             const whId = item._id.warehouse ? item._id.warehouse.toString() : 'UNKNOWN_WH';
-            const whCode = whMap.get(whId);
+            const whCode = whMap.get(whId) || '';
 
             if (!catMap.has(catId)) {
                 catMap.set(catId, {
                     key: catId,
                     productType: catName,
                     totalPurchased: 0, // Tổng count tất cả các kho
-                    pending: 0,
-                    imported: 0, // READY_TO_EXPORT
-                    exported: 0, // SOLD
+                    pendingQc: 0,
+                    underRepair: 0,
+                    readyToExport: 0,
                     defect: 0,
+                    inWarranty: 0,
+                    notActivated: 0,
+                    sold: 0,
+                    soldWarranty: 0,
+                    removed: 0,
                     defectRate: 0
                 });
             }
@@ -126,16 +137,23 @@ export class DeviceStatsService {
             const current = catMap.get(catId);
             current.totalPurchased += item.count;
 
-            if (whCode === 'PENDING_QC') current.pending += item.count;
-            else if (whCode === 'READY_TO_EXPORT') current.imported += item.count;
-            else if (whCode === 'SOLD' || whCode === 'REMOVED') current.exported += item.count;
+            if (whCode === 'PENDING_QC') current.pendingQc += item.count;
+            else if (whCode === 'UNDER_REPAIR') current.underRepair += item.count;
+            else if (whCode === 'READY_TO_EXPORT') current.readyToExport += item.count;
             else if (whCode === 'DEFECT') current.defect += item.count;
+            else if (whCode === 'IN_WARRANTY' || whCode === 'WARRANTY') current.inWarranty += item.count;
+            else if (whCode === 'NOT_ACTIVATED') current.notActivated += item.count;
+            else if (whCode === 'SOLD') current.sold += item.count;
+            else if (whCode === 'SOLD_WARRANTY') current.soldWarranty += item.count;
+            else if (whCode === 'REMOVED') current.removed += item.count;
         });
 
         // Calculate Rates
         catMap.forEach(v => {
             if (v.totalPurchased > 0) {
-                v.defectRate = parseFloat(((v.defect / v.totalPurchased) * 100).toFixed(2));
+                // Tỉ lệ lỗi thực hiện theo đúng 3 loại lỗi vật lý
+                const trueDefectCount = v.defect + v.inWarranty + v.removed;
+                v.defectRate = parseFloat(((trueDefectCount / v.totalPurchased) * 100).toFixed(2));
             }
         });
 

@@ -23,7 +23,11 @@ export const findMenuItemLabel = (items: MenuProps['items'], key: string): React
  * @param path - location.pathname
  * @returns selectedKey và openKeys (cha)
  */
-export const getActiveKeysFromPath = (path: string): { selectedKey: string, parentKey?: string } => {
+export const getActiveKeysFromPath = (path: string, state?: any): { selectedKey: string, parentKey?: string } => {
+    if (state?.activeMenuKey) {
+        return { selectedKey: state.activeMenuKey, parentKey: state.parentMenuKey };
+    }
+
     // 1. Check Dynamic Warehouse Routes
     // URL: /warehouse/:code
     if (path.includes('/warehouse/')) {

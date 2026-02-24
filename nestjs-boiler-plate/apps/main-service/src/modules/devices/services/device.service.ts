@@ -169,7 +169,8 @@ export class DeviceService implements OnModuleInit {
       })
       .populate({
         path: 'currentExportId',
-        select: 'code type exportReason exportDate receiver receiverPerson project customer notes'
+        select: 'code type exportReason exportDate receiver receiverPerson project customer notes createdBy',
+        populate: { path: 'createdBy', select: 'name' }
       })
       .populate('qcBy', 'name')
       .exec();
@@ -412,7 +413,8 @@ export class DeviceService implements OnModuleInit {
     const result = await this.deviceModel.aggregate([
       {
         $match: {
-          warehouseId: readyWarehouse._id
+          warehouseId: readyWarehouse._id,
+          qcStatus: 'PASS'
         }
       },
       {

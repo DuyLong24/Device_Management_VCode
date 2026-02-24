@@ -7,10 +7,15 @@ export interface ProductSummary {
     key: string;
     productType: string;
     totalPurchased: number;
-    pending: number;
-    imported: number;
-    exported: number;
+    pendingQc: number;
+    underRepair: number;
+    readyToExport: number;
     defect: number;
+    inWarranty: number;
+    notActivated: number;
+    sold: number;
+    soldWarranty: number;
+    removed: number;
     defectRate: number;
 }
 
@@ -46,33 +51,69 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({ data, loading })
             render: (val) => <Tag color="purple">{val}</Tag>
         },
         {
-            title: 'Chờ kiểm kê',
-            dataIndex: 'pending',
-            key: 'pending',
-            width: 120,
-            render: (val) => <Tag color="orange">{val}</Tag>
-        },
-        {
-            title: 'Trong kho',
-            dataIndex: 'imported',
-            key: 'imported',
-            width: 120,
+            title: 'Chờ QC',
+            dataIndex: 'pendingQc',
+            key: 'pendingQc',
+            width: 100,
             render: (val) => <Tag color="blue">{val}</Tag>
         },
         {
-            title: 'Đã xuất',
-            dataIndex: 'exported',
-            key: 'exported',
+            title: 'Sửa chữa',
+            dataIndex: 'underRepair',
+            key: 'underRepair',
+            width: 100,
+            render: (val) => <Tag color="orange">{val}</Tag>
+        },
+        {
+            title: 'Sẵn sàng xuất',
+            dataIndex: 'readyToExport',
+            key: 'readyToExport',
             width: 120,
             render: (val) => <Tag color="green">{val}</Tag>
         },
         {
-            title: 'Lỗi',
+            title: 'Lỗi - Chờ BH NCC',
             dataIndex: 'defect',
             key: 'defect',
-            width: 100,
+            width: 130,
             render: (val) => <Tag color="red">{val}</Tag>
         },
+        {
+            title: 'Đang bảo hành NCC',
+            dataIndex: 'inWarranty',
+            key: 'inWarranty',
+            width: 140,
+            render: (val) => <Tag color="yellow">{val}</Tag>
+        },
+        {
+            title: 'Chưa kích hoạt bảo hành',
+            dataIndex: 'notActivated',
+            key: 'notActivated',
+            width: 160,
+            render: (val) => <Tag color="cyan">{val}</Tag>
+        },
+        {
+            title: 'Đang bảo hành',
+            dataIndex: 'sold',
+            key: 'sold',
+            width: 120,
+            render: (val) => <Tag color="gray">{val}</Tag>
+        },
+        {
+            title: 'Hết hạn BH',
+            dataIndex: 'soldWarranty',
+            key: 'soldWarranty',
+            width: 120,
+            render: (val) => <Tag color="purple">{val}</Tag>
+        },
+        {
+            title: 'Lỗi - Loại bỏ',
+            dataIndex: 'removed',
+            key: 'removed',
+            width: 120,
+            render: (val) => <Tag color="volcano">{val}</Tag>
+        },
+
         {
             title: 'Thao tác',
             key: 'action',
@@ -112,42 +153,92 @@ export const DashboardTable: React.FC<DashboardTableProps> = ({ data, loading })
                         </Card>
 
                         <Row gutter={[16, 16]}>
-                            <Col span={12}>
+                            <Col span={8}>
                                 <Card size="small">
                                     <Statistic
-                                        title="Chờ kiểm kê"
-                                        value={selectedProduct.pending}
-                                        valueStyle={{ color: '#faad14' }}
-                                        prefix={<WarningOutlined />}
-                                    />
-                                </Card>
-                            </Col>
-                            <Col span={12}>
-                                <Card size="small">
-                                    <Statistic
-                                        title="Trong kho"
-                                        value={selectedProduct.imported}
+                                        title="Chờ QC"
+                                        value={selectedProduct.pendingQc}
                                         valueStyle={{ color: '#1677ff' }}
                                         prefix={<InboxOutlined />}
                                     />
                                 </Card>
                             </Col>
-                            <Col span={12}>
+                            <Col span={8}>
                                 <Card size="small">
                                     <Statistic
-                                        title="Đã xuất"
-                                        value={selectedProduct.exported}
+                                        title="Sửa chữa"
+                                        value={selectedProduct.underRepair}
+                                        valueStyle={{ color: '#fa8c16' }}
+                                        prefix={<WarningOutlined />}
+                                    />
+                                </Card>
+                            </Col>
+                            <Col span={8}>
+                                <Card size="small">
+                                    <Statistic
+                                        title="Sẵn sàng xuất"
+                                        value={selectedProduct.readyToExport}
                                         valueStyle={{ color: '#52c41a' }}
                                         prefix={<CheckCircleOutlined />}
                                     />
                                 </Card>
                             </Col>
-                            <Col span={12}>
+                            <Col span={8}>
                                 <Card size="small">
                                     <Statistic
-                                        title="Lỗi"
+                                        title="Lỗi - Chờ BH NCC"
                                         value={selectedProduct.defect}
                                         valueStyle={{ color: '#ff4d4f' }}
+                                        prefix={<WarningOutlined />}
+                                    />
+                                </Card>
+                            </Col>
+                            <Col span={8}>
+                                <Card size="small">
+                                    <Statistic
+                                        title="Đang bảo hành NCC"
+                                        value={selectedProduct.inWarranty}
+                                        valueStyle={{ color: '#fadb14' }}
+                                        prefix={<WarningOutlined />}
+                                    />
+                                </Card>
+                            </Col>
+                            <Col span={8}>
+                                <Card size="small">
+                                    <Statistic
+                                        title="Chưa kích hoạt bảo hành"
+                                        value={selectedProduct.notActivated}
+                                        valueStyle={{ color: '#13c2c2' }}
+                                        prefix={<CheckCircleOutlined />}
+                                    />
+                                </Card>
+                            </Col>
+                            <Col span={8}>
+                                <Card size="small">
+                                    <Statistic
+                                        title="Đang bảo hành"
+                                        value={selectedProduct.sold}
+                                        valueStyle={{ color: '#8c8c8c' }}
+                                        prefix={<CheckCircleOutlined />}
+                                    />
+                                </Card>
+                            </Col>
+                            <Col span={8}>
+                                <Card size="small">
+                                    <Statistic
+                                        title="Hết hạn BH"
+                                        value={selectedProduct.soldWarranty}
+                                        valueStyle={{ color: '#722ed1' }}
+                                        prefix={<CheckCircleOutlined />}
+                                    />
+                                </Card>
+                            </Col>
+                            <Col span={8}>
+                                <Card size="small">
+                                    <Statistic
+                                        title="Lỗi - Loại bỏ"
+                                        value={selectedProduct.removed}
+                                        valueStyle={{ color: '#fa541c' }}
                                         prefix={<WarningOutlined />}
                                     />
                                 </Card>

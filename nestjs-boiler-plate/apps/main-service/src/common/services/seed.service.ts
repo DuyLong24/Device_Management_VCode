@@ -143,7 +143,7 @@ export class SeedService implements OnModuleInit {
                         { key: 'qcBy.name', title: 'Người QC', type: 'text' },
                         { key: 'action', title: 'Thao tác', type: 'action' }
                     ],
-                    actions: [ActionType.SCAN, ActionType.IMPORT_EXCEL, ActionType.TRANSFER],
+                    actions: [ActionType.SCAN, ActionType.IMPORT_EXCEL],
                     quickTransfers: [
                         {
                             to: WarehouseCode.SOLD,
@@ -190,6 +190,12 @@ export class SeedService implements OnModuleInit {
                             label: 'Sẵn sàng xuất kho',
                             description: 'Sửa được trong kho, không cần gửi BH',
                             style: 'success'
+                        },
+                        {
+                            to: WarehouseCode.REMOVED,
+                            label: 'Chuyển sang Lỗi - Loại bỏ',
+                            description: 'Thiết bị hỏng nặng, không thể sửa chữa',
+                            style: 'danger'
                         }
                     ]
                 }
@@ -223,6 +229,12 @@ export class SeedService implements OnModuleInit {
                             to: WarehouseCode.PENDING_QC,
                             label: 'Đang QC',
                             description: 'Sửa được trong kho, QC lại',
+                            style: 'success'
+                        },
+                        {
+                            to: WarehouseCode.READY_TO_EXPORT,
+                            label: 'Sẵn sàng xuất kho',
+                            description: 'Sửa xong, có thể xuất luôn',
                             style: 'success'
                         }
                     ]
@@ -261,9 +273,15 @@ export class SeedService implements OnModuleInit {
                         },
                         {
                             to: WarehouseCode.REMOVED,
-                            label: 'Lỗi - Loại bỏ',
-                            description: 'Không thể sửa chữa, loại bỏ',
+                            label: 'Loại bỏ',
+                            description: 'NCC đổi mới (thiết bị cũ loại bỏ)',
                             style: 'danger'
+                        },
+                        {
+                            to: WarehouseCode.PENDING_QC,
+                            label: 'Đang QC',
+                            description: 'Bảo hành xong, cần QC lại trước khi nhập kho',
+                            style: 'warning'
                         }
                     ]
                 }
@@ -351,7 +369,7 @@ export class SeedService implements OnModuleInit {
                     quickTransfers: [
                         {
                             to: WarehouseCode.REMOVED,
-                            label: 'Lỗi - Loại bỏ',
+                            label: 'Chuyển sang Lỗi - Loại bỏ',
                             description: 'Thiết bị hỏng, loại bỏ',
                             style: 'danger'
                         }
@@ -404,17 +422,26 @@ export class SeedService implements OnModuleInit {
             // Defect -> In Warranty
             { from: WarehouseCode.DEFECT, to: WarehouseCode.IN_WARRANTY, type: TransitionType.SEND_WARRANTY },
 
+            // Defect -> Ready To Export (Sửa được trong kho không cần gửi BH)
+            { from: WarehouseCode.DEFECT, to: WarehouseCode.READY_TO_EXPORT, type: TransitionType.QC_PASS },
+
             // Repair -> In Warranty
             { from: WarehouseCode.UNDER_REPAIR, to: WarehouseCode.IN_WARRANTY, type: TransitionType.SEND_WARRANTY },
 
             // Repair -> Ready
             { from: WarehouseCode.UNDER_REPAIR, to: WarehouseCode.READY_TO_EXPORT, type: TransitionType.QC_PASS },
 
+            // Repair -> Pending QC (Sửa được trong kho, QC lại)
+            { from: WarehouseCode.UNDER_REPAIR, to: WarehouseCode.PENDING_QC, type: TransitionType.WARRANTY_REPAIR },
+
             // In Warranty -> Ready (Nhận lại dùng được)
             { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.READY_TO_EXPORT, type: TransitionType.RECEIVE_WARRANTY },
 
             //  In Warranty -> Removed (Đổi mới - MAC cũ hủy)
             { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.REMOVED, type: TransitionType.WARRANTY_REPLACE },
+
+            //  In Warranty -> Defect (NCC trả về vẫn lỗi, cần gửi lại)
+            { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.DEFECT, type: TransitionType.QC_FAIL },
 
             //  In Warranty -> Pending QC (Sửa xong - Cần QC lại)
             { from: WarehouseCode.IN_WARRANTY, to: WarehouseCode.PENDING_QC, type: TransitionType.WARRANTY_REPAIR },

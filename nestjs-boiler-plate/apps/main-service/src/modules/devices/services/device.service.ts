@@ -15,8 +15,6 @@ import { DEVICE_EXCEL_COLUMNS } from '../../../common/constants/device.constants
 import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
 import { WarehouseService } from '../../warehouses/services/warehouse.service';
 import { SharedDataService } from '../../shared-data/services/shared-data.service';
-import { DeviceQueryBuilder } from '../utils/device-query.builder';
-import { DevicePaginationDto } from '../dto/device-pagination.dto';
 
 import { AppLogger } from '../../../common/utils/logger.util';
 
@@ -126,27 +124,6 @@ export class DeviceService implements OnModuleInit {
 
   async findAllWithPagination(filter: any, options: any) {
     return this.deviceModel.paginate(filter, options);
-  }
-
-  async getDevicesList(query: DevicePaginationDto) {
-    const filter = DeviceQueryBuilder.build(query);
-
-    const options = {
-      page: query.page || 1,
-      limit: query.limit || 10,
-      sortBy: query.sortBy || 'createdAt:desc',
-      populate: query.populate || [
-        { path: 'warehouseId', select: 'name code color icon' },
-        { path: 'qcBy', select: 'name email' },
-        {
-          path: 'importId',
-          select: 'code importDate createdBy',
-          populate: { path: 'createdBy', select: 'name' }
-        }
-      ],
-    };
-
-    return this.findAllWithPagination(filter, options);
   }
 
   async findById(id: string): Promise<Device> {
@@ -261,16 +238,51 @@ export class DeviceService implements OnModuleInit {
   }
 
   async moveDevicesToWarehouse(macs: string[], targetWarehouseCode: string, exportCode: string, userId?: string, activationDate?: Date, exportId?: string, warrantyMonths?: number): Promise<void> {
-    // 1. Validate kho đích
-    const targetWarehouse = await this.validateTargetWarehouse(targetWarehouseCode);
 
-    // 2. Chuẩn bị dữ liệu cập nhật
-    const updatePayload = this.prepareTransferPayload(targetWarehouse, activationDate, exportId, warrantyMonths);
+    const targetWarehouse = await this.warehouseService.findByCode(targetWarehouseCode);
 
-    // 3. Thực hiện cập nhật hàng loạt
+    if (!targetWarehouse) {
+      throw new BadRequestException(`Kho đích "${targetWarehouseCode}" không tồn tại`);
+    }
+
+    // Lấy danh sách thiết bị cần di chuyển để tạo lịch sử sau khi cập nhật
+    const devicesToMove = await this.deviceModel.find({
+      mac: { $in: macs }
+    }).exec();
+
+
+    const updatePayload: any = {
+      warehouseId: targetWarehouse._id,
+      warehouseUpdatedAt: new Date(),
+      warehouseUpdatedBy: 'SYSTEM_EXPORT',
+      exportDate: new Date()
+    };
+
+    if (exportId) {
+      updatePayload.currentExportId = exportId;
+    }
+
+    if (activationDate) {
+      updatePayload.activationDate = activationDate;
+    }
+
+    if (targetWarehouse.code === 'SOLD') {
+      const activatedDate = activationDate || new Date();
+      updatePayload.warrantyActivatedDate = activatedDate;
+
+      if (warrantyMonths && warrantyMonths > 0) {
+        updatePayload.warrantyMonths = warrantyMonths;
+        const expiredDate = new Date(activatedDate);
+        expiredDate.setMonth(expiredDate.getMonth() + warrantyMonths);
+        updatePayload.warrantyExpiredDate = expiredDate;
+      }
+    }
+
     const result = await this.deviceModel.updateMany(
       { mac: { $in: macs } },
-      { $set: updatePayload }
+      {
+        $set: updatePayload
+      }
     ).exec();
 
     this.logger.debug(`[DEBUG] UpdateMany result:`, {
@@ -279,70 +291,25 @@ export class DeviceService implements OnModuleInit {
       acknowledged: result.acknowledged
     });
 
-    // 4. Tạo lịch sử
-    await this.createTransferHistory(macs, targetWarehouse, userId, exportCode);
-  }
-
-  private async validateTargetWarehouse(code: string): Promise<any> {
-    const warehouse = await this.warehouseService.findByCode(code);
-    if (!warehouse) {
-      throw new BadRequestException(`Kho đích "${code}" không tồn tại`);
-    }
-    return warehouse;
-  }
-
-  private prepareTransferPayload(targetWarehouse: any, activationDate?: Date, exportId?: string, warrantyMonths?: number): any {
-    const payload: any = {
-      warehouseId: targetWarehouse._id,
-      warehouseUpdatedAt: new Date(),
-      warehouseUpdatedBy: 'SYSTEM_EXPORT',
-      exportDate: new Date()
-    };
-
-    if (exportId) {
-      payload.currentExportId = exportId;
-    }
-
-    if (activationDate) {
-      payload.activationDate = activationDate;
-    }
-
-    if (targetWarehouse.code === 'SOLD') {
-      const activatedDate = activationDate || new Date();
-      payload.warrantyActivatedDate = activatedDate;
-
-      if (warrantyMonths && warrantyMonths > 0) {
-        payload.warrantyMonths = warrantyMonths;
-        const expiredDate = new Date(activatedDate);
-        expiredDate.setMonth(expiredDate.getMonth() + warrantyMonths);
-        payload.warrantyExpiredDate = expiredDate;
+    // Tạo lịch sử
+    if (devicesToMove.length > 0) {
+      let actorId = userId;
+      if (!actorId || !/^[0-9a-fA-F]{24}$/.test(actorId)) {
+        actorId = '000000000000000000000000';
       }
+
+      const historyRecords = devicesToMove.map(device => ({
+        deviceId: device._id,
+        fromWarehouseId: device.warehouseId,
+        toWarehouseId: targetWarehouse._id,
+        actorId: actorId,
+        action: 'EXPORT',
+        note: `Xuất kho: ${exportCode}`
+      }));
+
+      await this.historyModel.insertMany(historyRecords);
+      this.logger.debug(`[DEBUG] Created ${historyRecords.length} device history records with actorId: ${actorId}`);
     }
-    return payload;
-  }
-
-  private async createTransferHistory(macs: string[], targetWarehouse: any, userId: string | undefined, exportCode: string) {
-    const devices = await this.deviceModel.find({ mac: { $in: macs } }).select('_id warehouseId').exec();
-
-    if (devices.length === 0) return;
-
-    let actorId = userId;
-    // Kiểm tra định dạng ObjectId
-    if (!actorId || !/^[0-9a-fA-F]{24}$/.test(actorId)) {
-      actorId = '000000000000000000000000';
-    }
-
-    const historyRecords = devices.map(device => ({
-      deviceId: device._id,
-      fromWarehouseId: device.warehouseId,
-      toWarehouseId: targetWarehouse._id,
-      actorId: actorId,
-      action: 'EXPORT',
-      note: `Xuất kho: ${exportCode}`
-    }));
-
-    await this.historyModel.insertMany(historyRecords);
-    this.logger.debug(`[DEBUG] Created ${historyRecords.length} device history records with actorId: ${actorId}`);
   }
 
   async countReadyToExport(model: string): Promise<number> {

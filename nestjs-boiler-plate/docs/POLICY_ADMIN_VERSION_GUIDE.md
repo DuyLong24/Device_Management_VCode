@@ -113,7 +113,7 @@ curl -X POST "http://localhost:3000/policy/publish" \
   -d '{"createdBy": "admin"}'
 ```
 
-##  Version History
+## 📊 Version History
 
 ### Xem tất cả versions
 ```bash

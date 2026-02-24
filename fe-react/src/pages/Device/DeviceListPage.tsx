@@ -35,7 +35,7 @@ export default function DeviceListPage() {
             </div>
 
             {/* Category Filter */}
-            <Card size="small" className="mb-2 bg-transparent border-0 shadow-none" styles={{ body: { padding: '0' } }}>
+            <Card size="small" className="mb-4 bg-transparent border-0 shadow-none" styles={{ body: { padding: '0' } }}>
                 <Segmented
                     options={[
                         { label: 'Tất cả', value: 'ALL' },

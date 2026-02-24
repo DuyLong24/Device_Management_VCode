@@ -6,7 +6,6 @@ import { inventorySessionService } from '../services/inventory-session.service';
 import { sharedDataService } from '../services/shared-data.service';
 import type { ImportDeviceUI } from '../pages/Import/components/ImportDeviceTable';
 import { exportImportPDF } from '../utils/export-import-pdf';
-import { IMPORT_ORIGIN_CONFIG } from '../constants/import.constants';
 
 export const useImportDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -48,16 +47,8 @@ export const useImportDetail = () => {
 
     const resolveOrigin = (code?: string) => {
         if (!code) return '';
-        // 1. Check Shared Data (Dynamic)
         const found = originList.find((g: any) => g.code === code);
-        if (found) return found.name;
-
-        // 2. Check System Config (Static)
-        const systemConfig = IMPORT_ORIGIN_CONFIG[code as keyof typeof IMPORT_ORIGIN_CONFIG];
-        if (systemConfig) return systemConfig.text;
-
-        // 3. Fallback
-        return code;
+        return found ? found.name : code;
     };
 
     // 3. Chuẩn bị dữ liệu thiết bị

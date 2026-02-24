@@ -44,7 +44,7 @@ function getAvailableServices() {
   if (!fs.existsSync(appsPath)) {
     return ['main-service']; // fallback to default
   }
-
+  
   return fs.readdirSync(appsPath, { withFileTypes: true })
     .filter(dirent => dirent.isDirectory())
     .map(dirent => dirent.name)
@@ -97,10 +97,10 @@ if (args[0] === '--create-service') {
     console.log('Usage: node generate.js --create-service <service-name> [--port=<port>]');
     process.exit(1);
   }
-
+  
   const serviceName = args[1];
   let servicePort = 3001; // default port
-
+  
   // Check for port parameter
   const portArg = args.find(arg => arg.startsWith('--port='));
   if (portArg) {
@@ -110,21 +110,21 @@ if (args[0] === '--create-service') {
       process.exit(1);
     }
   }
-
+  
   // Validate service name format
   if (!serviceName.endsWith('-service')) {
     console.error('❌ Service name must end with "-service"');
     console.error('Example: notification-service, payment-service');
     process.exit(1);
   }
-
+  
   // Check if service already exists
   const existingServices = getAvailableServices();
   if (existingServices.includes(serviceName)) {
     console.error(`❌ Service "${serviceName}" already exists`);
     process.exit(1);
   }
-
+  
   createNewService(serviceName, servicePort);
   process.exit(0);
 }
@@ -163,7 +163,7 @@ const moduleNameCamel = kebabToCamel(moduleNameKebab); // Ensure proper camelCas
 const moduleNameCapital = camelToPascal(moduleNameCamel); // For class names: FncRole
 
 console.log(`🎯 Generating module for service: ${targetService}`);
-console.log(` Module name: ${moduleNameCapital}`);
+console.log(`📦 Module name: ${moduleNameCapital}`);
 
 // Parse các field từ arguments
 const fields = [];
@@ -177,12 +177,12 @@ if (adjustedArgs.length === 2) {
     const fieldName = parts[0];
     const fieldType = parts[1];
     const refModel = parts[2]; // Tên model để reference (chỉ dành cho objectId)
-
+    
     if (!fieldName || !fieldType) {
       console.error(`Invalid field format: ${fieldPair}. Expected format: field:type or field:objectId:ModelName`);
       process.exit(1);
     }
-
+    
     const field = { name: fieldName.trim(), type: fieldType.trim() };
     if (fieldType === 'objectId' && refModel) {
       field.ref = refModel.trim();
@@ -196,12 +196,12 @@ if (adjustedArgs.length === 2) {
     const fieldName = parts[0];
     const fieldType = parts[1];
     const refModel = parts[2]; // Tên model để reference (chỉ dành cho objectId)
-
+    
     if (!fieldName || !fieldType) {
       console.error(`Invalid field format: ${adjustedArgs[i]}. Expected format: field:type or field:objectId:ModelName`);
       process.exit(1);
     }
-
+    
     const field = { name: fieldName, type: fieldType };
     if (fieldType === 'objectId' && refModel) {
       field.ref = refModel;
@@ -253,25 +253,25 @@ function replaceTemplateVariables(template, variables) {
 // Generate Entity
 function generateEntity() {
   const template = readTemplate('entity');
-
+  
   // Collect unique reference models
   const refModels = [...new Set(fields
     .filter(field => field.type === 'objectId' && field.ref)
     .map(field => field.ref))];
-
-  const imports = refModels.length > 0
+  
+  const imports = refModels.length > 0 
     ? refModels.map(model => {
-      const modelKebab = camelToKebab(model);
-      // For cross-service references, we might need to adjust the path
-      // For now, assume all references are within the same service structure
-      return `import { ${model} } from '../../${pluralize(modelKebab)}/entities/${modelKebab}.entity';`;
-    }).join('\n')
+        const modelKebab = camelToKebab(model);
+        // For cross-service references, we might need to adjust the path
+        // For now, assume all references are within the same service structure
+        return `import { ${model} } from '../../${pluralize(modelKebab)}/entities/${modelKebab}.entity';`;
+      }).join('\n')
     : '';
-
+  
   const classFields = fields.map(field => {
     const required = field.type !== 'date'; // date fields are usually optional
     const mongooseType = typeMapping[field.type]?.mongoose || 'String';
-
+    
     if (field.type === 'objectId' && field.ref) {
       return `  @Prop({ type: MongooseSchema.Types.ObjectId, ref: '${field.ref}'${required ? ', required: true' : ''} })
   ${field.name}${required ? '!' : '?'}: ${field.ref};`;
@@ -297,20 +297,20 @@ function generateEntity() {
 // Generate Create DTO
 function generateCreateDto() {
   const template = readTemplate('create-dto');
-
+  
   const validators = [...new Set(fields.map(field => typeMapping[field.type]?.validator).filter(Boolean))];
-
+  
   // Ensure IsMongoId is included if we have objectId fields
   const hasObjectId = fields.some(field => field.type === 'objectId');
   if (hasObjectId && !validators.includes('IsMongoId')) {
     validators.push('IsMongoId');
   }
-
+  
   const classFields = fields.map(field => {
     const validator = typeMapping[field.type]?.validator || 'IsNotEmpty';
     const isRequired = field.type !== 'date';
     const fieldType = field.type === 'objectId' ? 'string' : (typeMapping[field.type]?.prop || 'string');
-
+    
     return `  ${isRequired ? `@${validator}()` : '@IsOptional()'}
   ${field.name}${isRequired ? '!' : '?'}: ${fieldType};`;
   }).join('\n\n');
@@ -330,7 +330,7 @@ function generateCreateDto() {
 // Generate Update DTO
 function generateUpdateDto() {
   const template = readTemplate('update-dto');
-
+  
   const variables = {
     MODULE_NAME_CAPITAL: moduleNameCapital,
     MODULE_NAME_CAMEL: moduleNameCamel,
@@ -344,18 +344,18 @@ function generateUpdateDto() {
 // Generate Pagination DTO
 function generatePaginationDto() {
   const template = readTemplate('pagination-dto');
-
+  
   // Collect required validators
   const requiredValidators = new Set(['IsOptional', 'IsNumber', 'Min', 'Max', 'IsString']);
-
+  
   // Tạo filter fields dựa trên các field của entity
   const filterFields = fields.map(field => {
     const fieldType = typeMapping[field.type];
     let decorators = [];
     let tsType = field.type === 'objectId' ? 'string' : (fieldType?.prop || 'string');
-
+    
     decorators.push('@IsOptional()');
-
+    
     // Thêm decorator phù hợp với type
     switch (field.type) {
       case 'boolean':
@@ -393,18 +393,18 @@ function generatePaginationDto() {
       default:
         decorators.push('@IsString()');
     }
-
+    
     const decoratorStr = decorators.map(d => `  ${d}`).join('\n');
     return `${decoratorStr}
   ${field.name}?: ${tsType};`;
   }).join('\n\n');
 
   // Tạo search fields cho các field string
-  const stringFields = fields.filter(field =>
+  const stringFields = fields.filter(field => 
     field.type === 'string' || field.type === 'email'
   );
-
-  const searchFields = stringFields.length > 0
+  
+  const searchFields = stringFields.length > 0 
     ? stringFields.map(field => `  @IsOptional()
   @IsString()
   ${field.name}Search?: string;`).join('\n\n')
@@ -432,7 +432,7 @@ function generatePaginationInterface() {
 // Generate Repository
 function generateRepository() {
   const template = readTemplate('repository');
-
+  
   const variables = {
     MODULE_NAME_CAPITAL: moduleNameCapital,
     MODULE_NAME_CAMEL: moduleNameCamel,
@@ -446,7 +446,7 @@ function generateRepository() {
 // Generate Service
 function generateService() {
   const template = readTemplate('service');
-
+  
   const variables = {
     MODULE_NAME_CAPITAL: moduleNameCapital,
     MODULE_NAME_CAMEL: moduleNameCamel,
@@ -460,25 +460,25 @@ function generateService() {
 // Generate Controller
 function generateController() {
   const template = readTemplate('controller');
-
+  
   // Tạo filter keys - tất cả các field trừ những field dùng cho search
   const filterKeys = fields
     .filter(field => field.type !== 'string' && field.type !== 'email')
     .map(field => `'${field.name}'`)
     .join(', ');
-
+  
   // Tạo search keys - chỉ các field string và email
   const searchKeys = fields
     .filter(field => field.type === 'string' || field.type === 'email')
     .map(field => `'${field.name}'`)
     .join(', ');
-
+  
   // Collect populate fields (ObjectId references)
   const populateFields = fields
     .filter(field => field.type === 'objectId' && field.ref)
     .map(field => `'${field.name}'`)
     .join(', ');
-
+  
   const variables = {
     MODULE_NAME_CAPITAL: moduleNameCapital,
     MODULE_NAME_CAMEL: moduleNameCamel,
@@ -495,7 +495,7 @@ function generateController() {
 // Generate Module
 function generateModule() {
   const template = readTemplate('module');
-
+  
   const variables = {
     MODULE_NAME_CAPITAL: moduleNameCapital,
     MODULE_NAME_CAMEL: moduleNameCamel,
@@ -509,7 +509,7 @@ function generateModule() {
 // Generate Postman Collection
 function generatePostmanCollection() {
   const template = readTemplate('postman-collection');
-
+  
   // Tạo sample create body
   const sampleCreateBody = {};
   fields.forEach(field => {
@@ -581,24 +581,24 @@ function generatePostmanCollection() {
   const searchFields = fields.filter(field => field.type === 'string' || field.type === 'email');
 
   // Sample filter params
-  const sampleFilterParams = filterFields.length > 0
+  const sampleFilterParams = filterFields.length > 0 
     ? '?' + filterFields.slice(0, 2).map(field => {
-      let value;
-      switch (field.type) {
-        case 'number': value = '100'; break;
-        case 'boolean': value = 'true'; break;
-        case 'date': value = '2024-01-01'; break;
-        case 'objectId': value = '507f1f77bcf86cd799439011'; break;
-        case 'arrayString': value = 'tag1,tag2'; break;
-        case 'arrayNumber': value = '100,200'; break;
-        default: value = 'sample';
-      }
-      return `${field.name}=${value}`;
-    }).join('&')
+        let value;
+        switch (field.type) {
+          case 'number': value = '100'; break;
+          case 'boolean': value = 'true'; break;
+          case 'date': value = '2024-01-01'; break;
+          case 'objectId': value = '507f1f77bcf86cd799439011'; break;
+          case 'arrayString': value = 'tag1,tag2'; break;
+          case 'arrayNumber': value = '100,200'; break;
+          default: value = 'sample';
+        }
+        return `${field.name}=${value}`;
+      }).join('&')
     : '';
 
   // Sample search params
-  const sampleSearchParams = searchFields.length > 0
+  const sampleSearchParams = searchFields.length > 0 
     ? '?' + searchFields.slice(0, 2).map(field => `${field.name}=sample`).join('&')
     : '';
 
@@ -642,9 +642,9 @@ function generatePostmanCollection() {
     description: `Search by ${field.name} (regex)`
   }));
 
-  const combinedQueryParams = [...filterQueryParams, ...searchQueryParams,
-  { key: 'page', value: '1' },
-  { key: 'limit', value: '10' }
+  const combinedQueryParams = [...filterQueryParams, ...searchQueryParams, 
+    { key: 'page', value: '1' },
+    { key: 'limit', value: '10' }
   ];
 
   const variables = {
@@ -659,9 +659,9 @@ function generatePostmanCollection() {
     COMBINED_PARAMS: combinedParams ? '?' + combinedParams : '',
     SAMPLE_POPULATE: searchFields[0]?.name || 'relatedField',
     FILTER_QUERY_PARAMS: JSON.stringify(filterQueryParams),
-    SEARCH_QUERY_PARAMS: JSON.stringify([...searchQueryParams,
-    { key: 'page', value: '1' },
-    { key: 'limit', value: '10' }
+    SEARCH_QUERY_PARAMS: JSON.stringify([...searchQueryParams, 
+      { key: 'page', value: '1' },
+      { key: 'limit', value: '10' }
     ]),
     COMBINED_QUERY_PARAMS: JSON.stringify(combinedQueryParams)
   };
@@ -673,23 +673,23 @@ function generatePostmanCollection() {
 function createNewService(serviceName, port) {
   console.log(`🚀 Creating new microservice: ${serviceName}`);
   console.log(`🔌 Port: ${port}`);
-
+  
   const servicePath = path.join(__dirname, 'apps', serviceName);
   const srcPath = path.join(servicePath, 'src');
   const serviceBaseName = serviceName.replace('-service', '');
   const serviceNameCamel = kebabToCamel(serviceBaseName);
   const serviceNameCapital = camelToPascal(serviceNameCamel);
-
+  
   // Check if service directory already exists
   if (fs.existsSync(servicePath)) {
     console.error(`❌ Service directory already exists: ${servicePath}`);
     process.exit(1);
   }
-
+  
   // Create service directory structure
   createDirectory(srcPath);
   createDirectory(path.join(srcPath, serviceBaseName));
-
+  
   // Generate main.ts for microservice with Kafka
   const mainTsContent = `import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
@@ -722,7 +722,7 @@ async function bootstrap() {
 }
 bootstrap();
 `;
-
+  
   // Generate app.module.ts for microservice
   const appModuleContent = `import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -739,7 +739,7 @@ import { ${serviceNameCapital}Module } from './${serviceBaseName}/${serviceBaseN
 })
 export class AppModule {}
 `;
-
+  
   // Generate service module
   const serviceModuleContent = `import { Module } from '@nestjs/common';
 import { ${serviceNameCapital}Controller } from './${serviceBaseName}.controller';
@@ -752,7 +752,7 @@ import { ${serviceNameCapital}Service } from './${serviceBaseName}.service';
 })
 export class ${serviceNameCapital}Module {}
 `;
-
+  
   // Generate service controller
   const serviceControllerContent = `import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
@@ -778,7 +778,7 @@ export class ${serviceNameCapital}Controller {
   }
 }
 `;
-
+  
   // Generate service service
   const serviceServiceContent = `import { Injectable, Logger } from '@nestjs/common';
 
@@ -808,7 +808,7 @@ export class ${serviceNameCapital}Service {
   }
 }
 `;
-
+  
   // Generate tsconfig.app.json
   const tsconfigContent = `{
   "extends": "../../tsconfig.json",
@@ -820,7 +820,7 @@ export class ${serviceNameCapital}Service {
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }
 `;
-
+  
   // Write files
   writeFile(path.join(srcPath, 'main.ts'), mainTsContent);
   writeFile(path.join(srcPath, 'app.module.ts'), appModuleContent);
@@ -828,13 +828,13 @@ export class ${serviceNameCapital}Service {
   writeFile(path.join(srcPath, serviceBaseName, `${serviceBaseName}.controller.ts`), serviceControllerContent);
   writeFile(path.join(srcPath, serviceBaseName, `${serviceBaseName}.service.ts`), serviceServiceContent);
   writeFile(path.join(servicePath, 'tsconfig.app.json'), tsconfigContent);
-
+  
   // Update nest-cli.json
   updateNestCliConfig(serviceName);
-
+  
   // Update shared library with new service constants
   updateSharedLibrary(serviceName, serviceBaseName);
-
+  
   console.log(`\n✅ Microservice '${serviceName}' created successfully!`);
   console.log(`\n📁 Service created in: ${servicePath}`);
   console.log(`\n🔧 Next steps:`);
@@ -856,21 +856,21 @@ export class ${serviceNameCapital}Service {
 // Update nest-cli.json to include new service
 function updateNestCliConfig(serviceName) {
   const nestCliPath = path.join(__dirname, 'nest-cli.json');
-
+  
   if (!fs.existsSync(nestCliPath)) {
     console.log('⚠️  nest-cli.json not found, skipping configuration update');
     return;
   }
-
+  
   try {
     const nestCliContent = fs.readFileSync(nestCliPath, 'utf8');
     const nestCliConfig = JSON.parse(nestCliContent);
-
+    
     // Initialize projects if it doesn't exist
     if (!nestCliConfig.projects) {
       nestCliConfig.projects = {};
     }
-
+    
     // Add new service configuration
     nestCliConfig.projects[serviceName] = {
       "type": "application",
@@ -881,11 +881,11 @@ function updateNestCliConfig(serviceName) {
         "tsConfigPath": `apps/${serviceName}/tsconfig.app.json`
       }
     };
-
+    
     // Write updated configuration
     fs.writeFileSync(nestCliPath, JSON.stringify(nestCliConfig, null, 2));
     console.log(`✅ Updated nest-cli.json with ${serviceName} configuration`);
-
+    
   } catch (error) {
     console.log(`⚠️  Failed to update nest-cli.json: ${error.message}`);
   }
@@ -895,10 +895,10 @@ function updateNestCliConfig(serviceName) {
 function updateSharedLibrary(serviceName, serviceBaseName) {
   const sharedConstantsPath = path.join(__dirname, 'libs', 'shared', 'src', 'constants');
   const sharedIndexPath = path.join(__dirname, 'libs', 'shared', 'src', 'index.ts');
-
+  
   // Create constants directory if it doesn't exist
   createDirectory(sharedConstantsPath);
-
+  
   // Create or update service constants file
   const serviceConstantsPath = path.join(sharedConstantsPath, `${serviceBaseName}.constants.ts`);
   const serviceConstantsContent = `// ${serviceName.toUpperCase()} Message Patterns
@@ -909,25 +909,25 @@ export const ${serviceBaseName.toUpperCase()}_PATTERNS = {
 
 export type ${camelToPascal(serviceBaseName)}Pattern = typeof ${serviceBaseName.toUpperCase()}_PATTERNS[keyof typeof ${serviceBaseName.toUpperCase()}_PATTERNS];
 `;
-
+  
   writeFile(serviceConstantsPath, serviceConstantsContent);
-
+  
   // Update shared index.ts to export new constants
   try {
     let indexContent = '';
     if (fs.existsSync(sharedIndexPath)) {
       indexContent = fs.readFileSync(sharedIndexPath, 'utf8');
     }
-
+    
     const newExport = `export * from './constants/${serviceBaseName}.constants';`;
-
+    
     // Check if export already exists
     if (!indexContent.includes(newExport)) {
       indexContent += `\n${newExport}`;
       fs.writeFileSync(sharedIndexPath, indexContent);
       console.log(`✅ Updated shared library index.ts with ${serviceName} constants`);
     }
-
+    
   } catch (error) {
     console.log(`⚠️  Failed to update shared library: ${error.message}`);
   }
@@ -938,7 +938,7 @@ function generateModuleFiles() {
   // Generate in the selected service directory
   const basePath = path.join(__dirname, 'apps', targetService, 'src', moduleNameKebab + 's');
   const postmanPath = path.join(__dirname, 'postman');
-
+  
   // Create directories
   createDirectory(basePath);
   createDirectory(path.join(basePath, 'controllers'));
@@ -959,7 +959,7 @@ function generateModuleFiles() {
   writeFile(path.join(basePath, 'services', `${moduleNameKebab}.service.ts`), generateService());
   writeFile(path.join(basePath, 'controllers', `${moduleNameKebab}.controller.ts`), generateController());
   writeFile(path.join(basePath, `${moduleNameKebab}s.module.ts`), generateModule());
-
+  
   // Generate Postman collection with service prefix
   const postmanFileName = `${targetService}-${moduleNameKebab}-api-collection.json`;
   writeFile(path.join(postmanPath, postmanFileName), generatePostmanCollection());

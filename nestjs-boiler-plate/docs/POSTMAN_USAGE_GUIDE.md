@@ -170,7 +170,7 @@ pm.request.headers.add({
 pm.environment.set('randomName', 'Product ' + Math.floor(Math.random() * 1000));
 ```
 
-##  Response Examples
+## 📊 Response Examples
 
 ### Success Create Response:
 ```json

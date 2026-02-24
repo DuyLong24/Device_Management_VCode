@@ -2,8 +2,6 @@
 import { IsString, IsNotEmpty, IsDateString, IsOptional, IsArray, ValidateNested, IsNumber, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 
-import { IsUniqueArray } from '../../../common/decorators/unique-array.decorator';
-
 class ImportDeviceDto {
   @IsString()
   @IsNotEmpty()
@@ -16,7 +14,6 @@ class ImportDeviceDto {
   @IsArray()
   @IsOptional()
   @IsString({ each: true })
-  @IsUniqueArray({ message: 'Danh sách MAC không được trùng lặp' })
   expectedMacs?: string[];
 
   @IsNumber()

@@ -21,13 +21,3 @@ export interface MacItem {
     checkResult: CheckResult;
     note?: string;
 }
-export interface ScannedItem {
-    mac: string;
-    deviceModel: string;
-    deviceCode: string;
-    scannedAt?: Date;
-    scannedBy?: any;
-    _id?: string;
-}
-
-export type LocalScannedItem = ScannedItem & { deviceCode?: string };

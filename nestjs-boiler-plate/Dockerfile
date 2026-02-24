@@ -14,4 +14,4 @@ RUN npm run build:main
 
 EXPOSE 3000
 
-CMD ["npm", "run", "start:main:prod"]
+CMD ["npm", "run", "start:main"]

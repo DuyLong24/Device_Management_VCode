@@ -76,7 +76,24 @@ export class DeviceController {
 
   @Get()
   async findAll(@Query() query: DevicePaginationDto) {
-    return this.deviceService.getDevicesList(query);
+    const filter = DeviceQueryBuilder.build(query);
+
+    const options = {
+      page: query.page || 1,
+      limit: query.limit || 10,
+      sortBy: query.sortBy || 'createdAt:desc',
+      populate: query.populate || [
+        { path: 'warehouseId', select: 'name code color icon' },
+        { path: 'qcBy', select: 'name email' },
+        {
+          path: 'importId',
+          select: 'code importDate createdBy',
+          populate: { path: 'createdBy', select: 'name' }
+        }
+      ], // Populate để lấy tên kho và thông tin user
+    };
+
+    return this.deviceService.findAllWithPagination(filter, options);
   }
 
   @Get('stats')

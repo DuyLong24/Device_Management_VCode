@@ -18,7 +18,7 @@ Plugin pagination TypeScript tùy chỉnh cho Mongoose với full type safety v�
 - **Flexible search**: Regex search với case-insensitive
 - **Performance optimized**: Promise.all và efficient MongoDB queries
 
-###  Plugin Interface
+### 📊 Plugin Interface
 
 ```typescript
 interface PaginateOptions {

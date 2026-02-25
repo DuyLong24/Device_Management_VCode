@@ -67,6 +67,11 @@ export class DeviceTransferService {
 
         const toWarehouse = await this.warehouseService.findById(toWarehouseId);
         if (toWarehouse) {
+            // Nghiệp vụ: Mọi máy lọt vào kho Sẵn sàng xuất BẮT BUỘC phải là hàng Đã qua QC
+            if (toWarehouse.code === 'READY_TO_EXPORT') {
+                device.qcStatus = 'PASS';
+            }
+
             if (toWarehouse.code === 'REMOVED') {
                 device.removeReason = errorReason;
                 device.removeDate = new Date();

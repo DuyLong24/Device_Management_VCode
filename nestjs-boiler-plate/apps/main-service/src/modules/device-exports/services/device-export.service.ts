@@ -220,8 +220,7 @@ export class DeviceExportService {
       }
     }
 
-    // Validate Stock Availability
-    await this.validateStockAvailability(exportRecord.requirements);
+    await this.validateStockAvailability(exportRecord.requirements, id);
 
     const updatedExport = await this.update(id, {
       status: ExportStatusEnum.APPROVED as any,
@@ -242,7 +241,7 @@ export class DeviceExportService {
     return updatedExport;
   }
 
-  private async validateStockAvailability(requirements: any[]) {
+  private async validateStockAvailability(requirements: any[], excludeExportId?: string) {
     if (requirements && requirements.length > 0) {
       // 1. Tính tổng số lượng yêu cầu cho từng model
       const requirementsMap = new Map<string, number>();
@@ -253,7 +252,7 @@ export class DeviceExportService {
 
       // 2. Kiểm tra tồn kho
       for (const [model, totalQuantity] of requirementsMap.entries()) {
-        const stockStatus = await this.getInventoryStatus(model);
+        const stockStatus = await this.getInventoryStatus(model, excludeExportId);
         if (stockStatus.available < totalQuantity) {
           throw new BadRequestException(
             `Không đủ tồn kho khả dụng cho ${model}. Cần: ${totalQuantity}, Khả dụng: ${stockStatus.available}`
@@ -319,10 +318,10 @@ export class DeviceExportService {
     }
   }
 
-  async getInventoryStatus(model: string): Promise<{ inStock: number; reserved: number; available: number }> {
+  async getInventoryStatus(model: string, excludeExportId?: string): Promise<{ inStock: number; reserved: number; available: number }> {
     const inStock = await this.deviceService.countReadyToExport(model);
 
-    const activeExports = await this.deviceExportRepository.findAll({
+    const query: any = {
       status: {
         $in: [
           ExportStatusEnum.PENDING_APPROVAL,
@@ -330,7 +329,12 @@ export class DeviceExportService {
           ExportStatusEnum.IN_PROGRESS
         ]
       }
-    });
+    };
+    if (excludeExportId) {
+      query._id = { $ne: excludeExportId };
+    }
+
+    const activeExports = await this.deviceExportRepository.findAll(query);
 
     let reserved = 0;
     for (const exportRecord of activeExports) {

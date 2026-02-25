@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { deviceService } from '../services/device.service';
 import { warehouseService } from '../services/warehouse.service';
 import { warehouseTransitionService, type WarehouseTransition } from '../services/warehouse-transition.service';
@@ -12,21 +12,48 @@ export const useWarehouseData = () => {
     const { code } = useParams();
     const queryClient = useQueryClient();
     const { message } = App.useApp();
+    const [searchParams, setSearchParams] = useSearchParams();
 
-    // Pagination
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(20);
+    // cập nhật tham số URL
+    const updateParams = (updates: Record<string, string | number | null>) => {
+        const newParams = new URLSearchParams(searchParams);
+        Object.keys(updates).forEach(key => {
+            const val = updates[key];
+            if (val === null || val === undefined || val === '') {
+                newParams.delete(key);
+            } else {
+                newParams.set(key, String(val));
+            }
+        });
+        setSearchParams(newParams, { replace: true });
+    };
 
-    // Filters
-    const [searchText, setSearchText] = useState('');
+    const getParam = (key: string, defaultValue: string = '') => searchParams.get(key) || defaultValue;
+    const getNumParam = (key: string, defaultValue: number) => {
+        const val = searchParams.get(key);
+        return val ? parseInt(val, 10) : defaultValue;
+    };
+
+    // URL-backed State
+    const page = getNumParam('page', 1);
+    const pageSize = getNumParam('limit', 20);
+    const searchText = getParam('search');
+    const importCode = getParam('importCode');
+    const exportCode = getParam('exportCode');
+    const selectedDeviceModel = searchParams.get('model') || undefined;
+
+    // Setters
+    const setPage = (p: number) => updateParams({ page: p });
+    const setPageSize = (ps: number) => updateParams({ limit: ps, page: 1 });
+    const setSearchText = (val: string) => updateParams({ search: val, page: 1 });
+    const setImportCode = (val: string) => updateParams({ importCode: val, page: 1 });
+    const setExportCode = (val: string) => updateParams({ exportCode: val, page: 1 });
+    const setSelectedDeviceModel = (val: string | undefined) => updateParams({ model: val || null, page: 1 });
+
     const debouncedSearch = useDebounce(searchText, 500);
-    const [importCode, setImportCode] = useState('');
     const debouncedImportCode = useDebounce(importCode, 500);
-    const [exportCode, setExportCode] = useState('');
     const debouncedExportCode = useDebounce(exportCode, 500);
-    const [selectedDeviceModel, setSelectedDeviceModel] = useState<string | undefined>(undefined);
 
-    // Selection
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [priorityItems, setPriorityItems] = useState<any[]>([]);
 
@@ -42,11 +69,7 @@ export const useWarehouseData = () => {
     }, []);
 
     useEffect(() => {
-        setPage(1);
         setSelectedRowKeys([]);
-        setSearchText('');
-        setImportCode('');
-        setExportCode('');
         setPriorityItems([]);
     }, [code]);
 

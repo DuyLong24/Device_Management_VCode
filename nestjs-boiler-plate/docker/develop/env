@@ -7,7 +7,7 @@ PORT=3000
 URL=api.wms.alvar.quytb.com
 
 # URL of the Mongo DB
-DATABASE_URL=mongodb://alvar:aidZwwypUIVRB0g7@db.bfd.vn:2700/alvarwarehouse
+DATABASE_URL=mongodb://db.bfd.vn:2700/alvarwarehouse
 MONGODB_AUTH_USER=alvar
 MONGODB_AUTH_PASS=aidZwwypUIVRB0g7
 

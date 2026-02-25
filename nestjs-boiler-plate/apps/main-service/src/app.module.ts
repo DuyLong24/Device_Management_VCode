@@ -68,10 +68,16 @@ import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activat
     ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('DATABASE_URL') ||
-          configService.get<string>('MONGODB_URI')
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const user = configService.get<string>('MONGODB_AUTH_USER');
+        const pass = configService.get<string>('MONGODB_AUTH_PASS');
+        return {
+          uri: configService.get<string>('DATABASE_URL') ||
+            configService.get<string>('MONGODB_URI'),
+          ...(user && { user }),
+          ...(pass && { pass })
+        };
+      },
       inject: [ConfigService],
     }),
     // JWT Module for token verification

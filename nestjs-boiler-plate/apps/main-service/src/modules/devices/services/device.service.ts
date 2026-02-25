@@ -100,7 +100,16 @@ export class DeviceService implements OnModuleInit {
   }
 
   async insertMany(devices: CreateDeviceDto[], options: any = {}): Promise<Device[]> {
-    return this.deviceRepository.insertMany(devices, options);
+    try {
+      return await this.deviceRepository.insertMany(devices, options);
+    } catch (err: any) {
+      if (err.code === 11000 || (err.message && err.message.includes('E11000'))) {
+        const match = err.message?.match(/dup key: \{ mac: "([^"]+)" \}/);
+        const dupMac = match ? match[1] : 'không xác định';
+        throw new BadRequestException(`MAC địa chỉ đã tồn tại trong hệ thống: ${dupMac}`);
+      }
+      throw err;
+    }
   }
 
   async bulkWrite(ops: any[], options: any = {}): Promise<any> {
@@ -320,7 +329,6 @@ export class DeviceService implements OnModuleInit {
     return this.deviceModel.countDocuments({
       deviceModel: model,
       warehouseId: readyWarehouse._id,
-      qcStatus: 'PASS'
     }).exec();
   }
 

@@ -23,11 +23,13 @@ export class DeviceImportService {
     // Kiểm tra Serial trước khi tạo mới -> Chỉ check kỹ khi trạng thái là PUBLIC (Lưu chính thức)
     if (createDto.status === 'PUBLIC') {
       const devices = createDto.devices || [];
+      const allMacs: string[] = [];
+
       for (const device of devices) {
         const d: any = device;
         const macs = d.expectedMacs || [];
 
-        // 2. Check trùng lặp nội bộ
+        // 1. Check trùng lặp nội bộ trong lô
         if (macs.length > 0) {
           const unique = new Set(macs);
           if (unique.size !== macs.length) {
@@ -36,6 +38,18 @@ export class DeviceImportService {
                 .replace('{device}', d.deviceCode)
             );
           }
+          allMacs.push(...macs);
+        }
+      }
+
+      // 2. Check trùng lặp với Database (dùng $in một lần duy nhất)
+      if (allMacs.length > 0) {
+        const existingDevices = await this.deviceService.findByMacs(allMacs);
+        if (existingDevices.length > 0) {
+          const duplicateMacs = existingDevices.map((d: any) => d.mac).join(', ');
+          throw new BadRequestException(
+            `Phát hiện ${existingDevices.length} MAC đã tồn tại trong hệ thống: ${duplicateMacs}`
+          );
         }
       }
     }
@@ -61,11 +75,11 @@ export class DeviceImportService {
     const payload = {
       ...createDto,
       code,
-      devices, // Use processed devices with macImported set
+      devices,
       details,
       totalItem,
       totalQuantity,
-      macImported: totalMacImported, // Set root macImported
+      macImported: totalMacImported,
       status,
       createdBy: userId ? userId : null
     };

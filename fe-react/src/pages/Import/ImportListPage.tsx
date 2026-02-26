@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, Button, Space, Table, Tag, Form, Tooltip, Empty, Spin, Typography } from 'antd';
 import { PlusOutlined, EyeOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
@@ -13,6 +13,7 @@ import { FileTextOutlined, ClockCircleOutlined, SyncOutlined, CheckCircleOutline
 import { exportImportPDF } from '../../utils/export-import-pdf';
 import { message } from 'antd';
 import { useAuth } from '../../hooks/useAuth';
+import { useListUrlState, type ListUrlState } from '../../hooks/useListUrlState';
 import { PERMISSION_KEYS } from '../../constants/permissionKeys';
 
 const { Text } = Typography;
@@ -59,7 +60,8 @@ export default function ImportListPage() {
 
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<ImportRecord[]>([]);
-    const [filteredData, setFilteredData] = useState<ImportRecord[]>([]);
+
+    const { searchParams, urlState, updateUrlState, formInitialValues } = useListUrlState();
 
     const mapApiToUi = (apiData: DeviceImport[]): ImportRecord[] => {
         if (!Array.isArray(apiData)) return [];
@@ -123,7 +125,6 @@ export default function ImportListPage() {
             if (res && res.data) {
                 const uiData = mapApiToUi(res.data);
                 setData(uiData);
-                setFilteredData(uiData);
             }
         } catch (error) {
             console.error(error);
@@ -134,42 +135,71 @@ export default function ImportListPage() {
 
     useEffect(() => {
         fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const handleRealtimeFilter = () => {
-        const values = form.getFieldsValue();
-        let filtered = [...data];
+    useEffect(() => {
+        form.setFieldsValue({
+            keyword: searchParams.get('keyword') ?? undefined,
+            status: searchParams.get('status') ?? undefined,
+            dateRange: (searchParams.get('dateStart') && searchParams.get('dateEnd'))
+                ? [dayjs(searchParams.get('dateStart')), dayjs(searchParams.get('dateEnd'))]
+                : undefined,
+        });
+    }, [searchParams]);
 
-        if (values.keyword) {
-            const keyword = values.keyword.toLowerCase();
-            filtered = filtered.filter((item) => {
+    const filteredData = useMemo(() => {
+        let _filtered = [...data];
+
+        if (urlState.keyword) {
+            const k = urlState.keyword.toLowerCase();
+            _filtered = _filtered.filter((item) => {
                 const matchBasic =
-                    item.importCode.toLowerCase().includes(keyword) ||
-                    item.supplier.toLowerCase().includes(keyword) ||
-                    item.importedBy.toLowerCase().includes(keyword) ||
-                    item.handoverPerson.toLowerCase().includes(keyword);
-                const matchDevice = item.devices.some((p) => p.deviceCode.toLowerCase().includes(keyword));
+                    item.importCode?.toLowerCase().includes(k) ||
+                    item.supplier?.toLowerCase().includes(k) ||
+                    item.importedBy?.toLowerCase().includes(k) ||
+                    item.handoverPerson?.toLowerCase().includes(k);
+                const matchDevice = item.devices?.some((p) => p.deviceCode?.toLowerCase().includes(k));
                 return matchBasic || matchDevice;
             });
         }
 
-        if (values.dateRange && values.dateRange.length === 2) {
-            filtered = filtered.filter((item) => {
+        if (urlState.dateStart && urlState.dateEnd) {
+            _filtered = _filtered.filter((item) => {
                 const itemDate = dayjs(item.importDate);
-                return itemDate.isAfter(values.dateRange[0].startOf('day')) && itemDate.isBefore(values.dateRange[1].endOf('day'));
+                return itemDate.isAfter(dayjs(urlState.dateStart).startOf('day')) && itemDate.isBefore(dayjs(urlState.dateEnd).endOf('day'));
             });
         }
 
-        if (values.status) {
-            filtered = filtered.filter((item) => item.inventoryStatus === values.status);
+        if (urlState.status) {
+            _filtered = _filtered.filter((item) => item.inventoryStatus === urlState.status);
         }
 
-        setFilteredData(filtered);
+        return _filtered;
+    }, [data, urlState]);
+
+    const handleFilterChange = () => {
+        const allValues = form.getFieldsValue();
+        const updates: Partial<ListUrlState> = {
+            keyword: allValues.keyword || undefined,
+            status: allValues.status || undefined,
+            page: 1, // Reset to page 1 on filter
+        };
+
+        if (allValues.dateRange && allValues.dateRange.length === 2) {
+            updates.dateStart = allValues.dateRange[0].toISOString();
+            updates.dateEnd = allValues.dateRange[1].toISOString();
+        } else {
+            updates.dateStart = undefined;
+            updates.dateEnd = undefined;
+        }
+
+        updateUrlState(updates);
     };
 
     const handleReset = () => {
         form.resetFields();
-        setFilteredData(data);
+        updateUrlState({ keyword: undefined, status: undefined, dateStart: undefined, dateEnd: undefined, page: 1, pageSize: 10 });
     };
 
     const handleViewDetail = (importCode: string) => {
@@ -244,8 +274,6 @@ export default function ImportListPage() {
         { value: 'in-progress', label: 'Đang kiểm kê' },
         { value: 'completed', label: 'Đã kiểm kê' },
     ];
-
-
 
     const columns: TableColumnsType<ImportRecord> = [
         {
@@ -387,7 +415,8 @@ export default function ImportListPage() {
 
             <FilterBar
                 form={form}
-                onValuesChange={handleRealtimeFilter}
+                initialValues={formInitialValues}
+                onValuesChange={handleFilterChange}
                 onReset={handleReset}
                 searchPlaceholder={IMPORT_LABELS.SEARCH_PLACEHOLDER}
                 showDateRange={true}
@@ -419,10 +448,12 @@ export default function ImportListPage() {
                         dataSource={filteredData}
                         scroll={{ x: 1300 }}
                         pagination={{
-                            pageSize: 10,
+                            current: urlState.page,
+                            pageSize: urlState.pageSize,
                             showSizeChanger: true,
                             showTotal: (total) => `Tổng ${total} phiếu nhập`,
                             pageSizeOptions: ['10', '20', '50'],
+                            onChange: (page, pageSize) => updateUrlState({ page, pageSize }),
                         }}
                         size="middle"
                     />

@@ -185,7 +185,7 @@ export default function InventoryCheckPage() {
     <div className="p-3 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-0">
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/import/list')} className="mb-4">
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} className="mb-4">
           {INVENTORY_LABELS.BTN_BACK}
         </Button>
       </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
     Card, Button, Table, Tag, Typography, message, Modal, Space, List, Form, Input, Select,
     Divider, Popover
@@ -18,6 +18,7 @@ import { useSessionPermission } from '../../hooks/useSessionPermission';
 import { SessionPermissionAlert } from '../../components/permissions/SessionPermissionAlert';
 import { IMPORT_INVENTORY_CHECK } from '../../constants/permissionKeys';
 import { INVENTORY_LABELS } from '../../constants/inventory.constants';
+import { useListUrlState } from '../../hooks/useListUrlState';
 
 const { Title, Text } = Typography;
 
@@ -39,7 +40,8 @@ export default function InventoryListPage() {
     // Data State
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<DeviceImport[]>([]);
-    const [filteredData, setFilteredData] = useState<DeviceImport[]>([]);
+
+    const { searchParams, urlState, updateUrlState, formInitialValues } = useListUrlState();
 
     // Modal State
     const [modalVisible, setModalVisible] = useState(false);
@@ -57,7 +59,6 @@ export default function InventoryListPage() {
                     item.inventoryStatus === 'pending' || item.inventoryStatus === 'in-progress'
                 );
                 setData(activeImports);
-                setFilteredData(activeImports);
             }
         } catch (error) {
             message.error('Lỗi tải danh sách phiếu nhập');
@@ -116,22 +117,41 @@ export default function InventoryListPage() {
         });
     };
 
-    // Filter Logic
-    const handleFilter = () => {
-        const values = form.getFieldsValue();
+    useEffect(() => {
+        form.setFieldsValue({
+            keyword: searchParams.get('keyword') ?? undefined,
+            status: searchParams.get('status') ?? undefined,
+        });
+    }, [searchParams]);
+
+    const filteredData = useMemo(() => {
         let result = [...data];
 
-        if (values.keyword) {
-            const k = values.keyword.toLowerCase();
+        if (urlState.keyword) {
+            const k = urlState.keyword.toLowerCase();
             result = result.filter(item =>
-                item.code.toLowerCase().includes(k) ||
-                item.supplier.toLowerCase().includes(k)
+                item.code?.toLowerCase().includes(k) ||
+                item.supplier?.toLowerCase().includes(k)
             );
         }
-        if (values.status) {
-            result = result.filter(item => item.inventoryStatus === values.status);
+        if (urlState.status) {
+            result = result.filter(item => item.inventoryStatus === urlState.status);
         }
-        setFilteredData(result);
+        return result;
+    }, [data, urlState]);
+
+    const handleFilterChange = () => {
+        const allValues = form.getFieldsValue();
+        updateUrlState({
+            keyword: allValues.keyword || undefined,
+            status: allValues.status || undefined,
+            page: 1, // Reset to page 1
+        });
+    };
+
+    const handleReset = () => {
+        form.resetFields();
+        updateUrlState({ keyword: undefined, status: undefined, page: 1, pageSize: 10 });
     };
 
     const columns: TableColumnsType<DeviceImport> = [
@@ -204,11 +224,11 @@ export default function InventoryListPage() {
     return (
         <div className="p-3">
             <Space align="center" className="mb-4">
-                <Title level={3} className="!mb-0 !mt-0">{INVENTORY_LABELS.PAGE_TITLE_LIST}</Title>
+                <Title level={3} className="mb-0! mt-0!">{INVENTORY_LABELS.PAGE_TITLE_LIST}</Title>
                 <Popover
                     title="Điều kiện kiểm kê"
                     content={
-                        <div className="max-w-[450px]">
+                        <div className="max-w-112.5">
                             <Text>Chỉ hiển thị các phiếu nhập đáp ứng điều kiện sau:</Text>
                             <ul className="mt-2 mb-0 pl-5">
                                 <li>
@@ -233,15 +253,15 @@ export default function InventoryListPage() {
             </Space>
 
             <Card size="small" className="mb-4">
-                <Form form={form} layout="inline" onValuesChange={handleFilter}>
+                <Form form={form} layout="inline" initialValues={formInitialValues} onValuesChange={handleFilterChange}>
                     <Form.Item name="keyword"><Input prefix={<SearchOutlined />} placeholder={INVENTORY_LABELS.SEARCH_PLACEHOLDER} /></Form.Item>
                     <Form.Item name="status">
-                        <Select className="w-[150px]" placeholder="Trạng thái" allowClear>
+                        <Select className="w-37.5" placeholder="Trạng thái" allowClear>
                             <Select.Option value="pending">Chưa kiểm kê</Select.Option>
                             <Select.Option value="in-progress">Đang kiểm kê</Select.Option>
                         </Select>
                     </Form.Item>
-                    <Form.Item><Button icon={<ReloadOutlined />} onClick={() => { form.resetFields(); setFilteredData(data); }} /></Form.Item>
+                    <Form.Item><Button icon={<ReloadOutlined />} onClick={handleReset} /></Form.Item>
                 </Form>
             </Card>
 
@@ -252,9 +272,11 @@ export default function InventoryListPage() {
                     rowKey="id"
                     loading={loading}
                     pagination={{
-                        pageSize: 10,
+                        current: urlState.page,
+                        pageSize: urlState.pageSize,
                         showSizeChanger: true,
                         showTotal: (total) => `Tổng ${total} phiếu nhập`,
+                        onChange: (page, pageSize) => updateUrlState({ page, pageSize }),
                     }}
                 />
             </Card>

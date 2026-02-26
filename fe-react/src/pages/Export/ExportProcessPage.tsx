@@ -283,7 +283,7 @@ export default function ExportProcessPage() {
             {contextHolder}
             {modalContextHolder}
             <Space className="mb-4">
-                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/export/check')}>
+                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
                     Quay lại
                 </Button>
             </Space>

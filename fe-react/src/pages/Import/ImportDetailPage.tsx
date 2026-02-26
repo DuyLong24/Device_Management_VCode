@@ -84,7 +84,7 @@ const ImportDetailPage = () => {
                 code={code}
                 inventoryStatus={inventoryStatus}
                 status={status}
-                onBack={() => navigate('/import/list')}
+                onBack={() => navigate(-1)}
                 onPrint={handlePrint}
                 onEdit={canEdit ? handleEdit : undefined}
                 onDelete={canDelete ? handleDelete : undefined}
@@ -95,7 +95,7 @@ const ImportDetailPage = () => {
                 <DetailInfoCard
                     title="Thông tin phiếu nhập kho"
                     items={infoItems}
-                    className="!mb-0"
+                    className="mb-0!"
                 />
 
                 {/* 2. Tổng quan */}

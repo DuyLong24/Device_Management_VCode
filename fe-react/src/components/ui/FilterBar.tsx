@@ -11,6 +11,7 @@ interface FilterOption {
 
 interface FilterBarProps {
     form: FormInstance;
+    initialValues?: Record<string, any>;
     onFilter?: () => void;
     onReset?: () => void;
     onValuesChange?: () => void;
@@ -24,6 +25,7 @@ interface FilterBarProps {
 
 export const FilterBar: React.FC<FilterBarProps> = ({
     form,
+    initialValues,
     onFilter,
     onReset,
     onValuesChange,
@@ -41,7 +43,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
     return (
         <Card className="mb-6">
-            <Form form={form} layout="inline" onFinish={onFilter} onValuesChange={onValuesChange}>
+            <Form form={form} layout="inline" initialValues={initialValues} onFinish={onFilter} onValuesChange={onValuesChange}>
                 <Row gutter={16} align="middle" className="w-full">
                     <Col xs={24} sm={24} md={8} lg={8}>
                         <Form.Item name="keyword" className="mb-0 w-full">

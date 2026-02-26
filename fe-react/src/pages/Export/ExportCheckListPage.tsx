@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
     Card, Button, Table, Tag, Typography, message, Modal, Space, Form, Input, Select, Divider, Spin, Progress, Popover,
     Alert
@@ -17,6 +17,7 @@ import type { DeviceExport } from '../../types/export.type';
 import { useSessionPermission } from '../../hooks/useSessionPermission';
 import { SessionPermissionAlert } from '../../components/permissions/SessionPermissionAlert';
 import { EXPORT_CHECK } from '../../constants/permissionKeys';
+import { useListUrlState } from '../../hooks/useListUrlState';
 
 const { Title, Text } = Typography;
 
@@ -32,7 +33,8 @@ export default function ExportCheckListPage() {
     // Data State
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<DeviceExport[]>([]);
-    const [filteredData, setFilteredData] = useState<DeviceExport[]>([]);
+
+    const { searchParams, urlState, updateUrlState, formInitialValues } = useListUrlState();
 
     // Modal State
     const [modalVisible, setModalVisible] = useState(false);
@@ -55,7 +57,6 @@ export default function ExportCheckListPage() {
             );
 
             setData(activeExports);
-            setFilteredData(activeExports);
         } catch (error) {
             messageApi.error('Lỗi tải danh sách phiếu xuất');
         } finally {
@@ -142,22 +143,41 @@ export default function ExportCheckListPage() {
         });
     };
 
-    // Filter Logic
-    const handleFilter = () => {
-        const values = filterForm.getFieldsValue();
+    useEffect(() => {
+        filterForm.setFieldsValue({
+            keyword: searchParams.get('keyword') ?? undefined,
+            status: searchParams.get('status') ?? undefined,
+        });
+    }, [searchParams]);
+
+    const filteredData = useMemo(() => {
         let result = [...data];
 
-        if (values.keyword) {
-            const k = values.keyword.toLowerCase();
+        if (urlState.keyword) {
+            const k = urlState.keyword.toLowerCase();
             result = result.filter(item =>
-                item.code.toLowerCase().includes(k) ||
-                (item.exportName && item.exportName.toLowerCase().includes(k))
+                item.code?.toLowerCase().includes(k) ||
+                (item.exportName && item.exportName?.toLowerCase().includes(k))
             );
         }
-        if (values.status) {
-            result = result.filter(item => item.status === values.status);
+        if (urlState.status) {
+            result = result.filter(item => item.status === urlState.status);
         }
-        setFilteredData(result);
+        return result;
+    }, [data, urlState]);
+
+    const handleFilterChange = () => {
+        const allValues = filterForm.getFieldsValue();
+        updateUrlState({
+            keyword: allValues.keyword || undefined,
+            status: allValues.status || undefined,
+            page: 1, // Reset to page 1
+        });
+    };
+
+    const handleReset = () => {
+        filterForm.resetFields();
+        updateUrlState({ keyword: undefined, status: undefined, page: 1, pageSize: 10 });
     };
 
     // Render modal footer - Tách ra để tránh nested ternary
@@ -178,8 +198,6 @@ export default function ExportCheckListPage() {
         );
     };
 
-
-
     const columns: TableColumnsType<DeviceExport> = [
         {
             title: 'Mã phiếu xuất',
@@ -195,7 +213,7 @@ export default function ExportCheckListPage() {
             title: 'Tên phiếu',
             dataIndex: 'exportName',
             key: 'exportName',
-            render: (text: string) => <div className="truncate whitespace-nowrap max-w-[200px]" title={text}>{text}</div>
+            render: (text: string) => <div className="truncate whitespace-nowrap max-w-50" title={text}>{text}</div>
         },
         {
             title: 'Tiến độ',
@@ -205,7 +223,7 @@ export default function ExportCheckListPage() {
                     ? Math.round(((record.totalItems || 0) / record.totalQuantity) * 100)
                     : 0;
                 return (
-                    <div className="w-[150px]">
+                    <div className="w-37.5">
                         <Progress percent={percent} size="small" />
                         <div className="text-xs text-gray-500">
                             {record.totalItems || 0} / {record.totalQuantity}
@@ -255,11 +273,11 @@ export default function ExportCheckListPage() {
             {contextHolder}
             {modalContextHolder}
             <Space align="center" className="mb-4">
-                <Title level={3} className="!mb-0 !mt-0">Xuất kho - Quét MAC</Title>
+                <Title level={3} className="mb-0! mt-0!">Xuất kho - Quét MAC</Title>
                 <Popover
                     title="Hướng dẫn"
                     content={
-                        <div className="max-w-[400px]">
+                        <div className="max-w-100">
                             <Text>Chọn phiếu xuất để tiến hành quét MAC (Xuất kho thực tế):</Text>
                             <ul className="mt-2 mb-0 pl-5">
                                 <li>
@@ -277,18 +295,18 @@ export default function ExportCheckListPage() {
             </Space>
 
             <Card size="small" className="mb-4">
-                <Form form={filterForm} layout="inline" onValuesChange={handleFilter}>
+                <Form form={filterForm} layout="inline" initialValues={formInitialValues} onValuesChange={handleFilterChange}>
                     <Form.Item name="keyword">
                         <Input prefix={<SearchOutlined />} placeholder="Tìm mã phiếu, tên..." />
                     </Form.Item>
                     <Form.Item name="status">
-                        <Select className="w-[150px]" placeholder="Trạng thái" allowClear>
+                        <Select className="w-37.5" placeholder="Trạng thái" allowClear>
                             <Select.Option value="APPROVED">Đã duyệt</Select.Option>
                             <Select.Option value="IN_PROGRESS">Đang xuất</Select.Option>
                         </Select>
                     </Form.Item>
                     <Form.Item>
-                        <Button icon={<ReloadOutlined />} onClick={() => { filterForm.resetFields(); setFilteredData(data); }} />
+                        <Button icon={<ReloadOutlined />} onClick={handleReset} />
                     </Form.Item>
                 </Form>
             </Card>
@@ -300,9 +318,11 @@ export default function ExportCheckListPage() {
                     rowKey={r => r.id || r._id || 'unknown'}
                     loading={loading}
                     pagination={{
-                        pageSize: 12,
+                        current: urlState.page,
+                        pageSize: urlState.pageSize,
                         showSizeChanger: true,
                         showTotal: (total) => `Tổng ${total} phiếu`,
+                        onChange: (page, pageSize) => updateUrlState({ page, pageSize }),
                     }}
                     className="border-0"
                 />
@@ -370,7 +390,7 @@ export default function ExportCheckListPage() {
                                 </div>
 
                                 <Spin spinning={sessionLoading}>
-                                    <div className="max-h-[300px] overflow-y-auto flex flex-col gap-3 p-1">
+                                    <div className="max-h-75 overflow-y-auto flex flex-col gap-3 p-1">
                                         {!sessionLoading && sessions.length === 0 && <Alert message="Chưa có phiên nào." type="warning" />}
 
                                         {sessions.map(session => (

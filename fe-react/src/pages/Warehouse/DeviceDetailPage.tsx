@@ -78,6 +78,7 @@ export default function DeviceDetailPage() {
 
     const isRemoved = currentWarehouse?.code === 'REMOVED';
 
+
     return (
         <div className="p-3">
             {/* Page Header */}
@@ -140,7 +141,7 @@ export default function DeviceDetailPage() {
                         </Tag>
                         <div className="mt-3">
                             <Text type="secondary">Cập nhật lúc: </Text>
-                            {device.warehouseUpdatedAt ? dayjs(device.warehouseUpdatedAt).format('DD/MM/YYYY HH:mm') : '-'}
+                            {device.warehouseUpdatedAt ? dayjs(device.warehouseUpdatedAt).format('DD/MM/YYYY HH:mm') : 'Chưa xác định'}
                         </div>
                     </Card>
 
@@ -153,7 +154,7 @@ export default function DeviceDetailPage() {
                                 children: (
                                     <div key={idx}>
                                         <Text type="secondary" className="text-xs">
-                                            {dayjs(ev.date).format('DD/MM/YYYY HH:mm')} • {ev.actor}
+                                            {ev.date ? dayjs(ev.date).format('DD/MM/YYYY HH:mm') : 'Chưa xác định'} • {ev.actor}
                                         </Text>
                                         <br />
                                         <Text strong>{ev.description}</Text>
@@ -195,7 +196,7 @@ export default function DeviceDetailPage() {
                                                     {device.importId.code}
                                                 </Link>
                                                 <Text type="secondary" className="text-xs">
-                                                    {device.importDate ? dayjs(device.importDate).format('DD/MM/YYYY') : '-'}
+                                                    {device.importDate ? dayjs(device.importDate).format('DD/MM/YYYY') : 'Chưa nhập kho'}
                                                 </Text>
                                             </Space>
                                         </Descriptions.Item>
@@ -224,7 +225,7 @@ export default function DeviceDetailPage() {
                                                     {device.currentExportId.code}
                                                 </Link>
                                                 <Text type="secondary" className="text-xs">
-                                                    {device.exportDate ? dayjs(device.exportDate).format('DD/MM/YYYY') : '-'}
+                                                    {device.exportDate ? dayjs(device.exportDate).format('DD/MM/YYYY') : 'Chưa xuất kho'}
                                                 </Text>
                                             </Space>
                                         </Descriptions.Item>
@@ -269,7 +270,7 @@ export default function DeviceDetailPage() {
                         <Card title="Thông tin bảo hành" size="small">
                             <Descriptions column={1} size="small">
                                 <Descriptions.Item label="Thời hạn">{device.warrantyMonths ? `${device.warrantyMonths} tháng` : '-'}</Descriptions.Item>
-                                <Descriptions.Item label="Kích hoạt">{device.warrantyActivatedDate ? dayjs(device.warrantyActivatedDate).format('DD/MM/YYYY') : '-'}</Descriptions.Item>
+                                <Descriptions.Item label="Kích hoạt">{device.warrantyActivatedDate ? dayjs(device.warrantyActivatedDate).format('DD/MM/YYYY') : 'Chưa kích hoạt'}</Descriptions.Item>
                                 <Descriptions.Item label="Hết hạn">{device.warrantyExpiredDate ? dayjs(device.warrantyExpiredDate).format('DD/MM/YYYY') : '-'}</Descriptions.Item>
                                 {device.warrantyExpiredDate && (
                                     <Descriptions.Item label="Trạng thái">

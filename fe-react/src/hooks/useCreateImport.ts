@@ -177,20 +177,63 @@ export const useCreateImport = () => {
         setIsMacModalOpen(true);
     };
 
-    const handleSaveMacs = (uniqueList: string[]) => {
+    const handleSaveMacs = (rawList: string[]) => {
         if (!currentDeviceKey) return;
 
+        const normalizedInputMacs = rawList
+            .map(mac => mac.trim().toUpperCase())
+            .filter(mac => mac !== '');
+
+        // Loại bỏ trùng lặp nội bộ (trường hợp user gõ 2 dòng y hệt nhau trong 1 ô input của modal)
+        const uniqueInputMacs = Array.from(new Set(normalizedInputMacs));
+
+        // THU THẬP GLOBAL SCOPE (Loại trừ thiết bị đang edit)
+        const existingGlobalMacs = new Set<string>();
+
+        deviceList.forEach(device => {
+            if (device.key === currentDeviceKey) return; // BỎ QUA dòng hiện tại
+
+            if (device.expectedMacs && device.expectedMacs.length > 0) {
+                device.expectedMacs.forEach(mac => {
+                    existingGlobalMacs.add(mac.trim().toUpperCase());
+                });
+            }
+        });
+
+        const duplicateMacs: string[] = [];
+        uniqueInputMacs.forEach(mac => {
+            if (existingGlobalMacs.has(mac)) {
+                duplicateMacs.push(mac);
+            }
+        });
+
+        // XỬ LÝ LỖI
+        if (duplicateMacs.length > 0) {
+            const displayMacs = duplicateMacs.slice(0, 5).join(', ');
+            const moreIndicator = duplicateMacs.length > 5 ? `\nvà ${duplicateMacs.length - 5} mã khác...` : '';
+
+            modal.error({
+                title: 'Phát hiện mã MAC trùng lặp',
+                content: `Có ${duplicateMacs.length} mã MAC đã tồn tại ở thiết bị khác trong cùng phiếu nhập này:\n\n[ ${displayMacs} ]${moreIndicator}\n\nHệ thống chỉ chấp nhận mã MAC duy nhất. Vui lòng xóa các mã bị trùng để tiếp tục!`,
+                okText: 'Đã hiểu',
+                okType: 'danger'
+            });
+            return;
+        }
+
+        // GHI DỮ LIỆU NẾU AN TOÀN
         setDeviceList(prev => prev.map(p => {
             if (p.key === currentDeviceKey) {
-                return { ...p, expectedMacs: uniqueList };
+                return { ...p, expectedMacs: uniqueInputMacs };
             }
             return p;
         }));
 
-        message.success(`Đã cập nhật ${uniqueList.length} MAC`);
+        message.success(`Đã đối chiếu an toàn và cập nhật ${uniqueInputMacs.length} MAC`);
         setIsMacModalOpen(false);
         setHasUnsavedChanges(true);
     };
+
 
     const validateDeviceList = (): { valid: boolean; message?: string } => {
         if (deviceList.length === 0) return { valid: false, message: 'Vui lòng thêm ít nhất 1 thiết bị' };

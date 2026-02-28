@@ -21,7 +21,7 @@ const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
     // 1. IMPORT Event
     if (device.importDate || device.importId) {
         timeline.push({
-            date: device.importDate || device.createdAt,
+            date: device.importDate,
             type: 'IMPORT',
             description: 'Nhập kho',
             actor: device.importId?.createdBy?.name || device.importId?.importedBy || 'N/A',
@@ -32,7 +32,7 @@ const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
     // 2. EXPORT Event
     if (device.currentExportId) {
         timeline.push({
-            date: device.currentExportId.exportDate || device.currentExportId.createdAt,
+            date: device.currentExportId.exportDate,
             type: 'EXPORT',
             description: 'Xuất kho',
             actor: device.currentExportId.createdBy?.name || 'N/A',
@@ -79,7 +79,11 @@ const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
         }
     });
 
-    return timeline.sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf());
+    return timeline.sort((a, b) => {
+        const timeA = a.date ? dayjs(a.date).valueOf() : Date.now();
+        const timeB = b.date ? dayjs(b.date).valueOf() : Date.now();
+        return timeA - timeB;
+    });
 };
 
 export const getTimelineIcon = (event: any) => {

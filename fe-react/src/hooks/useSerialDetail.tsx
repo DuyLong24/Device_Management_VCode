@@ -15,34 +15,11 @@ import {
     SyncOutlined
 } from '@ant-design/icons';
 
-const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
+const mapHistoryToTimeline = (rawHistory: any[]) => {
     const timeline: any[] = [];
 
-    // 1. IMPORT Event
-    if (device.importDate || device.importId) {
-        timeline.push({
-            date: device.importDate,
-            type: 'IMPORT',
-            description: 'Nhập kho',
-            actor: device.importId?.createdBy?.name || device.importId?.importedBy || 'N/A',
-            note: device.importId?.note,
-        });
-    }
-
-    // 2. EXPORT Event
-    if (device.currentExportId) {
-        timeline.push({
-            date: device.currentExportId.exportDate,
-            type: 'EXPORT',
-            description: 'Xuất kho',
-            actor: device.currentExportId.createdBy?.name || 'N/A',
-            exportSheetCode: device.currentExportId.code,
-            note: device.currentExportId.note
-        });
-    }
-
-    // 3. HISTORY Events
-    rawHistory.forEach(h => {
+    // Duyệt duy nhất mảng rawHistory (Single Source of Truth)
+    (rawHistory || []).forEach(h => {
         const item: any = {
             date: h.createdAt,
             actor: h.actorId?.name || (h.actorId === '000000000000000000000000' ? 'Hệ thống tự động' : 'Unknown'),
@@ -53,13 +30,13 @@ const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
         };
 
         if (h.action === 'IMPORT') {
-            // Skip
+            item.type = 'IMPORT';
+            item.description = 'Nhập kho';
+            timeline.push(item);
         } else if (h.action.includes('EXPORT')) {
-            if (!timeline.some(t => t.type === 'EXPORT')) {
-                item.type = 'EXPORT';
-                item.description = 'Xuất kho';
-                timeline.push(item);
-            }
+            item.type = 'EXPORT';
+            item.description = 'Xuất kho';
+            timeline.push(item);
         } else if (h.action.includes('WARRANTY_SEND')) {
             item.type = 'WARRANTY_SEND';
             item.description = 'Gửi bảo hành';
@@ -71,7 +48,7 @@ const mapHistoryToTimeline = (device: any, rawHistory: any[]) => {
         } else {
             // TRANSFER / QC
             item.type = 'TRANSFER';
-            item.description = `Chuyển kho: ${h.fromWarehouseId?.name} -> ${h.toWarehouseId?.name}`;
+            item.description = `Chuyển kho: ${h.fromWarehouseId?.name || '---'} -> ${h.toWarehouseId?.name || '---'}`;
 
             if (h.action === 'QC_PASS') item.qcResult = 'PASS';
             if (h.action === 'QC_FAIL') item.qcResult = 'FAIL';
@@ -120,7 +97,7 @@ export function useMacDetail(mac?: string) {
     const history = (data?.history || []);
 
     const timeline = useMemo(() =>
-        device ? mapHistoryToTimeline(device, history) : [],
+        device ? mapHistoryToTimeline(history) : [],
         [device, history]);
 
     const currentWarehouse = useMemo(() => {

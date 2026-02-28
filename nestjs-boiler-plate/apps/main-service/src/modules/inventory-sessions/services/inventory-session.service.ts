@@ -154,12 +154,14 @@ export class InventorySessionService {
             if (devicesToCreate.length > 0) {
                 const insertedDevices = await this.deviceService.insertMany(devicesToCreate, { session: mongoSession });
 
+                const validActorId = userId || '000000000000000000000000';
+
                 const historiesToCreate = insertedDevices.map(device => ({
                     deviceId: device._id,
                     action: 'IMPORT',
                     fromWarehouseId: warehouse._id,
                     toWarehouseId: warehouse._id,
-                    actorId: userId,
+                    actorId: validActorId,
                     note: 'Nhập kho từ kiểm kê',
                     createdAt: device.createdAt
                 }));

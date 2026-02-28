@@ -86,12 +86,14 @@ export class DeviceTransferService {
 
         const savedDevice = await device.save();
 
+        const validActorId = userId || '000000000000000000000000';
+
         // 4. Ghi lịch sử (Async)
         await this.historyModel.create({
             deviceId: device._id,
             fromWarehouseId: fromWarehouseId,
             toWarehouseId: toWarehouseId,
-            actorId: userId,
+            actorId: validActorId,
             action: transition.transitionType || 'TRANSFER',
             note: note || (errorReason ? `Lỗi: ${errorReason}` : 'Chuyển kho thủ công'),
             createdAt: new Date()

@@ -22,7 +22,7 @@ const mapHistoryToTimeline = (rawHistory: any[]) => {
     (rawHistory || []).forEach(h => {
         const item: any = {
             date: h.createdAt,
-            actor: h.actorId?.name || (h.actorId === '000000000000000000000000' ? 'Hệ thống tự động' : 'Unknown'),
+            actor: h.actorId?.name || (!h.actorId || h.actorId === '000000000000000000000000' ? 'Hệ thống tự động' : 'Unknown'),
             note: h.note,
             rawAction: h.action,
             fromWarehouse: h.fromWarehouseId,

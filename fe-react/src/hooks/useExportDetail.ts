@@ -130,7 +130,7 @@ export const useExportDetail = () => {
     };
 
     const handleBackToList = () => {
-        navigate('/export/list');
+        navigate(-1);
     };
 
     const handleExportClick = async () => {

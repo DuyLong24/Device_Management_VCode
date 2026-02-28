@@ -30,6 +30,9 @@ const ExportListPage = () => {
         filteredData,
         loading,
         form,
+        formInitialValues,
+        urlState,
+        updateUrlState,
         statistics: stats,
         handleFilter,
         handleReset,
@@ -281,6 +284,7 @@ const ExportListPage = () => {
 
             <FilterBar
                 form={form}
+                initialValues={formInitialValues}
                 onValuesChange={handleFilter}
                 onReset={handleReset}
                 searchPlaceholder="Tìm theo mã/tên phiếu, đơn vị nhận, dự án, khách hàng..."
@@ -309,9 +313,12 @@ const ExportListPage = () => {
                         dataSource={filteredData}
                         rowKey={(record) => record.id || record._id || ''}
                         pagination={{
-                            pageSize: 20,
+                            current: urlState.page,
+                            pageSize: urlState.pageSize,
                             showSizeChanger: true,
+                            pageSizeOptions: ['10', '20', '50'],
                             showTotal: (total) => `Tổng ${total} phiếu`,
+                            onChange: (page, pageSize) => updateUrlState({ page, pageSize }),
                         }}
                         scroll={{ x: 1800 }}
                     />

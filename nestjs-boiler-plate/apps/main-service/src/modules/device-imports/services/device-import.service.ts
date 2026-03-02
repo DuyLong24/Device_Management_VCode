@@ -96,7 +96,9 @@ export class DeviceImportService {
 
     const newImport = await this.deviceImportRepository.create(payload as any);
     if (status === 'PUBLIC') {
-      await this.autoProvisionDevices(newImport, userId);
+      // Fetch lại từ DB để đảm bảo là plain object (tránh Mongoose Document proxy issue)
+      const freshDoc = await this.findById(String(newImport.id || newImport._id));
+      await this.autoProvisionDevices(freshDoc, userId);
     }
 
     return newImport;
@@ -110,18 +112,25 @@ export class DeviceImportService {
       // 1. Lấy kho PENDING_QC
       const pendingQcWarehouse = await this.warehouseService.findByCode('PENDING_QC');
       if (!pendingQcWarehouse) {
-        this.logger.error('Kho PENDING_QC không tồn tại, không thể tự động tạo thiết bị!');
+        this.logger.error('[Shift-Left] Kho PENDING_QC không tồn tại!');
         return;
       }
 
       const validActorId = userId || '000000000000000000000000';
       const devicesToCreate: any[] = [];
 
-      // 2. Map từng device trong phiếu nhập thành Device document
-      for (const deviceSpec of importDoc.devices || []) {
-        for (const detail of deviceSpec.expectedDetails || []) {
-          if (!detail.mac) continue;
+      // 2. Map từng device — dùng toObject() để truy cập sub-document qua Mongoose
+      const importPlain = (importDoc as any).toObject ? (importDoc as any).toObject() : importDoc;
+      this.logger.log(`[Shift-Left] Bắt đầu auto-provision phiếu ${importPlain.code}, devices.length = ${(importPlain.devices || []).length}`);
 
+      for (const deviceSpec of importPlain.devices || []) {
+        const specDetails = deviceSpec.expectedDetails || [];
+        const specMacs = deviceSpec.expectedMacs || [];
+        this.logger.log(`[Shift-Left] deviceCode=${deviceSpec.deviceCode} | expectedDetails=${specDetails.length} | expectedMacs=${JSON.stringify(specMacs)}`);
+
+        // A. Luồng nhập từ File Excel (chứa expectedDetails)
+        for (const detail of specDetails) {
+          if (!detail.mac) continue;
           devicesToCreate.push({
             mac: detail.mac,
             serial: detail.serial || '',
@@ -129,20 +138,52 @@ export class DeviceImportService {
             deviceModel: deviceSpec.deviceCode,
             p2p: detail.p2p || '',
             warehouseId: pendingQcWarehouse._id,
-            importId: importDoc._id,
+            importId: importPlain._id,
             qcStatus: 'PENDING',
           });
+        }
+
+        // B. Luồng nhập Thủ công từ UI (chỉ chứa mảng string expectedMacs)
+        for (const plainMac of specMacs) {
+          if (!devicesToCreate.some(d => d.mac === plainMac)) {
+            devicesToCreate.push({
+              mac: plainMac,
+              serial: '',
+              name: deviceSpec.deviceCode,
+              deviceModel: deviceSpec.deviceCode,
+              p2p: '',
+              warehouseId: pendingQcWarehouse._id,
+              importId: importPlain._id,
+              qcStatus: 'PENDING',
+            });
+          }
         }
       }
 
       if (devicesToCreate.length === 0) {
-        this.logger.warn(`Phiếu nhập ${importDoc.code} không có MAC detail, bỏ qua auto-provision.`);
+        this.logger.warn(`[Shift-Left] Phiếu ${importPlain.code} không có MAC nào để provision.`);
         return;
       }
 
-      // 3. insertMany toàn bộ (ordered: false để bỏ qua bản ghi trùng thay vì dừng hết)
-      const inserted = await this.deviceModel.insertMany(devicesToCreate, { ordered: false });
-      this.logger.log(`[Shift-Left] Đã tạo ${inserted.length} thiết bị vào PENDING_QC từ phiếu ${importDoc.code}`);
+      this.logger.log(`[Shift-Left] Chuẩn bị insert ${devicesToCreate.length} thiết bị: ${JSON.stringify(devicesToCreate.map(d => d.mac))}`);
+
+      // 3. insertMany — ordered:false để tiếp tục dù có MAC trùng
+      let inserted: any[] = [];
+      try {
+        inserted = await this.deviceModel.insertMany(devicesToCreate, { ordered: false });
+      } catch (bulkErr: any) {
+        // BulkWriteError: một số doc bị reject (MAC trùng), nhưng các doc khác vẫn được insert
+        if (bulkErr?.insertedDocs?.length > 0 || bulkErr?.result?.insertedCount > 0) {
+          inserted = bulkErr.insertedDocs || [];
+          const skipped = devicesToCreate.length - inserted.length;
+          this.logger.warn(`[Shift-Left] BulkWriteError: insert ${inserted.length}/${devicesToCreate.length} thiết bị. Bỏ qua ${skipped} MAC đã tồn tại.`);
+        } else {
+          // Lỗi thật sự (không phải duplicate)
+          this.logger.error(`[Shift-Left] insertMany thất bại hoàn toàn: ${bulkErr.message}`, bulkErr.stack);
+          return;
+        }
+      }
+      this.logger.log(`[Shift-Left] Đã tạo ${inserted.length} thiết bị vào PENDING_QC từ phiếu ${importPlain.code}`);
 
       // 4. Ghi DeviceHistory cho từng thiết bị
       const histories = inserted.map((dev: any) => ({
@@ -195,17 +236,21 @@ export class DeviceImportService {
     // Tính lại tổng nếu sửa devices
     if (updateDto.devices) {
       const { devices, totalItem, totalQuantity, totalMacImported } = this.processDevices(updateDto.devices);
-      updateData.devices = devices; // Save processed devices
+      updateData.devices = devices;
       updateData.totalItem = totalItem;
       updateData.totalQuantity = totalQuantity;
-      updateData.macImported = totalMacImported; // Update root macImported
+      updateData.macImported = totalMacImported;
     }
 
     const updated = await this.deviceImportRepository.update(id, updateData);
 
-    // Check null safely though update repo usually returns document or null
     if (!updated) {
       throw new BadRequestException(ERROR_MESSAGES.DEVICE_IMPORT.UPDATE_FAILED);
+    }
+
+    if (updateDto.status === 'PUBLIC') {
+      const freshDoc = await this.findById(id);
+      await this.autoProvisionDevices(freshDoc, userId || '');
     }
 
     return updated;

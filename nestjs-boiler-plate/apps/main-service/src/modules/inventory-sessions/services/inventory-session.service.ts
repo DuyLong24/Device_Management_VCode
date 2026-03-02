@@ -88,13 +88,24 @@ export class InventorySessionService {
         const macsToCheck = session.details.map(d => d.mac);
         if (macsToCheck.length > 0) {
             const existingDevices = await this.deviceService.findByMacs(macsToCheck);
+
             if (existingDevices.length > 0) {
-                const duplicateMacs = existingDevices.map(d => d.mac);
-                throw new ConflictException({
-                    message: `Phát hiện ${duplicateMacs.length} MAC đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.`,
-                    error: 'DUPLICATE_MACS',
-                    duplicates: duplicateMacs
+                const importIdStr = String(session.importId);
+                const trulyDuplicate = existingDevices.filter(d => {
+                    const devImportId = d.importId ? String(d.importId) : null;
+                    return devImportId !== importIdStr; // Chỉ lỗi nếu không cùng phiếu nhập
                 });
+
+                if (trulyDuplicate.length > 0) {
+                    const duplicateMacs = trulyDuplicate.map(d => d.mac);
+                    throw new ConflictException({
+                        message: `Phát hiện ${duplicateMacs.length} MAC thuộc phiếu nhập khác hoặc đã tồn tại trong hệ thống.`,
+                        error: 'DUPLICATE_MACS',
+                        duplicates: duplicateMacs
+                    });
+                }
+                // Nếu tất cả MAC đều thuộc cùng phiếu nhập → Shift-Left valid, tiếp tục
+                this.logger.log(`[Inventory] ${existingDevices.length} MAC đã được auto-provision, kiểm kê hợp lệ.`);
             }
         }
 

@@ -22,7 +22,9 @@ export class DeviceTransferService {
         toWarehouseId: string,
         userId: string,
         note?: string,
-        errorReason?: string
+        errorReason?: string,
+        defectReasonId?: string,
+        originDeviceId?: string
     ): Promise<Device> {
         // 1. Lấy thông tin thiết bị
         const device = await this.deviceModel.findById(deviceId);
@@ -82,6 +84,39 @@ export class DeviceTransferService {
             if (toWarehouse.code === 'UNDER_REPAIR') {
                 device.repairNote = errorReason;
             }
+
+            // --- QUẢN LÝ LỖI (Bật isDefective khi vào SERVICE_CENTER, UNDER_REPAIR, DEFECT) ---
+            if (toWarehouse.code === 'SERVICE_CENTER' || toWarehouse.code === 'UNDER_REPAIR' || toWarehouse.code === 'DEFECT') {
+                if (!device.isDefective) {
+                    device.isDefective = true;
+                }
+                if (defectReasonId) {
+                    device.defectReasonId = defectReasonId as any;
+                }
+            }
+
+            // --- LOGIC KẾ THỪA KHI SWAP 1-1 ---
+            if (transition.transitionType === 'WARRANTY_SWAP_EXPORT' && originDeviceId) {
+                const originDevice = await this.deviceModel.findById(originDeviceId);
+                if (!originDevice) {
+                    throw new BadRequestException('Không tìm thấy thiết bị gốc (originDeviceId) để kế thừa bảo hành');
+                }
+
+                if (originDevice.replacedByDeviceId || originDevice.warrantyStatus === 'SWAPPED_BY_NEW_DEVICE') {
+                    throw new BadRequestException('Thiết bị lỗi này đã được xuất đổi trả bằng một thiết bị khác. Không thể đổi trả lần 2!');
+                }
+
+                // 1. Kế thừa bảo hành từ máy A
+                device.warrantyExpiredDate = originDevice.warrantyExpiredDate;
+
+                // 2. Chéo link liên kết
+                device.replacedForDeviceId = originDevice._id as any;
+                device.warrantyStatus = 'SWAPPED_TO_CUSTOMER'; // Trạng thái của Máy B
+
+                originDevice.replacedByDeviceId = device._id as any;
+                originDevice.warrantyStatus = 'SWAPPED_BY_NEW_DEVICE'; // Trạng thái của Máy A
+                await originDevice.save();
+            }
         }
 
         const savedDevice = await device.save();
@@ -94,6 +129,7 @@ export class DeviceTransferService {
             fromWarehouseId: fromWarehouseId,
             toWarehouseId: toWarehouseId,
             actorId: validActorId,
+            defectReasonId: defectReasonId, // Snapshot lại nguyên nhân
             action: transition.transitionType || 'TRANSFER',
             note: note || (errorReason ? `Lỗi: ${errorReason}` : 'Chuyển kho thủ công'),
             createdAt: new Date()
@@ -107,13 +143,15 @@ export class DeviceTransferService {
         toWarehouseId: string,
         userId: string,
         note?: string,
-        errorReason?: string
+        errorReason?: string,
+        defectReasonId?: string,
+        originDeviceId?: string
     ): Promise<{ success: string[]; errors: any[] }> {
         const results = { success: [], errors: [] };
 
         await Promise.all(deviceIds.map(async (id) => {
             try {
-                await this.transfer(id, toWarehouseId, userId, note, errorReason);
+                await this.transfer(id, toWarehouseId, userId, note, errorReason, defectReasonId, originDeviceId);
                 results.success.push(id);
             } catch (error) {
                 results.errors.push({ id, message: error.message });

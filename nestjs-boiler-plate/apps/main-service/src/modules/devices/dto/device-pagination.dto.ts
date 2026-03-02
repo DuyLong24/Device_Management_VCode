@@ -59,6 +59,10 @@ export class DevicePaginationDto {
 
   @IsOptional()
   @IsString()
+  deviceModel?: string;
+
+  @IsOptional()
+  @IsString()
   importCode?: string;
 
   @IsOptional()

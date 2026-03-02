@@ -16,7 +16,8 @@ import {
     Form,
     Input,
     Spin,
-    message
+    message,
+    Tooltip
 } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -26,6 +27,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useMacDetail, getTimelineIcon } from '../../hooks/useSerialDetail';
+import { SwapDeviceModal } from './components/SwapDeviceModal';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -35,6 +37,7 @@ export default function DeviceDetailPage() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [transferModalVisible, setTransferModalVisible] = useState(false);
+    const [swapModalVisible, setSwapModalVisible] = useState(false);
 
     const {
         device,
@@ -77,7 +80,8 @@ export default function DeviceDetailPage() {
     if (!device) return <div className="p-10 text-center"><Text type="danger">Không tìm thấy MAC {mac}</Text></div>;
 
     const isRemoved = currentWarehouse?.code === 'REMOVED';
-
+    const isInServiceCenter = currentWarehouse?.code === 'SERVICE_CENTER';
+    const isAlreadySwapped = !!device?.replacedByDeviceId || device?.warrantyStatus === 'SWAPPED_BY_NEW_DEVICE';
 
     return (
         <div className="p-3">
@@ -102,6 +106,19 @@ export default function DeviceDetailPage() {
                     <Space>
                         <Button icon={<ReloadOutlined />} onClick={() => refetch()}>Làm mới</Button>
                         <Button icon={<PrinterOutlined />} onClick={() => window.print()}>In</Button>
+                        {isInServiceCenter && (
+                            <Tooltip title={isAlreadySwapped ? "Thiết bị này đã được xuất đổi trả bằng một máy khác" : ""}>
+                                <Button
+                                    type="default"
+                                    danger={!isAlreadySwapped}
+                                    disabled={isAlreadySwapped}
+                                    icon={<SwapOutlined />}
+                                    onClick={() => setSwapModalVisible(true)}
+                                >
+                                    {isAlreadySwapped ? 'Đã Đổi Trả' : 'Đổi trả 1-1 (Swap)'}
+                                </Button>
+                            </Tooltip>
+                        )}
                         {availableTransitions.length > 0 && !isRemoved && (
                             <Button type="primary" icon={<SwapOutlined />} onClick={() => setTransferModalVisible(true)}>
                                 Chuyển kho
@@ -328,6 +345,17 @@ export default function DeviceDetailPage() {
                     </div>
                 </Form>
             </Modal>
+
+            {/* SwapDeviceModal – Đổi trả 1-1 */}
+            <SwapDeviceModal
+                open={swapModalVisible}
+                onCancel={() => setSwapModalVisible(false)}
+                originDevice={device}
+                onSuccess={() => {
+                    setSwapModalVisible(false);
+                    refetch();
+                }}
+            />
         </div>
     );
 }

@@ -12,6 +12,7 @@ import { Category } from '../../modules/categories/schemas/categories.schemas';
 import { DeviceImport } from '../../modules/device-imports/schemas/device-import.schemas';
 import { SharedDataRepository } from '../../modules/shared-data/repositories/shared-data.repository';
 import { UserKeycloakIntegrationService } from '../../users/services/user-keycloak-integration.service';
+import { DefectReason } from '../../modules/defect-reasons/schemas/defect-reasons.schemas';
 import * as bcrypt from 'bcrypt';
 import { WarehouseCode, TransitionType, ActionType } from '../constants/warehouse.constant';
 
@@ -28,6 +29,7 @@ export class SeedService implements OnModuleInit {
         @InjectModel(Device.name) private deviceModel: Model<Device>,
         @InjectModel(Category.name) private categoryModel: Model<Category>,
         @InjectModel(DeviceImport.name) private deviceImportModel: Model<DeviceImport>,
+        @InjectModel(DefectReason.name) private defectReasonModel: Model<DefectReason>,
         private readonly sharedDataRepository: SharedDataRepository,
         private readonly userKeycloakIntegrationService: UserKeycloakIntegrationService,
     ) { }
@@ -36,6 +38,7 @@ export class SeedService implements OnModuleInit {
         this.logger.warn('=== SEED SERVICE STARTING ==='); // Warn level to show up
         await this.seedRoles();
         await this.seedCategories();
+        await this.seedDefectReasons();
         await this.seedWarehousesAndTransitions();
         // await this.seedDevices();
         await this.seedSharedData();
@@ -72,6 +75,26 @@ export class SeedService implements OnModuleInit {
             if (!exists) {
                 await this.categoryModel.create(category);
                 this.logger.log(`Created Category: ${category.name}`);
+            }
+        }
+    }
+
+    // --- 2.8 SEED DEFECT REASONS ---
+    private async seedDefectReasons() {
+        const reasons = [
+            { code: 'SCREEN_ERROR', name: 'Lỗi màn hình', description: 'Điểm chết, sọc màn, vỡ kính', isActive: true },
+            { code: 'POWER_ERROR', name: 'Lỗi nguồn/Pin', description: 'Không lên nguồn, chai pin, tụt pin nhanh', isActive: true },
+            { code: 'HARDWARE_ERROR', name: 'Lỗi phần cứng', description: 'Cháy nổ, hỏng main, lỗi camera/cảm biến', isActive: true },
+            { code: 'SOFTWARE_ERROR', name: 'Lỗi phần mềm', description: 'Treo logo, khởi động lại liên tục', isActive: true },
+            { code: 'CONNECTION_ERROR', name: 'Lỗi kết nối', description: 'Mất sóng, không nhận Wifi/Bluetooth', isActive: true },
+            { code: 'OTHER_ERROR', name: 'Lỗi khác', description: 'Nguyên nhân không xác định, hao mòn vật lý', isActive: true },
+        ];
+
+        for (const reason of reasons) {
+            const exists = await this.defectReasonModel.findOne({ code: reason.code });
+            if (!exists) {
+                await this.defectReasonModel.create(reason);
+                this.logger.log(`Created Defect Reason: ${reason.name}`);
             }
         }
     }
@@ -286,6 +309,66 @@ export class SeedService implements OnModuleInit {
                     ]
                 }
             },
+            // Trung tâm bảo hành (Khách mang đến / Gửi đến)
+            {
+                code: WarehouseCode.SERVICE_CENTER,
+                name: 'Trung tâm Bảo hành',
+                groupId: warrantyGroup._id,
+                color: 'magenta',
+                orderIndex: 10,
+                icon: 'tool',
+                config: {
+                    columns: [
+                        { key: 'mac', title: 'MAC Address', type: 'text' },
+                        { key: 'deviceModel', title: 'Mã Model', type: 'text' },
+                        { key: 'name', title: 'Tên thiết bị', type: 'text' },
+                        { key: 'warehouseUpdatedAt', title: 'Ngày tiếp nhận', type: 'date' },
+                        { key: 'action', title: 'Thao tác', type: 'action' }
+                    ],
+                    actions: [ActionType.SCAN, ActionType.TRANSFER],
+                    quickTransfers: [
+                        {
+                            to: WarehouseCode.UNDER_REPAIR,
+                            label: 'Chuyển Sửa chữa',
+                            description: 'Bàn giao cho thợ sửa chữa',
+                            style: 'warning'
+                        },
+                        {
+                            to: WarehouseCode.DEFECT,
+                            label: 'Lỗi - Chờ BH NCC',
+                            description: 'Chuyển phân loại trả hãng',
+                            style: 'danger'
+                        }
+                    ]
+                }
+            },
+            // Kho dự phòng đổi trả 1-1
+            {
+                code: WarehouseCode.SWAP_STOCK,
+                name: 'Kho dự phòng đổi trả',
+                groupId: internalGroup._id,
+                color: 'cyan',
+                orderIndex: 11,
+                icon: 'swap',
+                config: {
+                    columns: [
+                        { key: 'mac', title: 'MAC Address', type: 'text' },
+                        { key: 'deviceModel', title: 'Mã Model', type: 'text' },
+                        { key: 'name', title: 'Tên thiết bị', type: 'text' },
+                        { key: 'warehouseUpdatedAt', title: 'Ngày lưu kho', type: 'date' },
+                        { key: 'action', title: 'Thao tác', type: 'action' }
+                    ],
+                    actions: [ActionType.SCAN, ActionType.TRANSFER],
+                    quickTransfers: [
+                        {
+                            to: WarehouseCode.SOLD,
+                            label: 'Xuất bù Đổi trả',
+                            description: 'Đổi trả 1-1 thay thế cho máy lỗi',
+                            style: 'success'
+                        }
+                    ]
+                }
+            },
             // 5. Đã xuất - Chưa kích hoạt
             {
                 code: WarehouseCode.NOT_ACTIVATED,
@@ -338,6 +421,12 @@ export class SeedService implements OnModuleInit {
                             label: 'Khách trả hàng',
                             description: 'Khách trả lại hàng, nhập về kho chờ QC',
                             style: 'warning'
+                        },
+                        {
+                            to: WarehouseCode.SERVICE_CENTER,
+                            label: 'Tiếp nhận Bảo hành',
+                            description: 'Khách báo lỗi, nhận về Trung tâm bảo hành',
+                            style: 'danger'
                         },
                         {
                             to: WarehouseCode.SOLD_WARRANTY,
@@ -470,6 +559,22 @@ export class SeedService implements OnModuleInit {
             // Sold Warranty -> Removed
             { from: WarehouseCode.SOLD_WARRANTY, to: WarehouseCode.REMOVED, type: TransitionType.SCRAP },
 
+            // --- CẤU HÌNH LUỒNG ĐỔI TRẢ & BẢO HÀNH (MỚI) ---
+
+            // Sold -> Service Center
+            { from: WarehouseCode.SOLD, to: WarehouseCode.SERVICE_CENTER, type: TransitionType.CUSTOMER_WARRANTY },
+
+            // Service Center -> Repair
+            { from: WarehouseCode.SERVICE_CENTER, to: WarehouseCode.UNDER_REPAIR, type: TransitionType.TRANSFER },
+
+            // Service Center -> Defect
+            { from: WarehouseCode.SERVICE_CENTER, to: WarehouseCode.DEFECT, type: TransitionType.TRANSFER },
+
+            // Swap Stock -> Sold (Xuất máy B cho khách)
+            { from: WarehouseCode.SWAP_STOCK, to: WarehouseCode.SOLD, type: TransitionType.WARRANTY_SWAP_EXPORT },
+
+            // Ready to Export -> Swap Stock (Nhập máy vào kho dự phòng)
+            { from: WarehouseCode.READY_TO_EXPORT, to: WarehouseCode.SWAP_STOCK, type: TransitionType.TRANSFER },
         ];
 
         for (const t of transitionsData) {

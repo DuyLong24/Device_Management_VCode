@@ -25,6 +25,7 @@ import { CreateDeviceDto } from '../dto/create-device.dto';
 import { UpdateDeviceDto } from '../dto/update-device.dto';
 import { DevicePaginationDto } from '../dto/device-pagination.dto';
 import { ValidateMacsDto, ValidateMacsResponse } from '../dto/validate-serials.dto';
+import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('devices')
 export class DeviceController {
@@ -131,7 +132,7 @@ export class DeviceController {
   @Patch(':id/transfer')
   async transfer(
     @Param('id') id: string,
-    @Body() body: { toWarehouseId: string; note?: string; errorReason?: string },
+    @Body() body: { toWarehouseId: string; note?: string; errorReason?: string; defectReasonId?: string; originDeviceId?: string },
     @Request() req: any
   ) {
     if (!req.user) {
@@ -140,12 +141,18 @@ export class DeviceController {
     const user = await this.userService.syncFromKeycloak(req.user);
     const userId = user._id.toString();
 
-    return this.deviceTransferService.transfer(id, body.toWarehouseId, userId, body.note, body.errorReason);
+    return this.deviceTransferService.transfer(id, body.toWarehouseId, userId, body.note, body.errorReason, body.defectReasonId, body.originDeviceId);
+  }
+
+  @Get('stats/defect-rate')
+  @ApiOperation({ summary: 'Thống kê tỷ lệ lỗi và tỷ trọng các nguyên nhân (Dashboard)' })
+  async getDefectRateStats(@Query('importId') importId?: string) {
+    return this.deviceService.getDefectRateStats(importId);
   }
 
   @Post('bulk-transfer')
   async bulkTransfer(
-    @Body() body: { deviceIds: string[]; toWarehouseId: string; note?: string; errorReason?: string },
+    @Body() body: { deviceIds: string[]; toWarehouseId: string; note?: string; errorReason?: string; defectReasonId?: string; originDeviceId?: string },
     @Request() req: any
   ) {
     if (!req.user) {
@@ -154,7 +161,7 @@ export class DeviceController {
     const user = await this.userService.syncFromKeycloak(req.user);
     const userId = user._id.toString();
 
-    return this.deviceTransferService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note, body.errorReason);
+    return this.deviceTransferService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note, body.errorReason, body.defectReasonId, body.originDeviceId);
   }
 
   @Post('validate-macs')

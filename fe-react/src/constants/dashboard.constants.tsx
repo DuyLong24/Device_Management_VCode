@@ -86,7 +86,8 @@ export const MENU_KEYS = {
     },
     WARRANTY: {
         ROOT: 'warranty',
-        LIST: 'warranty-activation-list'
+        LIST: 'warranty-activation-list',
+        DASHBOARD: 'warranty-dashboard'
     },
     SYSTEM: {
         ROOT: 'system',
@@ -111,6 +112,7 @@ export const MENU_LABELS = {
     },
     ALL_DEVICES: 'Danh sách thiết bị',
     INTERNAL_GROUP: 'Kho nội bộ',
+    WARRANTY_GROUP: 'Kho bảo hành',
     EXPORTED_GROUP: 'Đã xuất',
     EXPORT: {
         ROOT: 'Quản lý xuất kho',

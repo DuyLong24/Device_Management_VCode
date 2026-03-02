@@ -25,6 +25,7 @@ import RolePermissionDetailPage from './pages/RoleManagement/RolePermissionDetai
 import UserManagementPage from './pages/UserManagement/UserManagementPage';
 import SharedDataPage from './pages/SharedData/SharedDataPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
+import WarrantyDashboardPage from './pages/Dashboard/WarrantyDashboardPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import WarrantyLookupPage from './pages/Public/WarrantyLookupPage';
 // import LoginPage from './pages/Auth/LoginPage';
@@ -64,6 +65,7 @@ function App() {
                 <Route path="/" element={<DashboardLayout />}>
                   <Route index element={<Navigate to="/dashboard" replace />} />
                   <Route path="dashboard" element={<DashboardPage />} />
+                  <Route path="warranty-dashboard" element={<WarrantyDashboardPage />} />
                   <Route path="profile" element={<ProfilePage />} />
 
                   {/* MODULE NHẬP KHO */}

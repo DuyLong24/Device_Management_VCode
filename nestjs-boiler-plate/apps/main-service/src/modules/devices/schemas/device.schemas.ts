@@ -62,7 +62,23 @@ export class Device extends Document {
   @Prop()
   repairNote?: string;
 
+  // --- QUẢN LÝ BẢO HÀNH & ĐỔI TRẢ (NEW) ---
+  @Prop({ type: Boolean, default: false })
+  isDefective?: boolean; // Tự động bật khi vào kho lỗi
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'DefectReason' })
+  defectReasonId?: any; // Trỏ tới danh mục Lỗi (Màn hình, Nguồn...)
+
   @Prop()
+  warrantyStatus?: string; // Trạng thái bảo hành (IN_SERVICE_CENTER, SWAPPED, RESOLVED...)
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Device' })
+  replacedByDeviceId?: any; // Chỉ dùng cho Máy Lỗi - Trỏ tới ID máy mới (lấy từ Swap Stock)
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Device' })
+  replacedForDeviceId?: any; // Chỉ dùng cho Máy Mới - Trỏ về ID máy lỗi gốc
+
+  // --- THỜI GIAN KÍCH HOẠT BẢO HÀNH ---
   warrantyActivatedDate?: Date;
 
   @Prop()

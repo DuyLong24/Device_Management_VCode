@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+﻿import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ClientsModule, Transport } from '@nestjs/microservices';
@@ -53,9 +53,11 @@ import { DeviceHistory, DeviceHistorySchema } from './modules/device-histories/s
 import { Device, DeviceSchema } from './modules/devices/schemas/device.schemas';
 import { Category, CategorySchema } from './modules/categories/schemas/categories.schemas';
 import { DeviceImport, DeviceImportSchema } from './modules/device-imports/schemas/device-import.schemas';
+import { DefectReason, DefectReasonSchema } from './modules/defect-reasons/schemas/defect-reasons.schemas';
 import { SeedService } from './common/services/seed.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activation.task';
+import { DefectReasonsModule } from './modules/defect-reasons/defect-reasons.module';
 
 @Module({
   imports: [
@@ -127,6 +129,7 @@ import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activat
       { name: Device.name, schema: DeviceSchema },
       { name: Category.name, schema: CategorySchema },
       { name: DeviceImport.name, schema: DeviceImportSchema },
+      { name: DefectReason.name, schema: DefectReasonSchema },
     ]),
     UsersModule,
     FncRoleModule,
@@ -148,6 +151,7 @@ import { WarrantyActivationTask } from './modules/devices/tasks/warranty-activat
     SharedDataModule,
     NotificationsModule,
     InventoryModule,
+    DefectReasonsModule,
   ],
   controllers: [HealthController, AppController],
   providers: [

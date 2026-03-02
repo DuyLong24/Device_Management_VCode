@@ -29,6 +29,8 @@ export interface Device {
     warrantyExpiredDate?: string;
     createdAt?: string;
     updatedAt?: string;
+    replacedByDeviceId?: string;
+    warrantyStatus?: string;
     importId?: {
         id: string;
         _id?: string;
@@ -110,7 +112,7 @@ export const deviceService = {
         return response; //Trả về response để download file
     },
 
-    bulkTransfer: async (data: { deviceIds: string[], toWarehouseId: string, note?: string, errorReason?: string }) => {
+    bulkTransfer: async (data: { deviceIds: string[], toWarehouseId: string, note?: string, errorReason?: string, defectReasonId?: string, originDeviceId?: string }) => {
         const response = await axiosInstance.post('/devices/bulk-transfer', data);
         return response.data;
     },
@@ -122,6 +124,13 @@ export const deviceService = {
 
     getStatistics: async (params: any = {}) => {
         const response = await axiosInstance.get<any>('/devices/stats', { params });
+        return response.data;
+    },
+
+    getDefectRateStats: async (importId?: string) => {
+        const response = await axiosInstance.get<any>('/devices/stats/defect-rate', {
+            params: { importId }
+        });
         return response.data;
     }
 };

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu, Badge, Avatar, Dropdown, Breadcrumb, Space, Typography } from 'antd';
 import { useQuery } from '@tanstack/react-query';
-import { BellOutlined, UserOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { BellOutlined, UserOutlined, AppstoreOutlined, ToolOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { warehouseService } from '../../services/warehouse.service';
 import type { Warehouse } from '../../types/warehouse.type';
@@ -82,6 +82,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     const menuItems: MenuProps['items'] = useMemo(() => {
         const internalItems: MenuProps['items'] = [];
+        const warrantyItems: MenuProps['items'] = [];
         const exportedItems: MenuProps['items'] = [];
 
         if (warehouses) {
@@ -103,6 +104,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 // Logic phân nhóm kho theo code
                 if (group.code === 'INTERNAL' || group.name === 'Kho nội bộ') {
                     internalItems.push(item);
+                } else if (group.code === 'WARRANTY' || group.name === 'Kho bảo hành') {
+                    warrantyItems.push(item);
                 } else if (group.code === 'EXPORTED' || group.name === 'Đã xuất') {
                     exportedItems.push(item);
                 }
@@ -186,6 +189,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         const filteredInternal = internalItems?.filter(item =>
             hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(`warehouse.${(item as any).key.replace('warehouse-', '')}.view`)
         );
+        const filteredWarranty = warrantyItems?.filter(item =>
+            hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(`warehouse.${(item as any).key.replace('warehouse-', '')}.view`)
+        );
         const filteredExported = exportedItems?.filter(item =>
             hasRole('super_admin') || hasRole('SUPER_ADMIN') || hasPermission(`warehouse.${(item as any).key.replace('warehouse-', '')}.view`)
         );
@@ -199,6 +205,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             });
         }
 
+        if (filteredWarranty && filteredWarranty.length > 0) {
+            items.push({
+                key: 'group-warranty',
+                icon: <ToolOutlined />, // Về cơ bản là ToolIcon cho sửa chữa
+                label: MENU_LABELS.WARRANTY_GROUP,
+                children: filteredWarranty,
+            });
+        }
+
         if (filteredExported && filteredExported.length > 0) {
             items.push({
                 key: MENU_KEYS.EXPORTED_GROUP,
@@ -207,6 +222,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 children: filteredExported,
             });
         }
+
+        items.push({ type: 'divider' });
+
+        // --- BẢO HÀNH DASHBOARD ---
+        items.push({
+            key: MENU_KEYS.WARRANTY.DASHBOARD,
+            // BarChartOutlined is already available via AntD
+            icon: <AppstoreOutlined />,
+            label: 'Dashboard Bảo hành',
+            onClick: () => navigate('/warranty-dashboard'),
+        });
 
         items.push({ type: 'divider' });
 

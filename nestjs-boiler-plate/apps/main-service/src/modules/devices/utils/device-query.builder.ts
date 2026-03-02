@@ -31,6 +31,7 @@ export class DeviceQueryBuilder {
         }
         if (query.name) filter.name = { $regex: query.name, $options: 'i' };
         if (query.model) filter.deviceModel = { $regex: query.model, $options: 'i' };
+        if (query.deviceModel) filter.deviceModel = { $regex: query.deviceModel, $options: 'i' };
 
         // 4. Lọc theo từ khóa (Global Search)
         if (query.search) {

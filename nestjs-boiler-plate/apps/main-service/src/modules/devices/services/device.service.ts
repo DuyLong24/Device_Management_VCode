@@ -442,4 +442,88 @@ export class DeviceService implements OnModuleInit {
 
     return result;
   }
+
+  // --- THỐNG KÊ TỶ LỆ LỖI BẢO HÀNH (DASHBOARD) ---
+  async getDefectRateStats(importId?: string): Promise<any> {
+    const matchStage: any = {};
+    if (importId) {
+      matchStage.importId = new Types.ObjectId(importId);
+    }
+
+    const defectWarehouse = await this.warehouseService.findByCode('DEFECT');
+    const defectWarehouseId = defectWarehouse ? defectWarehouse._id : null;
+
+    const removedWarehouse = await this.warehouseService.findByCode('REMOVED');
+    const removedWarehouseId = removedWarehouse ? removedWarehouse._id : null;
+
+    const pipeline: any[] = [
+      { $match: matchStage },
+      {
+        $facet: {
+          defectSummary: [
+            {
+              $group: {
+                _id: null,
+                totalDevices: { $sum: 1 },
+                totalDefective: { $sum: { $cond: ['$isDefective', 1, 0] } },
+                totalGood: { $sum: { $cond: [{ $eq: ['$isDefective', false] }, 1, 0] } },
+                totalLocalRepaired: {
+                  $sum: {
+                    $cond: [
+                      {
+                        $and: [
+                          { $eq: ['$isDefective', true] },
+                          { $eq: [{ $ifNull: ['$replacedByDeviceId', null] }, null] },
+                          { $ne: ['$warehouseId', defectWarehouseId] },
+                          { $ne: ['$warehouseId', removedWarehouseId] }
+                        ]
+                      }, 1, 0
+                    ]
+                  }
+                },
+                totalSwapped: { $sum: { $cond: [{ $ne: [{ $ifNull: ['$replacedByDeviceId', null] }, null] }, 1, 0] } },
+                totalSentToVendor: { $sum: { $cond: [{ $eq: ['$warehouseId', defectWarehouseId] }, 1, 0] } },
+                totalScrapped: { $sum: { $cond: [{ $eq: ['$warehouseId', removedWarehouseId] }, 1, 0] } }
+              }
+            }
+          ],
+          defectReasonsDistribution: [
+            { $match: { isDefective: true, defectReasonId: { $ne: null } } },
+            { $group: { _id: '$defectReasonId', count: { $sum: 1 } } },
+            {
+              $lookup: {
+                from: 'defectreasons',
+                localField: '_id',
+                foreignField: '_id',
+                as: 'reasonInfo'
+              }
+            },
+            { $unwind: '$reasonInfo' },
+            {
+              $project: {
+                _id: 0,
+                reasonName: '$reasonInfo.name',
+                count: 1
+              }
+            }
+          ]
+        }
+      }
+    ];
+
+    const result = await this.deviceModel.aggregate(pipeline).exec();
+
+    return {
+      summary: result[0]?.defectSummary[0] || {
+        totalDevices: 0,
+        totalDefective: 0,
+        totalGood: 0,
+        totalLocalRepaired: 0,
+        totalSwapped: 0,
+        totalSentToVendor: 0,
+        totalScrapped: 0
+      },
+      distribution: result[0]?.defectReasonsDistribution || []
+    };
+  }
 }

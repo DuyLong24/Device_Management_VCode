@@ -7,6 +7,10 @@ export enum WarehouseCode {
 
     // Kho bảo hành
     IN_WARRANTY = 'IN_WARRANTY',
+    SERVICE_CENTER = 'SERVICE_CENTER', // Trung tâm bảo hành
+
+    // Kho dự phòng đổi trả
+    SWAP_STOCK = 'SWAP_STOCK', // Kho dự phòng đổi trả
 
     // Kho đã xuất
     SOLD = 'SOLD',
@@ -31,6 +35,8 @@ export enum TransitionType {
     CUSTOMER_RETURN = 'CUSTOMER_RETURN',   // Khách trả hàng (-> PENDING_QC)
     PENDING_QC_TO_UNDER_REPAIR = 'PENDING_QC_TO_UNDER_REPAIR', // QC -> Sửa chữa
     WARRANTY_EXPIRED = 'WARRANTY_EXPIRED', // Hết hạn BH (SOLD -> SOLD_WARRANTY)
+    CUSTOMER_WARRANTY = 'CUSTOMER_WARRANTY', // Khách báo lỗi / Khách gửi BH (SOLD -> SERVICE_CENTER)
+    WARRANTY_SWAP_EXPORT = 'WARRANTY_SWAP_EXPORT', // Xuất đổi trả 1-1 (SWAP_STOCK -> SOLD)
 }
 
 export enum ActionType {

@@ -8,14 +8,22 @@ import { DevicesModule } from '../devices/devices.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { InventoryCoordinatorModule } from '../inventory-coordinator/inventory-coordinator.module';
 import { UsersModule } from '../../users/users.module';
+import { WarehousesModule } from '../warehouses/warehouses.module';
+import { Device, DeviceSchema } from '../devices/schemas/device.schemas';
+import { DeviceHistory, DeviceHistorySchema } from '../device-histories/schemas/device-history.schemas';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: DeviceImport.name, schema: DeviceImportSchema }]),
+    MongooseModule.forFeature([
+      { name: DeviceImport.name, schema: DeviceImportSchema },
+      { name: Device.name, schema: DeviceSchema },
+      { name: DeviceHistory.name, schema: DeviceHistorySchema },
+    ]),
     DevicesModule,
     CategoriesModule,
     UsersModule,
-    InventoryCoordinatorModule
+    InventoryCoordinatorModule,
+    WarehousesModule,
   ],
   controllers: [DeviceImportController],
   providers: [DeviceImportService, DeviceImportRepository],

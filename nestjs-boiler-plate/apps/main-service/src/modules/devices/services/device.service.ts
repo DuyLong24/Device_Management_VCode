@@ -112,6 +112,11 @@ export class DeviceService implements OnModuleInit {
     }
   }
 
+  async countByImportId(importId: string): Promise<number> {
+    return this.deviceModel.countDocuments({ importId });
+  }
+
+
   async bulkWrite(ops: any[], options: any = {}): Promise<any> {
     return this.deviceRepository.bulkWrite(ops, options);
   }

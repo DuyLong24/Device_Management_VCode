@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, Space, Typography, Tag, Button } from 'antd';
-import { PlayCircleOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { Card, Space, Typography, Tag, Button, Alert } from 'antd';
+import { PlayCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useSessionPermission } from '../../../hooks/useSessionPermission';
 import { SessionPermissionAlert } from '../../../components/permissions/SessionPermissionAlert';
@@ -120,12 +120,25 @@ export const InventorySessionList: React.FC<InventorySessionListProps> = ({
                         Tạo phiên kiểm kê mới
                     </Button>
                 )}
-                {/* Thông báo khi phiếu ở trạng thái NHaacute;P */}
+                {/* Thông báo Shift-Left: hàng đã vào kho PENDING_QC */}
+                {ticketStatus === 'PUBLIC' && (
+                    <Alert
+                        type="info"
+                        showIcon
+                        message="Hàng đã tự động vào kho Chờ QC"
+                        description="Hàng hóa đã được tự động nhập vào kho Chờ QC. Bạn có thể tiến hành kiểm kê đối soát vật lý (quét mã) bất cứ lúc nào để xác nhận."
+                        className="mt-2"
+                    />
+                )}
+
+                {/* Thông báo khi phiếu ở trạng thái NHÁP */}
                 {ticketStatus === 'DRAFT' && (
-                    <div className="text-center text-amber-600 mt-2 bg-amber-50 p-2 rounded border border-amber-200">
-                        <InfoCircleOutlined className="mr-2" />
-                        Phiếu đang ở trạng thái NHÁP. Không thể tạo phiên kiểm kê.
-                    </div>
+                    <Alert
+                        type="warning"
+                        showIcon
+                        message="Phiếu đang ở trạng thái NHÁP. Không thể tạo phiên kiểm kê."
+                        className="mt-2"
+                    />
                 )}
 
                 {/* Hiện thị lỗi khi thiếu quyền */}

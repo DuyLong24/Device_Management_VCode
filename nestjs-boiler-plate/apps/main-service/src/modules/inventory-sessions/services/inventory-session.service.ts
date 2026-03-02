@@ -152,21 +152,30 @@ export class InventorySessionService {
             });
 
             if (devicesToCreate.length > 0) {
-                const insertedDevices = await this.deviceService.insertMany(devicesToCreate, { session: mongoSession });
+                // ====================================================
+                // SHIFT-LEFT GUARD: Skip insertMany if devices were already
+                // auto-provisioned by the new Import flow (PUBLIC status)
+                // ====================================================
+                const existingCount = await this.deviceService.countByImportId(String(importTicket._id));
+                if (existingCount > 0) {
+                    this.logger.log(`[Inventory] Phiếu ${String(importTicket._id)} đã có ${existingCount} thiết bị (shift-left auto). Bỏ qua insertMany.`);
+                } else {
+                    const insertedDevices = await this.deviceService.insertMany(devicesToCreate, { session: mongoSession });
 
-                const validActorId = userId || '000000000000000000000000';
+                    const validActorId = userId || '000000000000000000000000';
 
-                const historiesToCreate = insertedDevices.map(device => ({
-                    deviceId: device._id,
-                    action: 'IMPORT',
-                    fromWarehouseId: warehouse._id,
-                    toWarehouseId: warehouse._id,
-                    actorId: validActorId,
-                    note: 'Nhập kho từ kiểm kê',
-                    createdAt: device.createdAt
-                }));
+                    const historiesToCreate = insertedDevices.map(device => ({
+                        deviceId: device._id,
+                        action: 'IMPORT',
+                        fromWarehouseId: warehouse._id,
+                        toWarehouseId: warehouse._id,
+                        actorId: validActorId,
+                        note: 'Nhập kho từ kiểm kê',
+                        createdAt: device.createdAt
+                    }));
 
-                await this.historyRepo.insertMany(historiesToCreate, { session: mongoSession });
+                    await this.historyRepo.insertMany(historiesToCreate, { session: mongoSession });
+                }
             }
 
             const currentImported = importTicket.macImported || 0;
@@ -187,7 +196,7 @@ export class InventorySessionService {
             );
 
             await mongoSession.commitTransaction();
-            this.logger.log(`Hoàn tất phiên ${session.code} thành công. Đã tạo ${devicesToCreate.length} thiết bị.`);
+            this.logger.log(`Hoàn tất phiên ${session.code} thành công.`);
 
             await this.coordinatorService.updateProgressAndAutoComplete(
                 importIdStr,

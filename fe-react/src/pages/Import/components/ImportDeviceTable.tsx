@@ -62,7 +62,7 @@ export const ImportDeviceTable: React.FC<ImportDeviceTableProps> = ({
             )
         },
         {
-            title: 'Mac đã import',
+            title: 'Mac đã quét',
             key: 'macImport',
             width: 200,
             align: 'center',

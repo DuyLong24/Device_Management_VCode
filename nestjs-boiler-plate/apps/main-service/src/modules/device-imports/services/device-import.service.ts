@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { DeviceImportRepository } from '../repositories/device-import.repository';
 import { CreateDeviceImportDto } from '../dto/create-device-import.dto';
 import { UpdateDeviceImportDto } from '../dto/update-device-import.dto';
@@ -9,14 +11,22 @@ import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.
 import { FilterQuery } from 'mongoose';
 import { InventoryCoordinatorService } from '../../inventory-coordinator/services/inventory-coordinator.service';
 import { UserService } from '../../../users/services/user.service';
+import { WarehouseService } from '../../warehouses/services/warehouse.service';
+import { Device } from '../../devices/schemas/device.schemas';
+import { DeviceHistory } from '../../device-histories/schemas/device-history.schemas';
 
 @Injectable()
 export class DeviceImportService {
+  private readonly logger = new Logger(DeviceImportService.name);
+
   constructor(
     private readonly deviceImportRepository: DeviceImportRepository,
     private readonly deviceService: DeviceService,
     private readonly coordinatorService: InventoryCoordinatorService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly warehouseService: WarehouseService,
+    @InjectModel(Device.name) private readonly deviceModel: Model<Device>,
+    @InjectModel(DeviceHistory.name) private readonly historyModel: Model<DeviceHistory>,
   ) { }
 
   async create(createDto: CreateDeviceImportDto, userId: string): Promise<DeviceImport> {
@@ -85,8 +95,72 @@ export class DeviceImportService {
     };
 
     const newImport = await this.deviceImportRepository.create(payload as any);
+    if (status === 'PUBLIC') {
+      await this.autoProvisionDevices(newImport, userId);
+    }
 
     return newImport;
+  }
+
+  /**
+   * Tự động tạo toàn bộ Device từ phiếu nhập và đẩy thẳng vào PENDING_QC.
+   */
+  private async autoProvisionDevices(importDoc: DeviceImport, userId: string): Promise<void> {
+    try {
+      // 1. Lấy kho PENDING_QC
+      const pendingQcWarehouse = await this.warehouseService.findByCode('PENDING_QC');
+      if (!pendingQcWarehouse) {
+        this.logger.error('Kho PENDING_QC không tồn tại, không thể tự động tạo thiết bị!');
+        return;
+      }
+
+      const validActorId = userId || '000000000000000000000000';
+      const devicesToCreate: any[] = [];
+
+      // 2. Map từng device trong phiếu nhập thành Device document
+      for (const deviceSpec of importDoc.devices || []) {
+        for (const detail of deviceSpec.expectedDetails || []) {
+          if (!detail.mac) continue;
+
+          devicesToCreate.push({
+            mac: detail.mac,
+            serial: detail.serial || '',
+            name: detail.name || deviceSpec.deviceCode,
+            deviceModel: deviceSpec.deviceCode,
+            p2p: detail.p2p || '',
+            warehouseId: pendingQcWarehouse._id,
+            importId: importDoc._id,
+            qcStatus: 'PENDING',
+          });
+        }
+      }
+
+      if (devicesToCreate.length === 0) {
+        this.logger.warn(`Phiếu nhập ${importDoc.code} không có MAC detail, bỏ qua auto-provision.`);
+        return;
+      }
+
+      // 3. insertMany toàn bộ (ordered: false để bỏ qua bản ghi trùng thay vì dừng hết)
+      const inserted = await this.deviceModel.insertMany(devicesToCreate, { ordered: false });
+      this.logger.log(`[Shift-Left] Đã tạo ${inserted.length} thiết bị vào PENDING_QC từ phiếu ${importDoc.code}`);
+
+      // 4. Ghi DeviceHistory cho từng thiết bị
+      const histories = inserted.map((dev: any) => ({
+        deviceId: dev._id,
+        fromWarehouseId: pendingQcWarehouse._id, // Sinh trực tiếp vào đây nên from = to
+        toWarehouseId: pendingQcWarehouse._id,
+        actorId: validActorId,
+        action: 'IMPORT',
+        note: `Nhập kho tự động từ phiếu nhập ${importDoc.code}`,
+      }));
+
+      await this.historyModel.insertMany(histories, { ordered: false });
+
+      this.logger.log(`[Shift-Left] Đã đẩy ${inserted.length} thiết bị vào PENDING_QC từ phiếu ${importDoc.code}. Tiến độ kiểm kê vẫn là 0%.`);
+
+    } catch (err: any) {
+      this.logger.error(`[Shift-Left] Lỗi khi auto-provision thiết bị: ${err.message}`);
+    }
   }
 
   async findAll(filter: FilterQuery<DeviceImport> = {}, options: any = {}): Promise<DeviceImport[]> {

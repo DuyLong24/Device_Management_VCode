@@ -14,6 +14,7 @@ export const INVENTORY_LABELS = {
     STATUS: 'Trạng thái',
 
     // Status
+    STATUS_PENDING: 'Chưa kiểm kê',
     STATUS_PROCESSING: 'Đang thực hiện',
     STATUS_COMPLETED: 'Đã hoàn thành',
 

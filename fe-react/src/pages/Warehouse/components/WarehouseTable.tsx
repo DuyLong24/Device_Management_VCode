@@ -91,8 +91,11 @@ export const WarehouseTable = ({
         ) {
             return {
                 ...base,
-                render: (date: string) =>
-                    date ? new Date(date).toLocaleDateString('vi-VN') : '-'
+                render: (date: string, record: any) => {
+                    // Shift-Left devices có importDate trong importId.importDate, không phải root
+                    const dateVal = date || (rawKey === 'importDate' ? record?.importId?.importDate : undefined);
+                    return dateVal ? new Date(dateVal).toLocaleDateString('vi-VN') : '-';
+                }
             };
         }
 

@@ -139,6 +139,7 @@ export class DeviceImportService {
             p2p: detail.p2p || '',
             warehouseId: pendingQcWarehouse._id,
             importId: importPlain._id,
+            importDate: importPlain.importDate || new Date(),
             qcStatus: 'PENDING',
           });
         }
@@ -154,6 +155,7 @@ export class DeviceImportService {
               p2p: '',
               warehouseId: pendingQcWarehouse._id,
               importId: importPlain._id,
+              importDate: importPlain.importDate || new Date(),
               qcStatus: 'PENDING',
             });
           }

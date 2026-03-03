@@ -25,7 +25,7 @@ const { Title, Text } = Typography;
 // Map trạng thái kiểm kê sang UI tag (color + text)
 const getInventoryStatusConfig = (status: string) => {
     const configs: Record<string, { color: string; text: string }> = {
-        pending: { color: 'default', text: INVENTORY_LABELS.STATUS_PROCESSING },
+        pending: { color: 'default', text: INVENTORY_LABELS.STATUS_PENDING },
         'in-progress': { color: 'processing', text: INVENTORY_LABELS.STATUS_PROCESSING },
         completed: { color: 'success', text: INVENTORY_LABELS.STATUS_COMPLETED },
     };

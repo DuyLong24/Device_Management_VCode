@@ -33,8 +33,7 @@ export class DevicePaginationDto {
   warehouseId?: string;
 
   @IsOptional()
-  @IsMongoId()
-  importId?: string;
+  importId?: any;
 
   // --- Search ---
   @IsOptional()
@@ -70,8 +69,7 @@ export class DevicePaginationDto {
   exportCode?: string;
 
   @IsOptional()
-  @IsMongoId()
-  exportId?: string;
+  exportId?: any; // Có thể là string hoặc { $in: [...] } do interceptor inject
 
   // --- Date Range ---
   @IsOptional()

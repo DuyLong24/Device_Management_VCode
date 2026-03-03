@@ -213,7 +213,7 @@ export default function DeviceDetailPage() {
                                                     {device.importId.code}
                                                 </Link>
                                                 <Text type="secondary" className="text-xs">
-                                                    {device.importDate ? dayjs(device.importDate).format('DD/MM/YYYY') : 'Chưa nhập kho'}
+                                                    {(() => { const d = device.importDate || device.importId?.importDate; return d ? dayjs(d).format('DD/MM/YYYY') : 'Chưa nhập kho'; })()}
                                                 </Text>
                                             </Space>
                                         </Descriptions.Item>

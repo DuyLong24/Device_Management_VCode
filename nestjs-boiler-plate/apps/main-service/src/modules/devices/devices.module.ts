@@ -20,6 +20,8 @@ import { WarrantyActivationTask } from './tasks/warranty-activation.task';
 import { WarrantyExpirationTask } from './tasks/warranty-expiration.task';
 import { DeviceHistoryModule } from '../device-histories/device-histories.module';
 import { InventorySessionModule } from '../inventory-sessions/inventory-sessions.module';
+import { DeviceImport, DeviceImportSchema } from '../device-imports/schemas/device-import.schemas';
+import { DeviceExport, DeviceExportSchema } from '../device-exports/schemas/device-export.schemas';
 
 import { PublicDeviceController } from './controllers/public-device.controller';
 
@@ -29,7 +31,9 @@ import { PublicDeviceController } from './controllers/public-device.controller';
       { name: Device.name, schema: DeviceSchema },
       { name: Warehouse.name, schema: WarehouseSchema },
       { name: WarehouseTransition.name, schema: WarehouseTransitionSchema },
-      { name: DeviceHistory.name, schema: DeviceHistorySchema }
+      { name: DeviceHistory.name, schema: DeviceHistorySchema },
+      { name: DeviceImport.name, schema: DeviceImportSchema },
+      { name: DeviceExport.name, schema: DeviceExportSchema },
     ]),
     WarehousesModule,
     SharedDataModule,

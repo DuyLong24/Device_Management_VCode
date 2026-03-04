@@ -10,11 +10,14 @@ import {
   HttpStatus,
   HttpCode,
   Res,
+  Req,
   Patch,
   Request,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Response, Request as ExpressRequest } from 'express';
 import { DeviceQueryBuilder } from '../utils/device-query.builder';
 import { DeviceService } from '../services/device.service';
 import { UserService } from '../../../users/services/user.service';
@@ -35,6 +38,8 @@ export class DeviceController {
     private readonly deviceTransferService: DeviceTransferService,
     private readonly deviceValidationService: DeviceValidationService,
     private readonly userService: UserService,
+    @InjectModel('DeviceImport') private readonly deviceImportModel: Model<any>,
+    @InjectModel('DeviceExport') private readonly deviceExportModel: Model<any>,
   ) { }
 
   onModuleInit() {
@@ -75,9 +80,27 @@ export class DeviceController {
     res.end(buffer);
   }
 
+  // Resolve importCode → importId, exportCode → currentExportId từ raw query
+  private async resolveCodeFilters(rawQuery: any): Promise<{ importId?: any; currentExportId?: any }> {
+    const result: any = {};
+    if (rawQuery.importCode) {
+      const imports = await this.deviceImportModel.find({ code: { $regex: rawQuery.importCode, $options: 'i' } }, '_id').lean();
+      result.importId = imports.length > 0
+        ? { $in: imports.map((i: any) => i._id) }
+        : '000000000000000000000000';
+    }
+    if (rawQuery.exportCode) {
+      const exports = await this.deviceExportModel.find({ code: { $regex: rawQuery.exportCode, $options: 'i' } }, '_id').lean();
+      result.currentExportId = exports.length > 0
+        ? { $in: exports.map((e: any) => e._id) }
+        : '000000000000000000000000';
+    }
+    return result;
+  }
+
   @Get()
-  async findAll(@Query() query: DevicePaginationDto) {
-    const filter = DeviceQueryBuilder.build(query);
+  async findAll(@Query() query: DevicePaginationDto, @Req() req: ExpressRequest) {
+    const filter = { ...DeviceQueryBuilder.build(query), ...await this.resolveCodeFilters(req.query) };
 
     const options = {
       page: query.page || 1,
@@ -91,7 +114,7 @@ export class DeviceController {
           select: 'code importDate createdBy',
           populate: { path: 'createdBy', select: 'name' }
         }
-      ], // Populate để lấy tên kho và thông tin user
+      ],
     };
 
     return this.deviceService.findAllWithPagination(filter, options);

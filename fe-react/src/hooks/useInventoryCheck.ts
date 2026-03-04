@@ -16,19 +16,17 @@ export type LocalScannedItem = ScannedItem & { deviceCode?: string };
 // Web Audio API beep (standalone, no React deps)
 export const playSuccessSound = () => {
     try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(1200, ctx.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + 0.12);
-    } catch (_) { /* silent fail */ }
+        // Trỏ thẳng vào file mp3 nằm trong thư mục public
+        const audio = new Audio('/iphone-beep.m4a');
+
+        // Vặn max volume 100% để át tiếng ồn xưởng
+        audio.volume = 1.0;
+
+        // Phát nhạc!
+        audio.play().catch(e => console.log("Trình duyệt chặn autoplay:", e));
+    } catch (_) {
+        /* silent fail */
+    }
 };
 
 export const useInventoryCheck = () => {
@@ -54,6 +52,7 @@ export const useInventoryCheck = () => {
     const [manualMacs, setManualMacs] = useState('');
     const [otherCompletedCount, setOtherCompletedCount] = useState(0);
     const [otherCompletedItemsByModel, setOtherCompletedItemsByModel] = useState<Record<string, number>>({});
+    const [otherScannedMacs, setOtherScannedMacs] = useState<string[]>([]);
 
     const [selectedDeviceCode, setSelectedDeviceCode] = useState<string | null>(null);
     const [deviceModels, setDeviceModels] = useState<any[]>([]);
@@ -123,17 +122,20 @@ export const useInventoryCheck = () => {
             const othersCount = completedSessions.reduce((acc, s) => acc + (s.totalScanned || 0), 0);
             setOtherCompletedCount(othersCount);
 
-            // Tính tổng số lượng đã kiểm kê theo model
+            // Tính tổng số lượng đã kiểm kê theo model + trích xuất toàn bộ MAC đã quét ở phiên khác
             const itemsByModel: Record<string, number> = {};
+            const allOtherMacs: string[] = [];
             completedSessions.forEach(session => {
                 (session.details || []).forEach((item: any) => {
                     const deviceCode = item.deviceCode || item.deviceModel;
                     if (deviceCode) {
                         itemsByModel[deviceCode] = (itemsByModel[deviceCode] || 0) + 1;
                     }
+                    if (item.mac) allOtherMacs.push(item.mac);
                 });
             });
             setOtherCompletedItemsByModel(itemsByModel);
+            setOtherScannedMacs(allOtherMacs);
 
             if (activeSession) {
                 setSession(activeSession);
@@ -195,11 +197,23 @@ export const useInventoryCheck = () => {
             return;
         }
 
-        // Check trùng
-        const isDup = serverItems.some(i => i.mac === code);
+        // Check trùng (Bao gồm cả phiên hiện tại, mảng local, và các phiên trước)
+        const isDup = serverItems.some(i => i.mac === code) ||
+            localItems.some(i => i.mac === code) ||
+            (typeof otherScannedMacs !== 'undefined' && otherScannedMacs.includes(code));
+
         if (isDup) {
             playError();
-            message.warning(`Mac ${code} đã tồn tại!`);
+            message.error(`Mac ${code} bị trùng! Kiểm tra danh sách.`);
+
+            setLocalItems(prev => [{
+                mac: code,
+                deviceModel: selectedDeviceCode,
+                deviceCode: selectedDeviceCode,
+                scannedAt: new Date().toISOString()
+            }, ...prev]);
+
+            setDuplicateMacs(prev => Array.from(new Set([...prev, code])));
             setScannedInput('');
             return;
         }
@@ -241,26 +255,41 @@ export const useInventoryCheck = () => {
         const codes = manualMacs.split('\n').map(s => s.trim()).filter(Boolean);
         if (codes.length === 0) return;
 
-        const dups: string[] = [];
-        const validItems: any[] = [];
+        const dups: any[] = []; // Chứa item lỗi
+        const validItems: any[] = []; // Chứa item ngon
 
         codes.forEach(code => {
-            const isDup = serverItems.some(i => i.mac === code) || validItems.some(i => i.mac === code);
-            if (isDup) dups.push(code);
-            else validItems.push({
-                mac: code,
-                deviceModel: selectedDeviceCode,
-                deviceCode: selectedDeviceCode
-            });
+            const isDup = serverItems.some(i => i.mac === code) ||
+                validItems.some(i => i.mac === code) ||
+                localItems.some(i => i.mac === code) ||
+                (typeof otherScannedMacs !== 'undefined' && otherScannedMacs.includes(code));
+
+            if (isDup) {
+                // BẮT QUẢ TANG MÃ TRÙNG -> Lưu lại để ném ra UI
+                dups.push({
+                    mac: code,
+                    deviceModel: selectedDeviceCode,
+                    deviceCode: selectedDeviceCode,
+                    scannedAt: new Date().toISOString()
+                });
+            } else {
+                validItems.push({
+                    mac: code,
+                    deviceModel: selectedDeviceCode,
+                    deviceCode: selectedDeviceCode
+                });
+            }
         });
 
+        // 1. Gửi bọn mã Hợp lệ lên Server
         if (validItems.length > 0) {
             try {
                 setIsSaving(true);
                 const updated = await inventorySessionService.update(session!.id, { scannedItems: validItems });
                 if (updated && updated.details) {
                     setServerItems(updated.details);
-                    message.success(`Đã lưu ${validItems.length} mac.`);
+                    message.success(`Đã lưu ${validItems.length} mac hợp lệ.`);
+                    if (isSoundEnabled) playSuccessSound(); // Kêu Típ báo ngon
                 }
             } catch (e) {
                 message.error('Lỗi lưu danh sách');
@@ -269,9 +298,14 @@ export const useInventoryCheck = () => {
             }
         }
 
+        // 2. Ném bọn mã Trùng lặp ra Table để bêu riếu
         if (dups.length > 0) {
-            message.warning(`${dups.length} mac trùng lặp đã bị bỏ qua.`);
+            playError(); // Kêu bíp bíp báo lỗi
+            setLocalItems(prev => [...dups, ...prev]);
+            setDuplicateMacs(prev => Array.from(new Set([...prev, ...dups.map(d => d.mac)])));
+            message.error(`Phát hiện ${dups.length} mã TRÙNG LẶP! Hãy kiểm tra lại ở danh sách.`);
         }
+
         setManualMacs('');
     };
 
@@ -329,5 +363,6 @@ export const useInventoryCheck = () => {
         otherCompletedItemsByModel,
         deviceModels,
         isSoundEnabled, setIsSoundEnabled,
+        otherScannedMacs,
     };
 };

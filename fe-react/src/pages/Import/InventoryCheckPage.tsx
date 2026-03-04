@@ -29,8 +29,7 @@ import {
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
-import { useMemo } from 'react';
-
+import { useMemo, useRef, useEffect } from 'react';
 import { useInventoryCheck, playSuccessSound } from '../../hooks/useInventoryCheck';
 import { INVENTORY_LABELS } from '../../constants/inventory.constants';
 import { processScannerInput } from '../../utils/mac.util';
@@ -67,7 +66,15 @@ export default function InventoryCheckPage() {
     otherCompletedItemsByModel,
     deviceModels,
     isSoundEnabled, setIsSoundEnabled,
+    otherScannedMacs,
   } = useInventoryCheck();
+
+  // BỘ NHỚ ĐỒNG BỘ => FIX MÁY QUÉT NHANH
+  const lastCountRef = useRef(0);
+  useEffect(() => {
+    // Reset bộ đếm về 0 nếu text area bị xóa trắng (VD: sau khi bấm nút Nhập)
+    if (!manualMacs) lastCountRef.current = 0;
+  }, [manualMacs]);
 
   // Logic thống kê Matching
   const allItems = useMemo(() => [...serverItems, ...localItems], [serverItems, localItems]);
@@ -302,15 +309,22 @@ export default function InventoryCheckPage() {
                       onChange={(e) => {
                         const cleanVal = processScannerInput(e.target.value);
 
-                        // Đếm số lượng mã MAC hợp lệ trước và sau khi máy quét nhả text vào
-                        const oldScannedCount = manualMacs.split('\n').filter(mac => mac.trim()).length;
-                        const newScannedCount = cleanVal.split('\n').filter(mac => mac.trim()).length;
+                        // 1. Tạo bộ lọc chuẩn MAC (Định dạng XX:XX:XX:XX:XX:XX)
+                        const isMacRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/i;
 
-                        // Nếu máy quét vừa đẩy vào 1 mã MAC hợp lệ (vượt qua bộ lọc Serial) -> KÊU TÍP!
-                        if (newScannedCount > oldScannedCount && isSoundEnabled) {
+                        // 2. CHỈ ĐẾM những dòng đã là mã MAC HOÀN CHỈNH
+                        const newValidMacCount = cleanVal
+                          .split('\n')
+                          .map(mac => mac.trim())
+                          .filter(mac => isMacRegex.test(mac)).length;
+
+                        // 3. So sánh: Nếu số lượng MAC chuẩn tăng lên -> Kêu Típ!
+                        if (newValidMacCount > lastCountRef.current && isSoundEnabled) {
                           playSuccessSound();
                         }
 
+                        // 4. Lưu lại số đếm MAC chuẩn vào bộ nhớ
+                        lastCountRef.current = newValidMacCount;
                         setManualMacs(cleanVal);
                       }}
                     />
@@ -364,12 +378,19 @@ export default function InventoryCheckPage() {
                           {importInfo?.devices
                             .find(p => p.deviceCode === selectedDeviceCode)
                             ?.expectedMacs?.map(s => {
-                              const isScanned = processedItems.some(i => i.mac === s);
-                              return (
-                                <Tag key={s} color={isScanned ? 'green' : 'default'}>
-                                  {s} {isScanned && <CheckCircleOutlined />}
+                              const isScannedNow = processedItems.some(i => i.mac === s);
+                              const isScannedBefore = otherScannedMacs.includes(s);
+                              if (isScannedNow) return (
+                                <Tag key={s} color="green">
+                                  {s} <CheckCircleOutlined />
                                 </Tag>
-                              )
+                              );
+                              if (isScannedBefore) return (
+                                <Tag key={s} color="blue">
+                                  {s} (Phiên trước)
+                                </Tag>
+                              );
+                              return <Tag key={s} color="default">{s}</Tag>;
                             })
                           }
                         </div>

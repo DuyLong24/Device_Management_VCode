@@ -24,12 +24,14 @@ import {
   PlayCircleOutlined,
   DeleteOutlined,
   WarningOutlined,
+  SoundFilled,
+  SoundOutlined,
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
 
-import { useInventoryCheck } from '../../hooks/useInventoryCheck';
+import { useInventoryCheck, playSuccessSound } from '../../hooks/useInventoryCheck';
 import { INVENTORY_LABELS } from '../../constants/inventory.constants';
 import { processScannerInput } from '../../utils/mac.util';
 
@@ -63,7 +65,8 @@ export default function InventoryCheckPage() {
     manualMacs, setManualMacs,
     otherCompletedCount,
     otherCompletedItemsByModel,
-    deviceModels
+    deviceModels,
+    isSoundEnabled, setIsSoundEnabled,
   } = useInventoryCheck();
 
   // Logic thống kê Matching
@@ -292,14 +295,38 @@ export default function InventoryCheckPage() {
                       disabled={!selectedDeviceCode || isSaving}
                       rows={5}
                       value={manualMacs}
+                      // onChange={(e) => {
+                      //   const cleanVal = processScannerInput(e.target.value);
+                      //   setManualMacs(cleanVal);
+                      // }}
                       onChange={(e) => {
                         const cleanVal = processScannerInput(e.target.value);
+
+                        // Đếm số lượng mã MAC hợp lệ trước và sau khi máy quét nhả text vào
+                        const oldScannedCount = manualMacs.split('\n').filter(mac => mac.trim()).length;
+                        const newScannedCount = cleanVal.split('\n').filter(mac => mac.trim()).length;
+
+                        // Nếu máy quét vừa đẩy vào 1 mã MAC hợp lệ (vượt qua bộ lọc Serial) -> KÊU TÍP!
+                        if (newScannedCount > oldScannedCount && isSoundEnabled) {
+                          playSuccessSound();
+                        }
+
                         setManualMacs(cleanVal);
                       }}
                     />
-                    <Button block icon={<CheckCircleOutlined />} onClick={handleManualImport}>
-                      Nhập
-                    </Button>
+                    <Space>
+                      <Button block icon={<CheckCircleOutlined />} onClick={handleManualImport}>
+                        Nhập
+                      </Button>
+                      {/* Nút bật/tắt âm thanh quét mã */}
+                      <Button
+                        type={isSoundEnabled ? 'primary' : 'default'}
+                        ghost={isSoundEnabled}
+                        icon={isSoundEnabled ? <SoundFilled /> : <SoundOutlined />}
+                        onClick={() => setIsSoundEnabled((prev: boolean) => !prev)}
+                        title={isSoundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'}
+                      />
+                    </Space>
                   </Space>
                 </Row>
               </Space>

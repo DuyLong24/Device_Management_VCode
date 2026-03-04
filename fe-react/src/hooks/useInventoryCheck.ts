@@ -13,6 +13,24 @@ import { useScanSound } from '../hooks/useScanSound';
 
 export type LocalScannedItem = ScannedItem & { deviceCode?: string };
 
+// Web Audio API beep (standalone, no React deps)
+export const playSuccessSound = () => {
+    try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(1200, ctx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.12);
+    } catch (_) { /* silent fail */ }
+};
+
 export const useInventoryCheck = () => {
 
     const navigate = useNavigate();
@@ -40,8 +58,16 @@ export const useInventoryCheck = () => {
     const [selectedDeviceCode, setSelectedDeviceCode] = useState<string | null>(null);
     const [deviceModels, setDeviceModels] = useState<any[]>([]);
 
+    // State bật/tắt âm thanh + localStorage persistence
+    const [isSoundEnabled, setIsSoundEnabled] = useState<boolean>(() =>
+        localStorage.getItem('inventory_sound_enabled') !== 'false'
+    );
+    useEffect(() => {
+        localStorage.setItem('inventory_sound_enabled', String(isSoundEnabled));
+    }, [isSoundEnabled]);
+
     const inputRef = useRef<any>(null);
-    const { playError, playSuccess } = useScanSound();
+    const { playError } = useScanSound();
 
     const storageKey = useMemo(() => session ? `inventory_data_${session.id}` : null, [session]);
 
@@ -191,7 +217,8 @@ export const useInventoryCheck = () => {
 
             const updated = await inventorySessionService.update(session!.id, payload);
             if (updated && updated.details) {
-                playSuccess();
+                // Trigger âm thanh tại điểm "Save thành công"
+                if (isSoundEnabled) playSuccessSound();
                 message.success(`Đã lưu mac: ${code}`);
                 setServerItems(updated.details);
             }
@@ -300,6 +327,7 @@ export const useInventoryCheck = () => {
         duplicateMacs,
         otherCompletedCount,
         otherCompletedItemsByModel,
-        deviceModels
+        deviceModels,
+        isSoundEnabled, setIsSoundEnabled,
     };
 };

@@ -4,6 +4,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 import { KAFKA_CLIENT_CONFIG } from '@app/shared';
 import { ValidationPipe } from '@nestjs/common';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   // Tạo HTTP application (API Gateway)
@@ -46,6 +47,10 @@ async function bootstrap() {
     whitelist: true,
     forbidNonWhitelisted: true,
   }));
+
+  // Nâng giới hạn body lên 20MB để hỗ trợ phiếu nhập lớn 
+  app.use(json({ limit: '20mb' }));
+  app.use(urlencoded({ extended: true, limit: '20mb' }));
 
   // Khởi động HTTP server
   const port = process.env.PORT || 3000;

@@ -71,25 +71,6 @@ export class InventorySessionService {
                 );
             }
 
-            // 2. Chặn trùng với CÁC PHIÊN KHÁC đã hoàn thành (cùng importId)
-            const importIdStr = String(session.importId);
-            const completedSiblings = await this.sessionRepo.findAll({
-                importId: session.importId,
-                status: 'completed',
-                _id: { $ne: session._id }
-            });
-            if (completedSiblings.length > 0) {
-                const siblingMacs = new Set(
-                    completedSiblings.flatMap(s => s.details.map(d => d.mac))
-                );
-                const duplicatesAcross = newMacs.filter(m => siblingMacs.has(m));
-                if (duplicatesAcross.length > 0) {
-                    throw new ConflictException(
-                        `Mã đã được kiểm kê ở phiên trước: ${duplicatesAcross.join(', ')}`
-                    );
-                }
-                this.logger.debug(`[CrossSessionCheck] importId=${importIdStr} — OK, không trùng phiên nào`);
-            }
 
             const itemsToPush = updateDto.scannedItems.map(item => ({
                 mac: item.mac,

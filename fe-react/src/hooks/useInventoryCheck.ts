@@ -53,6 +53,7 @@ export const useInventoryCheck = () => {
     const [otherCompletedCount, setOtherCompletedCount] = useState(0);
     const [otherCompletedItemsByModel, setOtherCompletedItemsByModel] = useState<Record<string, number>>({});
     const [otherScannedMacs, setOtherScannedMacs] = useState<string[]>([]);
+    const [crossSessionDups, setCrossSessionDups] = useState<string[]>([]); // MAC trùng từ phiên khác
 
     const [selectedDeviceCode, setSelectedDeviceCode] = useState<string | null>(null);
     const [deviceModels, setDeviceModels] = useState<any[]>([]);
@@ -197,26 +198,14 @@ export const useInventoryCheck = () => {
             return;
         }
 
-        // Check trùng (Bao gồm cả phiên hiện tại, mảng local, và các phiên trước)
-        const isDup = serverItems.some(i => i.mac === code) ||
-            localItems.some(i => i.mac === code) ||
-            (typeof otherScannedMacs !== 'undefined' && otherScannedMacs.includes(code));
-
-        if (isDup) {
-            playError();
-            message.error(`Mac ${code} bị trùng! Kiểm tra danh sách.`);
-
-            setLocalItems(prev => [{
-                mac: code,
-                deviceModel: selectedDeviceCode,
-                deviceCode: selectedDeviceCode,
-                scannedAt: new Date().toISOString()
-            }, ...prev]);
-
-            setDuplicateMacs(prev => Array.from(new Set([...prev, code])));
+        // TH1 - Trùng nội bộ (cùng phiên)
+        const isDupInternal = serverItems.some(i => i.mac === code) || localItems.some(i => i.mac === code);
+        if (isDupInternal) {
             setScannedInput('');
+            inputRef.current?.focus();
             return;
         }
+
 
         try {
             // Lưu lên server
@@ -255,55 +244,48 @@ export const useInventoryCheck = () => {
         const codes = manualMacs.split('\n').map(s => s.trim()).filter(Boolean);
         if (codes.length === 0) return;
 
-        const dups: any[] = []; // Chứa item lỗi
-        const validItems: any[] = []; // Chứa item ngon
+        const validItems: any[] = [];
+        let internalDupCount = 0;
 
         codes.forEach(code => {
-            const isDup = serverItems.some(i => i.mac === code) ||
+            // TH1: Trùng nội bộ (cùng phiên hoặc localItems)
+            const isDupInternal = serverItems.some(i => i.mac === code) ||
                 validItems.some(i => i.mac === code) ||
-                localItems.some(i => i.mac === code) ||
-                (typeof otherScannedMacs !== 'undefined' && otherScannedMacs.includes(code));
+                localItems.some(i => i.mac === code);
 
-            if (isDup) {
-                // BẮT QUẢ TANG MÃ TRÙNG -> Lưu lại để ném ra UI
-                dups.push({
-                    mac: code,
-                    deviceModel: selectedDeviceCode,
-                    deviceCode: selectedDeviceCode,
-                    scannedAt: new Date().toISOString()
-                });
-            } else {
-                validItems.push({
-                    mac: code,
-                    deviceModel: selectedDeviceCode,
-                    deviceCode: selectedDeviceCode
-                });
+            if (isDupInternal) {
+                internalDupCount++;
+                return;
             }
+
+            // Mọi mã vượt qua TH1 đều được gửi lên server bình thường
+            validItems.push({
+                mac: code,
+                deviceModel: selectedDeviceCode,
+                deviceCode: selectedDeviceCode
+            });
         });
 
-        // 1. Gửi bọn mã Hợp lệ lên Server
         if (validItems.length > 0) {
             try {
                 setIsSaving(true);
                 const updated = await inventorySessionService.update(session!.id, { scannedItems: validItems });
                 if (updated && updated.details) {
                     setServerItems(updated.details);
-                    message.success(`Đã lưu ${validItems.length} mac hợp lệ.`);
-                    if (isSoundEnabled) playSuccessSound(); // Kêu Típ báo ngon
+
+                    const msg = `Đã lưu ${validItems.length} mã mới.` +
+                        (internalDupCount > 0 ? ` (Bỏ qua ${internalDupCount} mã đã quét)` : '');
+                    message.success(msg);
+
+                    if (isSoundEnabled) playSuccessSound();
                 }
             } catch (e) {
                 message.error('Lỗi lưu danh sách');
             } finally {
                 setIsSaving(false);
             }
-        }
-
-        // 2. Ném bọn mã Trùng lặp ra Table để bêu riếu
-        if (dups.length > 0) {
-            playError(); // Kêu bíp bíp báo lỗi
-            setLocalItems(prev => [...dups, ...prev]);
-            setDuplicateMacs(prev => Array.from(new Set([...prev, ...dups.map(d => d.mac)])));
-            message.error(`Phát hiện ${dups.length} mã TRÙNG LẶP! Hãy kiểm tra lại ở danh sách.`);
+        } else if (internalDupCount > 0) {
+            message.info(`Đã bỏ qua ${internalDupCount} mã trùng lặp.`);
         }
 
         setManualMacs('');
@@ -312,11 +294,21 @@ export const useInventoryCheck = () => {
     const [duplicateMacs, setDuplicateMacs] = useState<string[]>([]);
 
     const handleCompleteInventory = () => {
-        if (localItems.length > 0) {
-            message.warning('Vui lòng bấm LƯU các mac mới trước khi hoàn tất!');
+        const validUnsavedItems = localItems.filter(
+            item => !duplicateMacs.includes((item as any).mac)
+        );
+
+        if (validUnsavedItems.length > 0) {
+            message.warning('Vui lòng bấm LƯU các mac mới hợp lệ trước khi hoàn tất!');
             return;
         }
-        setDuplicateMacs([]);
+
+        // Tính toán mã trùng xuyên phiên ngay lúc bấm Hoàn tất
+        const foundCrossDups = serverItems
+            .filter(i => otherScannedMacs.includes(i.mac))
+            .map(i => i.mac);
+        setCrossSessionDups(foundCrossDups);
+
         setCompleteModalVisible(true);
     };
 
@@ -348,6 +340,25 @@ export const useInventoryCheck = () => {
         inputRef.current?.focus();
     };
 
+    // Xóa toàn bộ mã trùng xuyên phiên: gọi API xóa từng mã, đóng modal
+    const handleClearAllDuplicates = async () => {
+        if (!session || crossSessionDups.length === 0) return;
+        setIsSaving(true);
+        try {
+            for (const mac of crossSessionDups) {
+                await inventorySessionService.removeItem(session.id, mac);
+            }
+            setServerItems(prev => prev.filter(i => !crossSessionDups.includes(i.mac)));
+            setCrossSessionDups([]);
+            setCompleteModalVisible(false);
+            message.success(`Đã xóa ${crossSessionDups.length} mã trùng. Bấm Hoàn tất kiểm kê lại.`);
+        } catch {
+            message.error('Lỗi khi xóa mã trùng, vui lòng thử lại.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return {
         loading, isSaving, session, importInfo, serverItems, localItems, sessionStatus,
         scannedInput, setScannedInput, manualMacs, setManualMacs,
@@ -355,6 +366,7 @@ export const useInventoryCheck = () => {
         completeModalVisible, setCompleteModalVisible,
         handleStartSession, handleScanMac, handleManualImport,
         handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
+        handleClearAllDuplicates,
         navigate,
         removeServerItem,
         setLocalItems,
@@ -364,5 +376,6 @@ export const useInventoryCheck = () => {
         deviceModels,
         isSoundEnabled, setIsSoundEnabled,
         otherScannedMacs,
+        crossSessionDups,
     };
 };

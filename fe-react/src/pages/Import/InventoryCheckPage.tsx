@@ -58,6 +58,7 @@ export default function InventoryCheckPage() {
     completeModalVisible, setCompleteModalVisible,
     handleStartSession, handleManualImport,
     handleCompleteInventory, handleCompleteConfirm, handleRemoveLocalItem,
+    handleClearAllDuplicates,
     navigate,
     removeServerItem,
     duplicateMacs,
@@ -67,6 +68,7 @@ export default function InventoryCheckPage() {
     deviceModels,
     isSoundEnabled, setIsSoundEnabled,
     otherScannedMacs,
+    crossSessionDups,
   } = useInventoryCheck();
 
   // BỘ NHỚ ĐỒNG BỘ => FIX MÁY QUÉT NHANH
@@ -83,7 +85,7 @@ export default function InventoryCheckPage() {
     if (!importInfo) return [];
     return allItems.map(item => {
       let status = getMacStatus(item.mac, (item as any).deviceCode || (item as any).deviceModel, importInfo.devices);
-      if (duplicateMacs.includes(item.mac)) {
+      if (duplicateMacs.includes(item.mac) || crossSessionDups.includes(item.mac)) {
         status = 'DUPLICATE';
       }
       return {
@@ -91,7 +93,7 @@ export default function InventoryCheckPage() {
         status
       };
     });
-  }, [allItems, importInfo, duplicateMacs]);
+  }, [allItems, importInfo, duplicateMacs, crossSessionDups]);
 
   const stats = useMemo(() => {
     // Tổng cần kiểm = Tổng Import - Đã kiểm ở các phiên DONE
@@ -433,7 +435,6 @@ export default function InventoryCheckPage() {
           </>
         )
       }
-
       <Modal
         title="Xác nhận hoàn tất"
         open={completeModalVisible}
@@ -442,6 +443,7 @@ export default function InventoryCheckPage() {
         okText="Xác nhận"
         cancelText="Hủy"
         confirmLoading={isSaving}
+        okButtonProps={{ disabled: crossSessionDups.length > 0 || duplicateMacs.length > 0 }}
       >
         {stats.matchCount >= stats.totalRequired && (
           <Alert
@@ -452,7 +454,32 @@ export default function InventoryCheckPage() {
             className="mb-4"
           />
         )}
-        {duplicateMacs.length > 0 ? (
+        {crossSessionDups.length > 0 ? (
+          <Alert
+            message="Lỗi trùng phiên kiểm kê"
+            description={
+              <div>
+                <Text type="danger">Phát hiện {crossSessionDups.length} mã mac đã được quét ở phiên trước:</Text>
+                <div className="max-h-32 overflow-y-auto mt-2 bg-white p-2 border rounded">
+                  {crossSessionDups.map(s => <Tag color="red" key={s}>{s}</Tag>)}
+                </div>
+                <div className="mt-2">Hệ thống chặn hoàn tất để chống trùng lặp dữ liệu. Bạn có thể tự động xóa tất cả các mã này khỏi phiên hiện tại để tiếp tục.</div>
+                <Button
+                  danger
+                  type="primary"
+                  icon={<DeleteOutlined />}
+                  onClick={handleClearAllDuplicates}
+                  className="mt-3"
+                  loading={isSaving}
+                >
+                  Xóa toàn bộ {crossSessionDups.length} mã trùng
+                </Button>
+              </div>
+            }
+            type="error"
+            showIcon
+          />
+        ) : duplicateMacs.length > 0 ? (
           <Alert
             message="Lỗi hoàn tất phiên"
             description={
@@ -461,7 +488,6 @@ export default function InventoryCheckPage() {
                 <div className="max-h-32 overflow-y-auto mt-2 bg-white p-2 border rounded">
                   {duplicateMacs.map(s => <Tag color="red" key={s}>{s}</Tag>)}
                 </div>
-                <div className="mt-2">Vui lòng xóa các mã mac này khỏi danh sách quét trước khi thử lại.</div>
               </div>
             }
             type="error"

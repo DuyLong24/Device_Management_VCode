@@ -31,7 +31,7 @@ export default function CreateImportPage() {
         modelOptions,
         isMacModalOpen, setIsMacModalOpen,
         currentDeviceKey,
-        tempMacs,
+        tempDetails,
         isImportWizardOpen, setIsImportWizardOpen,
         openMacModal,
         handleSaveMacs,
@@ -120,7 +120,7 @@ export default function CreateImportPage() {
                 open={isMacModalOpen}
                 onCancel={() => setIsMacModalOpen(false)}
                 onSave={handleSaveMacs}
-                initialMacs={tempMacs ? tempMacs.split('\n') : []}
+                initialDetails={tempDetails}
                 deviceKey={currentDeviceKey}
                 requiredQuantity={currentDeviceKey ? deviceList.find(p => p.key === currentDeviceKey)?.quantity : 0}
                 deviceName={(() => {

@@ -25,10 +25,7 @@ export const ExportGeneralInfo = ({
     // 1. Projects
     const { data: projects = [] } = useQuery({
         queryKey: ['projects'],
-        queryFn: async () => {
-            const res = await sharedDataService.getDataByGroupCode('PROJECT');
-            return res || [];
-        },
+        queryFn: () => sharedDataService.getDataByGroupCode('PROJECT'),
         staleTime: 5 * 60 * 1000,
         select: (data) => data.map((p: any) => ({ label: p.name, value: p.code }))
     });

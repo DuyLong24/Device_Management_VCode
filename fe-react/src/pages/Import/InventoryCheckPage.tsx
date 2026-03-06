@@ -16,7 +16,8 @@ import {
   Space,
   Divider,
   Flex,
-  Tabs
+  Tabs,
+  Radio
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -33,6 +34,7 @@ import { useMemo, useRef, useEffect } from 'react';
 import { useInventoryCheck, playSuccessSound } from '../../hooks/useInventoryCheck';
 import { INVENTORY_LABELS } from '../../constants/inventory.constants';
 import { processScannerInput } from '../../utils/mac.util';
+import { useScanMode } from '../../hooks/useScanMode';
 
 // const { Dragger } = Upload;
 
@@ -51,6 +53,7 @@ const getMacStatus = (mac: string, deviceCode: string | undefined, importDevices
 };
 
 export default function InventoryCheckPage() {
+  const { mode: scanMode, setMode: setScanMode } = useScanMode();
   // const { playSuccess, playError } = useScanSound();
   const {
     loading, isSaving, session, importInfo, serverItems, localItems, sessionStatus,
@@ -132,7 +135,7 @@ export default function InventoryCheckPage() {
 
   // Columns
   const macColumns: TableColumnsType<any> = [
-    { title: 'Mac', dataIndex: 'mac', key: 'mac', render: (t) => <Text strong className="text-blue-600 font-mono">{t}</Text> },
+    { title: 'Mã quét', dataIndex: 'mac', key: 'mac', render: (t) => <Text strong className="text-blue-600 font-mono">{t}</Text> },
     { title: 'Tên thiết bị', dataIndex: 'deviceCode', key: 'deviceCode' },
     { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t) => dayjs(t).format('HH:mm:ss') },
     {
@@ -281,7 +284,7 @@ export default function InventoryCheckPage() {
       {
         sessionStatus === 'in-progress' && (
           <>
-            <Card title="Quét mac kiểm kê" className="mb-6 shadow-sm">
+            <Card title="Quét mã kiểm kê" className="mb-6 shadow-sm">
               <Space direction="vertical" className="w-full" size="middle">
                 <div className="bg-blue-50 p-4 rounded border border-blue-100">
                   <Text strong className="block mb-2 text-blue-800">1. Chọn thiết bị đang kiểm kê <span className="text-red-500">*</span></Text>
@@ -298,9 +301,15 @@ export default function InventoryCheckPage() {
                 <Row gutter={16}>
                   {/* <Col xs={24} md={12}> */}
                   <Space direction="vertical" className="w-full" size="small">
-                    <Divider>Quét mã mac</Divider>
+                    <div className="flex justify-between items-center w-full">
+                      <Divider className="flex-1 m-0 mr-4">Nhập/Quét {scanMode === 'mac' ? 'MAC' : 'Serial'}</Divider>
+                      <Radio.Group value={scanMode} onChange={e => setScanMode(e.target.value)} size="small">
+                        <Radio.Button value="mac">Mã MAC</Radio.Button>
+                        <Radio.Button value="serial">Số Serial</Radio.Button>
+                      </Radio.Group>
+                    </div>
                     <Input.TextArea
-                      placeholder={selectedDeviceCode ? "Nhập từng mã mac trên một dòng" : "Vui lòng chọn thiết bị trước"}
+                      placeholder={selectedDeviceCode ? `Nhập từng ${scanMode === 'mac' ? 'mã MAC' : 'mã Serial'} trên một dòng` : "Vui lòng chọn thiết bị trước"}
                       disabled={!selectedDeviceCode || isSaving}
                       rows={5}
                       value={manualMacs}
@@ -309,23 +318,25 @@ export default function InventoryCheckPage() {
                       //   setManualMacs(cleanVal);
                       // }}
                       onChange={(e) => {
-                        const cleanVal = processScannerInput(e.target.value);
+                        const cleanVal = processScannerInput(e.target.value, scanMode);
 
-                        // 1. Tạo bộ lọc chuẩn MAC (Định dạng XX:XX:XX:XX:XX:XX)
+                        // 1. Tạo bộ lọc chuẩn MAC (Định dạng XX:XX:XX:XX:XX:XX) hoặc Serial
                         const isMacRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/i;
+                        const isSerialRegex = /^[A-Z0-9-]+$/i;
+                        const regexToCheck = scanMode === 'mac' ? isMacRegex : isSerialRegex;
 
-                        // 2. CHỈ ĐẾM những dòng đã là mã MAC HOÀN CHỈNH
+                        // 2. CHỈ ĐẾM những dòng đã là mã HOÀN CHỈNH
                         const newValidMacCount = cleanVal
                           .split('\n')
                           .map(mac => mac.trim())
-                          .filter(mac => isMacRegex.test(mac)).length;
+                          .filter(mac => regexToCheck.test(mac)).length;
 
-                        // 3. So sánh: Nếu số lượng MAC chuẩn tăng lên -> Kêu Típ!
+                        // 3. So sánh: Nếu số lượng mã chuẩn tăng lên -> Kêu Típ!
                         if (newValidMacCount > lastCountRef.current && isSoundEnabled) {
                           playSuccessSound();
                         }
 
-                        // 4. Lưu lại số đếm MAC chuẩn vào bộ nhớ
+                        // 4. Lưu lại số đếm mã chuẩn vào bộ nhớ
                         lastCountRef.current = newValidMacCount;
                         setManualMacs(cleanVal);
                       }}

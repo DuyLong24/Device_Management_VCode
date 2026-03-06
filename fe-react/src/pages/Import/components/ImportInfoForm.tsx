@@ -15,20 +15,16 @@ export const ImportInfoForm: React.FC<ImportInfoFormProps> = () => {
     // 1. Categories
     const { data: categoryOptions = [] } = useQuery({
         queryKey: ['categories'],
-        queryFn: async () => {
-            const res = await categoryService.getAll();
-            return res.map((c: any) => ({ label: c.name, value: c.name }));
-        },
+        queryFn: () => categoryService.getAll(),
+        select: (data: any[]) => data.map(c => ({ label: c.name, value: c.name })),
         staleTime: 60 * 60 * 1000
     });
 
     // 2. Origins (Sources)
     const { data: originOptions = [] } = useQuery({
         queryKey: ['origins'],
-        queryFn: async () => {
-            const res = await sharedDataService.getDataByGroupCode('ORIGIN');
-            return (res || []).map((o: any) => ({ label: o.name, value: o.code }));
-        },
+        queryFn: () => sharedDataService.getDataByGroupCode('ORIGIN'),
+        select: (data: any[]) => (data || []).map(o => ({ label: o.name, value: o.code })),
         staleTime: 10 * 60 * 1000
     });
 

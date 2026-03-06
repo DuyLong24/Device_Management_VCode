@@ -10,6 +10,7 @@ import { inventorySessionService } from '../services/inventory-session.service';
 import type { InventorySession, ScannedItem } from '../services/inventory-session.service';
 import type { DeviceImport } from '../types/import.type';
 import { useScanSound } from '../hooks/useScanSound';
+import { useScanMode } from '../hooks/useScanMode';
 
 export type LocalScannedItem = ScannedItem & { deviceCode?: string };
 
@@ -30,7 +31,7 @@ export const playSuccessSound = () => {
 };
 
 export const useInventoryCheck = () => {
-
+    const { mode: scanMode } = useScanMode();
     const navigate = useNavigate();
     const { importId } = useParams<{ importId: string }>();
     const [searchParams] = useSearchParams();
@@ -215,7 +216,8 @@ export const useInventoryCheck = () => {
                     mac: code,
                     deviceModel: selectedDeviceCode,
                     deviceCode: selectedDeviceCode
-                }]
+                }],
+                scanMode
             };
 
             const updated = await inventorySessionService.update(session!.id, payload);
@@ -269,7 +271,7 @@ export const useInventoryCheck = () => {
         if (validItems.length > 0) {
             try {
                 setIsSaving(true);
-                const updated = await inventorySessionService.update(session!.id, { scannedItems: validItems });
+                const updated = await inventorySessionService.update(session!.id, { scannedItems: validItems, scanMode });
                 if (updated && updated.details) {
                     setServerItems(updated.details);
 

@@ -144,7 +144,7 @@ export class ExportSessionService {
         const warnings: { mac: string; warning: string }[] = [];
         const uniqueMacs = [...new Set(macs)];
 
-        const devices = await this.deviceService.findByMacs(uniqueMacs);
+        const devices = await this.deviceService.findByScannedCodes(uniqueMacs, 'mac');
         const deviceMap = new Map();
         devices.forEach(d => deviceMap.set(d.mac, d));
 

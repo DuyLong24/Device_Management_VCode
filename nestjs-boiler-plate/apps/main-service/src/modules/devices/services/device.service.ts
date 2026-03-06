@@ -34,14 +34,20 @@ export class DeviceService implements OnModuleInit {
 
   async onModuleInit() {
     try {
-      // Xóa index cũ trên serial nếu nó tồn tại
-      await this.deviceModel.collection.dropIndex('serial_1');
+      await this.deviceModel.collection.dropIndex('serial_1').catch(() => { });
       this.logger.log('Đã xóa index cũ: serial_1');
-    } catch (error) {
-      // Bỏ qua lỗi nếu index không tồn tại
-      if (error.codeName !== 'IndexNotFound') {
-        this.logger.warn('Cảnh báo: Không thể xóa index serial_1 (nó có thể không tồn tại hoặc cần kiểm tra thủ công)', error.message);
-      }
+    } catch (error) { }
+
+    try {
+      await this.deviceModel.collection.dropIndex('mac_1').catch(() => { });
+      this.logger.log('Đã xóa index cũ: mac_1');
+    } catch (error) { }
+
+    try {
+      await this.deviceModel.syncIndexes();
+      this.logger.log('Đã cấu trúc và đồng bộ lại Indexes cho Device collection (bao gồm sparse: true).');
+    } catch (error: any) {
+      this.logger.error('Cảnh báo: Lỗi khi sync indexes:', error.message);
     }
   }
 
@@ -220,9 +226,10 @@ export class DeviceService implements OnModuleInit {
 
 
 
-  async findByMacs(macs: string[]): Promise<Device[]> {
-    if (!macs || macs.length === 0) return [];
-    return this.deviceModel.find({ mac: { $in: macs } }).exec();
+  async findByScannedCodes(scannedCodes: string[], scanMode: 'mac' | 'serial' = 'mac'): Promise<Device[]> {
+    if (!scannedCodes || scannedCodes.length === 0) return [];
+    const searchField = scanMode === 'serial' ? 'serial' : 'mac';
+    return this.deviceModel.find({ [searchField]: { $in: scannedCodes } }).exec();
   }
 
   async findByMac(mac: string): Promise<Device | null> {

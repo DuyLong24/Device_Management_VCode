@@ -15,10 +15,12 @@ import { exportSessionService } from '../../services/export-session.service';
 import { getExportStatusTag } from '../../utils/export-status.util';
 import { processScannerInput } from '../../utils/mac.util';
 import type { DeviceExport } from '../../types/export.type';
+import { useScanMode } from '../../hooks/useScanMode';
 
 const { Text } = Typography;
 
 export default function ExportProcessPage() {
+    const { mode: scanMode } = useScanMode();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -383,10 +385,10 @@ export default function ExportProcessPage() {
                             <Space direction="vertical" className="w-full">
                                 <Input.TextArea
                                     rows={5}
-                                    placeholder="MAC-001&#10;MAC-002..."
+                                    placeholder={scanMode === 'mac' ? "MAC-001\nMAC-002..." : "SN-001\nSN-002..."}
                                     value={manualMacs}
                                     onChange={e => {
-                                        const cleanVal = processScannerInput(e.target.value);
+                                        const cleanVal = processScannerInput(e.target.value, scanMode);
                                         setManualMacs(cleanVal);
                                     }}
                                     disabled={loading}

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
     Modal,
     Space,
@@ -10,6 +10,7 @@ import {
     Alert,
     message,
     Typography,
+    Radio,
 } from 'antd';
 import {
     CloseCircleOutlined,
@@ -20,7 +21,8 @@ import {
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import type { QCPendingItem, ScannedMac, ValidationStatus } from '../../../types/qc.type';
-import { extractValidMacs } from '../../../utils/mac.util';
+import { extractValidScans } from '../../../utils/mac.util';
+import { useScanMode } from '../../../hooks/useScanMode';
 
 const { Text } = Typography;
 
@@ -32,10 +34,22 @@ interface QCFailModalProps {
 }
 
 export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: QCFailModalProps) {
+    const { mode: scanMode, setMode: setScanMode } = useScanMode();
     const [macInput, setMacInput] = useState('');
     const [scannedFailList, setScannedFailList] = useState<ScannedMac[]>([]);
     const [failNote, setFailNote] = useState('');
     const macInputRef = useRef<any>(null);
+
+    // Dọn rác khi đổi scanMode
+    useEffect(() => {
+        if (macInput) {
+            import('../../../utils/mac.util').then(({ isValidScan }) => {
+                if (!isValidScan(macInput, scanMode)) {
+                    setMacInput('');
+                }
+            });
+        }
+    }, [scanMode]);
 
     const validateMac = (mac: string, currentList: ScannedMac[]): { isValid: boolean; message?: string; item?: QCPendingItem } => {
         if (!mac.trim()) return { isValid: false, message: 'MAC không được để trống' };
@@ -49,7 +63,7 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
 
     const handleAddFailMac = () => {
         const rawInput = macInput;
-        let macsToProcess = extractValidMacs(rawInput);
+        let macsToProcess = extractValidScans(rawInput, scanMode);
 
         if (macsToProcess.length === 0) {
             const raw = rawInput.trim();
@@ -91,7 +105,7 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
     };
 
     const scannedColumns: TableColumnsType<ScannedMac> = [
-        { title: 'MAC', dataIndex: 'mac', key: 'mac', width: 200 },
+        { title: 'Mã quét', dataIndex: 'mac', key: 'mac', width: 200 },
         { title: 'Mã thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 130 },
         {
             title: 'Trạng thái',
@@ -163,11 +177,21 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
             <Space direction="vertical" size={16} className="w-full">
                 <Alert type="warning" message="thiết bị sẽ chuyển sang Kho Lỗi (Defect)." showIcon />
 
-                <Card size="small" title="Nhập/Quét MAC">
+                <Card size="small"
+                    title={
+                        <div className="flex justify-between items-center w-full">
+                            <span>Nhập/Quét {scanMode === 'mac' ? 'MAC' : 'Serial'}</span>
+                            <Radio.Group value={scanMode} onChange={e => setScanMode(e.target.value)} size="small">
+                                <Radio.Button value="mac">Mã MAC</Radio.Button>
+                                <Radio.Button value="serial">Số Serial</Radio.Button>
+                            </Radio.Group>
+                        </div>
+                    }
+                >
                     <Space.Compact className="w-full">
                         <Input
                             ref={macInputRef}
-                            placeholder="Nhập MAC..."
+                            placeholder={`Nhập ${scanMode === 'mac' ? 'MAC' : 'Serial'}...`}
                             value={macInput}
                             onChange={(e) => setMacInput(e.target.value)}
                             onPressEnter={handleAddFailMac}

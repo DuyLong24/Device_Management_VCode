@@ -2,7 +2,8 @@ import { useState, useRef } from 'react';
 import { Card, Input, Button, Space, Typography } from 'antd';
 import { ScanOutlined, ImportOutlined } from '@ant-design/icons';
 import { BulkInputModal } from '../../components/common/BulkInputModal';
-import { isValidMac } from '../../utils/mac.util';
+import { isValidScan } from '../../utils/mac.util';
+import { useScanMode } from '../../hooks/useScanMode';
 
 const { Text } = Typography;
 
@@ -14,6 +15,7 @@ interface ScanInputProps {
 }
 
 export const ScanInput = ({ onScan, onBulkScan, loading = false, disabled = false }: ScanInputProps) => {
+    const { mode: scanMode } = useScanMode();
     const [inputValue, setInputValue] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const inputRef = useRef<any>(null);
@@ -22,7 +24,7 @@ export const ScanInput = ({ onScan, onBulkScan, loading = false, disabled = fals
         const val = inputValue.trim();
         if (val) {
             // Validate MAC
-            if (!isValidMac(val)) {
+            if (!isValidScan(val, scanMode)) {
                 setInputValue('');
                 setTimeout(() => inputRef.current?.focus(), 100);
                 return;
@@ -42,7 +44,7 @@ export const ScanInput = ({ onScan, onBulkScan, loading = false, disabled = fals
 
     return (
         <Card
-            title={<span className="text-blue-600"><ScanOutlined /> Quét thiết bị</span>}
+            title={<span className="text-blue-600"><ScanOutlined /> Quét {scanMode === 'mac' ? 'MAC' : 'Serial'}</span>}
             className="shadow-md border-t-4 border-t-blue-500 mb-4"
             extra={
                 <Button
@@ -58,7 +60,7 @@ export const ScanInput = ({ onScan, onBulkScan, loading = false, disabled = fals
             <Space.Compact className="w-full mb-2">
                 <Input
                     ref={inputRef}
-                    placeholder="Quét mac "
+                    placeholder={`Quét ${scanMode === 'mac' ? 'MAC' : 'Serial'}`}
                     value={inputValue}
                     onChange={e => setInputValue(e.target.value)}
                     onPressEnter={handleKeyScan}

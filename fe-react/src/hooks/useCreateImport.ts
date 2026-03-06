@@ -24,7 +24,7 @@ export const useCreateImport = () => {
     // Modal States
     const [isMacModalOpen, setIsMacModalOpen] = useState(false);
     const [currentDeviceKey, setCurrentDeviceKey] = useState<string | null>(null);
-    const [tempMacs, setTempMacs] = useState<string>('');
+    const [tempDetails, setTempDetails] = useState<{ mac: string, serial: string }[]>([]);
     const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
 
     // --- React Query Fetching ---
@@ -32,8 +32,8 @@ export const useCreateImport = () => {
     // 1. Models
     const { data: modelOptions = [] } = useQuery({
         queryKey: ['models'],
-        queryFn: async () => {
-            const models = await sharedDataService.getDataByGroupCode('MODEL');
+        queryFn: () => sharedDataService.getDataByGroupCode('MODEL'),
+        select: (models: any[]) => {
             if (models && models.length > 0) {
                 return models.map((m: any) => ({
                     label: m.code,
@@ -90,7 +90,6 @@ export const useCreateImport = () => {
                     code: data.code,
                     supplier: data.supplier,
                     deviceType: data.deviceType,
-                    // origin: data.origin,
                     importDate: data.importDate ? dayjs(data.importDate) : undefined,
                     notes: data.notes,
                     status: data.status,
@@ -173,48 +172,57 @@ export const useCreateImport = () => {
 
     const openMacModal = (record: DeviceEntry) => {
         setCurrentDeviceKey(record.key);
-        setTempMacs((record.expectedMacs || []).join('\n'));
+        setTempDetails(record.expectedDetails || []);
         setIsMacModalOpen(true);
     };
 
-    const handleSaveMacs = (rawList: string[]) => {
+    const handleSaveMacs = (details: { mac: string, serial: string }[]) => {
         if (!currentDeviceKey) return;
 
-        const normalizedInputMacs = rawList
-            .map(mac => mac.trim().toUpperCase())
-            .filter(mac => mac !== '');
-
-        // Loại bỏ trùng lặp nội bộ (trường hợp user gõ 2 dòng y hệt nhau trong 1 ô input của modal)
-        const uniqueInputMacs = Array.from(new Set(normalizedInputMacs));
+        // Xóa thuộc tính thừa, chỉ giữ mac và serial. Nếu rỗng thì gán undefined hoặc xóa.
+        const validDetails = details.map(d => {
+            const m = d.mac?.trim().toUpperCase();
+            const s = d.serial?.trim().toUpperCase();
+            const res: any = {};
+            if (m) res.mac = m;
+            if (s) res.serial = s;
+            return res;
+        }).filter(d => d.mac || d.serial);
 
         // THU THẬP GLOBAL SCOPE (Loại trừ thiết bị đang edit)
         const existingGlobalMacs = new Set<string>();
+        const existingGlobalSerials = new Set<string>();
 
         deviceList.forEach(device => {
             if (device.key === currentDeviceKey) return; // BỎ QUA dòng hiện tại
 
-            if (device.expectedMacs && device.expectedMacs.length > 0) {
-                device.expectedMacs.forEach(mac => {
-                    existingGlobalMacs.add(mac.trim().toUpperCase());
+            if (device.expectedDetails && device.expectedDetails.length > 0) {
+                device.expectedDetails.forEach((d: any) => {
+                    if (d.mac) existingGlobalMacs.add(d.mac.trim().toUpperCase());
+                    if (d.serial) existingGlobalSerials.add(d.serial.trim().toUpperCase());
                 });
+            } else if (device.expectedMacs && device.expectedMacs.length > 0) {
+                device.expectedMacs.forEach(mac => existingGlobalMacs.add(mac.trim().toUpperCase()));
             }
         });
 
-        const duplicateMacs: string[] = [];
-        uniqueInputMacs.forEach(mac => {
-            if (existingGlobalMacs.has(mac)) {
-                duplicateMacs.push(mac);
-            }
+        const duplicateMacs = new Set<string>();
+        const duplicateSerials = new Set<string>();
+
+        validDetails.forEach(d => {
+            if (d.mac && existingGlobalMacs.has(d.mac)) duplicateMacs.add(d.mac);
+            if (d.serial && existingGlobalSerials.has(d.serial)) duplicateSerials.add(d.serial);
         });
 
         // XỬ LÝ LỖI
-        if (duplicateMacs.length > 0) {
-            const displayMacs = duplicateMacs.slice(0, 5).join(', ');
-            const moreIndicator = duplicateMacs.length > 5 ? `\nvà ${duplicateMacs.length - 5} mã khác...` : '';
+        if (duplicateMacs.size > 0 || duplicateSerials.size > 0) {
+            let errorMsg = 'Phát hiện mã trùng lặp ở thiết bị khác trong cùng phiếu nhập này:\n\n';
+            if (duplicateMacs.size > 0) errorMsg += `- MAC: [ ${Array.from(duplicateMacs).slice(0, 5).join(', ')} ]${duplicateMacs.size > 5 ? `\nvà ${duplicateMacs.size - 5} mã khác...` : ''}\n`;
+            if (duplicateSerials.size > 0) errorMsg += `- Serial: [ ${Array.from(duplicateSerials).slice(0, 5).join(', ')} ]${duplicateSerials.size > 5 ? `\nvà ${duplicateSerials.size - 5} mã khác...` : ''}\n`;
 
             modal.error({
-                title: 'Phát hiện mã MAC trùng lặp',
-                content: `Có ${duplicateMacs.length} mã MAC đã tồn tại ở thiết bị khác trong cùng phiếu nhập này:\n\n[ ${displayMacs} ]${moreIndicator}\n\nHệ thống chỉ chấp nhận mã MAC duy nhất. Vui lòng xóa các mã bị trùng để tiếp tục!`,
+                title: 'Trùng lặp dữ liệu',
+                content: errorMsg + '\nHệ thống chỉ chấp nhận mã duy nhất. Vui lòng kiểm tra lại!',
                 okText: 'Đã hiểu',
                 okType: 'danger'
             });
@@ -224,12 +232,16 @@ export const useCreateImport = () => {
         // GHI DỮ LIỆU NẾU AN TOÀN
         setDeviceList(prev => prev.map(p => {
             if (p.key === currentDeviceKey) {
-                return { ...p, expectedMacs: uniqueInputMacs };
+                return {
+                    ...p,
+                    expectedDetails: validDetails as any,
+                    expectedMacs: validDetails.map(d => d.mac).filter(m => !!m)
+                };
             }
             return p;
         }));
 
-        message.success(`Đã đối chiếu an toàn và cập nhật ${uniqueInputMacs.length} MAC`);
+        message.success(`Đã đối chiếu an toàn và cập nhật ${validDetails.length} dòng dữ liệu.`);
         setIsMacModalOpen(false);
         setHasUnsavedChanges(true);
     };
@@ -254,17 +266,17 @@ export const useCreateImport = () => {
                 return;
             }
 
-            // Kiểm tra số lượng thiết bị và số lượng MAC đã khớp chưa
+            // Kiểm tra số lượng thiết bị và số lượng Mã đã khớp chưa
             if (targetStatus === 'PUBLIC') {
                 const mismatchedDevice = deviceList.find(d => {
-                    const macCount = d.expectedMacs?.length || 0;
-                    return d.quantity !== macCount;
+                    const count = d.expectedDetails?.length || d.expectedMacs?.length || 0;
+                    return d.quantity !== count;
                 });
 
                 if (mismatchedDevice) {
                     modal.error({
                         title: 'Dữ liệu chưa khớp',
-                        content: `Thiết bị "${mismatchedDevice.deviceName || mismatchedDevice.deviceCode}" có số lượng khai báo (${mismatchedDevice.quantity}) không khớp với số lượng MAC đã nhập (${mismatchedDevice.expectedMacs?.length || 0}). Vui lòng cập nhật lại hoặc chọn "Lưu nháp".`,
+                        content: `Thiết bị "${mismatchedDevice.deviceName || mismatchedDevice.deviceCode}" có số lượng khai báo (${mismatchedDevice.quantity}) không khớp với số lượng mã đã nhập (${mismatchedDevice.expectedDetails?.length || 0}). Vui lòng cập nhật lại hoặc chọn "Lưu nháp".`,
                         okText: 'Đã hiểu',
                     });
                     return;
@@ -289,7 +301,14 @@ export const useCreateImport = () => {
                     boxCount: p.boxCount || undefined,
                     itemsPerBox: p.itemsPerBox || undefined,
                     expectedMacs: p.expectedMacs,
-                    expectedDetails: p.expectedDetails?.map(({ _id, ...rest }: any) => rest)
+                    expectedDetails: p.expectedDetails?.map(({ _id, ...rest }: any) => {
+                        const sanitized: any = { ...rest };
+                        if (!sanitized.mac || String(sanitized.mac).trim() === '') delete sanitized.mac;
+                        else sanitized.mac = String(sanitized.mac).trim();
+                        if (!sanitized.serial || String(sanitized.serial).trim() === '') delete sanitized.serial;
+                        else sanitized.serial = String(sanitized.serial).trim();
+                        return sanitized;
+                    })
                 })),
             };
 
@@ -370,18 +389,23 @@ export const useCreateImport = () => {
                 details: [] as any[]
             };
 
+            let m = row.mac ? String(row.mac).trim() : '';
+            let s = row.serial ? String(row.serial).trim() : '';
+
             let qty = Number(row.quantity) || 0;
-            if (row.mac && qty === 0) qty = 1;
+            if ((m || s) && qty === 0) qty = 1;
 
             current.quantity += qty;
-            if (row.mac) {
-                current.macs.push(row.mac);
-                current.details.push({
-                    mac: row.mac,
-                    serial: row.serial || '',
-                    p2p: row.p2p || '',
-                    name: row.name || ''
-                });
+            if (m || s) {
+                if (m) current.macs.push(m);
+                const doc: any = {
+                    name: row.name ? String(row.name).trim() : ''
+                };
+                if (m) doc.mac = m;
+                if (s) doc.serial = s;
+                if (row.p2p) doc.p2p = String(row.p2p).trim();
+
+                current.details.push(doc);
             }
             if (!current.boxCount && row.boxCount) current.boxCount = row.boxCount;
             if (!current.itemsPerBox && row.itemsPerBox) current.itemsPerBox = row.itemsPerBox;
@@ -415,9 +439,6 @@ export const useCreateImport = () => {
         { key: 'name', label: 'Tên thiết bị', required: false, description: 'Tên hiển thị' },
         { key: 'p2p', label: 'P2P', required: false, description: 'Mã P2P (Cloud)' },
         { key: 'serial', label: 'Serial Number', required: false, description: 'Số Serial' },
-        // { key: 'quantity', label: 'Số lượng', required: false, description: 'Mặc định là 1 nếu có MAC' },
-        // { key: 'boxCount', label: 'Số hộp', required: false },
-        // { key: 'itemsPerBox', label: 'Số SP/Hộp', required: false },
     ];
 
     return {
@@ -428,7 +449,7 @@ export const useCreateImport = () => {
         modelOptions,
         isMacModalOpen, setIsMacModalOpen,
         currentDeviceKey,
-        tempMacs,
+        tempDetails,
         isImportWizardOpen, setIsImportWizardOpen,
         openMacModal,
         handleSaveMacs,

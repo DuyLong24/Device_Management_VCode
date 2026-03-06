@@ -37,24 +37,38 @@ export class DeviceQueryBuilder {
         if (query.search) {
             const searchStr = query.search.trim();
             const searchRegex = { $regex: searchStr, $options: 'i' };
-            const orConditions: any[] = [
-                { serial: searchRegex },
-                { name: searchRegex },
-                { deviceModel: searchRegex }
-            ];
 
-            // Tìm kiếm MAC theo định dạng fuzzy
-            if (/^[a-fA-F0-9]+$/.test(searchStr)) {
-                const fuzzyMacRegex = { $regex: searchStr.split('').join('[:\\.-]?'), $options: 'i' };
-                orConditions.push({ mac: fuzzyMacRegex });
+            // Nếu truyền rõ scanMode thì ưu tiên filter field đó
+            if (query.scanMode === 'mac') {
+                // Fuzzy support theo mac format
+                if (/^[a-fA-F0-9]+$/.test(searchStr)) {
+                    const fuzzyMacRegex = { $regex: searchStr.split('').join('[:\\.-]?'), $options: 'i' };
+                    Object.assign(filter, { mac: fuzzyMacRegex });
+                } else {
+                    Object.assign(filter, { mac: searchRegex });
+                }
+            } else if (query.scanMode === 'serial') {
+                Object.assign(filter, { serial: searchRegex });
             } else {
-                orConditions.push({ mac: searchRegex });
-            }
+                // Global Search cũ nếu không có scanMode
+                const orConditions: any[] = [
+                    { serial: searchRegex },
+                    { name: searchRegex },
+                    { deviceModel: searchRegex }
+                ];
 
-            if (Object.keys(filter).length > 0) {
-                filter.$or = orConditions;
-            } else {
-                Object.assign(filter, { $or: orConditions });
+                if (/^[a-fA-F0-9]+$/.test(searchStr)) {
+                    const fuzzyMacRegex = { $regex: searchStr.split('').join('[:\\.-]?'), $options: 'i' };
+                    orConditions.push({ mac: fuzzyMacRegex });
+                } else {
+                    orConditions.push({ mac: searchRegex });
+                }
+
+                if (Object.keys(filter).length > 0) {
+                    filter.$or = orConditions;
+                } else {
+                    Object.assign(filter, { $or: orConditions });
+                }
             }
         }
 

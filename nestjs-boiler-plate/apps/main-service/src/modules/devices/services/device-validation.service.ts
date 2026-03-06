@@ -12,7 +12,7 @@ export class DeviceValidationService {
     ) { }
 
     async validateMacs(dto: ValidateMacsDto): Promise<ValidateMacsResponse> {
-        const { macs, deviceModel, warehouseCode } = dto;
+        const { scannedCodes, scanMode, deviceModel, warehouseCode } = dto;
 
         const warehouses = await this.warehouseService.findAll({ code: warehouseCode });
         const warehouse = warehouses[0];
@@ -25,42 +25,43 @@ export class DeviceValidationService {
         const invalidMacs: string[] = [];
         const errors: MacValidationError[] = [];
 
-        const macCounts = new Map<string, number>();
-        macs.forEach(s => macCounts.set(s, (macCounts.get(s) || 0) + 1));
+        const codeCounts = new Map<string, number>();
+        scannedCodes.forEach(s => codeCounts.set(s, (codeCounts.get(s) || 0) + 1));
 
-        for (const mac of macs) {
-            if (macCounts.get(mac)! > 1) {
-                if (!invalidMacs.includes(mac)) {
-                    invalidMacs.push(mac);
+        for (const code of scannedCodes) {
+            if (codeCounts.get(code)! > 1) {
+                if (!invalidMacs.includes(code)) {
+                    invalidMacs.push(code);
                     errors.push({
-                        mac,
+                        mac: code,
                         reason: 'DUPLICATE',
-                        message: `MAC "${mac}" bị trùng lặp trong danh sách`
+                        message: `Mã "${code}" bị trùng lặp trong danh sách`
                     });
                 }
                 continue;
             }
 
-            const device = await this.deviceModel.findOne({ mac })
+            const searchField = scanMode === 'serial' ? 'serial' : 'mac';
+            const device = await this.deviceModel.findOne({ [searchField]: code })
                 .populate('warehouseId')
                 .exec();
 
             if (!device) {
-                invalidMacs.push(mac);
+                invalidMacs.push(code);
                 errors.push({
-                    mac,
+                    mac: code,
                     reason: 'NOT_FOUND',
-                    message: `MAC "${mac}" không tồn tại trong hệ thống`
+                    message: `Mã "${code}" không tồn tại trong hệ thống`
                 });
                 continue;
             }
 
             if (device.deviceModel !== deviceModel) {
-                invalidMacs.push(mac);
+                invalidMacs.push(code);
                 errors.push({
-                    mac,
+                    mac: code,
                     reason: 'WRONG_MODEL',
-                    message: `MAC "${mac}" thuộc model "${device.deviceModel}", không phải "${deviceModel}"`,
+                    message: `Mã "${code}" thuộc model "${device.deviceModel}", không phải "${deviceModel}"`,
                     currentModel: device.deviceModel
                 });
                 continue;
@@ -68,17 +69,17 @@ export class DeviceValidationService {
 
             const currentWarehouse = device.warehouseId as any;
             if (currentWarehouse._id.toString() !== warehouse._id.toString()) {
-                invalidMacs.push(mac);
+                invalidMacs.push(code);
                 errors.push({
-                    mac,
+                    mac: code,
                     reason: 'WRONG_WAREHOUSE',
-                    message: `MAC "${mac}" đang ở kho "${currentWarehouse.name}", không phải "${warehouse.name}"`,
+                    message: `Mã "${code}" đang ở kho "${currentWarehouse.name}", không phải "${warehouse.name}"`,
                     currentWarehouse: currentWarehouse.name
                 });
                 continue;
             }
 
-            validMacs.push(mac);
+            validMacs.push(code);
         }
 
         return {

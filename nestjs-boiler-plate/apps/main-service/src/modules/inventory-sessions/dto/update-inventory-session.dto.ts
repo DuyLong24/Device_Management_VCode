@@ -31,4 +31,8 @@ export class UpdateInventorySessionDto {
     @ValidateNested({ each: true })
     @Type(() => ScannedDetailDto)
     scannedItems?: ScannedDetailDto[];
+
+    @IsOptional()
+    @IsEnum(['mac', 'serial'])
+    scanMode?: 'mac' | 'serial';
 }

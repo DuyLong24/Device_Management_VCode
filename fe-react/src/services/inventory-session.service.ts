@@ -48,7 +48,7 @@ export const inventorySessionService = {
         return transformSession(response.data);
     },
 
-    update: async (id: string, data: { scannedItems?: { mac: string, deviceModel: string }[], status?: string }) => {
+    update: async (id: string, data: { scannedItems?: { mac: string, deviceModel: string, deviceCode?: string }[], status?: string, scanMode?: 'mac' | 'serial' }) => {
         const response = await axiosInstance.put(`/inventory-sessions/${id}`, data);
         return transformSession(response.data);
     },

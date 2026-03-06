@@ -54,7 +54,7 @@ export class DeviceImportService {
 
       // 2. Check trùng lặp với Database (dùng $in một lần duy nhất)
       if (allMacs.length > 0) {
-        const existingDevices = await this.deviceService.findByMacs(allMacs);
+        const existingDevices = await this.deviceService.findByScannedCodes(allMacs, 'mac');
         if (existingDevices.length > 0) {
           const duplicateMacs = existingDevices.map((d: any) => d.mac).join(', ');
           throw new BadRequestException(
@@ -121,18 +121,16 @@ export class DeviceImportService {
 
       // 2. Map từng device — dùng toObject() để truy cập sub-document qua Mongoose
       const importPlain = (importDoc as any).toObject ? (importDoc as any).toObject() : importDoc;
-      this.logger.log(`[Shift-Left] Bắt đầu auto-provision phiếu ${importPlain.code}, devices.length = ${(importPlain.devices || []).length}`);
 
       for (const deviceSpec of importPlain.devices || []) {
         const specDetails = deviceSpec.expectedDetails || [];
         const specMacs = deviceSpec.expectedMacs || [];
-        this.logger.log(`[Shift-Left] deviceCode=${deviceSpec.deviceCode} | expectedDetails=${specDetails.length} | expectedMacs=${JSON.stringify(specMacs)}`);
 
         // A. Luồng nhập từ File Excel (chứa expectedDetails)
         for (const detail of specDetails) {
-          if (!detail.mac) continue;
-          devicesToCreate.push({
-            mac: detail.mac,
+          if (!detail.mac && !detail.serial) continue;
+
+          const doc: any = {
             serial: detail.serial || '',
             name: detail.name || deviceSpec.deviceCode,
             deviceModel: deviceSpec.deviceCode,
@@ -141,7 +139,10 @@ export class DeviceImportService {
             importId: importPlain._id,
             importDate: importPlain.importDate || new Date(),
             qcStatus: 'PENDING',
-          });
+          };
+          if (detail.mac) doc.mac = detail.mac;
+
+          devicesToCreate.push(doc);
         }
 
         // B. Luồng nhập Thủ công từ UI (chỉ chứa mảng string expectedMacs)
@@ -163,11 +164,19 @@ export class DeviceImportService {
       }
 
       if (devicesToCreate.length === 0) {
-        this.logger.warn(`[Shift-Left] Phiếu ${importPlain.code} không có MAC nào để provision.`);
+        this.logger.warn(`[Shift-Left] Phiếu ${importPlain.code} không có thiết bị nào để provision.`);
         return;
       }
 
-      this.logger.log(`[Shift-Left] Chuẩn bị insert ${devicesToCreate.length} thiết bị: ${JSON.stringify(devicesToCreate.map(d => d.mac))}`);
+      // Vòng lặp dọn rác cuối cùng tránh lỗi Duplicate Key do sparse index (mac: "")
+      devicesToCreate.forEach(doc => {
+        if (!doc.mac || doc.mac.trim() === '') {
+          delete doc.mac;
+        }
+        if (!doc.serial || doc.serial.trim() === '') {
+          delete doc.serial;
+        }
+      });
 
       // 3. insertMany — ordered:false để tiếp tục dù có MAC trùng
       let inserted: any[] = [];
@@ -185,7 +194,6 @@ export class DeviceImportService {
           return;
         }
       }
-      this.logger.log(`[Shift-Left] Đã tạo ${inserted.length} thiết bị vào PENDING_QC từ phiếu ${importPlain.code}`);
 
       // 4. Ghi DeviceHistory cho từng thiết bị
       const histories = inserted.map((dev: any) => ({
@@ -199,10 +207,9 @@ export class DeviceImportService {
 
       await this.historyModel.insertMany(histories, { ordered: false });
 
-      this.logger.log(`[Shift-Left] Đã đẩy ${inserted.length} thiết bị vào PENDING_QC từ phiếu ${importDoc.code}. Tiến độ kiểm kê vẫn là 0%.`);
-
     } catch (err: any) {
-      this.logger.error(`[Shift-Left] Lỗi khi auto-provision thiết bị: ${err.message}`);
+      this.logger.error(`[Shift-Left] Lỗi khi auto-provision thiết bị: ${err.message}`, err.stack);
+      throw new BadRequestException(`Lỗi hệ thống khi khởi tạo thiết bị: ${err.message}`);
     }
   }
 

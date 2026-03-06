@@ -1,6 +1,6 @@
 // Trigger Reload
 import { IsString, IsNotEmpty, IsDateString, IsOptional, IsArray, ValidateNested, IsNumber, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 class ImportDeviceDto {
   @IsString()
@@ -37,6 +37,7 @@ class ImportDeviceDto {
 class ImportDetailDto {
   @IsString()
   @IsOptional()
+  @Transform(({ value }) => (!value || String(value).trim() === '' ? undefined : String(value).trim()))
   serial?: string;
 
   @IsString()
@@ -44,13 +45,13 @@ class ImportDetailDto {
   p2p?: string;
 
   @IsString()
-  @IsNotEmpty()
-  mac: string;
+  @IsOptional()
+  @Transform(({ value }) => (!value || String(value).trim() === '' ? undefined : String(value).trim()))
+  mac?: string;
 
   @IsString()
   @IsOptional()
   name?: string;
-
 }
 
 export class CreateDeviceImportDto {

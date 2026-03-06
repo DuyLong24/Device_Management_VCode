@@ -42,6 +42,10 @@ export class DevicePaginationDto {
 
   @IsOptional()
   @IsString()
+  scanMode?: 'mac' | 'serial';
+
+  @IsOptional()
+  @IsString()
   serial?: string;
 
   @IsOptional()

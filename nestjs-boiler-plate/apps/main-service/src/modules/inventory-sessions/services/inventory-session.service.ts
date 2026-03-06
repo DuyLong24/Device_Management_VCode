@@ -56,7 +56,7 @@ export class InventorySessionService {
         if (session.status === 'completed') throw new BadRequestException(ERROR_MESSAGES.INVENTORY.ALREADY_COMPLETED);
 
         if (updateDto.status === 'completed') {
-            return await this.completeSession(session, userId);
+            return await this.completeSession(session, userId, updateDto.scanMode || 'mac');
         }
 
         if (updateDto.scannedItems && updateDto.scannedItems.length > 0) {
@@ -86,10 +86,10 @@ export class InventorySessionService {
         return await this.sessionRepo.update(id, { ...updateDto, updatedBy: userId }) as InventorySession;
     }
 
-    private async completeSession(session: InventorySession, userId: string): Promise<InventorySession> {
-        const macsToCheck = session.details.map(d => d.mac);
-        if (macsToCheck.length > 0) {
-            const existingDevices = await this.deviceService.findByMacs(macsToCheck);
+    private async completeSession(session: InventorySession, userId: string, scanMode: 'mac' | 'serial' = 'mac'): Promise<InventorySession> {
+        const codesToCheck = session.details.map(d => d.mac);
+        if (codesToCheck.length > 0) {
+            const existingDevices = await this.deviceService.findByScannedCodes(codesToCheck, scanMode);
 
             if (existingDevices.length > 0) {
                 const importIdStr = String(session.importId);
@@ -99,11 +99,11 @@ export class InventorySessionService {
                 });
 
                 if (trulyDuplicate.length > 0) {
-                    const duplicateMacs = trulyDuplicate.map(d => d.mac);
+                    const duplicateCodes = trulyDuplicate.map(d => scanMode === 'serial' ? d.serial || '' : d.mac);
                     throw new ConflictException({
-                        message: `Phát hiện ${duplicateMacs.length} MAC thuộc phiếu nhập khác hoặc đã tồn tại trong hệ thống.`,
+                        message: `Phát hiện ${duplicateCodes.length} mã thuộc phiếu nhập khác hoặc đã tồn tại trong hệ thống.`,
                         error: 'DUPLICATE_MACS',
-                        duplicates: duplicateMacs
+                        duplicates: duplicateCodes
                     });
                 }
                 // Nếu tất cả MAC đều thuộc cùng phiếu nhập → Shift-Left valid, tiếp tục
@@ -135,7 +135,9 @@ export class InventorySessionService {
 
                 if (importTicket && importTicket.devices) {
                     for (const dev of importTicket.devices) {
-                        const found = dev.expectedDetails?.find(d => d.mac === item.mac);
+                        const found = dev.expectedDetails?.find(d =>
+                            scanMode === 'serial' ? d.serial === item.mac : d.mac === item.mac
+                        );
                         if (found) {
                             foundDetail = found;
                             detailedName = found.name || modelName;
@@ -147,8 +149,8 @@ export class InventorySessionService {
 
                 return {
                     code: item.deviceCode,
-                    mac: item.mac,
-                    serial: (foundDetail && foundDetail.serial) ? foundDetail.serial : '',
+                    mac: scanMode === 'mac' ? item.mac : '',
+                    serial: scanMode === 'serial' ? item.mac : (foundDetail && foundDetail.serial ? foundDetail.serial : ''),
                     name: detailedName,
                     deviceModel: item.deviceCode || modelName,
                     unit: 'Cái',

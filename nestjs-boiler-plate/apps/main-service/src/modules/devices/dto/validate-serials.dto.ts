@@ -3,7 +3,10 @@ import { IsString, IsArray, IsEnum } from 'class-validator';
 export class ValidateMacsDto {
     @IsArray()
     @IsString({ each: true })
-    macs: string[];
+    scannedCodes: string[];
+
+    @IsEnum(['mac', 'serial'])
+    scanMode: 'mac' | 'serial';
 
     @IsString()
     deviceModel: string;

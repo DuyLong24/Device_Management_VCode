@@ -89,12 +89,12 @@ export const ImportCreationTable: React.FC<ImportCreationTableProps> = ({
             ),
         },
         {
-            title: <span className="font-semibold text-center block"><span className="text-red-500 mr-1" aria-hidden="true">*</span>Danh sách MAC</span>,
+            title: <span className="font-semibold text-center block"><span className="text-red-500 mr-1" aria-hidden="true">*</span>Danh sách mã</span>,
             key: 'macs',
             width: '20%',
             align: 'center',
             render: (_, record) => {
-                const count = record.expectedMacs?.length || 0;
+                const count = record.expectedDetails?.length || 0;
                 const isMatch = count === record.quantity;
                 const isEmpty = count === 0;
 
@@ -106,7 +106,7 @@ export const ImportCreationTable: React.FC<ImportCreationTableProps> = ({
                             className={!isMatch && !isEmpty ? 'border-red-500 text-red-500' : ''}
                             onClick={() => onOpenMacModal(record)}
                         >
-                            {isEmpty ? 'Nhập MAC' : 'Chi tiết'}
+                            {isEmpty ? 'Nhập mã' : 'Chi tiết'}
                         </Button>
                     </Badge>
                 );
@@ -118,13 +118,14 @@ export const ImportCreationTable: React.FC<ImportCreationTableProps> = ({
             width: '15%',
             align: 'center',
             render: (_, record) => {
-                const serialMatch = (record.expectedMacs?.length || 0) === record.quantity;
-                const serialEmpty = (record.expectedMacs?.length || 0) === 0;
+                const count = record.expectedDetails?.length || 0;
+                const serialMatch = count === record.quantity;
+                const serialEmpty = count === 0;
 
                 return (
                     <Space direction="vertical" size="small">
                         {!serialEmpty && (serialMatch ? <Tag color="blue">Đủ</Tag> : <Tag color="warning">Chưa khớp SL</Tag>)}
-                        {serialEmpty && <Tag color="default">Chưa nhập MAC</Tag>}
+                        {serialEmpty && <Tag color="default">Chưa nhập mã</Tag>}
                     </Space>
                 )
             }

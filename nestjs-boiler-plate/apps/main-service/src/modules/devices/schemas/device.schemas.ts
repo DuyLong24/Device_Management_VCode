@@ -13,8 +13,8 @@ export class Device extends Document {
   @Prop()
   serial?: string;
 
-  @Prop({ required: true, unique: true })
-  mac!: string;
+  @Prop({ required: false, unique: true, sparse: true })
+  mac?: string;
 
   @Prop()
   p2p?: string;

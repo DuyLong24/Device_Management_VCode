@@ -4,6 +4,7 @@ import { FileTextOutlined, FileExcelOutlined, UploadOutlined } from '@ant-design
 import type { UploadProps } from 'antd';
 import * as XLSX from 'xlsx';
 import { processScannerInput } from '../../utils/mac.util';
+import { useScanMode } from '../../hooks/useScanMode';
 
 const { TextArea } = Input;
 const { Text, Title } = Typography;
@@ -20,9 +21,10 @@ export const BulkInputModal = ({
     open,
     onCancel,
     onOk,
-    title = "Nhập danh sách Serial",
+    title = "Nhập danh sách theo mã",
     loading = false
 }: BulkInputModalProps) => {
+    const { mode: scanMode } = useScanMode();
     const [activeTab, setActiveTab] = useState('manual');
     const [tempSerials, setTempSerials] = useState<string>('');
 
@@ -32,6 +34,16 @@ export const BulkInputModal = ({
             setActiveTab('manual');
         }
     }, [open]);
+
+    // Dọn rác khi đổi scanMode
+    useEffect(() => {
+        if (tempSerials) {
+            import('../../utils/mac.util').then(({ processScannerInput }) => {
+                const cleaned = processScannerInput(tempSerials, scanMode);
+                setTempSerials(cleaned);
+            });
+        }
+    }, [scanMode]);
 
     const handleOk = () => {
         // 1. Xử lý text
@@ -108,8 +120,8 @@ export const BulkInputModal = ({
                 message="Hướng dẫn"
                 description={(
                     <ul className="list-disc pl-4 mt-1 text-xs text-gray-600">
-                        <li>Dán danh sách mac (mỗi mã 1 dòng) hoặc upload Excel.</li>
-                        <li>Với Excel: Mac phải ở cột A, bắt đầu từ dòng 2 (có tiêu đề).</li>
+                        <li>Dán danh sách mã {scanMode === 'mac' ? 'MAC' : 'Serial'} (mỗi mã 1 dòng) hoặc upload Excel.</li>
+                        <li>Với Excel: Số liệu phải ở cột A, bắt đầu từ dòng 2 (có tiêu đề).</li>
                     </ul>
                 )}
                 type="info"
@@ -125,10 +137,10 @@ export const BulkInputModal = ({
                         <div>
                             <TextArea
                                 rows={10}
-                                placeholder="SN-001&#10;SN-002&#10;SN-003..."
+                                placeholder={scanMode === 'mac' ? "AA:BB:CC:DD:EE:FF\n11:22:33:44:55:66" : "SN-001\nSN-002\nSN-003..."}
                                 value={tempSerials}
                                 onChange={(e) => {
-                                    const cleanVal = processScannerInput(e.target.value);
+                                    const cleanVal = processScannerInput(e.target.value, scanMode);
                                     setTempSerials(cleanVal);
                                 }}
                                 className="font-mono text-sm"

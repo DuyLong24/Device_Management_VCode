@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Input, message, Typography, Space, Alert, Button } from 'antd';
+import { Modal, Input, message, Typography, Alert, Button } from 'antd';
 import { deviceService } from '../../../services/device.service';
-import { extractValidMacs } from '../../../utils/mac.util';
+import { extractValidScans, processScannerInput } from '../../../utils/mac.util';
+import { useScanMode } from '../../../hooks/useScanMode';
+import { Radio } from 'antd';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -19,6 +21,7 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
     onSelect,
     currentWarehouseId
 }) => {
+    const { mode: scanMode, setMode: setScanMode } = useScanMode();
     const [payload, setPayload] = useState('');
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState<{ success: number; failed: string[]; failedRaw: string[] } | null>(null);
@@ -31,11 +34,19 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
         }
     }, [visible]);
 
+    // Dọn rác khi đổi scanMode
+    useEffect(() => {
+        if (payload) {
+            const cleaned = processScannerInput(payload, scanMode);
+            setPayload(cleaned);
+        }
+    }, [scanMode]);
+
     const handleProcess = async () => {
-        // Sử dụng utils để trích xuất MAC hợp lệ, bỏ qua rác
-        const macs = extractValidMacs(payload);
+        // Sử dụng utils để trích xuất mã hợp lệ, bỏ qua rác
+        const macs = extractValidScans(payload, scanMode);
         if (macs.length === 0) {
-            message.warning('Vui lòng nhập ít nhất 1 mã MAC');
+            message.warning(`Vui lòng nhập ít nhất 1 mã ${scanMode === 'mac' ? 'MAC' : 'Serial'}`);
             return;
         }
 
@@ -50,9 +61,11 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
             // Tìm kiếm song song
             const checkPromises = macs.map(async (mac) => {
                 try {
-                    // Tìm kiếm
-                    const res = await deviceService.getAll({ search: mac, limit: 1 });
-                    const device = res.results.find((d: any) => d.mac === mac);
+                    // Tìm kiếm, pass scanMode xuống 
+                    const res = await deviceService.getAll({ search: mac, limit: 1, scanMode });
+                    const device = res.results.find((d: any) =>
+                        scanMode === 'mac' ? d.mac === mac : d.serial === mac
+                    );
 
                     if (!device) {
                         return { mac, error: 'Không tìm thấy' };
@@ -122,7 +135,7 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
 
     return (
         <Modal
-            title="Quét/Nhập nhiều mã MAC"
+            title={`Quét/Nhập nhiều mã ${scanMode === 'mac' ? 'MAC' : 'Serial'}`}
             open={visible}
             onCancel={onCancel}
             onOk={handleProcess}
@@ -142,14 +155,21 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
                 </Button>
             ]}
         >
-            <Space direction="vertical" className="w-full">
-                <Text type="secondary">Nhập danh sách mã MAC, mỗi mã một dòng.</Text>
+            <div className="w-full mt-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
+                    <Text type="secondary">Nhập danh sách mã {scanMode === 'mac' ? 'MAC' : 'Serial'}, mỗi mã 1 dòng.</Text>
+                    <Radio.Group value={scanMode} onChange={e => setScanMode(e.target.value)} optionType="button" buttonStyle="solid">
+                        <Radio.Button value="mac">Mã MAC</Radio.Button>
+                        <Radio.Button value="serial">Số Serial</Radio.Button>
+                    </Radio.Group>
+                </div>
 
                 <TextArea
+                    className="w-full"
                     rows={8}
-                    placeholder="MAC-001&#10;MAC-002&#10;MAC-003..."
+                    placeholder={scanMode === 'mac' ? "MAC-001\nMAC-002\nMAC-003..." : "SN-001\nSN-002\nSN-003..."}
                     value={payload}
-                    onChange={(e) => setPayload(e.target.value)}
+                    onChange={(e) => setPayload(processScannerInput(e.target.value, scanMode))}
                     disabled={loading}
                 />
 
@@ -167,7 +187,7 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
                         showIcon
                     />
                 )}
-            </Space>
+            </div>
         </Modal>
     );
 };

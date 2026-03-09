@@ -11,24 +11,9 @@ import type { InventorySession, ScannedItem } from '../services/inventory-sessio
 import type { DeviceImport } from '../types/import.type';
 import { useScanSound } from '../hooks/useScanSound';
 import { useScanMode } from '../hooks/useScanMode';
+import { playScanSuccessSound } from '../utils/sound.util';
 
 export type LocalScannedItem = ScannedItem & { deviceCode?: string };
-
-// Web Audio API beep (standalone, no React deps)
-export const playSuccessSound = () => {
-    try {
-        // Trỏ thẳng vào file mp3 nằm trong thư mục public
-        const audio = new Audio('/iphone-beep.m4a');
-
-        // Vặn max volume 100% để át tiếng ồn xưởng
-        audio.volume = 1.0;
-
-        // Phát nhạc!
-        audio.play().catch(e => console.log("Trình duyệt chặn autoplay:", e));
-    } catch (_) {
-        /* silent fail */
-    }
-};
 
 export const useInventoryCheck = () => {
     const { mode: scanMode } = useScanMode();
@@ -223,7 +208,7 @@ export const useInventoryCheck = () => {
             const updated = await inventorySessionService.update(session!.id, payload);
             if (updated && updated.details) {
                 // Trigger âm thanh tại điểm "Save thành công"
-                if (isSoundEnabled) playSuccessSound();
+                if (isSoundEnabled) playScanSuccessSound();
                 message.success(`Đã lưu mac: ${code}`);
                 setServerItems(updated.details);
             }
@@ -279,7 +264,7 @@ export const useInventoryCheck = () => {
                         (internalDupCount > 0 ? ` (Bỏ qua ${internalDupCount} mã đã quét)` : '');
                     message.success(msg);
 
-                    if (isSoundEnabled) playSuccessSound();
+                    if (isSoundEnabled) playScanSuccessSound();
                 }
             } catch (e) {
                 message.error('Lỗi lưu danh sách');

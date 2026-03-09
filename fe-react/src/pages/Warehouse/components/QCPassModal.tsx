@@ -26,6 +26,7 @@ import type { TableColumnsType } from 'antd';
 import type { QCPendingItem, ScannedMac, ValidationStatus } from '../../../types/qc.type';
 import { extractValidScans } from '../../../utils/mac.util';
 import { useScanMode } from '../../../hooks/useScanMode';
+import { playScanSuccessSound } from '../../../utils/sound.util';
 
 const { Text } = Typography;
 
@@ -100,6 +101,7 @@ export default function QCPassModal({ open, onCancel, onConfirm, dataSource }: Q
         if (addedCount > 0) {
             setScannedPassList(currentList);
             message.success(`Đã thêm ${addedCount} thiết bị`);
+            playScanSuccessSound();
         }
 
         setMacInput('');

@@ -11,6 +11,7 @@ const { Text } = Typography;
 export interface DeviceUI {
     key: string;
     mac: string;
+    serial?: string;
     deviceCode: string;
     deviceName: string;
     warehouseName: string;
@@ -45,15 +46,40 @@ export const DeviceListTable: React.FC<DeviceListTableProps> = ({
             key: 'mac',
             fixed: 'left',
             width: 200,
-            render: (text) => (
-                <Button
-                    type="link"
-                    className="p-0 font-mono text-blue-600 font-semibold"
-                    onClick={() => onViewDetail(text)}
-                >
-                    {text}
-                </Button>
-            ),
+            render: (text, record: any) => {
+                const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
+                const identifier = validMac || record.serial;
+                return (
+                    <Button
+                        type="link"
+                        className="p-0 font-mono text-blue-600 font-semibold"
+                        onClick={() => identifier ? onViewDetail(identifier) : undefined}
+                        disabled={!identifier}
+                    >
+                        {text || '--'}
+                    </Button>
+                );
+            },
+        },
+        {
+            title: 'Serial Number',
+            dataIndex: 'serial',
+            key: 'serial',
+            width: 200,
+            render: (text, record: any) => {
+                const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
+                const identifier = validMac || record.serial;
+                return (
+                    <Button
+                        type="link"
+                        className="p-0 font-mono text-gray-700 font-medium"
+                        onClick={() => identifier ? onViewDetail(identifier) : undefined}
+                        disabled={!identifier}
+                    >
+                        {text || '--'}
+                    </Button>
+                );
+            }
         },
         {
             title: 'Mã Model',
@@ -102,17 +128,22 @@ export const DeviceListTable: React.FC<DeviceListTableProps> = ({
             fixed: 'right',
             width: 120,
             align: 'center',
-            render: (_, record) => (
-                <Space size="small">
-                    <Button
-                        type="text"
-                        icon={<EyeOutlined />}
-                        size="small"
-                        title="Xem chi tiết"
-                        onClick={() => onViewDetail(record.mac)}
-                    />
-                </Space>
-            ),
+            render: (_, record: any) => {
+                const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
+                const identifier = validMac || record.serial;
+                return (
+                    <Space size="small">
+                        <Button
+                            type="text"
+                            icon={<EyeOutlined />}
+                            size="small"
+                            title="Xem chi tiết"
+                            onClick={() => identifier ? onViewDetail(identifier) : undefined}
+                            disabled={!identifier}
+                        />
+                    </Space>
+                );
+            },
         },
     ];
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Input, Select, DatePicker, Button } from 'antd';
 import { SearchOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
@@ -28,15 +28,31 @@ export const DeviceFilterBar: React.FC<DeviceFilterBarProps> = ({
     onReset,
     onReload
 }) => {
+    const [localSearch, setLocalSearch] = useState<string>(searchText || '');
+
+    useEffect(() => {
+        setLocalSearch(searchText || '');
+    }, [searchText]);
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (localSearch !== searchText) {
+                setSearchText(localSearch);
+            }
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [localSearch, setSearchText, searchText]);
+
     return (
         <Card size="small" className="mb-4 shadow-sm border-gray-200">
             <Row gutter={[16, 16]} align="middle">
                 <Col xs={24} md={6}>
                     <Input
-                        placeholder="Tìm MAC, model, tên..."
+                        placeholder="Tìm MAC, Serial, model..."
                         prefix={<SearchOutlined className="text-gray-400" />}
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
+                        value={localSearch}
+                        onChange={(e) => setLocalSearch(e.target.value)}
                         allowClear
                     />
                 </Col>

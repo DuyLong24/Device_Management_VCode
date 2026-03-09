@@ -9,11 +9,11 @@ export const MAC_REGEX_STRICT = /^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$/;
 // Regex tìm kiếm MAC trong một văn bản (Global)
 export const MAC_REGEX_GLOBAL = /([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})/g;
 
-// Regex chuẩn cho Serial (Chỉ chấp nhận ký tự chữ cái, số, dấu gạch ngang)
-export const SERIAL_REGEX_STRICT = /^[A-Z0-9-]+$/i;
+// Regex chuẩn cho Serial (Chỉ chấp nhận ký tự SỐ 0-9)
+export const SERIAL_REGEX_STRICT = /^\d+$/;
 
 // Regex tìm kiếm Serial trong một văn bản
-export const SERIAL_REGEX_GLOBAL = /[A-Z0-9-]+/gi;
+export const SERIAL_REGEX_GLOBAL = /\d+/g;
 
 import type { ScanMode } from '../hooks/useScanMode';
 
@@ -24,13 +24,20 @@ export const isValidScan = (text: string, mode: ScanMode): boolean => {
 
 export const extractValidScans = (text: string, mode: ScanMode): string[] => {
     if (!text) return [];
-    let matches: string[] | null = text.match(mode === 'mac' ? MAC_REGEX_GLOBAL : SERIAL_REGEX_GLOBAL);
-    if (!matches) return [];
 
-    if (mode === 'serial') {
-        matches = matches.filter(m => m.length >= 4);
-    }
-    return Array.from(new Set(matches)); // Remove duplicates
+    // Split by common delimiters (newline, comma, space)
+    const tokens = text.split(/[\n\s,]+/).map(t => t.trim()).filter(Boolean);
+
+    const validTokens = tokens.filter(token => {
+        if (mode === 'mac') {
+            return MAC_REGEX_STRICT.test(token);
+        } else {
+            // Strict digit check
+            return SERIAL_REGEX_STRICT.test(token);
+        }
+    });
+
+    return Array.from(new Set(validTokens));
 };
 
 export const processScannerInput = (currentValue: string, mode: ScanMode): string => {

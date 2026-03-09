@@ -96,12 +96,11 @@ export class DeviceExportService {
       if (deviceexport.items && deviceexport.items.length > 0) {
         const rawMacs = deviceexport.items.map(i => i.mac);
 
-        // Lọc đúng định dạng Mac
-        const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
-        const macs = rawMacs.filter(mac => macRegex.test(mac));
+        // Bỏ regex MAC để tự do hỗ trợ cả Serial Number
+        const macs = rawMacs.filter(mac => mac && mac.trim().length > 0);
 
         if (rawMacs.length > macs.length) {
-          this.logger.warn(`Lọc ${rawMacs.length - macs.length} MAC không hợp lệ`);
+          this.logger.warn(`Lọc ${rawMacs.length - macs.length} mã định danh trống hoặc không hợp lệ`);
         }
 
         // Lấy thông tin thiết bị theo MAC

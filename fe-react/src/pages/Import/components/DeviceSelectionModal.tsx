@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Tabs, Input, Tooltip, Checkbox, message } from 'antd';
 import { FileTextOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { isValidScan } from '../../../utils/mac.util';
+import { isValidScan, processScannerInput } from '../../../utils/mac.util';
+import { playScanSuccessSound } from '../../../utils/sound.util';
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -136,7 +137,15 @@ export const DeviceSelectionModal: React.FC<DeviceSelectionModalProps> = ({
                                 rows={14}
                                 placeholder="MAC-001&#10;MAC-002&#10;MAC-003..."
                                 value={macText}
-                                onChange={(e) => setMacText(e.target.value)}
+                                onChange={(e) => {
+                                    const cleanVal = processScannerInput(e.target.value, 'mac');
+                                    const newValidCount = cleanVal.split('\n').filter(Boolean).length;
+                                    const oldValidCount = macText.split('\n').filter(Boolean).length;
+                                    if (newValidCount > oldValidCount) {
+                                        playScanSuccessSound();
+                                    }
+                                    setMacText(cleanVal);
+                                }}
                                 className="font-mono text-sm tracking-wide"
                                 style={{ whiteSpace: 'pre', overflowWrap: 'normal', overflowX: 'auto' }}
                             />
@@ -152,7 +161,15 @@ export const DeviceSelectionModal: React.FC<DeviceSelectionModalProps> = ({
                                 rows={14}
                                 placeholder="SN-001&#10;SN-002&#10;SN-003..."
                                 value={serialText}
-                                onChange={(e) => setSerialText(e.target.value)}
+                                onChange={(e) => {
+                                    const cleanVal = processScannerInput(e.target.value, 'serial');
+                                    const newValidCount = cleanVal.split('\n').filter(Boolean).length;
+                                    const oldValidCount = serialText.split('\n').filter(Boolean).length;
+                                    if (newValidCount > oldValidCount) {
+                                        playScanSuccessSound();
+                                    }
+                                    setSerialText(cleanVal);
+                                }}
                                 className="font-mono text-sm tracking-wide"
                                 style={{ whiteSpace: 'pre', overflowWrap: 'normal', overflowX: 'auto' }}
                             />

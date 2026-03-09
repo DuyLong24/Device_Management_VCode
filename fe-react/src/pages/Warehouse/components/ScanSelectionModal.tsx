@@ -3,6 +3,7 @@ import { Modal, Input, message, Typography, Alert, Button } from 'antd';
 import { deviceService } from '../../../services/device.service';
 import { extractValidScans, processScannerInput } from '../../../utils/mac.util';
 import { useScanMode } from '../../../hooks/useScanMode';
+import { playScanSuccessSound } from '../../../utils/sound.util';
 import { Radio } from 'antd';
 
 const { Text } = Typography;
@@ -169,7 +170,17 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
                     rows={8}
                     placeholder={scanMode === 'mac' ? "MAC-001\nMAC-002\nMAC-003..." : "SN-001\nSN-002\nSN-003..."}
                     value={payload}
-                    onChange={(e) => setPayload(processScannerInput(e.target.value, scanMode))}
+                    onChange={(e) => {
+                        const cleanVal = processScannerInput(e.target.value, scanMode);
+                        const cleanTokens = cleanVal.split('\n').filter(Boolean);
+                        const newValidCount = cleanTokens.length;
+                        const oldTokens = payload.split('\n').filter(Boolean);
+                        const oldValidCount = oldTokens.length;
+                        if (newValidCount > oldValidCount) {
+                            playScanSuccessSound();
+                        }
+                        setPayload(cleanVal);
+                    }}
                     disabled={loading}
                 />
 

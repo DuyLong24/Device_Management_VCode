@@ -152,13 +152,15 @@ export class DeviceExportController {
   }
 
   @Post('sessions/:id/scan')
-  async scanMac(@Param('id') id: string, @Body() body: { mac: string }) {
-    return this.exportSessionService.scanMac(id, body.mac);
+  async scanMac(@Param('id') id: string, @Body() body: { mac: string, scanMode?: string }) {
+    const scanMode = body.scanMode || 'mac';
+    return this.exportSessionService.scanMac(id, body.mac, scanMode as 'mac' | 'serial');
   }
 
   @Post('sessions/:id/scan-bulk')
-  async scanBulk(@Param('id') id: string, @Body() body: { macs: string[] }) {
-    return this.exportSessionService.scanBulk(id, body.macs);
+  async scanBulk(@Param('id') id: string, @Body() body: { macs: string[], scanMode?: string }) {
+    const scanMode = body.scanMode || 'mac';
+    return this.exportSessionService.scanBulk(id, body.macs, scanMode as 'mac' | 'serial');
   }
 
   @Delete('sessions/:id/items/:mac')

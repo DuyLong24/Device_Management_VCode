@@ -1,5 +1,6 @@
 import { Table, Button, Typography } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
@@ -56,11 +57,40 @@ export const WarehouseTable = ({
         if (rawKey === 'mac') {
             return {
                 ...base,
-                render: (text: string) => (
-                    <Button type="link" className="p-0" onClick={() => navigate(`/device/${text}`, { state: { activeMenuKey: currentWarehouse?.code ? `warehouse-${currentWarehouse.code}` : undefined } })}>
-                        {text}
-                    </Button>
-                )
+                render: (text: string, record: any) => {
+                    const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
+                    const identifier = validMac || record.serial;
+                    return (
+                        <Button
+                            type="link"
+                            className="p-0 font-mono text-blue-600 font-semibold"
+                            onClick={() => identifier ? navigate(`/device/${identifier}`, { state: { activeMenuKey: currentWarehouse?.code ? `warehouse-${currentWarehouse.code}` : undefined } }) : undefined}
+                            disabled={!identifier}
+                        >
+                            {text || '--'}
+                        </Button>
+                    );
+                }
+            };
+        }
+
+        if (rawKey === 'serial') {
+            return {
+                ...base,
+                render: (text: string, record: any) => {
+                    const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
+                    const identifier = validMac || record.serial;
+                    return (
+                        <Button
+                            type="link"
+                            className="p-0 font-mono text-gray-700 font-medium"
+                            onClick={() => identifier ? navigate(`/device/${identifier}`, { state: { activeMenuKey: currentWarehouse?.code ? `warehouse-${currentWarehouse.code}` : undefined } }) : undefined}
+                            disabled={!identifier}
+                        >
+                            {text || '--'}
+                        </Button>
+                    );
+                }
             };
         }
 
@@ -71,16 +101,21 @@ export const WarehouseTable = ({
                 align: 'center' as const,
                 width: 100,
                 fixed: 'right' as const,
-                render: (_: any, record: any) => (
-                    <Button
-                        type="text"
-                        icon={<EyeOutlined />}
-                        size="small"
-                        onClick={() => navigate(`/device/${record.mac}`, { state: { activeMenuKey: currentWarehouse?.code ? `warehouse-${currentWarehouse.code}` : undefined } })}
-                    >
-                        Chi tiết
-                    </Button>
-                )
+                render: (_: any, record: any) => {
+                    const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
+                    const identifier = validMac || record.serial;
+                    return (
+                        <Button
+                            type="text"
+                            icon={<EyeOutlined />}
+                            size="small"
+                            onClick={() => identifier ? navigate(`/device/${identifier}`, { state: { activeMenuKey: currentWarehouse?.code ? `warehouse-${currentWarehouse.code}` : undefined } }) : undefined}
+                            disabled={!identifier}
+                        >
+                            Chi tiết
+                        </Button>
+                    );
+                }
             };
         }
 
@@ -139,9 +174,52 @@ export const WarehouseTable = ({
 
     const dataColumns = normalizedColumns.map(getColumnDef);
 
+    // ÉP CỘT ĐỊNH DANH (MAC & SERIAL) LÊN ĐẦU
+    const identityColumns = [
+        {
+            title: 'MAC',
+            dataIndex: 'mac',
+            key: 'mac',
+            width: 180,
+            render: (mac: string, record: any) => {
+                const validMac = mac && mac !== 'N/A' ? mac : '';
+                const identifier = validMac || record.serial;
+                return identifier ? (
+                    <Link to={`/device/${identifier}`} className="font-medium text-blue-600 hover:underline">
+                        {mac || 'N/A'}
+                    </Link>
+                ) : (
+                    <Text className="text-gray-400">N/A</Text>
+                );
+            }
+        },
+        {
+            title: 'Số Serial',
+            dataIndex: 'serial',
+            key: 'serial',
+            width: 180,
+            render: (serial: string, record: any) => {
+                const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
+                const identifier = validMac || serial;
+                return identifier ? (
+                    <Link to={`/device/${identifier}`} className="font-medium text-blue-600 hover:underline">
+                        {serial || 'N/A'}
+                    </Link>
+                ) : (
+                    <Text className="text-gray-400">N/A</Text>
+                );
+            }
+        }
+    ];
+
+    // Lọc bỏ những cột trùng lặp config cũ
+    const filteredDataColumns = dataColumns.filter((col: any) => col.key !== 'mac' && col.key !== 'serial');
+
+    const finalColumns = [...identityColumns, ...filteredDataColumns];
+
     return (
         <Table
-            columns={dataColumns}
+            columns={finalColumns}
             dataSource={dataSource}
             loading={isLoading}
             rowKey="id"

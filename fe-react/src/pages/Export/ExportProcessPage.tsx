@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-    Button, Typography, message, Tag, Space, Modal, Card, Descriptions, Row, Col, Statistic, Divider, Progress, Alert, Input, Table, Popconfirm
+    Button, Typography, message, Tag, Space, Modal, Card, Descriptions, Row, Col, Statistic, Divider, Progress, Alert, Input, Table, Popconfirm, Radio
 } from 'antd';
 import {
     CheckCircleOutlined,
@@ -16,11 +16,12 @@ import { getExportStatusTag } from '../../utils/export-status.util';
 import { processScannerInput } from '../../utils/mac.util';
 import type { DeviceExport } from '../../types/export.type';
 import { useScanMode } from '../../hooks/useScanMode';
+import { playScanSuccessSound } from '../../utils/sound.util';
 
 const { Text } = Typography;
 
 export default function ExportProcessPage() {
-    const { mode: scanMode } = useScanMode();
+    const { mode: scanMode, setMode: setScanMode } = useScanMode();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -107,7 +108,8 @@ export default function ExportProcessPage() {
     const processBulkScan = async (codes: string[]) => {
         setLoading(true);
         try {
-            const res = await exportSessionService.scanBulk(sessionId!, codes);
+            const res = await exportSessionService.scanBulk(sessionId!, codes, scanMode);
+
             messageApi.success(`Đã xử lý ${codes.length} mã.`);
             if (res.data?.errors?.length) {
                 const errorList = res.data.errors.map((e: any) =>
@@ -257,10 +259,11 @@ export default function ExportProcessPage() {
     const excessModels = perModelStats.filter(m => m.isExcess);
     const hasExcess = excessModels.length > 0;
 
-    // Cột MAC List
+    // Cột thiết bị
     const macColumns = [
         { title: 'Thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 'auto' },
         { title: 'MAC Address', dataIndex: 'mac', key: 'mac', width: 'auto', render: (t: string) => <b>{t}</b> },
+        { title: 'Số Serial', dataIndex: 'serial', key: 'serial', width: 'auto', render: (t: string) => <Tag color="default">{t || 'N/A'}</Tag> },
         { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t: string) => t ? dayjs(t).format('HH:mm:ss DD/MM') : '' },
         { title: 'Trạng thái', key: 'status', render: () => <Tag color="blue">Mới quét</Tag> },
         {
@@ -268,8 +271,8 @@ export default function ExportProcessPage() {
             key: 'action',
             render: (_: any, record: any) => (
                 <Popconfirm
-                    title="Xóa MAC này?"
-                    description="Bạn có chắc chắn muốn xóa MAC này khỏi phiên?"
+                    title="Xóa thiết bị này?"
+                    description="Bạn có chắc chắn muốn xóa thiết bị này khỏi phiên?"
                     onConfirm={() => handleRemoveMac(record.mac)}
                     okText="Xóa"
                     cancelText="Hủy"
@@ -379,16 +382,40 @@ export default function ExportProcessPage() {
 
             {/* Scan Section */}
             {sessionData?.status !== 'COMPLETED' ? (
-                <Card title="Quét MAC xuất kho" className="mb-2">
+                <Card
+                    title={
+                        <div className="flex justify-between items-center w-full">
+                            <span>Quét mã thiết bị xuất kho</span>
+                            <Radio.Group value={scanMode} onChange={e => setScanMode(e.target.value)} size="small">
+                                <Radio.Button value="mac">Mã MAC</Radio.Button>
+                                <Radio.Button value="serial">Số Serial</Radio.Button>
+                            </Radio.Group>
+                        </div>
+                    }
+                    className="mb-2"
+                >
                     <Space direction="vertical" className="w-full" size="middle">
                         <Row gutter={16}>
                             <Space direction="vertical" className="w-full">
                                 <Input.TextArea
                                     rows={5}
-                                    placeholder={scanMode === 'mac' ? "MAC-001\nMAC-002..." : "SN-001\nSN-002..."}
+                                    placeholder={scanMode === 'mac' ? "Nhập mã MAC. Tối đa 1 mã 1 dòng...\nMAC-001\nMAC-002" : "Nhập số Serial. Tối đa 1 mã 1 dòng...\nSN-001\nSN-002"}
                                     value={manualMacs}
                                     onChange={e => {
                                         const cleanVal = processScannerInput(e.target.value, scanMode);
+
+                                        // Count complete valid lines
+                                        const cleanTokens = cleanVal.split('\n').filter(Boolean);
+                                        const newValidCount = cleanTokens.length;
+
+                                        // Previous state string evaluation
+                                        const oldTokens = manualMacs.split('\n').filter(Boolean);
+                                        const oldValidCount = oldTokens.length;
+
+                                        if (newValidCount > oldValidCount) {
+                                            playScanSuccessSound();
+                                        }
+
                                         setManualMacs(cleanVal);
                                     }}
                                     disabled={loading}
@@ -401,7 +428,7 @@ export default function ExportProcessPage() {
             ) : (
                 <Alert
                     message="Phiên xuất kho này đã hoàn thành"
-                    description="Bạn không thể thêm hoặc xóa MAC trong phiên đã hoàn thành."
+                    description="Bạn không thể thêm hoặc xóa thiết bị trong phiên đã hoàn thành."
                     type="success"
                     showIcon
                     className="mb-4"
@@ -410,7 +437,7 @@ export default function ExportProcessPage() {
 
             {/* List */}
             <Card
-                title="Danh sách MAC"
+                title="Danh sách thiết bị đã quét"
                 className="mb-2"
             >
                 <Table

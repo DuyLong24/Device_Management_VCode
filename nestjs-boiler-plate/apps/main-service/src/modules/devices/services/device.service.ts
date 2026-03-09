@@ -181,7 +181,7 @@ export class DeviceService implements OnModuleInit {
   }
 
   async findByMacWithDetail(mac: string): Promise<any> {
-    const device = await this.deviceModel.findOne({ mac })
+    const device = await this.deviceModel.findOne({ $or: [{ mac: mac }, { serial: mac }] })
       .populate('warehouseId')
       //.populate('importId') 
       .populate({
@@ -228,17 +228,19 @@ export class DeviceService implements OnModuleInit {
 
 
 
-  async findByScannedCodes(scannedCodes: string[], scanMode: 'mac' | 'serial' = 'mac'): Promise<Device[]> {
+  async findByScannedCodes(scannedCodes: string[], scanMode?: 'mac' | 'serial'): Promise<Device[]> {
     if (!scannedCodes || scannedCodes.length === 0) return [];
-    const searchField = scanMode === 'serial' ? 'serial' : 'mac';
-    return this.deviceModel.find({ [searchField]: { $in: scannedCodes } }).exec();
+    return this.deviceModel.find({
+      $or: [
+        { mac: { $in: scannedCodes } },
+        { serial: { $in: scannedCodes } }
+      ]
+    }).exec();
   }
 
   async findByMac(mac: string): Promise<Device | null> {
     return this.deviceModel.findOne({ mac }).exec();
   }
-
-
 
   async bulkUpdateStatus(macs: string[], status: string, note?: string, customer?: string): Promise<any> {
     if (!macs || macs.length === 0) return;
@@ -252,7 +254,7 @@ export class DeviceService implements OnModuleInit {
     }
 
     const result = await this.deviceModel.updateMany(
-      { mac: { $in: macs } },
+      { $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }] },
       {
         $set: updatePayload
       }
@@ -271,7 +273,7 @@ export class DeviceService implements OnModuleInit {
 
     // Lấy danh sách thiết bị cần di chuyển để tạo lịch sử sau khi cập nhật
     const devicesToMove = await this.deviceModel.find({
-      mac: { $in: macs }
+      $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }]
     }).exec();
 
 
@@ -303,7 +305,7 @@ export class DeviceService implements OnModuleInit {
     }
 
     const result = await this.deviceModel.updateMany(
-      { mac: { $in: macs } },
+      { $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }] },
       {
         $set: updatePayload
       }
@@ -333,6 +335,23 @@ export class DeviceService implements OnModuleInit {
 
       await this.historyModel.insertMany(historyRecords);
       this.logger.debug(`[DEBUG] Created ${historyRecords.length} device history records with actorId: ${actorId}`);
+
+      // Log Transition
+      const transitionData = {
+        exportCode,
+        fromWarehouseId: devicesToMove[0].warehouseId, // Assume all from same warehouse ideally
+        toWarehouseId: targetWarehouse._id,
+        macs: macs, // validCodes passed down
+        status: 'COMPLETED',
+        createdBy: actorId !== '000000000000000000000000' ? actorId : null
+      };
+
+      try {
+        await this.transitionModel.create(transitionData);
+        this.logger.debug(`[DEBUG] Transition log created`);
+      } catch (err) {
+        this.logger.error(`[DEBUG] Failed to log transition:`, err);
+      }
     }
   }
 

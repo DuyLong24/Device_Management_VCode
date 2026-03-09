@@ -31,9 +31,10 @@ import {
 import type { TableColumnsType } from 'antd';
 import dayjs from 'dayjs';
 import { useMemo, useRef, useEffect } from 'react';
-import { useInventoryCheck, playSuccessSound } from '../../hooks/useInventoryCheck';
+import { useInventoryCheck } from '../../hooks/useInventoryCheck';
+import { playScanSuccessSound } from '../../utils/sound.util';
 import { INVENTORY_LABELS } from '../../constants/inventory.constants';
-import { processScannerInput } from '../../utils/mac.util';
+import { processScannerInput, isValidScan } from '../../utils/mac.util';
 import { useScanMode } from '../../hooks/useScanMode';
 
 // const { Dragger } = Upload;
@@ -303,11 +304,11 @@ export default function InventoryCheckPage() {
                   <Space direction="vertical" className="w-full" size="small">
                     <div className="flex justify-between items-center w-full">
                       <Divider className="flex-1 m-0 mr-4">Nhập/Quét {scanMode === 'mac' ? 'MAC' : 'Serial'}</Divider>
-                      <Radio.Group value={scanMode} onChange={e => setScanMode(e.target.value)} size="small">
-                        <Radio.Button value="mac">Mã MAC</Radio.Button>
-                        <Radio.Button value="serial">Số Serial</Radio.Button>
-                      </Radio.Group>
                     </div>
+                    <Radio.Group value={scanMode} onChange={e => setScanMode(e.target.value)} size="small">
+                      <Radio.Button value="mac">Mã MAC</Radio.Button>
+                      <Radio.Button value="serial">Số Serial</Radio.Button>
+                    </Radio.Group>
                     <Input.TextArea
                       placeholder={selectedDeviceCode ? `Nhập từng ${scanMode === 'mac' ? 'mã MAC' : 'mã Serial'} trên một dòng` : "Vui lòng chọn thiết bị trước"}
                       disabled={!selectedDeviceCode || isSaving}
@@ -320,20 +321,15 @@ export default function InventoryCheckPage() {
                       onChange={(e) => {
                         const cleanVal = processScannerInput(e.target.value, scanMode);
 
-                        // 1. Tạo bộ lọc chuẩn MAC (Định dạng XX:XX:XX:XX:XX:XX) hoặc Serial
-                        const isMacRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/i;
-                        const isSerialRegex = /^[A-Z0-9-]+$/i;
-                        const regexToCheck = scanMode === 'mac' ? isMacRegex : isSerialRegex;
-
                         // 2. CHỈ ĐẾM những dòng đã là mã HOÀN CHỈNH
                         const newValidMacCount = cleanVal
                           .split('\n')
                           .map(mac => mac.trim())
-                          .filter(mac => regexToCheck.test(mac)).length;
+                          .filter(mac => isValidScan(mac, scanMode as any)).length;
 
                         // 3. So sánh: Nếu số lượng mã chuẩn tăng lên -> Kêu Típ!
                         if (newValidMacCount > lastCountRef.current && isSoundEnabled) {
-                          playSuccessSound();
+                          playScanSuccessSound();
                         }
 
                         // 4. Lưu lại số đếm mã chuẩn vào bộ nhớ

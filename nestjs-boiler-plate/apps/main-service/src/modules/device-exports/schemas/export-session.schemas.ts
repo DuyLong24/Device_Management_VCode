@@ -34,7 +34,8 @@ export class ExportSession extends Document {
 
     @Prop({
         type: [{
-            mac: { type: String, required: true },
+            mac: { type: String },
+            serial: { type: String },
             deviceCode: { type: String, required: true },
             deviceModel: { type: String },
             scannedAt: { type: Date, default: Date.now }
@@ -42,6 +43,7 @@ export class ExportSession extends Document {
     })
     items: {
         mac: string;
+        serial?: string;
         deviceCode: string;
         deviceModel: string;
         scannedAt: Date;

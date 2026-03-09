@@ -42,8 +42,8 @@ export const exportSessionService = {
         return res;
     },
 
-    scanBulk: (id: string, macs: string[]) =>
-        axiosInstance.post<ScanResult>(`/device-exports/sessions/${id}/scan-bulk`, { macs }),
+    scanBulk: (id: string, macs: string[], scanMode?: string) =>
+        axiosInstance.post<ScanResult>(`/device-exports/sessions/${id}/scan-bulk`, { macs, scanMode }),
 
     complete: (id: string) =>
         axiosInstance.post(`/device-exports/sessions/${id}/complete`),

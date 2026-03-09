@@ -175,7 +175,7 @@ export class DeviceTransferService {
                 throw new BadRequestException('Không tìm thấy kho "Đã xuất - trong bảo hành" (Code: SOLD)');
             }
 
-            const devices = await this.deviceModel.find({ mac: { $in: macs } });
+            const devices = await this.deviceModel.find({ $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }] });
 
             for (const device of devices) {
                 const fromWarehouseId = device.warehouseId;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, Typography, Space, Button, Input, Select, Checkbox, Tooltip } from 'antd';
 import {
     ReloadOutlined,
@@ -50,6 +50,22 @@ export default function WarehousePage() {
     const [transferModalVisible, setTransferModalVisible] = useState(false);
     const [importModalVisible, setImportModalVisible] = useState(false);
     const [scanModalVisible, setScanModalVisible] = useState(false);
+
+    const [localSearch, setLocalSearch] = useState<string>(searchText || '');
+
+    useEffect(() => {
+        setLocalSearch(searchText || '');
+    }, [searchText]);
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (localSearch !== searchText) {
+                setSearchText(localSearch);
+            }
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [localSearch, setSearchText, searchText]);
 
     // Import Fields
     const DEVICE_IMPORT_FIELDS: FieldDefinition[] = [
@@ -150,10 +166,10 @@ export default function WarehousePage() {
             <Card size="small" className="mb-4">
                 <Space wrap>
                     <Input
-                        placeholder="Tìm mac, tên, model..."
+                        placeholder="Tìm MAC, Serial, model..."
                         prefix={<SearchOutlined />}
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
+                        value={localSearch}
+                        onChange={(e) => setLocalSearch(e.target.value)}
                         className="w-50"
                         allowClear
                     />

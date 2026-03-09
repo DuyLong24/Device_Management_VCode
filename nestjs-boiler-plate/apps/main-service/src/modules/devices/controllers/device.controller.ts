@@ -146,6 +146,11 @@ export class DeviceController {
     return this.deviceService.delete(id);
   }
 
+  @Post('system/sync-categories')
+  async syncCategories() {
+    return this.deviceService.syncCategories();
+  }
+
 
   /**
    * API Chuyển kho (Transfer)

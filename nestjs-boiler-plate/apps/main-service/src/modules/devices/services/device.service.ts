@@ -15,6 +15,7 @@ import { DEVICE_EXCEL_COLUMNS } from '../../../common/constants/device.constants
 import { ERROR_MESSAGES } from 'apps/main-service/src/common/constants/messages.constants';
 import { WarehouseService } from '../../warehouses/services/warehouse.service';
 import { SharedDataService } from '../../shared-data/services/shared-data.service';
+import { Category } from '../../categories/schemas/categories.schemas';
 
 import { AppLogger } from '../../../common/utils/logger.util';
 
@@ -28,6 +29,7 @@ export class DeviceService implements OnModuleInit {
 
     @InjectModel(WarehouseTransition.name) private transitionModel: Model<WarehouseTransition>,
     @InjectModel(DeviceHistory.name) private historyModel: Model<DeviceHistory>,
+    @InjectModel(Category.name) private categoryModel: Model<Category>,
     private readonly warehouseService: WarehouseService,
     private readonly sharedDataService: SharedDataService,
   ) { }
@@ -536,6 +538,73 @@ export class DeviceService implements OnModuleInit {
         totalScrapped: 0
       },
       distribution: result[0]?.defectReasonsDistribution || []
+    };
+  }
+
+  // Helper method for category mapping
+  private determineCategoryName(deviceModel: string, name: string): string | null {
+    const modelStr = String(deviceModel || '').trim().toUpperCase();
+    const nameStr = String(name || '').trim().toLowerCase();
+
+    // Priority 1: Match deviceModel strictly
+    if (modelStr.startsWith('AV-C')) return 'Camera';
+    if (modelStr.startsWith('AV-N')) return 'Đầu ghi hình';
+
+    // Priority 2: Fuzzy match name string
+    if (nameStr.includes('camera')) return 'Camera';
+    if (nameStr.includes('đầu ghi') || nameStr.includes('nvr')) return 'Đầu ghi hình';
+    if (nameStr.includes('barrier') || nameStr.includes('barie')) return 'Barrier';
+    if (nameStr.includes('màn hình') || nameStr.includes('display')) return 'Màn hình';
+
+    return null;
+  }
+
+  async syncCategories(): Promise<{ message: string, matchedCount: number, modifiedCount: number }> {
+    // 1. Fetch categories map (1 query)
+    const allCategories = await this.categoryModel.find().lean();
+    const categoryMap: Record<string, any> = {};
+    for (const cat of allCategories) {
+      categoryMap[cat.name] = cat._id;
+    }
+
+    // 2. Query target devices affected by legacy ID bug
+    const TARGET_LEGACY_ID = '696b38875f5e0185d5a694cd';
+    const targetDevices = await this.deviceModel.find({ categoryId: TARGET_LEGACY_ID }).lean();
+
+    if (targetDevices.length === 0) {
+      return { message: 'Không tìm thấy thiết bị nào mang mã 696b38875f5e0185d5a694cd.', matchedCount: 0, modifiedCount: 0 };
+    }
+
+    // 3. Loop and evaluate mapping
+    const bulkOps: any[] = [];
+    for (const d of targetDevices) {
+      const matchName = this.determineCategoryName(d.deviceModel, d.name);
+
+      if (matchName && categoryMap[matchName]) {
+        // Queue valid update
+        bulkOps.push({
+          updateOne: {
+            filter: { _id: d._id },
+            update: { $set: { categoryId: categoryMap[matchName] } }
+          }
+        });
+      }
+    }
+
+    // 4. Execute
+    if (bulkOps.length === 0) {
+      return { message: 'Đã bỏ qua vì các thiết bị mục tiêu không có chuỗi nào trùng khớp với quy tắc mapping Category.', matchedCount: targetDevices.length, modifiedCount: 0 };
+    }
+
+    const startExecution = Date.now();
+    const result = await this.deviceModel.bulkWrite(bulkOps);
+
+    this.logger.log(`[Category Sync] Cập nhật hoàn tất cho ${result.modifiedCount} thiết bị trong ${Date.now() - startExecution}ms.`);
+
+    return {
+      message: 'Success',
+      matchedCount: result.matchedCount || 0,
+      modifiedCount: result.modifiedCount || 0
     };
   }
 }

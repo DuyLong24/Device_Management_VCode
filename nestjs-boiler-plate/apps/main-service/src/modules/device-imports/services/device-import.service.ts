@@ -14,6 +14,7 @@ import { UserService } from '../../../users/services/user.service';
 import { WarehouseService } from '../../warehouses/services/warehouse.service';
 import { Device } from '../../devices/schemas/device.schemas';
 import { DeviceHistory } from '../../device-histories/schemas/device-history.schemas';
+import { Category } from '../../categories/schemas/categories.schemas';
 
 @Injectable()
 export class DeviceImportService {
@@ -27,6 +28,7 @@ export class DeviceImportService {
     private readonly warehouseService: WarehouseService,
     @InjectModel(Device.name) private readonly deviceModel: Model<Device>,
     @InjectModel(DeviceHistory.name) private readonly historyModel: Model<DeviceHistory>,
+    @InjectModel(Category.name) private readonly categoryModel: Model<Category>,
   ) { }
 
   async create(createDto: CreateDeviceImportDto, userId: string): Promise<DeviceImport> {
@@ -122,6 +124,10 @@ export class DeviceImportService {
       // 2. Map từng device — dùng toObject() để truy cập sub-document qua Mongoose
       const importPlain = (importDoc as any).toObject ? (importDoc as any).toObject() : importDoc;
 
+      // Extract category lookup BEFORE the loop to avoid N+1 queries
+      const categoryDoc = await this.categoryModel.findOne({ name: importPlain.deviceType }).lean();
+      const validCategoryId = categoryDoc ? categoryDoc._id : null;
+
       for (const deviceSpec of importPlain.devices || []) {
         const specDetails = deviceSpec.expectedDetails || [];
         const specMacs = deviceSpec.expectedMacs || [];
@@ -134,6 +140,7 @@ export class DeviceImportService {
             serial: detail.serial || '',
             name: detail.name || deviceSpec.deviceCode,
             deviceModel: deviceSpec.deviceCode,
+            categoryId: validCategoryId,
             p2p: detail.p2p || '',
             warehouseId: pendingQcWarehouse._id,
             importId: importPlain._id,
@@ -153,6 +160,7 @@ export class DeviceImportService {
               serial: '',
               name: deviceSpec.deviceCode,
               deviceModel: deviceSpec.deviceCode,
+              categoryId: validCategoryId,
               p2p: '',
               warehouseId: pendingQcWarehouse._id,
               importId: importPlain._id,

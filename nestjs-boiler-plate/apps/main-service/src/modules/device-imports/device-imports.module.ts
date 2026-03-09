@@ -11,6 +11,7 @@ import { UsersModule } from '../../users/users.module';
 import { WarehousesModule } from '../warehouses/warehouses.module';
 import { Device, DeviceSchema } from '../devices/schemas/device.schemas';
 import { DeviceHistory, DeviceHistorySchema } from '../device-histories/schemas/device-history.schemas';
+import { Category, CategorySchema } from '../categories/schemas/categories.schemas';
 
 @Module({
   imports: [

@@ -22,6 +22,7 @@ import { DeviceHistoryModule } from '../device-histories/device-histories.module
 import { InventorySessionModule } from '../inventory-sessions/inventory-sessions.module';
 import { DeviceImport, DeviceImportSchema } from '../device-imports/schemas/device-import.schemas';
 import { DeviceExport, DeviceExportSchema } from '../device-exports/schemas/device-export.schemas';
+import { CategoriesModule } from '../categories/categories.module';
 
 import { PublicDeviceController } from './controllers/public-device.controller';
 
@@ -41,6 +42,7 @@ import { PublicDeviceController } from './controllers/public-device.controller';
     forwardRef(() => InventorySessionModule),
     UsersModule,
     ExcelModule,
+    CategoriesModule,
   ],
   controllers: [DeviceController, PublicDeviceController],
   providers: [DeviceService, DeviceStatsService, DeviceTransferService, DeviceValidationService, DeviceRepository, WarrantyActivationTask, WarrantyExpirationTask],

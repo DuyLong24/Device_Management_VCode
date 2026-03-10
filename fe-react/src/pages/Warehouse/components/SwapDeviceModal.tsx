@@ -134,16 +134,10 @@ export const SwapDeviceModal: React.FC<SwapDeviceModalProps> = ({
 
     const swapColumns = [
         {
-            title: 'MAC Address',
-            dataIndex: 'mac',
-            key: 'mac',
-            render: (mac: string) => <Text code>{mac}</Text>,
-        },
-        {
-            title: 'Serial',
-            dataIndex: 'serial',
-            key: 'serial',
-            render: (s: string) => s || <Text type="secondary">—</Text>,
+            title: 'Mã Định Danh',
+            dataIndex: 'iden',
+            key: 'iden',
+            render: (iden: string) => <Text code>{iden}</Text>,
         },
         {
             title: 'Model',
@@ -187,7 +181,7 @@ export const SwapDeviceModal: React.FC<SwapDeviceModalProps> = ({
                     <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
                         <Text type="secondary" className="text-xs">Thiết bị lỗi (Máy A)</Text>
                         <div className="flex gap-4 mt-1">
-                            <Text strong>{originDevice.mac}</Text>
+                            <Text strong>{originDevice.iden}</Text>
                             <Tag>{originDevice.deviceModel}</Tag>
                             {originDevice.warrantyExpiredDate && (
                                 <Text type="secondary" className="text-sm">

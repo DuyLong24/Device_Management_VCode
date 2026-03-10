@@ -102,7 +102,7 @@ function App() {
                       <DeviceListPage />
                     </PermissionRoute>
                   } />
-                  <Route path="device/:mac" element={
+                  <Route path="device/:iden" element={
                     <PermissionRoute requiredPermission={PERMISSION_KEYS.DEVICE.LIST.DETAIL}>
                       <DeviceDetailPage />
                     </PermissionRoute>

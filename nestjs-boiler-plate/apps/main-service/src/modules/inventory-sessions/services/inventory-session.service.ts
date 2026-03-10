@@ -63,7 +63,6 @@ export class InventorySessionService {
             const newMacs = updateDto.scannedItems.map(i => i.mac);
             const existingMacs = session.details.map(d => d.mac);
 
-            // 1. Chặn trùng trong CÙNG phiên
             const duplicatesInSession = newMacs.filter(s => existingMacs.includes(s));
             if (duplicatesInSession.length > 0) {
                 throw new ConflictException(
@@ -73,6 +72,7 @@ export class InventorySessionService {
 
 
             const itemsToPush = updateDto.scannedItems.map(item => ({
+                iden: item.iden || item.mac,
                 mac: item.mac,
                 deviceModel: item.deviceModel,
                 deviceCode: item.deviceCode || 'Unknown',
@@ -89,13 +89,13 @@ export class InventorySessionService {
     private async completeSession(session: InventorySession, userId: string, scanMode: 'mac' | 'serial' = 'mac'): Promise<InventorySession> {
         const codesToCheck = session.details.map(d => d.mac);
         if (codesToCheck.length > 0) {
-            const existingDevices = await this.deviceService.findByScannedCodes(codesToCheck, scanMode);
+            const existingDevices = await this.deviceService.findByIdens(codesToCheck);
 
             if (existingDevices.length > 0) {
                 const importIdStr = String(session.importId);
                 const trulyDuplicate = existingDevices.filter(d => {
                     const devImportId = d.importId ? String(d.importId) : null;
-                    return devImportId !== importIdStr; // Chỉ lỗi nếu không cùng phiếu nhập
+                    return devImportId !== importIdStr;
                 });
 
                 if (trulyDuplicate.length > 0) {
@@ -106,7 +106,6 @@ export class InventorySessionService {
                         duplicates: duplicateCodes
                     });
                 }
-                // Nếu tất cả MAC đều thuộc cùng phiếu nhập → Shift-Left valid, tiếp tục
                 this.logger.log(`[Inventory] ${existingDevices.length} MAC đã được auto-provision, kiểm kê hợp lệ.`);
             }
         }
@@ -147,7 +146,12 @@ export class InventorySessionService {
                     }
                 }
 
+                if (!item.iden) {
+                    throw new BadRequestException(`Dữ liệu thiết bị thiếu mã định danh (iden) ở dòng ${item.mac || item.serial}`);
+                }
+
                 return {
+                    iden: item.iden,
                     code: item.deviceCode,
                     mac: scanMode === 'mac' ? item.mac : '',
                     serial: scanMode === 'serial' ? item.mac : (foundDetail && foundDetail.serial ? foundDetail.serial : ''),
@@ -167,10 +171,6 @@ export class InventorySessionService {
             });
 
             if (devicesToCreate.length > 0) {
-                // ====================================================
-                // SHIFT-LEFT GUARD: Skip insertMany if devices were already
-                // auto-provisioned by the new Import flow (PUBLIC status)
-                // ====================================================
                 const existingCount = await this.deviceService.countByImportId(String(importTicket._id));
                 if (existingCount > 0) {
                     this.logger.log(`[Inventory] Phiếu ${String(importTicket._id)} đã có ${existingCount} thiết bị (shift-left auto). Bỏ qua insertMany.`);
@@ -245,7 +245,9 @@ export class InventorySessionService {
         if (session.status === 'completed') throw new BadRequestException(ERROR_MESSAGES.INVENTORY.ALREADY_COMPLETED);
 
         const initialCount = session.details.length;
-        session.details = session.details.filter(item => (item.mac || item.serial) !== code);
+        session.details = session.details.filter(item =>
+            item.iden ? item.iden !== code : (item.mac || (item as any).serial) !== code
+        );
 
         if (session.details.length === initialCount) {
             throw new NotFoundException(`Không tìm thấy thiết bị ${code}`);

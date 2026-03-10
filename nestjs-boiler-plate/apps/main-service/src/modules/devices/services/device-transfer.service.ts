@@ -175,7 +175,8 @@ export class DeviceTransferService {
                 throw new BadRequestException('Không tìm thấy kho "Đã xuất - trong bảo hành" (Code: SOLD)');
             }
 
-            const devices = await this.deviceModel.find({ $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }] });
+            const devices = await this.deviceModel.find({ iden: { $in: macs } });
+            const historiesToCreate: any[] = [];
 
             for (const device of devices) {
                 const fromWarehouseId = device.warehouseId;
@@ -193,6 +194,19 @@ export class DeviceTransferService {
                 }
 
                 await device.save();
+
+                historiesToCreate.push({
+                    deviceId: device._id,
+                    fromWarehouseId,
+                    toWarehouseId: soldWarehouse._id,
+                    actorId: '000000000000000000000000',
+                    action: 'WARRANTY_ACTIVATE',
+                    note: `Kích hoạt bảo hành: ${exportCode} → SOLD`
+                });
+            }
+
+            if (historiesToCreate.length > 0) {
+                await this.historyModel.insertMany(historiesToCreate, { ordered: false });
             }
 
             return { success: true, count: devices.length };

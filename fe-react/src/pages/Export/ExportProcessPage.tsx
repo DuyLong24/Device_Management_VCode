@@ -85,7 +85,7 @@ export default function ExportProcessPage() {
             messageApi.success(`Đã xóa thiết bị ${code}`);
 
             // Remove 
-            setSessionItems(prev => prev.filter(item => (item.mac || item.serial) !== code));
+            setSessionItems(prev => prev.filter(item => item.iden !== code));
 
             // Update count
             const newCount = Math.max(0, (sessionData?.totalScanned || 0) - 1);
@@ -265,10 +265,9 @@ export default function ExportProcessPage() {
     const hasExcess = excessModels.length > 0;
 
     // Cột thiết bị
-    const macColumns = [
+    const idenColumns = [
         { title: 'Thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 'auto' },
-        { title: 'MAC Address', dataIndex: 'mac', key: 'mac', width: 'auto', render: (t: string) => <b>{t}</b> },
-        { title: 'Số Serial', dataIndex: 'serial', key: 'serial', width: 'auto', render: (t: string) => <Tag color="default">{t || 'N/A'}</Tag> },
+        { title: 'Mã Định Danh', dataIndex: 'iden', key: 'iden', width: 'auto', render: (t: string) => <b>{t}</b> },
         { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t: string) => t ? dayjs(t).format('HH:mm:ss DD/MM') : '' },
         { title: 'Trạng thái', key: 'status', render: () => <Tag color="blue">Mới quét</Tag> },
         {
@@ -278,7 +277,7 @@ export default function ExportProcessPage() {
                 <Popconfirm
                     title="Xóa thiết bị này?"
                     description="Bạn có chắc chắn muốn xóa thiết bị này khỏi phiên?"
-                    onConfirm={() => handleRemoveDevice(record.mac || record.serial)}
+                    onConfirm={() => handleRemoveDevice(record.iden)}
                     okText="Xóa"
                     cancelText="Hủy"
                 >
@@ -446,7 +445,7 @@ export default function ExportProcessPage() {
                 className="mb-2"
             >
                 <Table
-                    columns={macColumns.filter(col => {
+                    columns={idenColumns.filter((col: any) => {
                         if (col.key === 'action' && sessionData?.status === 'COMPLETED') return false;
                         return true;
                     })}

@@ -20,7 +20,7 @@ import {
     CheckCircleOutlined
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
-import type { QCPendingItem, ScannedMac, ValidationStatus } from '../../../types/qc.type';
+import type { QCPendingItem, ScannedIdentity, ValidationStatus } from '../../../types/qc.type';
 import { extractValidScans } from '../../../utils/mac.util';
 import { useScanMode } from '../../../hooks/useScanMode';
 import { playScanSuccessSound } from '../../../utils/sound.util';
@@ -38,7 +38,7 @@ interface QCFailModalProps {
 export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: QCFailModalProps) {
     const { mode: scanMode, setMode: setScanMode } = useScanMode();
     const [macInput, setMacInput] = useState('');
-    const [scannedFailList, setScannedFailList] = useState<ScannedMac[]>([]);
+    const [scannedFailList, setScannedFailList] = useState<ScannedIdentity[]>([]);
     const [failNote, setFailNote] = useState('');
     const macInputRef = useRef<any>(null);
 
@@ -53,12 +53,12 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
         }
     }, [scanMode]);
 
-    const validateMac = (mac: string, currentList: ScannedMac[]): { isValid: boolean; message?: string; item?: QCPendingItem } => {
+    const validateMac = (mac: string, currentList: ScannedIdentity[]): { isValid: boolean; message?: string; item?: QCPendingItem } => {
         if (!mac.trim()) return { isValid: false, message: 'MAC không được để trống' };
         if (currentList.find(s => s.mac === mac)) return { isValid: false, message: 'MAC đã có trong danh sách' };
 
         const item = dataSource.find(d => d.mac === mac);
-        if (!item) return { isValid: false, message: 'MAC không tồn tại trong danh sách chờ QC' };
+        if (!item) return { isValid: false, message: 'Mã Định Danh không tồn tại trong danh sách chờ QC' };
 
         return { isValid: true, item };
     };
@@ -86,7 +86,7 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
             const validation = validateMac(mac, currentList);
 
             if (validation.isValid) {
-                const newItem: ScannedMac = {
+                const newItem: ScannedIdentity = {
                     ...validation.item!,
                     validationStatus: 'valid',
                 };
@@ -109,8 +109,8 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
         setTimeout(() => macInputRef.current?.focus(), 100);
     };
 
-    const scannedColumns: TableColumnsType<ScannedMac> = [
-        { title: 'Mã quét', dataIndex: 'mac', key: 'mac', width: 200 },
+    const scannedColumns: TableColumnsType<ScannedIdentity> = [
+        { title: 'Mã Định Danh', dataIndex: 'iden', key: 'iden', width: 200 },
         { title: 'Mã thiết bị', dataIndex: 'deviceCode', key: 'deviceCode', width: 130 },
         {
             title: 'Trạng thái',
@@ -130,7 +130,7 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
             render: (_, record) => (
                 <Button
                     type="link" danger size="small" icon={<DeleteOutlined />}
-                    onClick={() => setScannedFailList(prev => prev.filter(s => (s.mac || s.serial) !== (record.mac || record.serial)))}
+                    onClick={() => setScannedFailList(prev => prev.filter(s => s.iden !== record.iden))}
                 />
             ),
         },

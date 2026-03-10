@@ -32,7 +32,6 @@ export class DeviceImportService {
   ) { }
 
   async create(createDto: CreateDeviceImportDto, userId: string): Promise<DeviceImport> {
-    // Kiểm tra Serial trước khi tạo mới -> Chỉ check kỹ khi trạng thái là PUBLIC (Lưu chính thức)
     if (createDto.status === 'PUBLIC') {
       const devices = createDto.devices || [];
       const allMacs: string[] = [];
@@ -54,9 +53,9 @@ export class DeviceImportService {
         }
       }
 
-      // 2. Check trùng lặp với Database (dùng $in một lần duy nhất)
+      // 2. Check trùng lặp với Database
       if (allMacs.length > 0) {
-        const existingDevices = await this.deviceService.findByScannedCodes(allMacs, 'mac');
+        const existingDevices = await this.deviceService.findByIdens(allMacs);
         if (existingDevices.length > 0) {
           const duplicateMacs = existingDevices.map((d: any) => d.mac).join(', ');
           throw new BadRequestException(
@@ -66,7 +65,6 @@ export class DeviceImportService {
       }
     }
 
-    // 1. Tự sinh mã phiếu nếu FE không gửi
     let code = createDto.code;
     if (!code) {
       const today = new Date();
@@ -76,14 +74,12 @@ export class DeviceImportService {
       code = `NK-${year}-${month}-${random}`;
     }
 
-    // 2. Tính toán tổng & Process Devices
     const devicesDto = createDto.devices || [];
     const { devices, totalItem, totalQuantity, totalMacImported } = this.processDevices(devicesDto);
 
     const details = createDto.details || [];
     const status = createDto.status || 'DRAFT';
 
-    // 3. Map dữ liệu
     const payload = {
       ...createDto,
       code,
@@ -98,7 +94,6 @@ export class DeviceImportService {
 
     const newImport = await this.deviceImportRepository.create(payload as any);
     if (status === 'PUBLIC') {
-      // Fetch lại từ DB để đảm bảo là plain object (tránh Mongoose Document proxy issue)
       const freshDoc = await this.findById(String(newImport.id || newImport._id));
       await this.autoProvisionDevices(freshDoc, userId);
     }
@@ -121,10 +116,8 @@ export class DeviceImportService {
       const validActorId = userId || '000000000000000000000000';
       const devicesToCreate: any[] = [];
 
-      // 2. Map từng device — dùng toObject() để truy cập sub-document qua Mongoose
       const importPlain = (importDoc as any).toObject ? (importDoc as any).toObject() : importDoc;
 
-      // Extract category lookup BEFORE the loop to avoid N+1 queries
       const categoryDoc = await this.categoryModel.findOne({ name: importPlain.deviceType }).lean();
       const validCategoryId = categoryDoc ? categoryDoc._id : null;
 
@@ -132,11 +125,13 @@ export class DeviceImportService {
         const specDetails = deviceSpec.expectedDetails || [];
         const specMacs = deviceSpec.expectedMacs || [];
 
-        // A. Luồng nhập từ File Excel (chứa expectedDetails)
         for (const detail of specDetails) {
           if (!detail.mac && !detail.serial) continue;
 
+          const idenValue = detail.iden || (detail.mac ? detail.mac : detail.serial);
+
           const doc: any = {
+            iden: idenValue,
             serial: detail.serial || '',
             name: detail.name || deviceSpec.deviceCode,
             deviceModel: deviceSpec.deviceCode,
@@ -156,6 +151,7 @@ export class DeviceImportService {
         for (const plainMac of specMacs) {
           if (!devicesToCreate.some(d => d.mac === plainMac)) {
             devicesToCreate.push({
+              iden: plainMac,
               mac: plainMac,
               serial: '',
               name: deviceSpec.deviceCode,
@@ -176,7 +172,6 @@ export class DeviceImportService {
         return;
       }
 
-      // Vòng lặp dọn rác cuối cùng tránh lỗi Duplicate Key do sparse index (mac: "")
       devicesToCreate.forEach(doc => {
         if (!doc.mac || doc.mac.trim() === '') {
           delete doc.mac;
@@ -186,31 +181,26 @@ export class DeviceImportService {
         }
       });
 
-      // 3. insertMany — ordered:false để tiếp tục dù có MAC trùng
       let inserted: any[] = [];
       try {
         inserted = await this.deviceModel.insertMany(devicesToCreate, { ordered: false });
       } catch (bulkErr: any) {
-        // BulkWriteError: một số doc bị reject (MAC trùng), nhưng các doc khác vẫn được insert
         if (bulkErr?.insertedDocs?.length > 0 || bulkErr?.result?.insertedCount > 0) {
           inserted = bulkErr.insertedDocs || [];
           const skipped = devicesToCreate.length - inserted.length;
           this.logger.warn(`[Shift-Left] BulkWriteError: insert ${inserted.length}/${devicesToCreate.length} thiết bị. Bỏ qua ${skipped} MAC đã tồn tại.`);
         } else {
-          // Lỗi thật sự (không phải duplicate)
           this.logger.error(`[Shift-Left] insertMany thất bại hoàn toàn: ${bulkErr.message}`, bulkErr.stack);
           return;
         }
       }
-
-      // 4. Ghi DeviceHistory cho từng thiết bị
       const histories = inserted.map((dev: any) => ({
         deviceId: dev._id,
-        fromWarehouseId: pendingQcWarehouse._id, // Sinh trực tiếp vào đây nên from = to
+        fromWarehouseId: pendingQcWarehouse._id,
         toWarehouseId: pendingQcWarehouse._id,
         actorId: validActorId,
         action: 'IMPORT',
-        note: `Nhập kho tự động từ phiếu nhập ${importDoc.code}`,
+        note: `Nhập kho từ phiếu ${importDoc.code}`,
       }));
 
       await this.historyModel.insertMany(histories, { ordered: false });

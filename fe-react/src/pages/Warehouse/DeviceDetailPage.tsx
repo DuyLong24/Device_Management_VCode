@@ -26,14 +26,14 @@ import {
     SwapOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { useMacDetail, getTimelineIcon } from '../../hooks/useSerialDetail';
+import { useIdenDetail, getTimelineIcon } from '../../hooks/useSerialDetail';
 import { SwapDeviceModal } from './components/SwapDeviceModal';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 export default function DeviceDetailPage() {
-    const { mac } = useParams();
+    const { iden } = useParams();
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [transferModalVisible, setTransferModalVisible] = useState(false);
@@ -48,7 +48,7 @@ export default function DeviceDetailPage() {
         availableTransitions,
         transferDevice,
         isTransferring
-    } = useMacDetail(mac);
+    } = useIdenDetail(iden);
 
     const isTransferringToError = Form.useWatch('toWarehouseCode', form) === 'DEFECT' || Form.useWatch('toWarehouseCode', form) === 'REMOVED';
 
@@ -77,7 +77,7 @@ export default function DeviceDetailPage() {
     };
 
     if (isLoading) return <div className="p-10 text-center"><Spin size="large" /></div>;
-    if (!device) return <div className="p-10 text-center"><Text type="danger">Không tìm thấy MAC {mac}</Text></div>;
+    if (!device) return <div className="p-10 text-center"><Text type="danger">Không tìm thấy mã định danh: {iden}</Text></div>;
 
     const isRemoved = currentWarehouse?.code === 'REMOVED';
     const isInServiceCenter = currentWarehouse?.code === 'SERVICE_CENTER';
@@ -98,7 +98,7 @@ export default function DeviceDetailPage() {
                             Quay lại
                         </Button>
                         <Title level={3} className="m-0!">
-                            Chi tiết MAC: {device.mac}
+                            Chi tiết Mã Định Danh: {device.iden || iden}
                         </Title>
                         <Text type="secondary">ID: {device.id}</Text>
                     </div>
@@ -144,10 +144,11 @@ export default function DeviceDetailPage() {
                     {/* Info */}
                     <Card title=" Thông tin thiết bị" size="small" className="mb-4">
                         <Descriptions column={2} size="small" bordered>
-                            <Descriptions.Item label="MAC" span={2}><Text strong>{device.mac}</Text></Descriptions.Item>
+                            <Descriptions.Item label="Mã Định Danh" span={2}><Text strong>{device.iden}</Text></Descriptions.Item>
                             <Descriptions.Item label="Model">{device.deviceModel}</Descriptions.Item>
                             <Descriptions.Item label="Tên">{device.name}</Descriptions.Item>
                             <Descriptions.Item label="Serial">{device.serial || '-'}</Descriptions.Item>
+                            <Descriptions.Item label="MAC">{device.mac || '-'}</Descriptions.Item>
                         </Descriptions>
                     </Card>
 

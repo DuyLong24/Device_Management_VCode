@@ -163,9 +163,9 @@ export class DeviceExportController {
     return this.exportSessionService.scanBulk(id, body.macs, scanMode as 'mac' | 'serial');
   }
 
-  @Delete('sessions/:id/items/:mac')
-  async removeMac(@Param('id') id: string, @Param('mac') mac: string) {
-    return this.exportSessionService.removeMac(id, mac);
+  @Delete('sessions/:id/items/:iden')
+  async removeIden(@Param('id') id: string, @Param('iden') iden: string) {
+    return this.exportSessionService.removeIden(id, iden);
   }
 
   @Post('sessions/:id/complete')

@@ -14,6 +14,7 @@ import type { Category } from '../services/category.service';
 
 export interface DeviceUI {
     key: string;
+    iden?: string;
     mac: string;
     serial: string;
     deviceCode: string;
@@ -149,6 +150,7 @@ export const useAllDevices = () => {
 
         return {
             key: d.id,
+            iden: d.iden,
             mac: d.mac || 'N/A',
             serial: d.serial,
             deviceCode: d.deviceModel || 'N/A',

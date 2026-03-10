@@ -81,7 +81,7 @@ export class ExportSessionService {
         await this.validateScan(code, session, exportRecord, scanMode);
 
         // Add
-        const device = await this.deviceService.findByScannedCodes([code], scanMode).then(res => res[0]);
+        const device = await this.deviceService.findByIdens([code]).then(res => res[0]);
         const newItem = {
             mac: device.mac || '',
             serial: device.serial || '',
@@ -98,7 +98,7 @@ export class ExportSessionService {
         return updatedSession;
     }
 
-    async removeMac(sessionId: string, code: string): Promise<ExportSession> {
+    async removeIden(sessionId: string, code: string): Promise<ExportSession> {
         const session = await this.exportSessionRepository.findById(sessionId);
         if (!session) throw new NotFoundException('Phiên xuất kho không tồn tại');
 
@@ -112,7 +112,7 @@ export class ExportSessionService {
         }
 
         const updatedSession = await this.exportSessionRepository.update(sessionId, {
-            $pull: { items: { $or: [{ mac: code }, { serial: code }] } } as any,
+            $pull: { items: { iden: code } } as any,
             $inc: { macChecked: -1 }
         });
 
@@ -143,7 +143,7 @@ export class ExportSessionService {
         const warnings: { mac: string; warning: string }[] = [];
         const uniqueMacs = [...new Set(macs)];
 
-        const devices = await this.deviceService.findByScannedCodes(uniqueMacs, scanMode);
+        const devices = await this.deviceService.findByIdens(uniqueMacs);
         const deviceMap = new Map();
         devices.forEach(d => {
             const key = scanMode === 'serial' ? d.serial : d.mac;
@@ -189,7 +189,7 @@ export class ExportSessionService {
                     throw new Error(`Đã đủ số lượng cho model ${device.deviceModel} (${currentQty}/${requiredQty})`);
                 }
 
-                success.push(code); // push the EXACT key we iterated on, which matches deviceMap's index
+                success.push(code);
                 scannedMap.set(device.deviceModel, currentQty + 1);
 
             } catch (err: any) {
@@ -202,6 +202,7 @@ export class ExportSessionService {
             const newItems = success.map(code => {
                 const device = deviceMap.get(code);
                 return {
+                    iden: device.iden,
                     mac: device.mac,
                     serial: device.serial,
                     deviceCode: device.deviceModel,
@@ -221,7 +222,7 @@ export class ExportSessionService {
 
     private async validateScan(code: string, session: ExportSession, exportRecord: any, scanMode: 'mac' | 'serial' = 'mac'): Promise<void> {
 
-        const device = await this.deviceService.findByScannedCodes([code], scanMode).then(res => res[0]);
+        const device = await this.deviceService.findByIdens([code]).then(res => res[0]);
         if (!device) throw new BadRequestException(`Mã thiết bị ${code} không tồn tại`);
 
         // Check against target saved identifier
@@ -236,10 +237,7 @@ export class ExportSessionService {
 
         const otherSession = await this.exportSessionRepository.findOne({
             status: ExportSessionStatus.IN_PROGRESS,
-            $or: [
-                { 'items.mac': device.mac },
-                { 'items.serial': device.serial }
-            ],
+            'items.iden': device.iden,
             _id: { $ne: session._id || session.id }
         });
 

@@ -38,6 +38,11 @@ class ImportDetailDto {
   @IsString()
   @IsOptional()
   @Transform(({ value }) => (!value || String(value).trim() === '' ? undefined : String(value).trim()))
+  iden?: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => (!value || String(value).trim() === '' ? undefined : String(value).trim()))
   serial?: string;
 
   @IsString()

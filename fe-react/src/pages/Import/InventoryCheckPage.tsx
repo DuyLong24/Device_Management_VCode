@@ -71,18 +71,15 @@ export default function InventoryCheckPage() {
     otherCompletedItemsByModel,
     deviceModels,
     isSoundEnabled, setIsSoundEnabled,
-    otherScannedMacs,
+    otherScannedIdens,
     crossSessionDups,
   } = useInventoryCheck();
 
-  // BỘ NHỚ ĐỒNG BỘ => FIX MÁY QUÉT NHANH
   const lastCountRef = useRef(0);
   useEffect(() => {
-    // Reset bộ đếm về 0 nếu text area bị xóa trắng (VD: sau khi bấm nút Nhập)
     if (!manualMacs) lastCountRef.current = 0;
   }, [manualMacs]);
 
-  // Logic thống kê Matching
   const allItems = useMemo(() => [...serverItems, ...localItems], [serverItems, localItems]);
 
   const processedItems = useMemo(() => {
@@ -135,8 +132,8 @@ export default function InventoryCheckPage() {
   };
 
   // Columns
-  const macColumns: TableColumnsType<any> = [
-    { title: 'Mã quét', dataIndex: 'mac', key: 'mac', render: (t) => <Text strong className="text-blue-600 font-mono">{t}</Text> },
+  const idenColumns: TableColumnsType<any> = [
+    { title: 'Mã Định Danh', dataIndex: 'iden', key: 'iden', render: (t) => <Text strong className="text-blue-600 font-mono">{t}</Text> },
     { title: 'Tên thiết bị', dataIndex: 'deviceCode', key: 'deviceCode' },
     { title: 'Thời gian quét', dataIndex: 'scannedAt', key: 'scannedAt', render: (t) => dayjs(t).format('HH:mm:ss') },
     {
@@ -155,9 +152,9 @@ export default function InventoryCheckPage() {
       key: 'action',
       render: (_, r) => {
         if (r._id) {
-          return <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeServerItem && removeServerItem(r.mac || r.serial)} />;
+          return <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeServerItem && removeServerItem(r.iden)} />;
         }
-        return <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleRemoveLocalItem(r.mac || r.serial)} />;
+        return <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleRemoveLocalItem(r.iden)} />;
       }
     }
   ];
@@ -288,7 +285,7 @@ export default function InventoryCheckPage() {
             <Card title="Quét mã kiểm kê" className="mb-6 shadow-sm">
               <Space direction="vertical" className="w-full" size="middle">
                 <div className="bg-blue-50 p-4 rounded border border-blue-100">
-                  <Text strong className="block mb-2 text-blue-800">1. Chọn thiết bị đang kiểm kê <span className="text-red-500">*</span></Text>
+                  <Text strong className="block mb-2 text-blue-800">1. Chọn mã thiết bị để kiểm kê <span className="text-red-500">*</span></Text>
                   <Select
                     className="w-full"
                     size="large"
@@ -364,7 +361,7 @@ export default function InventoryCheckPage() {
                     label: `Danh sách quét (${stats.scannedCount})`,
                     children: (
                       <Table
-                        columns={macColumns}
+                        columns={idenColumns}
                         dataSource={[...processedItems].reverse()}
                         pagination={{ pageSize: 20 }}
                         size="small"
@@ -377,18 +374,18 @@ export default function InventoryCheckPage() {
                   },
                   {
                     key: '2',
-                    label: 'Mac mẫu (Đối chiếu)',
+                    label: 'Thiết bị mẫu (Đối chiếu)',
                     children: !selectedDeviceCode ? (
-                      <div className="p-4 text-center text-gray-500">Chọn thiết bị để xem danh sách mac cần quét</div>
+                      <div className="p-4 text-center text-gray-500">Chọn thiết bị để xem danh sách thiết bị cần quét</div>
                     ) : (
                       <div className="p-4">
-                        <Text strong>Mac dự kiến của {selectedDeviceCode}:</Text>
+                        <Text strong>Thiết bị dự kiến của {selectedDeviceCode}:</Text>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {importInfo?.devices
                             .find(p => p.deviceCode === selectedDeviceCode)
                             ?.expectedMacs?.map(s => {
                               const isScannedNow = processedItems.some(i => i.mac === s);
-                              const isScannedBefore = otherScannedMacs.includes(s);
+                              const isScannedBefore = otherScannedIdens.includes(s);
                               if (isScannedNow) return (
                                 <Tag key={s} color="green">
                                   {s} <CheckCircleOutlined />
@@ -417,11 +414,11 @@ export default function InventoryCheckPage() {
                   <br />
                   <Text type="secondary">
                     {stats.duplicateCount > 0 ? (
-                      <Text type="danger" strong>Phát hiện {stats.duplicateCount} mã mac trùng lặp! Vui lòng xóa trước khi hoàn tất.</Text>
+                      <Text type="danger" strong>Phát hiện {stats.duplicateCount} thiết bị trùng lặp! Vui lòng xóa trước khi hoàn tất.</Text>
                     ) : stats.excessCount > 0 ? (
-                      <Text type="danger" strong>Phát hiện {stats.excessCount} mã mac thừa so với phiếu nhập! Vui lòng kiểm tra lại.</Text>
+                      <Text type="danger" strong>Phát hiện {stats.excessCount} thiết bị thừa so với phiếu nhập! Vui lòng kiểm tra lại.</Text>
                     ) : stats.missingCount > 0 ? (
-                      <Text type="warning">Còn thiếu {stats.missingCount} mã mac so với phiếu nhập.</Text>
+                      <Text type="warning">Còn thiếu {stats.missingCount} thiết bị so với phiếu nhập.</Text>
                     ) : (
                       <Text type="success">Đã đủ số lượng yêu cầu.</Text>
                     )}
@@ -455,7 +452,7 @@ export default function InventoryCheckPage() {
         {stats.matchCount >= stats.totalRequired && (
           <Alert
             message="Lưu ý quan trọng"
-            description="Bạn đã kiểm đủ số lượng. Sau khi hoàn tất phiên này, Phiếu nhập kho sẽ tự động chuyển sang trạng thái ĐÃ HOÀN TẤT và không thể kiểm kê thêm."
+            description="Bạn đã kiểm đủ số lượng. Sau khi hoàn tất phiên này, phiếu nhập kho sẽ tự động chuyển sang trạng thái ĐÃ HOÀN TẤT và không thể kiểm kê thêm."
             type="warning"
             showIcon
             className="mb-4"
@@ -466,11 +463,11 @@ export default function InventoryCheckPage() {
             message="Lỗi trùng phiên kiểm kê"
             description={
               <div>
-                <Text type="danger">Phát hiện {crossSessionDups.length} mã mac đã được quét ở phiên trước:</Text>
+                <Text type="danger">Phát hiện {crossSessionDups.length} thiết bị đã được quét ở phiên trước:</Text>
                 <div className="max-h-32 overflow-y-auto mt-2 bg-white p-2 border rounded">
                   {crossSessionDups.map(s => <Tag color="red" key={s}>{s}</Tag>)}
                 </div>
-                <div className="mt-2">Hệ thống chặn hoàn tất để chống trùng lặp dữ liệu. Bạn có thể tự động xóa tất cả các mã này khỏi phiên hiện tại để tiếp tục.</div>
+                <div className="mt-2">Hệ thống chặn hoàn tất để chống trùng lặp dữ liệu. Bạn có thể tự động xóa tất cả các thiết bị này khỏi phiên hiện tại để tiếp tục.</div>
                 <Button
                   danger
                   type="primary"
@@ -479,7 +476,7 @@ export default function InventoryCheckPage() {
                   className="mt-3"
                   loading={isSaving}
                 >
-                  Xóa toàn bộ {crossSessionDups.length} mã trùng
+                  Xóa toàn bộ {crossSessionDups.length} thiết bị trùng
                 </Button>
               </div>
             }
@@ -491,7 +488,7 @@ export default function InventoryCheckPage() {
             message="Lỗi hoàn tất phiên"
             description={
               <div>
-                <Text type="danger">Phát hiện {duplicateMacs.length} mã mac đã tồn tại trong hệ thống:</Text>
+                <Text type="danger">Phát hiện {duplicateMacs.length} thiết bị đã tồn tại trong hệ thống:</Text>
                 <div className="max-h-32 overflow-y-auto mt-2 bg-white p-2 border rounded">
                   {duplicateMacs.map(s => <Tag color="red" key={s}>{s}</Tag>)}
                 </div>
@@ -505,8 +502,8 @@ export default function InventoryCheckPage() {
             message="Xác nhận hoàn tất kiểm kê"
             description={
               <ul className="pl-5 mt-2 mb-0">
-                <li><b>Số mac đã khớp:</b> {stats.matchCount}</li>
-                <li><b>Số mac thừa:</b> {stats.excessCount}</li>
+                <li><b>Số thiết bị đã khớp:</b> {stats.matchCount}</li>
+                <li><b>Số thiết bị thừa:</b> {stats.excessCount}</li>
                 <li><b>Còn thiếu:</b> {stats.missingCount}</li>
                 <li>Hệ thống sẽ tạo thiết bị và cập nhật trạng thái phiếu nhập.</li>
               </ul>

@@ -10,6 +10,7 @@ const { Text } = Typography;
 
 export interface DeviceUI {
     key: string;
+    iden?: string;
     mac: string;
     serial?: string;
     deviceCode: string;
@@ -41,20 +42,24 @@ export const DeviceListTable: React.FC<DeviceListTableProps> = ({
     const canExport = hasPermission(PERMISSION_KEYS.DEVICE.LIST.EXPORT);
     const columns: ColumnsType<DeviceUI> = [
         {
-            title: 'MAC Address',
-            dataIndex: 'mac',
-            key: 'mac',
+            title: 'Mã định danh',
+            dataIndex: 'iden',
+            key: 'iden',
             fixed: 'left',
-            width: 200,
-            render: (text, record: any) => {
-                const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
-                const identifier = validMac || record.serial;
+            width: 'auto',
+            onCell: () => ({
+                className: '!pl-[0px]'
+            }),
+            onHeaderCell: () => ({
+                className: '!pl-[20px]'
+            }),
+            render: (text: string) => {
                 return (
                     <Button
                         type="link"
                         className="p-0 font-mono text-blue-600 font-semibold"
-                        onClick={() => identifier ? onViewDetail(identifier) : undefined}
-                        disabled={!identifier}
+                        onClick={() => text ? onViewDetail(text) : undefined}
+                        disabled={!text}
                     >
                         {text || '--'}
                     </Button>
@@ -62,30 +67,16 @@ export const DeviceListTable: React.FC<DeviceListTableProps> = ({
             },
         },
         {
-            title: 'Serial Number',
-            dataIndex: 'serial',
-            key: 'serial',
-            width: 200,
-            render: (text, record: any) => {
-                const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
-                const identifier = validMac || record.serial;
-                return (
-                    <Button
-                        type="link"
-                        className="p-0 font-mono text-gray-700 font-medium"
-                        onClick={() => identifier ? onViewDetail(identifier) : undefined}
-                        disabled={!identifier}
-                    >
-                        {text || '--'}
-                    </Button>
-                );
-            }
-        },
-        {
             title: 'Mã Model',
             dataIndex: 'deviceModel',
             key: 'deviceModel',
-            width: 150,
+            width: 'auto',
+            onCell: () => ({
+                className: '!pl-[10px]'
+            }),
+            onHeaderCell: () => ({
+                className: '!pl-[10px]'
+            }),
             render: (text, record: any) => {
                 const value = text || record.deviceModel || record.model;
                 return <Text strong>{value || '--'}</Text>
@@ -129,8 +120,7 @@ export const DeviceListTable: React.FC<DeviceListTableProps> = ({
             width: 120,
             align: 'center',
             render: (_, record: any) => {
-                const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
-                const identifier = validMac || record.serial;
+                const identifier = record.iden;
                 return (
                     <Space size="small">
                         <Button

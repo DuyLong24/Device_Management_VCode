@@ -176,49 +176,48 @@ export const useCreateImport = () => {
         setIsMacModalOpen(true);
     };
 
-    const handleSaveMacs = (details: { mac: string, serial: string }[]) => {
+    const handleSaveMacs = (details: { iden?: string, mac: string, serial: string }[]) => {
         if (!currentDeviceKey) return;
 
-        // Xóa thuộc tính thừa, chỉ giữ mac và serial. Nếu rỗng thì gán undefined hoặc xóa.
         const validDetails = details.map(d => {
             const m = d.mac?.trim().toUpperCase();
             const s = d.serial?.trim().toUpperCase();
+
+            const computedIden = m ? m : s;
+            const iden = d.iden?.trim().toUpperCase() || computedIden;
+
             const res: any = {};
+            if (iden) res.iden = iden;
             if (m) res.mac = m;
             if (s) res.serial = s;
             return res;
-        }).filter(d => d.mac || d.serial);
+        }).filter(d => d.iden);
 
         // THU THẬP GLOBAL SCOPE (Loại trừ thiết bị đang edit)
-        const existingGlobalMacs = new Set<string>();
-        const existingGlobalSerials = new Set<string>();
+        const existingGlobalIdens = new Set<string>();
 
         deviceList.forEach(device => {
             if (device.key === currentDeviceKey) return; // BỎ QUA dòng hiện tại
 
             if (device.expectedDetails && device.expectedDetails.length > 0) {
                 device.expectedDetails.forEach((d: any) => {
-                    if (d.mac) existingGlobalMacs.add(d.mac.trim().toUpperCase());
-                    if (d.serial) existingGlobalSerials.add(d.serial.trim().toUpperCase());
+                    if (d.iden) existingGlobalIdens.add(d.iden.trim().toUpperCase());
                 });
             } else if (device.expectedMacs && device.expectedMacs.length > 0) {
-                device.expectedMacs.forEach(mac => existingGlobalMacs.add(mac.trim().toUpperCase()));
+                device.expectedMacs.forEach(mac => existingGlobalIdens.add(mac.trim().toUpperCase()));
             }
         });
 
-        const duplicateMacs = new Set<string>();
-        const duplicateSerials = new Set<string>();
+        const duplicateIdens = new Set<string>();
 
         validDetails.forEach(d => {
-            if (d.mac && existingGlobalMacs.has(d.mac)) duplicateMacs.add(d.mac);
-            if (d.serial && existingGlobalSerials.has(d.serial)) duplicateSerials.add(d.serial);
+            if (d.iden && existingGlobalIdens.has(d.iden)) duplicateIdens.add(d.iden);
         });
 
         // XỬ LÝ LỖI
-        if (duplicateMacs.size > 0 || duplicateSerials.size > 0) {
+        if (duplicateIdens.size > 0) {
             let errorMsg = 'Phát hiện mã trùng lặp ở thiết bị khác trong cùng phiếu nhập này:\n\n';
-            if (duplicateMacs.size > 0) errorMsg += `- MAC: [ ${Array.from(duplicateMacs).slice(0, 5).join(', ')} ]${duplicateMacs.size > 5 ? `\nvà ${duplicateMacs.size - 5} mã khác...` : ''}\n`;
-            if (duplicateSerials.size > 0) errorMsg += `- Serial: [ ${Array.from(duplicateSerials).slice(0, 5).join(', ')} ]${duplicateSerials.size > 5 ? `\nvà ${duplicateSerials.size - 5} mã khác...` : ''}\n`;
+            if (duplicateIdens.size > 0) errorMsg += `- Mã Định Danh: [ ${Array.from(duplicateIdens).slice(0, 5).join(', ')} ]${duplicateIdens.size > 5 ? `\nvà ${duplicateIdens.size - 5} mã khác...` : ''}\n`;
 
             modal.error({
                 title: 'Trùng lặp dữ liệu',
@@ -309,6 +308,10 @@ export const useCreateImport = () => {
                         else sanitized.mac = String(sanitized.mac).trim();
                         if (!sanitized.serial || String(sanitized.serial).trim() === '') delete sanitized.serial;
                         else sanitized.serial = String(sanitized.serial).trim();
+
+                        if (!sanitized.iden) {
+                            throw new Error('Dữ liệu thiết bị thiếu mã định danh (iden). Vui lòng kiểm tra lại!');
+                        }
                         return sanitized;
                     })
                 })),
@@ -405,6 +408,11 @@ export const useCreateImport = () => {
                 };
                 if (m) doc.mac = m;
                 if (s) doc.serial = s;
+                doc.iden = m ? m : s;
+
+                if (!doc.iden) {
+                    throw new Error('Dữ liệu thiết bị thiếu mã Định Danh (iden)');
+                }
                 if (row.p2p) doc.p2p = String(row.p2p).trim();
 
                 current.details.push(doc);

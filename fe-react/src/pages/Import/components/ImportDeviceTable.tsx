@@ -62,7 +62,7 @@ export const ImportDeviceTable: React.FC<ImportDeviceTableProps> = ({
             )
         },
         {
-            title: 'Mac đã quét',
+            title: 'Thiết bị đã quét',
             key: 'macImport',
             width: 200,
             align: 'center',
@@ -90,7 +90,7 @@ export const ImportDeviceTable: React.FC<ImportDeviceTableProps> = ({
             },
         },
         {
-            title: 'Trạng thái mac',
+            title: 'Trạng thái thiết bị',
             key: 'macStatus',
             width: 150,
             align: 'center',
@@ -99,12 +99,12 @@ export const ImportDeviceTable: React.FC<ImportDeviceTableProps> = ({
                 const expected = item.quantity || 0;
 
                 if (imported === expected) {
-                    return <Tag color="success">Đủ mac</Tag>;
+                    return <Tag color="success">Đủ</Tag>;
                 } else if (imported < expected) {
                     return (
                         <Tooltip title={`Thiếu ${expected - imported} mac`}>
                             <Tag color="error" icon={<WarningOutlined />}>
-                                Thiếu mac
+                                Thiếu
                             </Tag>
                         </Tooltip>
                     );
@@ -112,7 +112,7 @@ export const ImportDeviceTable: React.FC<ImportDeviceTableProps> = ({
                     return (
                         <Tooltip title={`Thừa ${imported - expected} mac`}>
                             <Tag color="warning" icon={<WarningOutlined />}>
-                                Thừa mac
+                                Thừa
                             </Tag>
                         </Tooltip>
                     );

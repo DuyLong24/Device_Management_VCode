@@ -34,6 +34,7 @@ export class ExportSession extends Document {
 
     @Prop({
         type: [{
+            iden: { type: String, required: true },
             mac: { type: String },
             serial: { type: String },
             deviceCode: { type: String, required: true },
@@ -42,7 +43,8 @@ export class ExportSession extends Document {
         }], default: []
     })
     items: {
-        mac: string;
+        iden: string;
+        mac?: string;
         serial?: string;
         deviceCode: string;
         deviceModel: string;

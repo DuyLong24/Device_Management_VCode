@@ -126,9 +126,9 @@ export class DeviceController {
     return this.deviceStatsService.getStatistics(filter);
   }
 
-  @Get('mac/:mac/detail')
-  async findByMacWithDetail(@Param('mac') mac: string) {
-    return this.deviceService.findByMacWithDetail(mac);
+  @Get('iden/:iden/detail')
+  async findByIdenWithDetail(@Param('iden') iden: string) {
+    return this.deviceService.findByIdenWithDetail(iden);
   }
 
   @Get(':id')
@@ -145,12 +145,6 @@ export class DeviceController {
   async delete(@Param('id') id: string) {
     return this.deviceService.delete(id);
   }
-
-  @Post('system/sync-categories')
-  async syncCategories() {
-    return this.deviceService.syncCategories();
-  }
-
 
   /**
    * API Chuyển kho (Transfer)

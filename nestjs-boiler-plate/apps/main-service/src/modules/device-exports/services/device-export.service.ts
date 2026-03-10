@@ -104,7 +104,7 @@ export class DeviceExportService {
         }
 
         // Lấy thông tin thiết bị theo MAC
-        const devices = await this.deviceService.findByScannedCodes(macs, 'mac');
+        const devices = await this.deviceService.findByIdens(macs);
         const deviceMap = new Map(devices.map(d => [d.mac, d]));
 
         const deviceExportObj = deviceexport.toObject();
@@ -401,7 +401,7 @@ export class DeviceExportService {
       const macs = exportRecord.items.map(i => i.mac);
 
       // Fetch thông tin chi tiết từ Device
-      const devices = await this.deviceService.findByScannedCodes(macs, 'mac');
+      const devices = await this.deviceService.findByIdens(macs);
 
       const deviceMap = new Map(devices.map(d => [d.mac, d]));
 

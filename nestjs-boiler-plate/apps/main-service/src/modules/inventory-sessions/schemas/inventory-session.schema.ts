@@ -24,6 +24,7 @@ export class InventorySession extends Document {
 
     @Prop({
         type: [{
+            iden: String,
             mac: String,
             serial: String,
             deviceModel: String,
@@ -34,6 +35,7 @@ export class InventorySession extends Document {
         default: []
     })
     details: Array<{
+        iden: string;
         mac: string;
         serial?: string;
         deviceModel: string;

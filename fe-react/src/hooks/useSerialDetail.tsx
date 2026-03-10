@@ -33,22 +33,34 @@ const mapHistoryToTimeline = (rawHistory: any[]) => {
             item.type = 'IMPORT';
             item.description = 'Nhập kho';
             timeline.push(item);
-        } else if (h.action.includes('EXPORT')) {
+        } else if (h.action === 'WARRANTY_ACTIVATE') {
+            item.type = 'WARRANTY_ACTIVATE';
+            item.description = 'Kích hoạt bảo hành';
+            timeline.push(item);
+        } else if (h.action === 'EXPORT_PENDING') {
+            item.type = 'EXPORT_PENDING';
+            item.description = 'Xuất kho (Chưa kích hoạt)';
+            timeline.push(item);
+        } else if (h.action === 'EXPORT_WARRANTY') {
+            item.type = 'EXPORT_WARRANTY';
+            item.description = 'Xuất kho - Bảo hành';
+            timeline.push(item);
+        } else if (h.action === 'EXPORT' || h.action.startsWith('EXPORT')) {
             item.type = 'EXPORT';
             item.description = 'Xuất kho';
             timeline.push(item);
         } else if (h.action.includes('WARRANTY_SEND')) {
             item.type = 'WARRANTY_SEND';
-            item.description = 'Gửi bảo hành';
+            item.description = 'Gửui bảo hành';
             timeline.push(item);
         } else if (h.action.includes('WARRANTY_RECEIVE')) {
             item.type = 'WARRANTY_RECEIVE';
             item.description = 'Nhận từ bảo hành';
             timeline.push(item);
         } else {
-            // TRANSFER / QC
+            // TRANSFER / QC / WARRANTY_SWAP
             item.type = 'TRANSFER';
-            item.description = `Chuyển kho: ${h.fromWarehouseId?.name || '---'} -> ${h.toWarehouseId?.name || '---'}`;
+            item.description = `Chuyển kho: ${h.fromWarehouseId?.name || '---'} → ${h.toWarehouseId?.name || '---'}`;
 
             if (h.action === 'QC_PASS') item.qcResult = 'PASS';
             if (h.action === 'QC_FAIL') item.qcResult = 'FAIL';
@@ -66,6 +78,9 @@ const mapHistoryToTimeline = (rawHistory: any[]) => {
 export const getTimelineIcon = (event: any) => {
     if (event.type === 'IMPORT') return <InboxOutlined className="text-blue-500" />;
     if (event.type === 'EXPORT') return <ExportOutlined className="text-green-500" />;
+    if (event.type === 'WARRANTY_ACTIVATE') return <CheckCircleOutlined className="text-emerald-600" />;
+    if (event.type === 'EXPORT_PENDING') return <ExportOutlined className="text-orange-400" />;
+    if (event.type === 'EXPORT_WARRANTY') return <ToolOutlined className="text-purple-500" />;
     if (event.type === 'WARRANTY_SEND') return <ToolOutlined className="text-yellow-500" />;
     if (event.type === 'WARRANTY_RECEIVE') return <CheckCircleOutlined className="text-green-500" />;
 
@@ -77,14 +92,14 @@ export const getTimelineIcon = (event: any) => {
     return <SyncOutlined className="text-blue-500" />;
 };
 
-export function useMacDetail(mac?: string) {
+export function useIdenDetail(iden?: string) {
     const queryClient = useQueryClient();
 
     // 1. Fetch Device Detail
     const { data, isLoading, refetch } = useQuery({
-        queryKey: ['mac-detail', mac],
-        queryFn: () => deviceService.getByMacWithDetail(mac || ''),
-        enabled: !!mac
+        queryKey: ['iden-detail', iden],
+        queryFn: () => deviceService.getByIdenWithDetail(iden || ''),
+        enabled: !!iden
     });
 
     // 2. Fetch Warehouses 

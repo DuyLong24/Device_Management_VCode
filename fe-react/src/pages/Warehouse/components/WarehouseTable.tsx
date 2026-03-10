@@ -54,36 +54,15 @@ export const WarehouseTable = ({
             dataIndex: dataKey,
         };
 
-        if (rawKey === 'mac') {
+        if (rawKey === 'iden') {
             return {
                 ...base,
                 render: (text: string, record: any) => {
-                    const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
-                    const identifier = validMac || record.serial;
+                    const identifier = record.iden;
                     return (
                         <Button
                             type="link"
                             className="p-0 font-mono text-blue-600 font-semibold"
-                            onClick={() => identifier ? navigate(`/device/${identifier}`, { state: { activeMenuKey: currentWarehouse?.code ? `warehouse-${currentWarehouse.code}` : undefined } }) : undefined}
-                            disabled={!identifier}
-                        >
-                            {text || '--'}
-                        </Button>
-                    );
-                }
-            };
-        }
-
-        if (rawKey === 'serial') {
-            return {
-                ...base,
-                render: (text: string, record: any) => {
-                    const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
-                    const identifier = validMac || record.serial;
-                    return (
-                        <Button
-                            type="link"
-                            className="p-0 font-mono text-gray-700 font-medium"
                             onClick={() => identifier ? navigate(`/device/${identifier}`, { state: { activeMenuKey: currentWarehouse?.code ? `warehouse-${currentWarehouse.code}` : undefined } }) : undefined}
                             disabled={!identifier}
                         >
@@ -102,8 +81,7 @@ export const WarehouseTable = ({
                 width: 100,
                 fixed: 'right' as const,
                 render: (_: any, record: any) => {
-                    const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
-                    const identifier = validMac || record.serial;
+                    const identifier = record.iden;
                     return (
                         <Button
                             type="text"
@@ -127,8 +105,12 @@ export const WarehouseTable = ({
             return {
                 ...base,
                 render: (date: string, record: any) => {
-                    // Shift-Left devices có importDate trong importId.importDate, không phải root
-                    const dateVal = date || (rawKey === 'importDate' ? record?.importId?.importDate : undefined);
+                    let dateVal = date;
+                    if (rawKey === 'importDate') {
+                        dateVal = date || record?.importId?.importDate;
+                    } else if (rawKey === 'warrantyActivatedDate' || rawKey === 'activationDate') {
+                        dateVal = date || record?.activationDate || record?.warrantyActivatedDate;
+                    }
                     return dateVal ? new Date(dateVal).toLocaleDateString('vi-VN') : '-';
                 }
             };
@@ -174,36 +156,16 @@ export const WarehouseTable = ({
 
     const dataColumns = normalizedColumns.map(getColumnDef);
 
-    // ÉP CỘT ĐỊNH DANH (MAC & SERIAL) LÊN ĐẦU
     const identityColumns = [
         {
-            title: 'MAC',
-            dataIndex: 'mac',
-            key: 'mac',
-            width: 180,
-            render: (mac: string, record: any) => {
-                const validMac = mac && mac !== 'N/A' ? mac : '';
-                const identifier = validMac || record.serial;
-                return identifier ? (
-                    <Link to={`/device/${identifier}`} className="font-medium text-blue-600 hover:underline">
-                        {mac || 'N/A'}
-                    </Link>
-                ) : (
-                    <Text className="text-gray-400">N/A</Text>
-                );
-            }
-        },
-        {
-            title: 'Số Serial',
-            dataIndex: 'serial',
-            key: 'serial',
-            width: 180,
-            render: (serial: string, record: any) => {
-                const validMac = record.mac && record.mac !== 'N/A' ? record.mac : '';
-                const identifier = validMac || serial;
-                return identifier ? (
-                    <Link to={`/device/${identifier}`} className="font-medium text-blue-600 hover:underline">
-                        {serial || 'N/A'}
+            title: 'Mã định danh',
+            dataIndex: 'iden',
+            key: 'iden',
+            width: 250,
+            render: (iden: string) => {
+                return iden ? (
+                    <Link to={`/device/${iden}`} className="font-medium text-blue-600 hover:underline">
+                        {iden}
                     </Link>
                 ) : (
                     <Text className="text-gray-400">N/A</Text>

@@ -4,7 +4,9 @@ import dayjs from 'dayjs';
 const { Text } = Typography;
 
 interface ExportItem {
-    mac: string;
+    iden?: string;
+    mac?: string;
+    serial?: string;
     deviceCode: string;
     deviceModel?: string;
     scannedAt?: string;
@@ -18,9 +20,9 @@ interface ActualItemsTableProps {
 export const ActualItemsTable = ({ items = [] }: ActualItemsTableProps) => {
     const columns = [
         {
-            title: 'Mac Address',
-            dataIndex: 'mac',
-            key: 'mac',
+            title: 'Mã Định Danh',
+            dataIndex: 'iden',
+            key: 'iden',
             render: (text: string) => <Text strong>{text || '-'}</Text>,
         },
         {
@@ -56,7 +58,7 @@ export const ActualItemsTable = ({ items = [] }: ActualItemsTableProps) => {
                 <Table
                     columns={columns}
                     dataSource={items}
-                    rowKey={(record, index) => record.mac || `item-${index}`}
+                    rowKey={(record, index) => record.iden || `item-${index}`}
                     pagination={{ pageSize: 10 }}
                     size="small"
                     bordered

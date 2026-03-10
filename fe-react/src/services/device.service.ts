@@ -22,6 +22,7 @@ export interface Device {
     categoryId?: string;
     description?: string;
     mac?: string;
+    iden?: string;
     warehouseUpdatedAt?: string;
     qcNote?: string;
     warrantyActivatedDate?: string;
@@ -117,8 +118,8 @@ export const deviceService = {
         return response.data;
     },
 
-    getByMacWithDetail: async (mac: string) => {
-        const response = await axiosInstance.get<{ device: Device; history: any[] }>(`/devices/mac/${mac}/detail`);
+    getByIdenWithDetail: async (iden: string) => {
+        const response = await axiosInstance.get<{ device: Device; history: any[] }>(`/devices/iden/${iden}/detail`);
         return response.data;
     },
 

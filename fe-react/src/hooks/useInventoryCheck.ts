@@ -38,7 +38,7 @@ export const useInventoryCheck = () => {
     const [manualMacs, setManualMacs] = useState('');
     const [otherCompletedCount, setOtherCompletedCount] = useState(0);
     const [otherCompletedItemsByModel, setOtherCompletedItemsByModel] = useState<Record<string, number>>({});
-    const [otherScannedMacs, setOtherScannedMacs] = useState<string[]>([]);
+    const [otherScannedIdens, setOtherScannedIdens] = useState<string[]>([]);
     const [crossSessionDups, setCrossSessionDups] = useState<string[]>([]); // MAC trùng từ phiên khác
 
     const [selectedDeviceCode, setSelectedDeviceCode] = useState<string | null>(null);
@@ -122,7 +122,7 @@ export const useInventoryCheck = () => {
                 });
             });
             setOtherCompletedItemsByModel(itemsByModel);
-            setOtherScannedMacs(allOtherMacs);
+            setOtherScannedIdens(allOtherMacs);
 
             if (activeSession) {
                 setSession(activeSession);
@@ -151,7 +151,7 @@ export const useInventoryCheck = () => {
             await inventorySessionService.removeItem(session.id, mac);
             setServerItems(prev => prev.filter(i => i.mac !== mac));
             setDuplicateMacs(prev => prev.filter(s => s !== mac)); // Xóa khỏi danh sách trùng nếu có
-            message.success(`Đã xóa mac ${mac}`);
+            message.success(`Đã xóa thiết bị ${mac}`);
         } catch (e) {
             message.error('Không thể xóa thiết bị đã lưu');
         }
@@ -198,6 +198,7 @@ export const useInventoryCheck = () => {
             setIsSaving(true);
             const payload = {
                 scannedItems: [{
+                    iden: code,
                     mac: code,
                     deviceModel: selectedDeviceCode,
                     deviceCode: selectedDeviceCode
@@ -209,12 +210,12 @@ export const useInventoryCheck = () => {
             if (updated && updated.details) {
                 // Trigger âm thanh tại điểm "Save thành công"
                 if (isSoundEnabled) playScanSuccessSound();
-                message.success(`Đã lưu mac: ${code}`);
+                message.success(`Đã lưu thiết bị: ${code}`);
                 setServerItems(updated.details);
             }
         } catch (e) {
             playError();
-            message.error('Lỗi khi lưu mac này. Vui lòng thử lại.');
+            message.error('Lỗi khi lưu thiết bị này. Vui lòng thử lại.');
         } finally {
             setIsSaving(false);
             setScannedInput('');
@@ -224,7 +225,7 @@ export const useInventoryCheck = () => {
 
     const handleManualImport = async () => {
         if (!manualMacs.trim() || !selectedDeviceCode) {
-            message.warning('Vui lòng chọn thiết bị và nhập danh sách mac');
+            message.warning('Vui lòng chọn mã thiết bị và nhập danh sách thiết bị');
             return;
         }
 
@@ -235,7 +236,6 @@ export const useInventoryCheck = () => {
         let internalDupCount = 0;
 
         codes.forEach(code => {
-            // TH1: Trùng nội bộ (cùng phiên hoặc localItems)
             const isDupInternal = serverItems.some(i => i.mac === code) ||
                 validItems.some(i => i.mac === code) ||
                 localItems.some(i => i.mac === code);
@@ -245,8 +245,8 @@ export const useInventoryCheck = () => {
                 return;
             }
 
-            // Mọi mã vượt qua TH1 đều được gửi lên server bình thường
             validItems.push({
+                iden: code,
                 mac: code,
                 deviceModel: selectedDeviceCode,
                 deviceCode: selectedDeviceCode
@@ -260,8 +260,8 @@ export const useInventoryCheck = () => {
                 if (updated && updated.details) {
                     setServerItems(updated.details);
 
-                    const msg = `Đã lưu ${validItems.length} mã mới.` +
-                        (internalDupCount > 0 ? ` (Bỏ qua ${internalDupCount} mã đã quét)` : '');
+                    const msg = `Đã lưu ${validItems.length} thiết bị.` +
+                        (internalDupCount > 0 ? ` (Bỏ qua ${internalDupCount} thiết bị đã quét)` : '');
                     message.success(msg);
 
                     if (isSoundEnabled) playScanSuccessSound();
@@ -272,7 +272,7 @@ export const useInventoryCheck = () => {
                 setIsSaving(false);
             }
         } else if (internalDupCount > 0) {
-            message.info(`Đã bỏ qua ${internalDupCount} mã trùng lặp.`);
+            message.info(`Đã bỏ qua ${internalDupCount} thiết bị trùng lặp.`);
         }
 
         setManualMacs('');
@@ -286,13 +286,13 @@ export const useInventoryCheck = () => {
         );
 
         if (validUnsavedItems.length > 0) {
-            message.warning('Vui lòng bấm LƯU các mac mới hợp lệ trước khi hoàn tất!');
+            message.warning('Vui lòng bấm LƯU các thiết bị mới hợp lệ trước khi hoàn tất!');
             return;
         }
 
         // Tính toán mã trùng xuyên phiên ngay lúc bấm Hoàn tất
         const foundCrossDups = serverItems
-            .filter(i => otherScannedMacs.includes(i.mac))
+            .filter(i => otherScannedIdens.includes(i.mac))
             .map(i => i.mac);
         setCrossSessionDups(foundCrossDups);
 
@@ -315,7 +315,7 @@ export const useInventoryCheck = () => {
 
             if (data?.duplicates && Array.isArray(data.duplicates)) {
                 setDuplicateMacs(data.duplicates);
-                message.error(`Có ${data.duplicates.length} mac bị trùng lặp!`);
+                message.error(`Có ${data.duplicates.length} thiết bị bị trùng lặp!`);
             } else {
                 message.error(msg);
             }
@@ -338,9 +338,9 @@ export const useInventoryCheck = () => {
             setServerItems(prev => prev.filter(i => !crossSessionDups.includes(i.mac || (i as any).serial)));
             setCrossSessionDups([]);
             setCompleteModalVisible(false);
-            message.success(`Đã xóa ${crossSessionDups.length} mã trùng. Bấm Hoàn tất kiểm kê lại.`);
+            message.success(`Đã xóa ${crossSessionDups.length} thiết bị trùng. Bấm Hoàn tất kiểm kê lại.`);
         } catch {
-            message.error('Lỗi khi xóa mã trùng, vui lòng thử lại.');
+            message.error('Lỗi khi xóa thiết bị trùng, vui lòng thử lại.');
         } finally {
             setIsSaving(false);
         }
@@ -362,7 +362,7 @@ export const useInventoryCheck = () => {
         otherCompletedItemsByModel,
         deviceModels,
         isSoundEnabled, setIsSoundEnabled,
-        otherScannedMacs,
+        otherScannedIdens,
         crossSessionDups,
     };
 };

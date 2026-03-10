@@ -10,6 +10,9 @@ import { User } from '../../../users/entities/user.entity';
 
 @Schema({ timestamps: true })
 export class Device extends Document {
+  @Prop({ type: String, unique: true, index: true, required: true })
+  iden!: string;
+
   @Prop({ type: String, index: true, sparse: true })
   serial?: string;
 

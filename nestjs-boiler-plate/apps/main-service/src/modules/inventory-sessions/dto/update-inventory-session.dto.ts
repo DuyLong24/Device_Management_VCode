@@ -2,6 +2,10 @@ import { IsOptional, IsString, ValidateNested, IsArray, IsEnum } from 'class-val
 import { Type } from 'class-transformer';
 
 class ScannedDetailDto {
+    @IsOptional()
+    @IsString()
+    iden?: string;
+
     @IsString()
     mac: string;
 

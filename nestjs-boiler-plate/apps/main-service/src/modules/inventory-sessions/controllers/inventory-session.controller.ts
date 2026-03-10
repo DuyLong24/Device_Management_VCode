@@ -60,8 +60,8 @@ export class InventorySessionController {
         return this.sessionService.findById(id);
     }
 
-    @Delete(':id/items/:mac')
-    async removeItem(@Param('id') id: string, @Param('mac') mac: string) {
-        return this.sessionService.removeItem(id, mac);
+    @Delete(':id/items/:iden')
+    async removeItem(@Param('id') id: string, @Param('iden') iden: string) {
+        return this.sessionService.removeItem(id, iden);
     }
 }

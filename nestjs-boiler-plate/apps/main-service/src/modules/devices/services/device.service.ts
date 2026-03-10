@@ -180,8 +180,8 @@ export class DeviceService implements OnModuleInit {
     return deletedDevice;
   }
 
-  async findByMacWithDetail(mac: string): Promise<any> {
-    const device = await this.deviceModel.findOne({ $or: [{ mac: mac }, { serial: mac }] })
+  async findByIdenWithDetail(iden: string): Promise<any> {
+    const device = await this.deviceModel.findOne({ iden })
       .populate('warehouseId')
       //.populate('importId') 
       .populate({
@@ -226,24 +226,17 @@ export class DeviceService implements OnModuleInit {
     return this.excelService.exportTableData(devices, DEVICE_EXCEL_COLUMNS, 'Danh sách thiết bị');
   }
 
-
-
-  async findByScannedCodes(scannedCodes: string[], scanMode?: 'mac' | 'serial'): Promise<Device[]> {
-    if (!scannedCodes || scannedCodes.length === 0) return [];
-    return this.deviceModel.find({
-      $or: [
-        { mac: { $in: scannedCodes } },
-        { serial: { $in: scannedCodes } }
-      ]
-    }).exec();
+  async findByIdens(idens: string[]): Promise<Device[]> {
+    if (!idens || idens.length === 0) return [];
+    return this.deviceModel.find({ iden: { $in: idens } }).exec();
   }
 
   async findByMac(mac: string): Promise<Device | null> {
     return this.deviceModel.findOne({ mac }).exec();
   }
 
-  async bulkUpdateStatus(macs: string[], status: string, note?: string, customer?: string): Promise<any> {
-    if (!macs || macs.length === 0) return;
+  async bulkUpdateStatus(idens: string[], status: string, note?: string, customer?: string): Promise<any> {
+    if (!idens || idens.length === 0) return;
 
     const updatePayload: any = {
       qcStatus: status
@@ -254,7 +247,7 @@ export class DeviceService implements OnModuleInit {
     }
 
     const result = await this.deviceModel.updateMany(
-      { $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }] },
+      { iden: { $in: idens } },
       {
         $set: updatePayload
       }
@@ -263,7 +256,7 @@ export class DeviceService implements OnModuleInit {
     return result;
   }
 
-  async moveDevicesToWarehouse(macs: string[], targetWarehouseCode: string, exportCode: string, userId?: string, activationDate?: Date, exportId?: string, warrantyMonths?: number): Promise<void> {
+  async moveDevicesToWarehouse(idens: string[], targetWarehouseCode: string, exportCode: string, userId?: string, activationDate?: Date, exportId?: string, warrantyMonths?: number): Promise<void> {
 
     const targetWarehouse = await this.warehouseService.findByCode(targetWarehouseCode);
 
@@ -272,9 +265,7 @@ export class DeviceService implements OnModuleInit {
     }
 
     // Lấy danh sách thiết bị cần di chuyển để tạo lịch sử sau khi cập nhật
-    const devicesToMove = await this.deviceModel.find({
-      $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }]
-    }).exec();
+    const devicesToMove = await this.deviceModel.find({ iden: { $in: idens } }).exec();
 
 
     const updatePayload: any = {
@@ -305,7 +296,7 @@ export class DeviceService implements OnModuleInit {
     }
 
     const result = await this.deviceModel.updateMany(
-      { $or: [{ mac: { $in: macs } }, { serial: { $in: macs } }] },
+      { iden: { $in: idens } },
       {
         $set: updatePayload
       }
@@ -324,13 +315,33 @@ export class DeviceService implements OnModuleInit {
         actorId = '000000000000000000000000';
       }
 
+      // Phân loại action dựa theo kho đích
+      let action: string;
+      let notePrefix: string;
+      if (targetWarehouseCode === 'SOLD') {
+        action = 'WARRANTY_ACTIVATE';
+        notePrefix = 'Kích hoạt bảo hành';
+      } else if (targetWarehouseCode === 'NOT_ACTIVATED') {
+        action = 'EXPORT_PENDING';
+        notePrefix = 'Xuất kho - Chưa kích hoạt';
+      } else if (targetWarehouseCode === 'IN_WARRANTY') {
+        action = 'EXPORT_WARRANTY';
+        notePrefix = 'Xuất kho - Bảo hành';
+      } else if (targetWarehouseCode === 'TRANSFERRED') {
+        action = 'TRANSFER';
+        notePrefix = 'Chuyển kho';
+      } else {
+        action = 'EXPORT';
+        notePrefix = 'Xuất kho';
+      }
+
       const historyRecords = devicesToMove.map(device => ({
         deviceId: device._id,
         fromWarehouseId: device.warehouseId,
         toWarehouseId: targetWarehouse._id,
         actorId: actorId,
-        action: 'EXPORT',
-        note: `Xuất kho: ${exportCode}`
+        action,
+        note: `${notePrefix}: ${exportCode} → ${targetWarehouseCode}`
       }));
 
       await this.historyModel.insertMany(historyRecords);
@@ -341,7 +352,7 @@ export class DeviceService implements OnModuleInit {
         exportCode,
         fromWarehouseId: devicesToMove[0].warehouseId, // Assume all from same warehouse ideally
         toWarehouseId: targetWarehouse._id,
-        macs: macs, // validCodes passed down
+        idens: idens, // validCodes passed down
         status: 'COMPLETED',
         createdBy: actorId !== '000000000000000000000000' ? actorId : null
       };
@@ -364,8 +375,6 @@ export class DeviceService implements OnModuleInit {
       warehouseId: readyWarehouse._id,
     }).exec();
   }
-
-
 
   async processWarrantyActivation(): Promise<{ processedCount: number }> {
     const today = new Date();
@@ -576,54 +585,5 @@ export class DeviceService implements OnModuleInit {
     if (nameStr.includes('màn hình') || nameStr.includes('display')) return 'Màn hình';
 
     return null;
-  }
-
-  async syncCategories(): Promise<{ message: string, matchedCount: number, modifiedCount: number }> {
-    // 1. Fetch categories map (1 query)
-    const allCategories = await this.categoryModel.find().lean();
-    const categoryMap: Record<string, any> = {};
-    for (const cat of allCategories) {
-      categoryMap[cat.name] = cat._id;
-    }
-
-    // 2. Query target devices affected by legacy ID bug
-    const TARGET_LEGACY_ID = '696b38875f5e0185d5a694cd';
-    const targetDevices = await this.deviceModel.find({ categoryId: TARGET_LEGACY_ID }).lean();
-
-    if (targetDevices.length === 0) {
-      return { message: 'Không tìm thấy thiết bị nào mang mã 696b38875f5e0185d5a694cd.', matchedCount: 0, modifiedCount: 0 };
-    }
-
-    // 3. Loop and evaluate mapping
-    const bulkOps: any[] = [];
-    for (const d of targetDevices) {
-      const matchName = this.determineCategoryName(d.deviceModel, d.name);
-
-      if (matchName && categoryMap[matchName]) {
-        // Queue valid update
-        bulkOps.push({
-          updateOne: {
-            filter: { _id: d._id },
-            update: { $set: { categoryId: categoryMap[matchName] } }
-          }
-        });
-      }
-    }
-
-    // 4. Execute
-    if (bulkOps.length === 0) {
-      return { message: 'Đã bỏ qua vì các thiết bị mục tiêu không có chuỗi nào trùng khớp với quy tắc mapping Category.', matchedCount: targetDevices.length, modifiedCount: 0 };
-    }
-
-    const startExecution = Date.now();
-    const result = await this.deviceModel.bulkWrite(bulkOps);
-
-    this.logger.log(`[Category Sync] Cập nhật hoàn tất cho ${result.modifiedCount} thiết bị trong ${Date.now() - startExecution}ms.`);
-
-    return {
-      message: 'Success',
-      matchedCount: result.matchedCount || 0,
-      modifiedCount: result.modifiedCount || 0
-    };
   }
 }

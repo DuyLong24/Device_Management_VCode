@@ -98,7 +98,7 @@ export class ExportSessionService {
         return updatedSession;
     }
 
-    async removeMac(sessionId: string, mac: string): Promise<ExportSession> {
+    async removeMac(sessionId: string, code: string): Promise<ExportSession> {
         const session = await this.exportSessionRepository.findById(sessionId);
         if (!session) throw new NotFoundException('Phiên xuất kho không tồn tại');
 
@@ -106,13 +106,13 @@ export class ExportSessionService {
             throw new BadRequestException('Phiên xuất kho đã kết thúc hoặc bị hủy');
         }
 
-        const itemExists = session.items.some(i => i.mac === mac);
+        const itemExists = session.items.some(i => i.mac === code || i.serial === code);
         if (!itemExists) {
-            throw new BadRequestException(`MAC ${mac} không có trong phiên này`);
+            throw new BadRequestException(`Thiết bị ${code} không có trong phiên này`);
         }
 
         const updatedSession = await this.exportSessionRepository.update(sessionId, {
-            $pull: { items: { mac: mac } },
+            $pull: { items: { $or: [{ mac: code }, { serial: code }] } } as any,
             $inc: { macChecked: -1 }
         });
 

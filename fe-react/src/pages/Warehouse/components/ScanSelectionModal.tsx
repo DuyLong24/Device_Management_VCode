@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Input, message, Typography, Alert, Button } from 'antd';
 import { deviceService } from '../../../services/device.service';
-import { extractValidScans, processScannerInput } from '../../../utils/mac.util';
+import { processScannerInput } from '../../../utils/mac.util';
 import { useScanMode } from '../../../hooks/useScanMode';
 import { playScanSuccessSound } from '../../../utils/sound.util';
+import { removeDuplicatesWithToast } from '../../../utils/array.util';
 import { Radio } from 'antd';
 
 const { Text } = Typography;
@@ -44,12 +45,13 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
     }, [scanMode]);
 
     const handleProcess = async () => {
-        // Sử dụng utils để trích xuất mã hợp lệ, bỏ qua rác
-        const macs = extractValidScans(payload, scanMode);
+        let macs = payload.split('\n').map(m => m.trim()).filter(Boolean);
         if (macs.length === 0) {
-            message.warning(`Vui lòng nhập ít nhất 1 mã ${scanMode === 'mac' ? 'MAC' : 'Serial'}`);
+            message.warning(`Vui lòng nhập ${scanMode === 'mac' ? 'mã MAC' : 'số Serial'} `);
             return;
         }
+
+        const cleanMacs = removeDuplicatesWithToast(macs, scanMode === 'mac' ? 'mã MAC' : 'số Serial');
 
         setLoading(true);
         setResults(null);
@@ -60,7 +62,7 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
 
         try {
             // Tìm kiếm song song
-            const checkPromises = macs.map(async (mac) => {
+            const checkPromises = cleanMacs.map(async (mac) => {
                 try {
                     // Tìm kiếm, pass scanMode xuống 
                     const res = await deviceService.getAll({ search: mac, limit: 1, scanMode });
@@ -136,7 +138,7 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
 
     return (
         <Modal
-            title={`Quét/Nhập nhiều mã ${scanMode === 'mac' ? 'MAC' : 'Serial'}`}
+            title={`Quét / Nhập nhiều mã ${scanMode === 'mac' ? 'MAC' : 'Serial'} `}
             open={visible}
             onCancel={onCancel}
             onOk={handleProcess}
@@ -186,7 +188,7 @@ export const ScanSelectionModal: React.FC<ScanSelectionModalProps> = ({
 
                 {results && results.failed.length > 0 && (
                     <Alert
-                        message={`Kết quả: Chọn được ${results.success} mã. Có ${results.failed.length} mã lỗi:`}
+                        message={`Kết quả: Chọn được ${results.success} mã.Có ${results.failed.length} mã lỗi: `}
                         description={
                             <div className="max-h-32 overflow-y-auto mt-2">
                                 <ul className="list-disc pl-4">

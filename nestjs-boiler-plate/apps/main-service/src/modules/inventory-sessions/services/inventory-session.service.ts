@@ -239,16 +239,16 @@ export class InventorySessionService {
         return this.sessionRepo.findById(id);
     }
 
-    async removeItem(sessionId: string, mac: string): Promise<InventorySession> {
+    async removeItem(sessionId: string, code: string): Promise<InventorySession> {
         const session = await this.sessionRepo.findById(sessionId);
         if (!session) throw new NotFoundException(ERROR_MESSAGES.INVENTORY.SESSION_NOT_FOUND);
         if (session.status === 'completed') throw new BadRequestException(ERROR_MESSAGES.INVENTORY.ALREADY_COMPLETED);
 
         const initialCount = session.details.length;
-        session.details = session.details.filter(item => item.mac !== mac);
+        session.details = session.details.filter(item => (item.mac || item.serial) !== code);
 
         if (session.details.length === initialCount) {
-            throw new NotFoundException(`MAC ${mac} not found in session.`);
+            throw new NotFoundException(`Không tìm thấy thiết bị ${code}`);
         }
 
         session.totalScanned = session.details.length;

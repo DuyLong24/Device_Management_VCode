@@ -241,7 +241,9 @@ export const useCreateImport = () => {
             return p;
         }));
 
-        message.success(`Đã đối chiếu an toàn và cập nhật ${validDetails.length} dòng dữ liệu.`);
+        setTimeout(() => {
+            message.success(`Đã đối chiếu an toàn và cập nhật ${validDetails.length} dòng dữ liệu.`);
+        }, 1000);
         setIsMacModalOpen(false);
         setHasUnsavedChanges(true);
     };

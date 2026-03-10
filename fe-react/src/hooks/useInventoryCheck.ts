@@ -322,8 +322,8 @@ export const useInventoryCheck = () => {
         } finally { setIsSaving(false); }
     };
 
-    const handleRemoveLocalItem = (mac: string) => {
-        setLocalItems(prev => prev.filter(i => (i as any).mac !== mac));
+    const handleRemoveLocalItem = (targetCode: string) => {
+        setLocalItems(prev => prev.filter(i => (i.mac || i.serial) !== targetCode));
         inputRef.current?.focus();
     };
 
@@ -335,7 +335,7 @@ export const useInventoryCheck = () => {
             for (const mac of crossSessionDups) {
                 await inventorySessionService.removeItem(session.id, mac);
             }
-            setServerItems(prev => prev.filter(i => !crossSessionDups.includes(i.mac)));
+            setServerItems(prev => prev.filter(i => !crossSessionDups.includes(i.mac || (i as any).serial)));
             setCrossSessionDups([]);
             setCompleteModalVisible(false);
             message.success(`Đã xóa ${crossSessionDups.length} mã trùng. Bấm Hoàn tất kiểm kê lại.`);

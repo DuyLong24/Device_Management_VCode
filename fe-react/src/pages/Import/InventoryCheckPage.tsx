@@ -155,9 +155,9 @@ export default function InventoryCheckPage() {
       key: 'action',
       render: (_, r) => {
         if (r._id) {
-          return <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeServerItem && removeServerItem(r.mac)} />;
+          return <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeServerItem && removeServerItem(r.mac || r.serial)} />;
         }
-        return <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleRemoveLocalItem(r.mac)} />;
+        return <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleRemoveLocalItem(r.mac || r.serial)} />;
       }
     }
   ];

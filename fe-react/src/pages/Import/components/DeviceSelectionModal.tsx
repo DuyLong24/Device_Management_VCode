@@ -3,6 +3,7 @@ import { Modal, Tabs, Input, Tooltip, Checkbox, message } from 'antd';
 import { FileTextOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { isValidScan, processScannerInput } from '../../../utils/mac.util';
 import { playScanSuccessSound } from '../../../utils/sound.util';
+import { removeDuplicatesWithToast } from '../../../utils/array.util';
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -94,12 +95,34 @@ export const DeviceSelectionModal: React.FC<DeviceSelectionModalProps> = ({
             details.pop();
         }
 
-        if (checkQuantityMatch && validMacCount !== validSerialCount) {
-            message.error(`Số lượng MAC (${validMacCount}) và Serial (${validSerialCount}) không khớp. Vui lòng kiểm tra lại dữ liệu copy!`);
+        // --- NEW LOGIC HERE: Filter out duplicates while preserving row mapping ---
+        const macList = details.map(d => d.mac).filter(Boolean);
+        const serialList = details.map(d => d.serial).filter(Boolean);
+
+        const uniqueMacs = removeDuplicatesWithToast(macList, 'mã MAC');
+        const uniqueSerials = removeDuplicatesWithToast(serialList, 'số Serial');
+
+        const cleanDetails: typeof details = [];
+        const usedMacs = new Set<string>();
+        const usedSerials = new Set<string>();
+
+        details.forEach(d => {
+            const isMacDup = d.mac ? usedMacs.has(d.mac) : false;
+            const isSerialDup = d.serial ? usedSerials.has(d.serial) : false;
+
+            if (!isMacDup && !isSerialDup) {
+                if (d.mac) usedMacs.add(d.mac);
+                if (d.serial) usedSerials.add(d.serial);
+                cleanDetails.push(d);
+            }
+        });
+
+        if (checkQuantityMatch && uniqueMacs.length !== uniqueSerials.length) {
+            message.error(`Số lượng MAC(${uniqueMacs.length}) và Serial(${uniqueSerials.length}) không khớp.Vui lòng kiểm tra lại dữ liệu copy!`);
             return;
         }
 
-        onSave(details);
+        onSave(cleanDetails);
     };
 
     const validMacCount = macText.split('\n').filter(s => isValidScan(s.trim(), 'mac')).length;

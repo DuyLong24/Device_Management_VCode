@@ -24,4 +24,5 @@ export interface QCPendingItem {
 export interface ScannedMac extends QCPendingItem {
     validationStatus: ValidationStatus;
     validationMessage?: string;
+    serial?: string;
 }

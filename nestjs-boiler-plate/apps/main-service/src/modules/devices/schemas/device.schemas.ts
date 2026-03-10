@@ -10,10 +10,10 @@ import { User } from '../../../users/entities/user.entity';
 
 @Schema({ timestamps: true })
 export class Device extends Document {
-  @Prop()
+  @Prop({ type: String, index: true, sparse: true })
   serial?: string;
 
-  @Prop({ required: false, unique: true, sparse: true })
+  @Prop({ required: false, unique: true, sparse: true, index: true })
   mac?: string;
 
   @Prop()

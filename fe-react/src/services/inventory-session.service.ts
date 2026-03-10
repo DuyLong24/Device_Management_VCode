@@ -2,6 +2,7 @@ import { axiosInstance } from '../configs/axios.config';
 
 export interface ScannedItem {
     mac: string;
+    serial?: string;
     deviceModel: string;
     scannedAt?: string;
     _id?: string;

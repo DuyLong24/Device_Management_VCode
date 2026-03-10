@@ -14,6 +14,7 @@ import { exportService } from '../../services/export.service';
 import { exportSessionService } from '../../services/export-session.service';
 import { getExportStatusTag } from '../../utils/export-status.util';
 import { processScannerInput } from '../../utils/mac.util';
+import { removeDuplicatesWithToast } from '../../utils/array.util';
 import type { DeviceExport } from '../../types/export.type';
 import { useScanMode } from '../../hooks/useScanMode';
 import { playScanSuccessSound } from '../../utils/sound.util';
@@ -77,21 +78,21 @@ export default function ExportProcessPage() {
         fetchDetail();
     }, [id, sessionId]);
 
-    const handleRemoveMac = async (mac: string) => {
+    const handleRemoveDevice = async (code: string) => {
         if (!sessionId) return;
         try {
-            await exportSessionService.removeMac(sessionId, mac);
-            messageApi.success(`Đã xóa MAC ${mac}`);
+            await exportSessionService.removeMac(sessionId, code);
+            messageApi.success(`Đã xóa thiết bị ${code}`);
 
             // Remove 
-            setSessionItems(prev => prev.filter(item => item.mac !== mac));
+            setSessionItems(prev => prev.filter(item => (item.mac || item.serial) !== code));
 
             // Update count
             const newCount = Math.max(0, (sessionData?.totalScanned || 0) - 1);
             setSessionData({ ...sessionData, totalScanned: newCount });
 
         } catch (error: any) {
-            messageApi.error(error.response?.data?.message || 'Lỗi khi xóa MAC');
+            messageApi.error(error.response?.data?.message || 'Lỗi khi xóa thiết bị');
         }
     };
 
@@ -101,7 +102,10 @@ export default function ExportProcessPage() {
         const codes = manualMacs.split('\n').map(s => s.trim()).filter(Boolean);
         if (codes.length === 0) return;
 
-        await processBulkScan(codes);
+        const cleanCodes = removeDuplicatesWithToast(codes, scanMode === 'mac' ? 'mã MAC' : 'số Serial');
+        if (cleanCodes.length === 0) return;
+
+        await processBulkScan(cleanCodes);
         setManualMacs('');
     };
 
@@ -109,8 +113,9 @@ export default function ExportProcessPage() {
         setLoading(true);
         try {
             const res = await exportSessionService.scanBulk(sessionId!, codes, scanMode);
-
-            messageApi.success(`Đã xử lý ${codes.length} mã.`);
+            setTimeout(() => {
+                messageApi.success(`Đã xử lý ${codes.length} mã.`);
+            }, 1000);
             if (res.data?.errors?.length) {
                 const errorList = res.data.errors.map((e: any) =>
                     `<li><b>${e.mac}</b>: ${e.error}</li>`
@@ -273,7 +278,7 @@ export default function ExportProcessPage() {
                 <Popconfirm
                     title="Xóa thiết bị này?"
                     description="Bạn có chắc chắn muốn xóa thiết bị này khỏi phiên?"
-                    onConfirm={() => handleRemoveMac(record.mac)}
+                    onConfirm={() => handleRemoveDevice(record.mac || record.serial)}
                     okText="Xóa"
                     cancelText="Hủy"
                 >

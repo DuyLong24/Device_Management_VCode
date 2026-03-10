@@ -24,6 +24,7 @@ import type { QCPendingItem, ScannedMac, ValidationStatus } from '../../../types
 import { extractValidScans } from '../../../utils/mac.util';
 import { useScanMode } from '../../../hooks/useScanMode';
 import { playScanSuccessSound } from '../../../utils/sound.util';
+import { removeDuplicatesWithToast } from '../../../utils/array.util';
 
 const { Text } = Typography;
 
@@ -71,15 +72,17 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
             if (raw) macsToProcess = [raw];
         }
 
-        if (macsToProcess.length === 0) {
-            message.warning('Vui lòng nhập MAC');
+        const cleanMacs = removeDuplicatesWithToast(macsToProcess, scanMode === 'mac' ? 'mã MAC' : 'số Serial');
+
+        if (cleanMacs.length === 0) {
+            message.warning(`Vui lòng nhập ${scanMode === 'mac' ? 'MAC' : 'Serial'}`);
             return;
         }
 
         let addedCount = 0;
         const currentList = [...scannedFailList];
 
-        macsToProcess.forEach(mac => {
+        cleanMacs.forEach(mac => {
             const validation = validateMac(mac, currentList);
 
             if (validation.isValid) {
@@ -127,7 +130,7 @@ export default function QCFailModal({ open, onCancel, onConfirm, dataSource }: Q
             render: (_, record) => (
                 <Button
                     type="link" danger size="small" icon={<DeleteOutlined />}
-                    onClick={() => setScannedFailList(prev => prev.filter(s => s.mac !== record.mac))}
+                    onClick={() => setScannedFailList(prev => prev.filter(s => (s.mac || s.serial) !== (record.mac || record.serial)))}
                 />
             ),
         },

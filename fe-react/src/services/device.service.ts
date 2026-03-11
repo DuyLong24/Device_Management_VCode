@@ -113,7 +113,7 @@ export const deviceService = {
         return response; //Trả về response để download file
     },
 
-    bulkTransfer: async (data: { deviceIds: string[], toWarehouseId: string, note?: string, errorReason?: string, defectReasonId?: string, originDeviceId?: string }) => {
+    bulkTransfer: async (data: { deviceIds: string[], toWarehouseId: string, note?: string, errorReason?: string, defectReason?: string, originDeviceId?: string }) => {
         const response = await axiosInstance.post('/devices/bulk-transfer', data);
         return response.data;
     },

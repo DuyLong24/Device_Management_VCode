@@ -70,22 +70,26 @@ export class Device extends Document {
   isDefective?: boolean; // Tự động bật khi vào kho lỗi
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'DefectReason' })
-  defectReasonId?: any; // Trỏ tới danh mục Lỗi (Màn hình, Nguồn...)
+  defectReasonId?: any;
 
   @Prop()
-  warrantyStatus?: string; // Trạng thái bảo hành (IN_SERVICE_CENTER, SWAPPED, RESOLVED...)
+  defectReason?: string;
+
+
+  @Prop()
+  warrantyStatus?: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Device' })
-  replacedByDeviceId?: any; // Chỉ dùng cho Máy Lỗi - Trỏ tới ID máy mới (lấy từ Swap Stock)
+  replacedByDeviceId?: any;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Device' })
-  replacedForDeviceId?: any; // Chỉ dùng cho Máy Mới - Trỏ về ID máy lỗi gốc
+  replacedForDeviceId?: any;
 
   // --- THỜI GIAN KÍCH HOẠT BẢO HÀNH ---
   warrantyActivatedDate?: Date;
 
   @Prop()
-  warrantyMonths?: number; // Thời gian bảo hành (tháng)
+  warrantyMonths?: number;
 
   @Prop()
   activationDate?: Date; // Ngày kích hoạt
@@ -102,7 +106,7 @@ export class Device extends Document {
   removeDate?: Date;
 
   @Prop()
-  warrantyExpiredDate?: Date; // Cache for easy query/sort 
+  warrantyExpiredDate?: Date;
 
   @Prop()
   warehouseUpdatedAt?: Date;

@@ -100,7 +100,6 @@ export default function DeviceDetailPage() {
                         <Title level={3} className="m-0!">
                             Chi tiết Mã Định Danh: {device.iden || iden}
                         </Title>
-                        <Text type="secondary">ID: {device.id}</Text>
                     </div>
 
                     <Space>

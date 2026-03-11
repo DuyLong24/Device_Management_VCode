@@ -530,25 +530,17 @@ export class DeviceService implements OnModuleInit {
             }
           ],
           defectReasonsDistribution: [
-            { $match: { isDefective: true, defectReasonId: { $ne: null } } },
-            { $group: { _id: '$defectReasonId', count: { $sum: 1 } } },
-            {
-              $lookup: {
-                from: 'defectreasons',
-                localField: '_id',
-                foreignField: '_id',
-                as: 'reasonInfo'
-              }
-            },
-            { $unwind: '$reasonInfo' },
+            { $match: { isDefective: true, defectReason: { $ne: null } } },
+            { $group: { _id: '$defectReason', count: { $sum: 1 } } },
             {
               $project: {
                 _id: 0,
-                reasonName: '$reasonInfo.name',
+                reasonCode: '$_id',
                 count: 1
               }
             }
           ]
+
         }
       }
     ];
@@ -567,23 +559,5 @@ export class DeviceService implements OnModuleInit {
       },
       distribution: result[0]?.defectReasonsDistribution || []
     };
-  }
-
-  // Helper method for category mapping
-  private determineCategoryName(deviceModel: string, name: string): string | null {
-    const modelStr = String(deviceModel || '').trim().toUpperCase();
-    const nameStr = String(name || '').trim().toLowerCase();
-
-    // Priority 1: Match deviceModel strictly
-    if (modelStr.startsWith('AV-C')) return 'Camera';
-    if (modelStr.startsWith('AV-N')) return 'Đầu ghi hình';
-
-    // Priority 2: Fuzzy match name string
-    if (nameStr.includes('camera')) return 'Camera';
-    if (nameStr.includes('đầu ghi') || nameStr.includes('nvr')) return 'Đầu ghi hình';
-    if (nameStr.includes('barrier') || nameStr.includes('barie')) return 'Barrier';
-    if (nameStr.includes('màn hình') || nameStr.includes('display')) return 'Màn hình';
-
-    return null;
   }
 }

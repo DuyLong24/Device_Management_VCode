@@ -154,7 +154,7 @@ export class DeviceController {
   @Patch(':id/transfer')
   async transfer(
     @Param('id') id: string,
-    @Body() body: { toWarehouseId: string; note?: string; errorReason?: string; defectReasonId?: string; originDeviceId?: string },
+    @Body() body: { toWarehouseId: string; note?: string; errorReason?: string; defectReason?: string; originDeviceId?: string },
     @Request() req: any
   ) {
     if (!req.user) {
@@ -163,7 +163,7 @@ export class DeviceController {
     const user = await this.userService.syncFromKeycloak(req.user);
     const userId = user._id.toString();
 
-    return this.deviceTransferService.transfer(id, body.toWarehouseId, userId, body.note, body.errorReason, body.defectReasonId, body.originDeviceId);
+    return this.deviceTransferService.transfer(id, body.toWarehouseId, userId, body.note, body.errorReason, body.defectReason, body.originDeviceId);
   }
 
   @Get('stats/defect-rate')
@@ -174,7 +174,7 @@ export class DeviceController {
 
   @Post('bulk-transfer')
   async bulkTransfer(
-    @Body() body: { deviceIds: string[]; toWarehouseId: string; note?: string; errorReason?: string; defectReasonId?: string; originDeviceId?: string },
+    @Body() body: { deviceIds: string[]; toWarehouseId: string; note?: string; errorReason?: string; defectReason?: string; originDeviceId?: string },
     @Request() req: any
   ) {
     if (!req.user) {
@@ -183,7 +183,7 @@ export class DeviceController {
     const user = await this.userService.syncFromKeycloak(req.user);
     const userId = user._id.toString();
 
-    return this.deviceTransferService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note, body.errorReason, body.defectReasonId, body.originDeviceId);
+    return this.deviceTransferService.bulkTransfer(body.deviceIds, body.toWarehouseId, userId, body.note, body.errorReason, body.defectReason, body.originDeviceId);
   }
 
   @Post('validate-macs')

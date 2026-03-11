@@ -27,8 +27,9 @@ export class DeviceHistory extends Document {
   note!: string;
 
   // Ghi lại lý do lỗi tại thời điểm chuyển trạng thái
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'DefectReason' })
-  defectReasonId?: any;
+  @Prop()
+  defectReason?: string;
+
 
   // Virtual for id (will be handled by toJSON plugin)
   declare id?: string;

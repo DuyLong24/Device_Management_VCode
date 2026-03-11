@@ -23,7 +23,7 @@ export class DeviceTransferService {
         userId: string,
         note?: string,
         errorReason?: string,
-        defectReasonId?: string,
+        defectReason?: string,
         originDeviceId?: string
     ): Promise<Device> {
         // 1. Lấy thông tin thiết bị
@@ -90,8 +90,8 @@ export class DeviceTransferService {
                 if (!device.isDefective) {
                     device.isDefective = true;
                 }
-                if (defectReasonId) {
-                    device.defectReasonId = defectReasonId as any;
+                if (defectReason) {
+                    device.defectReason = defectReason;
                 }
             }
 
@@ -129,7 +129,7 @@ export class DeviceTransferService {
             fromWarehouseId: fromWarehouseId,
             toWarehouseId: toWarehouseId,
             actorId: validActorId,
-            defectReasonId: defectReasonId, // Snapshot lại nguyên nhân
+            defectReason: defectReason, // Snapshot lý do lỗi
             action: transition.transitionType || 'TRANSFER',
             note: note || (errorReason ? `Lỗi: ${errorReason}` : 'Chuyển kho thủ công'),
             createdAt: new Date()
@@ -144,14 +144,14 @@ export class DeviceTransferService {
         userId: string,
         note?: string,
         errorReason?: string,
-        defectReasonId?: string,
+        defectReason?: string,
         originDeviceId?: string
     ): Promise<{ success: string[]; errors: any[] }> {
         const results = { success: [], errors: [] };
 
         await Promise.all(deviceIds.map(async (id) => {
             try {
-                await this.transfer(id, toWarehouseId, userId, note, errorReason, defectReasonId, originDeviceId);
+                await this.transfer(id, toWarehouseId, userId, note, errorReason, defectReason, originDeviceId);
                 results.success.push(id);
             } catch (error) {
                 results.errors.push({ id, message: error.message });

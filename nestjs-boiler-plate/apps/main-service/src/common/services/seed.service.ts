@@ -12,7 +12,6 @@ import { Category } from '../../modules/categories/schemas/categories.schemas';
 import { DeviceImport } from '../../modules/device-imports/schemas/device-import.schemas';
 import { SharedDataRepository } from '../../modules/shared-data/repositories/shared-data.repository';
 import { UserKeycloakIntegrationService } from '../../users/services/user-keycloak-integration.service';
-import { DefectReason } from '../../modules/defect-reasons/schemas/defect-reasons.schemas';
 import * as bcrypt from 'bcrypt';
 import { WarehouseCode, TransitionType, ActionType } from '../constants/warehouse.constant';
 
@@ -29,16 +28,14 @@ export class SeedService implements OnModuleInit {
         @InjectModel(Device.name) private deviceModel: Model<Device>,
         @InjectModel(Category.name) private categoryModel: Model<Category>,
         @InjectModel(DeviceImport.name) private deviceImportModel: Model<DeviceImport>,
-        @InjectModel(DefectReason.name) private defectReasonModel: Model<DefectReason>,
         private readonly sharedDataRepository: SharedDataRepository,
         private readonly userKeycloakIntegrationService: UserKeycloakIntegrationService,
     ) { }
 
     async onModuleInit() {
-        this.logger.warn('=== SEED SERVICE STARTING ==='); // Warn level to show up
+        this.logger.warn('=== SEED SERVICE STARTING ===');
         await this.seedRoles();
         await this.seedCategories();
-        await this.seedDefectReasons();
         await this.seedWarehousesAndTransitions();
         // await this.seedDevices();
         await this.seedSharedData();
@@ -79,27 +76,7 @@ export class SeedService implements OnModuleInit {
         }
     }
 
-    // --- 2.8 SEED DEFECT REASONS ---
-    private async seedDefectReasons() {
-        const reasons = [
-            { code: 'SCREEN_ERROR', name: 'Lỗi màn hình', description: 'Điểm chết, sọc màn, vỡ kính', isActive: true },
-            { code: 'POWER_ERROR', name: 'Lỗi nguồn/Pin', description: 'Không lên nguồn, chai pin, tụt pin nhanh', isActive: true },
-            { code: 'HARDWARE_ERROR', name: 'Lỗi phần cứng', description: 'Cháy nổ, hỏng main, lỗi camera/cảm biến', isActive: true },
-            { code: 'SOFTWARE_ERROR', name: 'Lỗi phần mềm', description: 'Treo logo, khởi động lại liên tục', isActive: true },
-            { code: 'CONNECTION_ERROR', name: 'Lỗi kết nối', description: 'Mất sóng, không nhận Wifi/Bluetooth', isActive: true },
-            { code: 'OTHER_ERROR', name: 'Lỗi khác', description: 'Nguyên nhân không xác định, hao mòn vật lý', isActive: true },
-        ];
 
-        for (const reason of reasons) {
-            const exists = await this.defectReasonModel.findOne({ code: reason.code });
-            if (!exists) {
-                await this.defectReasonModel.create(reason);
-                this.logger.log(`Created Defect Reason: ${reason.name}`);
-            }
-        }
-    }
-
-    // --- 3. SEED WAREHOUSES & TRANSITIONS (Config-driven) ---
     private async seedWarehousesAndTransitions() {
         const internalGroup = await this.ensureGroup('Kho nội bộ', 'INTERNAL', 1);
         const warrantyGroup = await this.ensureGroup('Kho bảo hành', 'WARRANTY', 2);
@@ -597,6 +574,7 @@ export class SeedService implements OnModuleInit {
                 { code: 'PROJECT', name: 'Dự án', description: 'Dự án (Hà Nội, Cà Mau...)' },
                 { code: 'MODEL', name: 'Mã thiết bị', description: 'Danh sách SKU/Model thiết bị' },
                 { code: 'UNIT', name: 'Đơn vị tính', description: 'Đơn vị tính (Cái, Chiếc...)' },
+                { code: 'DEFECT_REASON', name: 'Nguyên nhân lỗi', description: 'Danh mục nguyên nhân lỗi thiết bị' },
             ];
 
             try {
@@ -652,6 +630,20 @@ export class SeedService implements OnModuleInit {
                     { code: 'CAI', name: 'Cái', groupId: unitId },
                     { code: 'CHIEC', name: 'Chiếc', groupId: unitId },
                     { code: 'BO', name: 'Bộ', groupId: unitId },
+                );
+            }
+
+            // DEFECT_REASON Data
+            const defectReasonId = groupMap.get('DEFECT_REASON');
+            if (defectReasonId) {
+                dataToSeed.push(
+                    { code: 'SCREEN_ERROR', name: 'Lỗi màn hình', description: 'Điểm chết, sọc màn, vỡ kính', groupId: defectReasonId, order: 1 },
+                    { code: 'POWER_ERROR', name: 'Lỗi nguồn/Pin', description: 'Không lên nguồn, chai pin, tụt pin nhanh', groupId: defectReasonId, order: 2 },
+                    { code: 'HARDWARE_ERROR', name: 'Lỗi phần cứng', description: 'Cháy nổ, hỏng main, lỗi camera/cảm biến', groupId: defectReasonId, order: 3 },
+                    { code: 'SOFTWARE_ERROR', name: 'Lỗi phần mềm', description: 'Treo logo, khởi động lại liên tục', groupId: defectReasonId, order: 4 },
+                    { code: 'CONNECTION_ERROR', name: 'Lỗi kết nối', description: 'Mất sóng, không nhận Wifi/Bluetooth', groupId: defectReasonId, order: 5 },
+                    { code: 'COSMETIC_DAMAGE', name: 'Vỡ vỏ/Ngoại quan', description: 'Vỡ màn hình, trầy xước, móp méo', groupId: defectReasonId, order: 6 },
+                    { code: 'OTHER_ERROR', name: 'Lỗi khác', description: 'Nguyên nhân không xác định, hao mòn vật lý', groupId: defectReasonId, order: 7 },
                 );
             }
 

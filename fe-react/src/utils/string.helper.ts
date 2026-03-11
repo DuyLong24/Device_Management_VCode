@@ -10,7 +10,7 @@ export const normalizeString = (str: string): string => {
 export const generateProjectCode = (name: string): string => {
     if (!name) return '';
     const normalized = normalizeString(name);
-    return 'DA_' + normalized
+    return normalized
         .toUpperCase()
         .replace(/[^A-Z0-9]/g, '_') // Replace non-alphanumeric with _
         .replace(/_+/g, '_')        // Collapse multiple _
